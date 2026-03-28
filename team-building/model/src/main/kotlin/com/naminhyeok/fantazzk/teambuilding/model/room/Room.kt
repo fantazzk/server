@@ -46,6 +46,80 @@ data class Room(
         return copy(status = RoomStatus.IN_PROGRESS, progression = progression)
     }
 
+    fun placeBid(teamLeaderId: TeamLeaderId, amount: Int): Room {
+        check(status == RoomStatus.IN_PROGRESS) { "Room is not in progress" }
+        val auction = progression as? Progression.Auction
+            ?: error("Not in auction mode")
+
+        val leader = teamLeaders.first { it.id == teamLeaderId }
+        require(amount <= (leader.remainingBudget ?: 0)) { "Insufficient budget" }
+
+        val currentHighest = auction.highestBid()?.amount ?: 0
+        require(amount > currentHighest) { "Bid must be higher than current highest: $currentHighest" }
+
+        return copy(progression = auction.addBid(Bid(teamLeaderId, amount)))
+    }
+
+    fun settleCurrentAuction(): Room {
+        check(status == RoomStatus.IN_PROGRESS) { "Room is not in progress" }
+        val auction = progression as? Progression.Auction
+            ?: error("Not in auction mode")
+
+        val target = requireNotNull(playerPool.currentTarget()) { "No player to auction" }
+        val highestBid = auction.highestBid()
+
+        return if (highestBid != null) {
+            settleAsSold(auction, target, highestBid)
+        } else {
+            settleAsPassed(auction, target)
+        }
+    }
+
+    private fun settleAsSold(auction: Progression.Auction, target: Player, bid: Bid): Room {
+        val assignedPlayer = target.copy(status = PlayerStatus.ASSIGNED)
+        val updatedLeaders = teamLeaders.map { leader ->
+            if (leader.id == bid.teamLeaderId) {
+                leader.deductBudget(bid.amount).addPlayer(assignedPlayer)
+            } else {
+                leader
+            }
+        }
+        val updatedPool = playerPool.assignPlayer(target.name)
+        val result = AuctionResult(target, AuctionResult.Outcome.Sold(bid.teamLeaderId, bid.amount))
+        val updatedAuction = auction.addResult(result)
+
+        return copy(
+            teamLeaders = updatedLeaders,
+            playerPool = updatedPool,
+            progression = updatedAuction,
+        ).checkCompletion()
+    }
+
+    private fun settleAsPassed(auction: Progression.Auction, target: Player): Room {
+        val updatedPool = playerPool.moveCurrentToBack()
+        val result = AuctionResult(target, AuctionResult.Outcome.Passed)
+        val updatedAuction = auction.addResult(result)
+
+        return copy(
+            playerPool = updatedPool,
+            progression = updatedAuction,
+        )
+    }
+
+    private fun checkCompletion(): Room {
+        val allFull = teamLeaders.all { it.hasPickedEnough(settings.picksPerTeam) }
+        if (!allFull) return this
+
+        val updatedPool = playerPool.markRemainingAsUnassigned()
+        val teams = teamLeaders.map { leader -> Team(teamLeader = leader, members = leader.team) }
+
+        return copy(
+            status = RoomStatus.COMPLETED,
+            playerPool = updatedPool,
+            result = RoomResult(teams),
+        )
+    }
+
     companion object {
         fun create(
             id: RoomId,
