@@ -1,7 +1,7 @@
 package com.naminhyeok.fantazzk.teambuilding.template
 
 import com.naminhyeok.fantazzk.teambuilding.TeamBuildingMode
-import org.junit.jupiter.api.Assertions.assertEquals
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class TemplateTest {
@@ -20,8 +20,8 @@ class TemplateTest {
                     ),
             )
 
-        assertEquals(TeamBuildingMode.AUCTION, template.mode)
-        assertEquals(2, template.players.size)
-        assertEquals(300, template.rules.budget)
+        assertThat(template.mode).isEqualTo(TeamBuildingMode.AUCTION)
+        assertThat(template.players).hasSize(2)
+        assertThat(template.rules.budget).isEqualTo(300)
     }
 }

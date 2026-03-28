@@ -1,7 +1,6 @@
 package com.naminhyeok.fantazzk.teambuilding.room
 
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNull
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class PlayerPoolTest {
@@ -17,22 +16,24 @@ class PlayerPoolTest {
 
     @Test
     fun `현재 경매 대상은 첫 번째 가용 선수이다`() {
-        assertEquals("선수1", pool.currentTarget()?.name)
+        assertThat(pool.currentTarget()?.name).isEqualTo("선수1")
     }
 
     @Test
     fun `선수를 배정하면 ASSIGNED 상태로 변경된다`() {
         val updated = pool.assignPlayer("선수1")
-        assertEquals(PlayerStatus.ASSIGNED, updated.players.first { it.name == "선수1" }.status)
-        assertEquals("선수2", updated.currentTarget()?.name)
+
+        assertThat(updated.players.first { it.name == "선수1" }.status).isEqualTo(PlayerStatus.ASSIGNED)
+        assertThat(updated.currentTarget()?.name).isEqualTo("선수2")
     }
 
     @Test
     fun `유찰 시 현재 대상 선수가 맨 뒤로 이동한다`() {
         val updated = pool.moveCurrentToBack()
         val available = updated.players.filter { it.status == PlayerStatus.AVAILABLE }
-        assertEquals("선수2", available.first().name)
-        assertEquals("선수1", available.last().name)
+
+        assertThat(available.first().name).isEqualTo("선수2")
+        assertThat(available.last().name).isEqualTo("선수1")
     }
 
     @Test
@@ -42,6 +43,7 @@ class PlayerPoolTest {
                 .assignPlayer("선수1")
                 .assignPlayer("선수2")
                 .assignPlayer("선수3")
-        assertNull(empty.currentTarget())
+
+        assertThat(empty.currentTarget()).isNull()
     }
 }

@@ -1,8 +1,7 @@
 package com.naminhyeok.fantazzk.teambuilding.room
 
 import com.naminhyeok.fantazzk.teambuilding.DraftOrderStrategy
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNull
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class ProgressionTest {
@@ -13,14 +12,15 @@ class ProgressionTest {
                 .addBid(Bid(TeamLeaderId("A"), 100))
                 .addBid(Bid(TeamLeaderId("B"), 150))
 
-        assertEquals(150, progression.highestBid()?.amount)
-        assertEquals(TeamLeaderId("B"), progression.highestBid()?.teamLeaderId)
+        assertThat(progression.highestBid()?.amount).isEqualTo(150)
+        assertThat(progression.highestBid()?.teamLeaderId).isEqualTo(TeamLeaderId("B"))
     }
 
     @Test
     fun `입찰이 없으면 최고 입찰가는 null이다`() {
         val progression = Progression.Auction()
-        assertNull(progression.highestBid())
+
+        assertThat(progression.highestBid()).isNull()
     }
 
     @Test
@@ -28,10 +28,7 @@ class ProgressionTest {
         val teamLeaders = listOf(TeamLeaderId("A"), TeamLeaderId("B"), TeamLeaderId("C"))
         val order = Progression.Draft.generatePickOrder(teamLeaders, DraftOrderStrategy.SNAKE, picksPerTeam = 2)
 
-        assertEquals(
-            listOf("A", "B", "C", "C", "B", "A"),
-            order.map { it.value },
-        )
+        assertThat(order.map { it.value }).containsExactly("A", "B", "C", "C", "B", "A")
     }
 
     @Test
@@ -39,10 +36,7 @@ class ProgressionTest {
         val teamLeaders = listOf(TeamLeaderId("A"), TeamLeaderId("B"), TeamLeaderId("C"))
         val order = Progression.Draft.generatePickOrder(teamLeaders, DraftOrderStrategy.FIXED, picksPerTeam = 2)
 
-        assertEquals(
-            listOf("A", "B", "C", "A", "B", "C"),
-            order.map { it.value },
-        )
+        assertThat(order.map { it.value }).containsExactly("A", "B", "C", "A", "B", "C")
     }
 
     @Test
@@ -51,7 +45,8 @@ class ProgressionTest {
             Progression.Draft(
                 pickOrder = listOf(TeamLeaderId("A"), TeamLeaderId("B"), TeamLeaderId("C")),
             )
-        assertEquals(TeamLeaderId("A"), draft.currentTurn())
+
+        assertThat(draft.currentTurn()).isEqualTo(TeamLeaderId("A"))
     }
 
     @Test
@@ -61,6 +56,7 @@ class ProgressionTest {
                 pickOrder = listOf(TeamLeaderId("A"), TeamLeaderId("B"), TeamLeaderId("C")),
             )
         val next = draft.advanceTurn()
-        assertEquals(TeamLeaderId("B"), next.currentTurn())
+
+        assertThat(next.currentTurn()).isEqualTo(TeamLeaderId("B"))
     }
 }

@@ -1,10 +1,9 @@
 package com.naminhyeok.fantazzk.teambuilding.room
 
 import com.naminhyeok.fantazzk.teambuilding.TeamBuildingMode
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNull
+import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 
 class RoomAuctionTest {
     private fun createStartedAuctionRoom(): Room {
@@ -34,17 +33,16 @@ class RoomAuctionTest {
                 .placeBid(TeamLeaderId("host"), 100)
 
         val auction = room.progression as Progression.Auction
-        assertEquals(1, auction.currentBids.size)
-        assertEquals(100, auction.currentBids.first().amount)
+        assertThat(auction.currentBids).hasSize(1)
+        assertThat(auction.currentBids.first().amount).isEqualTo(100)
     }
 
     @Test
     fun `예산을 초과하여 입찰할 수 없다`() {
         val room = createStartedAuctionRoom()
 
-        assertThrows<IllegalArgumentException> {
-            room.placeBid(TeamLeaderId("host"), 301)
-        }
+        assertThatThrownBy { room.placeBid(TeamLeaderId("host"), 301) }
+            .isInstanceOf(IllegalArgumentException::class.java)
     }
 
     @Test
@@ -59,9 +57,8 @@ class RoomAuctionTest {
                 playerPool = PlayerPool(listOf(Player("선수1"), Player("선수2"))),
             )
 
-        assertThrows<IllegalStateException> {
-            room.placeBid(TeamLeaderId("host"), 100)
-        }
+        assertThatThrownBy { room.placeBid(TeamLeaderId("host"), 100) }
+            .isInstanceOf(IllegalStateException::class.java)
     }
 
     @Test
@@ -73,13 +70,13 @@ class RoomAuctionTest {
                 .settleCurrentAuction()
 
         val winner = room.teamLeaders.findById(TeamLeaderId("leader2"))
-        assertEquals(1, winner.team.size)
-        assertEquals("선수1", winner.team.first().name)
-        assertEquals(150, winner.remainingBudget)
+        assertThat(winner.team).hasSize(1)
+        assertThat(winner.team.first().name).isEqualTo("선수1")
+        assertThat(winner.remainingBudget).isEqualTo(150)
 
         val auction = room.progression as Progression.Auction
-        assertEquals(1, auction.history.size)
-        assert(auction.history.first().outcome is AuctionResult.Outcome.Sold)
+        assertThat(auction.history).hasSize(1)
+        assertThat(auction.history.first().outcome).isInstanceOf(AuctionResult.Outcome.Sold::class.java)
     }
 
     @Test
@@ -88,14 +85,13 @@ class RoomAuctionTest {
             createStartedAuctionRoom()
                 .settleCurrentAuction()
 
-        val pool = room.playerPool
-        val available = pool.players.filter { it.status == PlayerStatus.AVAILABLE }
-        assertEquals("선수2", available.first().name)
-        assertEquals("선수1", available.last().name)
+        val available = room.playerPool.players.filter { it.status == PlayerStatus.AVAILABLE }
+        assertThat(available.first().name).isEqualTo("선수2")
+        assertThat(available.last().name).isEqualTo("선수1")
 
         val auction = room.progression as Progression.Auction
-        assertEquals(1, auction.history.size)
-        assert(auction.history.first().outcome is AuctionResult.Outcome.Passed)
+        assertThat(auction.history).hasSize(1)
+        assertThat(auction.history.first().outcome).isInstanceOf(AuctionResult.Outcome.Passed::class.java)
     }
 
     @Test
@@ -107,10 +103,9 @@ class RoomAuctionTest {
                 .placeBid(TeamLeaderId("leader2"), 100)
                 .settleCurrentAuction()
 
-        assertEquals(RoomStatus.COMPLETED, room.status)
-        assertNull(room.playerPool.currentTarget())
-
-        val result = requireNotNull(room.result)
-        assertEquals(2, result.teams.size)
+        assertThat(room.status).isEqualTo(RoomStatus.COMPLETED)
+        assertThat(room.playerPool.currentTarget()).isNull()
+        assertThat(room.result).isNotNull
+        assertThat(room.result!!.teams).hasSize(2)
     }
 }

@@ -2,9 +2,9 @@ package com.naminhyeok.fantazzk.teambuilding.room
 
 import com.naminhyeok.fantazzk.teambuilding.DraftOrderStrategy
 import com.naminhyeok.fantazzk.teambuilding.TeamBuildingMode
-import org.junit.jupiter.api.Assertions.assertEquals
+import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 
 class RoomLifecycleTest {
     private val auctionSettings =
@@ -30,10 +30,10 @@ class RoomLifecycleTest {
     fun `방 생성 시 WAITING 상태이며 호스트가 첫 번째 팀장이다`() {
         val room = createWaitingRoom()
 
-        assertEquals(RoomStatus.WAITING, room.status)
-        assertEquals(1, room.teamLeaders.size)
-        assertEquals("호스트", room.teamLeaders.values.first().nickname)
-        assertEquals(300, room.teamLeaders.values.first().remainingBudget)
+        assertThat(room.status).isEqualTo(RoomStatus.WAITING)
+        assertThat(room.teamLeaders.size).isEqualTo(1)
+        assertThat(room.teamLeaders.values.first().nickname).isEqualTo("호스트")
+        assertThat(room.teamLeaders.values.first().remainingBudget).isEqualTo(300)
     }
 
     @Test
@@ -42,7 +42,7 @@ class RoomLifecycleTest {
             createWaitingRoom()
                 .addTeamLeader(TeamLeaderId("leader-2"), "팀장2")
 
-        assertEquals(2, room.teamLeaders.size)
+        assertThat(room.teamLeaders.size).isEqualTo(2)
     }
 
     @Test
@@ -51,9 +51,8 @@ class RoomLifecycleTest {
             createWaitingRoom()
                 .addTeamLeader(TeamLeaderId("leader-2"), "팀장2")
 
-        assertThrows<IllegalStateException> {
-            room.addTeamLeader(TeamLeaderId("leader-3"), "팀장3")
-        }
+        assertThatThrownBy { room.addTeamLeader(TeamLeaderId("leader-3"), "팀장3") }
+            .isInstanceOf(IllegalStateException::class.java)
     }
 
     @Test
@@ -63,9 +62,8 @@ class RoomLifecycleTest {
                 .addTeamLeader(TeamLeaderId("leader-2"), "팀장2")
                 .start()
 
-        assertThrows<IllegalStateException> {
-            room.addTeamLeader(TeamLeaderId("leader-3"), "팀장3")
-        }
+        assertThatThrownBy { room.addTeamLeader(TeamLeaderId("leader-3"), "팀장3") }
+            .isInstanceOf(IllegalStateException::class.java)
     }
 
     @Test
@@ -75,17 +73,16 @@ class RoomLifecycleTest {
                 .addTeamLeader(TeamLeaderId("leader-2"), "팀장2")
                 .start()
 
-        assertEquals(RoomStatus.IN_PROGRESS, room.status)
-        assert(room.progression is Progression.Auction)
+        assertThat(room.status).isEqualTo(RoomStatus.IN_PROGRESS)
+        assertThat(room.progression).isInstanceOf(Progression.Auction::class.java)
     }
 
     @Test
     fun `모든 팀장 자리가 채워지지 않으면 시작할 수 없다`() {
         val room = createWaitingRoom()
 
-        assertThrows<IllegalStateException> {
-            room.start()
-        }
+        assertThatThrownBy { room.start() }
+            .isInstanceOf(IllegalStateException::class.java)
     }
 
     @Test
@@ -109,6 +106,6 @@ class RoomLifecycleTest {
                 .start()
 
         val draft = room.progression as Progression.Draft
-        assertEquals(4, draft.pickOrder.size)
+        assertThat(draft.pickOrder).hasSize(4)
     }
 }

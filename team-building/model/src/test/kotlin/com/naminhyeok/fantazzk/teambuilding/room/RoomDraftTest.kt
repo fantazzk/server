@@ -2,9 +2,9 @@ package com.naminhyeok.fantazzk.teambuilding.room
 
 import com.naminhyeok.fantazzk.teambuilding.DraftOrderStrategy
 import com.naminhyeok.fantazzk.teambuilding.TeamBuildingMode
-import org.junit.jupiter.api.Assertions.assertEquals
+import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 
 class RoomDraftTest {
     private fun createStartedDraftRoom(): Room {
@@ -35,8 +35,9 @@ class RoomDraftTest {
 
         val updated = room.pick(currentTurn, "선수1")
         val leader = updated.teamLeaders.findById(currentTurn)
-        assertEquals(1, leader.team.size)
-        assertEquals("선수1", leader.team.first().name)
+
+        assertThat(leader.team).hasSize(1)
+        assertThat(leader.team.first().name).isEqualTo("선수1")
     }
 
     @Test
@@ -45,9 +46,8 @@ class RoomDraftTest {
         val draft = room.progression as Progression.Draft
         val notCurrentTurn = draft.pickOrder[1]
 
-        assertThrows<IllegalStateException> {
-            room.pick(notCurrentTurn, "선수1")
-        }
+        assertThatThrownBy { room.pick(notCurrentTurn, "선수1") }
+            .isInstanceOf(IllegalStateException::class.java)
     }
 
     @Test
@@ -55,9 +55,8 @@ class RoomDraftTest {
         val room = createStartedDraftRoom()
         val draft = room.progression as Progression.Draft
 
-        assertThrows<IllegalArgumentException> {
-            room.pick(draft.currentTurn(), "존재하지않는선수")
-        }
+        assertThatThrownBy { room.pick(draft.currentTurn(), "존재하지않는선수") }
+            .isInstanceOf(IllegalArgumentException::class.java)
     }
 
     @Test
@@ -70,8 +69,8 @@ class RoomDraftTest {
                 .pick(draft.pickOrder[0], "선수1")
                 .pick(draft.pickOrder[1], "선수2")
 
-        assertEquals(RoomStatus.COMPLETED, result.status)
-        assertEquals(2, result.result?.teams?.size)
+        assertThat(result.status).isEqualTo(RoomStatus.COMPLETED)
+        assertThat(result.result?.teams).hasSize(2)
     }
 
     @Test
@@ -96,6 +95,6 @@ class RoomDraftTest {
                 .start()
 
         val draft = room.progression as Progression.Draft
-        assertEquals(listOf("A", "B", "B", "A"), draft.pickOrder.map { it.value })
+        assertThat(draft.pickOrder.map { it.value }).containsExactly("A", "B", "B", "A")
     }
 }
