@@ -116,7 +116,8 @@ class InMemoryRoomTeamMemberRepository : RoomTeamMemberRepository {
 
     override fun save(member: RoomTeamMember): RoomTeamMemberModel {
         val saved = if (member.roomTeamMemberId == 0L) member.copy(roomTeamMemberId = seq++) else member
-        store.add(saved)
+        val idx = store.indexOfFirst { it.roomTeamMemberId == saved.roomTeamMemberId }
+        if (idx >= 0) store[idx] = saved else store.add(saved)
         return saved
     }
 
@@ -128,6 +129,9 @@ class InMemoryRoomTeamMemberRepository : RoomTeamMemberRepository {
     ): List<RoomTeamMemberModel> = store.filter { it.roomId == roomId && it.teamLeaderId == teamLeaderId }
 
     override fun countByRoomId(roomId: Long): Int = store.count { it.roomId == roomId }
+
+    override fun countByRoomIdAndTeamLeaderId(roomId: Long, teamLeaderId: String): Int =
+        store.count { it.roomId == roomId && it.teamLeaderId == teamLeaderId }
 }
 
 class InMemoryRoomBidRepository : RoomBidRepository {

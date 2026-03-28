@@ -1,14 +1,7 @@
 package com.naminhyeok.fantazzk.teambuilding.room
 
-interface RoomPlayerIdentity {
-    val roomPlayerId: Long
-}
+import com.naminhyeok.fantazzk.teambuilding.AuditProps
 
-interface RoomPlayerProps {
-    val roomId: Long
-    val name: String
-    val status: PlayerStatus
-    val displayOrder: Int
-}
+interface RoomPlayerModel : RoomPlayerIdentity, RoomPlayerProps, AuditProps
 
-interface RoomPlayerModel : RoomPlayerIdentity, RoomPlayerProps
+fun RoomPlayerModel.isAvailable(): Boolean = status == PlayerStatus.AVAILABLE

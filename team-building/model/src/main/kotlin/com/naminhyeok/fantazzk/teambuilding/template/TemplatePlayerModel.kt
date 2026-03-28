@@ -1,13 +1,5 @@
 package com.naminhyeok.fantazzk.teambuilding.template
 
-interface TemplatePlayerIdentity {
-    val templatePlayerId: Long
-}
+import com.naminhyeok.fantazzk.teambuilding.AuditProps
 
-interface TemplatePlayerProps {
-    val templateId: Long
-    val name: String
-    val displayOrder: Int
-}
-
-interface TemplatePlayerModel : TemplatePlayerIdentity, TemplatePlayerProps
+interface TemplatePlayerModel : TemplatePlayerIdentity, TemplatePlayerProps, AuditProps
