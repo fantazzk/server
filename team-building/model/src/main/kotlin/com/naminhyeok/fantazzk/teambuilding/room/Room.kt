@@ -9,7 +9,7 @@ data class Room(
     val status: RoomStatus,
     val settings: RoomSettings,
     val playerPool: PlayerPool,
-    val teamLeaders: List<TeamLeader>,
+    val teamLeaders: TeamLeaders,
     val progression: Progression?,
     val result: RoomResult?,
 ) {
@@ -18,8 +18,8 @@ data class Room(
         nickname: String,
     ): Room {
         check(status == RoomStatus.WAITING) { "대기 중인 방에서만 팀장을 추가할 수 있습니다" }
-        check(teamLeaders.size < settings.teamCount) { "방이 가득 찼습니다" }
-        check(teamLeaders.none { it.id == id }) { "이미 참가한 팀장입니다" }
+        check(!teamLeaders.isFull(settings.teamCount)) { "방이 가득 찼습니다" }
+        check(!teamLeaders.contains(id)) { "이미 참가한 팀장입니다" }
 
         val leader =
             TeamLeader(
@@ -27,7 +27,7 @@ data class Room(
                 nickname = nickname,
                 remainingBudget = settings.budget,
             )
-        return copy(teamLeaders = teamLeaders + leader)
+        return copy(teamLeaders = teamLeaders.add(leader))
     }
 
     fun start(): Room {
@@ -41,7 +41,7 @@ data class Room(
                     val strategy = requireNotNull(settings.draftOrderStrategy) { "드래프트에는 픽 순서 전략이 필요합니다" }
                     val pickOrder =
                         Progression.Draft.generatePickOrder(
-                            teamLeaders.map { it.id },
+                            teamLeaders.ids(),
                             strategy,
                             settings.picksPerTeam,
                         )
@@ -61,7 +61,7 @@ data class Room(
             progression as? Progression.Auction
                 ?: error("경매 모드가 아닙니다")
 
-        val leader = teamLeaders.first { it.id == teamLeaderId }
+        val leader = teamLeaders.findById(teamLeaderId)
         require(amount <= (leader.remainingBudget ?: 0)) { "예산이 부족합니다" }
 
         val currentHighest = auction.highestBid()?.amount ?: 0
@@ -93,13 +93,7 @@ data class Room(
     ): Room {
         val assignedPlayer = target.copy(status = PlayerStatus.ASSIGNED)
         val updatedLeaders =
-            teamLeaders.map { leader ->
-                if (leader.id == bid.teamLeaderId) {
-                    leader.deductBudget(bid.amount).addPlayer(assignedPlayer)
-                } else {
-                    leader
-                }
-            }
+            teamLeaders.update(bid.teamLeaderId) { it.deductBudget(bid.amount).addPlayer(assignedPlayer) }
         val updatedPool = playerPool.assignPlayer(target.name)
         val result = AuctionResult(target, AuctionResult.Outcome.Sold(bid.teamLeaderId, bid.amount))
         val updatedAuction = auction.addResult(result)
@@ -141,10 +135,7 @@ data class Room(
         requireNotNull(target) { "선수 '$playerName'은(는) 선택할 수 없습니다" }
 
         val assignedPlayer = target.copy(status = PlayerStatus.ASSIGNED)
-        val updatedLeaders =
-            teamLeaders.map { leader ->
-                if (leader.id == teamLeaderId) leader.addPlayer(assignedPlayer) else leader
-            }
+        val updatedLeaders = teamLeaders.update(teamLeaderId) { it.addPlayer(assignedPlayer) }
         val updatedPool = playerPool.assignPlayer(playerName)
         val updatedDraft = draft.addPick(Pick(teamLeaderId, playerName)).advanceTurn()
 
@@ -156,16 +147,14 @@ data class Room(
     }
 
     private fun checkCompletion(): Room {
-        val allFull = teamLeaders.all { it.hasPickedEnough(settings.picksPerTeam) }
-        if (!allFull) return this
+        if (!teamLeaders.allPickedEnough(settings.picksPerTeam)) return this
 
         val updatedPool = playerPool.markRemainingAsUnassigned()
-        val teams = teamLeaders.map { leader -> Team(teamLeader = leader) }
 
         return copy(
             status = RoomStatus.COMPLETED,
             playerPool = updatedPool,
-            result = RoomResult(teams),
+            result = RoomResult(teamLeaders.toTeams()),
         )
     }
 
@@ -191,7 +180,7 @@ data class Room(
                 status = RoomStatus.WAITING,
                 settings = settings,
                 playerPool = playerPool,
-                teamLeaders = listOf(host),
+                teamLeaders = TeamLeaders(listOf(host)),
                 progression = null,
                 result = null,
             )

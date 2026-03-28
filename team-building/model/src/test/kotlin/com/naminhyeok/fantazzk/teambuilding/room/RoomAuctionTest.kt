@@ -72,7 +72,7 @@ class RoomAuctionTest {
                 .placeBid(TeamLeaderId("leader2"), 150)
                 .settleCurrentAuction()
 
-        val winner = room.teamLeaders.first { it.id == TeamLeaderId("leader2") }
+        val winner = room.teamLeaders.findById(TeamLeaderId("leader2"))
         assertEquals(1, winner.team.size)
         assertEquals("선수1", winner.team.first().name)
         assertEquals(150, winner.remainingBudget)

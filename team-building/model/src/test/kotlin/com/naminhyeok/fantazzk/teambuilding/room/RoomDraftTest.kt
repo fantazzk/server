@@ -34,7 +34,7 @@ class RoomDraftTest {
         val currentTurn = draft.currentTurn()
 
         val updated = room.pick(currentTurn, "선수1")
-        val leader = updated.teamLeaders.first { it.id == currentTurn }
+        val leader = updated.teamLeaders.findById(currentTurn)
         assertEquals(1, leader.team.size)
         assertEquals("선수1", leader.team.first().name)
     }

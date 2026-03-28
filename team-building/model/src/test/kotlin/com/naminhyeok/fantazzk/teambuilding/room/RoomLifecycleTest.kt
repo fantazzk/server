@@ -32,8 +32,8 @@ class RoomLifecycleTest {
 
         assertEquals(RoomStatus.WAITING, room.status)
         assertEquals(1, room.teamLeaders.size)
-        assertEquals("호스트", room.teamLeaders.first().nickname)
-        assertEquals(300, room.teamLeaders.first().remainingBudget)
+        assertEquals("호스트", room.teamLeaders.values.first().nickname)
+        assertEquals(300, room.teamLeaders.values.first().remainingBudget)
     }
 
     @Test
