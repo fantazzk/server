@@ -14,14 +14,4 @@ interface RoomProps {
     val draftOrderStrategy: DraftOrderStrategy?
     val currentTurnIndex: Int?
     val currentAuctionRound: Int?
-
-    fun isWaiting(): Boolean = status == RoomStatus.WAITING
-
-    fun isInProgress(): Boolean = status == RoomStatus.IN_PROGRESS
-
-    fun isAuction(): Boolean = mode == TeamBuildingMode.AUCTION
-
-    fun isDraft(): Boolean = mode == TeamBuildingMode.DRAFT
-
-    val picksPerTeam: Int get() = teamSize - 1
 }

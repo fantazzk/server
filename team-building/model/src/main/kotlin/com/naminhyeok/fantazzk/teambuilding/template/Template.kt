@@ -17,6 +17,4 @@ data class Template(
         require(teamSize > 0) { "팀 인원은 1 이상이어야 합니다" }
         budget?.let { require(it > 0) { "예산은 1 이상이어야 합니다" } }
     }
-
-    val picksPerTeam: Int get() = teamSize - 1
 }

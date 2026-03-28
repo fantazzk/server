@@ -5,16 +5,6 @@ import com.naminhyeok.fantazzk.teambuilding.TeamBuildingMode
 import com.naminhyeok.fantazzk.teambuilding.template.TemplateModel
 import com.naminhyeok.fantazzk.teambuilding.template.TemplatePlayerModel
 
-data class CreateTemplateRequest(
-    val name: String,
-    val mode: TeamBuildingMode,
-    val teamCount: Int,
-    val teamSize: Int,
-    val budget: Int? = null,
-    val draftOrderStrategy: DraftOrderStrategy? = null,
-    val playerNames: List<String>,
-)
-
 data class TemplateResponse(
     val id: Long,
     val name: String,
@@ -42,8 +32,3 @@ data class TemplateResponse(
             )
     }
 }
-
-data class TemplatePlayerResponse(
-    val name: String,
-    val displayOrder: Int,
-)
