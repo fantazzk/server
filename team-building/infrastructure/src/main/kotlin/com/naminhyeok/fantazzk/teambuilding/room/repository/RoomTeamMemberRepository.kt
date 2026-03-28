@@ -14,4 +14,9 @@ interface RoomTeamMemberRepository {
     ): List<RoomTeamMemberModel>
 
     fun countByRoomId(roomId: Long): Int
+
+    fun countByRoomIdAndTeamLeaderId(
+        roomId: Long,
+        teamLeaderId: String,
+    ): Int
 }

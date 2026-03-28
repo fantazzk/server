@@ -2,6 +2,7 @@ package com.naminhyeok.fantazzk.teambuilding.room
 
 import com.naminhyeok.fantazzk.teambuilding.DraftOrderStrategy
 import com.naminhyeok.fantazzk.teambuilding.TeamBuildingMode
+import java.time.Instant
 
 data class Room(
     override val roomId: Long = 0L,
@@ -15,6 +16,8 @@ data class Room(
     override val draftOrderStrategy: DraftOrderStrategy? = null,
     override val currentTurnIndex: Int? = null,
     override val currentAuctionRound: Int? = null,
+    override val createdAt: Instant = Instant.now(),
+    override val updatedAt: Instant = Instant.now(),
 ) : RoomModel {
     companion object {
         fun from(model: RoomModel): Room =
@@ -30,6 +33,8 @@ data class Room(
                 draftOrderStrategy = model.draftOrderStrategy,
                 currentTurnIndex = model.currentTurnIndex,
                 currentAuctionRound = model.currentAuctionRound,
+                createdAt = model.createdAt,
+                updatedAt = model.updatedAt,
             )
     }
 }

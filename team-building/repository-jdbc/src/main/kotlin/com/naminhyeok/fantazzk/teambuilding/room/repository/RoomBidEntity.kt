@@ -4,6 +4,7 @@ import com.naminhyeok.fantazzk.teambuilding.room.RoomBidModel
 import org.springframework.data.annotation.Id
 import org.springframework.data.relational.core.mapping.Column
 import org.springframework.data.relational.core.mapping.Table
+import java.time.Instant
 
 @Table("room_bid")
 class RoomBidEntity(
@@ -11,6 +12,8 @@ class RoomBidEntity(
     @Column override val round: Int,
     @Column override val teamLeaderId: String,
     @Column override val amount: Int,
+    @Column override val createdAt: Instant = Instant.now(),
+    @Column override val updatedAt: Instant = Instant.now(),
 ) : RoomBidModel {
     @Id
     var id: Long = 0L

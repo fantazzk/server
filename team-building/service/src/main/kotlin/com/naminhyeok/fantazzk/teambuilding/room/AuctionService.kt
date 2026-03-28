@@ -41,8 +41,7 @@ internal class AuctionServiceImpl(
             roomTeamLeaderRepository.findByRoomIdAndTeamLeaderId(room.roomId, teamLeaderId)
                 ?: throw RoomTeamLeaderNotFoundException()
 
-        val budget = requireNotNull(leader.remainingBudget) { "이 모드에서는 예산이 존재하지 않습니다" }
-        require(amount <= budget) { "예산이 부족합니다: 잔여 $budget, 필요 $amount" }
+        leader.validateBudget(amount)
 
         val currentRound = room.currentAuctionRound ?: 1
         val highest = roomBidRepository.findHighestByRoomIdAndRound(room.roomId, currentRound)
@@ -85,7 +84,7 @@ internal class AuctionServiceImpl(
         )
 
         val leaderMemberCount =
-            roomTeamMemberRepository.findByRoomIdAndTeamLeaderId(room.roomId, bid.teamLeaderId).size
+            roomTeamMemberRepository.countByRoomIdAndTeamLeaderId(room.roomId, bid.teamLeaderId)
         check(leaderMemberCount < room.picksPerTeam) { "팀장의 팀원 정원이 가득 찼습니다" }
 
         val assignedCount = roomTeamMemberRepository.countByRoomId(room.roomId)

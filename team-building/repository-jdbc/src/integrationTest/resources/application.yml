@@ -4,4 +4,4 @@ spring:
     username: test
     password: test
   liquibase:
-    change-log: classpath:/db/changelog/team-building/db.changelog-initial-schema.yaml
+    change-log: classpath:/db/changelog/team-building/db.changelog-master.yaml

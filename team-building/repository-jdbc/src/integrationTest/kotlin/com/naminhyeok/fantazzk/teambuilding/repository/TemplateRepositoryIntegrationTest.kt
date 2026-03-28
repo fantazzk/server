@@ -51,6 +51,16 @@ class TemplateRepositoryIntegrationTest(
     }
 
     @Test
+    fun `전체 템플릿 목록을 조회할 수 있다`() {
+        cut.save(Template(name = "첫째", mode = TeamBuildingMode.AUCTION, teamCount = 2, teamSize = 2, budget = 300))
+        cut.save(Template(name = "둘째", mode = TeamBuildingMode.DRAFT, teamCount = 2, teamSize = 2))
+
+        val all = cut.findAll()
+        assertThat(all).hasSizeGreaterThanOrEqualTo(2)
+        assertThat(all.map { it.name }).contains("첫째", "둘째")
+    }
+
+    @Test
     fun `템플릿 선수를 저장하고 조회할 수 있다`() {
         val template =
             cut.save(

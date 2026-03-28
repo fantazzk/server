@@ -13,3 +13,5 @@ kotlin-spring = { id = "org.jetbrains.kotlin.plugin.spring", version.ref = "kotl
 [libraries]
 kotlin-bom = { group = "org.jetbrains.kotlin", name = "kotlin-bom", version.ref = "kotlin" }
 kotlinx-coroutine-bom = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-bom", version.ref = "kotlinx-coroutine" }
+mockk = { group = "io.mockk", name = "mockk-jvm", version = "1.14.2" }
+springmockk = { group = "com.ninja-squad", name = "springmockk", version = "4.0.2" }
