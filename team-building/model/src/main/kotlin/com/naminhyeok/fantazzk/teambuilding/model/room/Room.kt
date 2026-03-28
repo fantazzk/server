@@ -106,6 +106,30 @@ data class Room(
         )
     }
 
+    fun pick(teamLeaderId: TeamLeaderId, playerName: String): Room {
+        check(status == RoomStatus.IN_PROGRESS) { "Room is not in progress" }
+        val draft = progression as? Progression.Draft
+            ?: error("Not in draft mode")
+
+        check(draft.currentTurn() == teamLeaderId) { "Not your turn" }
+
+        val target = playerPool.players.firstOrNull { it.name == playerName && it.status == PlayerStatus.AVAILABLE }
+        requireNotNull(target) { "Player '$playerName' is not available" }
+
+        val assignedPlayer = target.copy(status = PlayerStatus.ASSIGNED)
+        val updatedLeaders = teamLeaders.map { leader ->
+            if (leader.id == teamLeaderId) leader.addPlayer(assignedPlayer) else leader
+        }
+        val updatedPool = playerPool.assignPlayer(playerName)
+        val updatedDraft = draft.addPick(Pick(teamLeaderId, target)).advanceTurn()
+
+        return copy(
+            teamLeaders = updatedLeaders,
+            playerPool = updatedPool,
+            progression = updatedDraft,
+        ).checkCompletion()
+    }
+
     private fun checkCompletion(): Room {
         val allFull = teamLeaders.all { it.hasPickedEnough(settings.picksPerTeam) }
         if (!allFull) return this
