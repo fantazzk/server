@@ -47,8 +47,10 @@ class RoomTeamMemberRepositoryImpl(
 
     override fun countByRoomId(roomId: Long): Int = roomTeamMemberJdbcCrudRepository.countByRoomId(roomId)
 
-    override fun countByRoomIdAndTeamLeaderId(roomId: Long, teamLeaderId: String): Int =
-        roomTeamMemberJdbcCrudRepository.countByRoomIdAndTeamLeaderId(roomId, teamLeaderId)
+    override fun countByRoomIdAndTeamLeaderId(
+        roomId: Long,
+        teamLeaderId: String,
+    ): Int = roomTeamMemberJdbcCrudRepository.countByRoomIdAndTeamLeaderId(roomId, teamLeaderId)
 
     private fun RoomTeamMemberEntity.toModel() =
         RoomTeamMember(

@@ -23,9 +23,10 @@ class TemplateLookUpServiceTest {
 
     @Test
     fun `ID로 템플릿을 조회할 수 있다`() {
-        val saved = templateRepo.save(
-            Template(name = "테스트", mode = TeamBuildingMode.AUCTION, teamCount = 2, teamSize = 2, budget = 300),
-        )
+        val saved =
+            templateRepo.save(
+                Template(name = "테스트", mode = TeamBuildingMode.AUCTION, teamCount = 2, teamSize = 2, budget = 300),
+            )
 
         val found = cut.get(TemplateIdentity.of(saved.templateId))
         assertThat(found.name).isEqualTo("테스트")
@@ -48,9 +49,10 @@ class TemplateLookUpServiceTest {
 
     @Test
     fun `템플릿의 선수 목록을 조회할 수 있다`() {
-        val template = templateRepo.save(
-            Template(name = "테스트", mode = TeamBuildingMode.AUCTION, teamCount = 2, teamSize = 2, budget = 300),
-        )
+        val template =
+            templateRepo.save(
+                Template(name = "테스트", mode = TeamBuildingMode.AUCTION, teamCount = 2, teamSize = 2, budget = 300),
+            )
         playerRepo.saveAll(
             listOf(
                 TemplatePlayer(templateId = template.templateId, name = "선수1", displayOrder = 0),

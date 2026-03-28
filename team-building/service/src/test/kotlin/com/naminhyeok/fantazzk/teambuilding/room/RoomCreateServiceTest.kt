@@ -106,6 +106,8 @@ class RoomCreateServiceTest {
             draftOrderStrategy = DraftOrderStrategy.SNAKE,
         )
 
-    private fun templatePlayers(templateId: Long, names: List<String>) =
-        names.mapIndexed { i, name -> TemplatePlayer(templateId = templateId, name = name, displayOrder = i) }
+    private fun templatePlayers(
+        templateId: Long,
+        names: List<String>,
+    ) = names.mapIndexed { i, name -> TemplatePlayer(templateId = templateId, name = name, displayOrder = i) }
 }

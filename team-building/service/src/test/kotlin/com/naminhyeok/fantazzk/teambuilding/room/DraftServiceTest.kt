@@ -87,7 +87,19 @@ class DraftServiceTest {
 
         @Test
         fun `대기 중인 방에서는 픽할 수 없다`() {
-            roomRepo.save(Room(roomId = roomId, code = roomCode, hostId = "host", status = RoomStatus.WAITING, mode = TeamBuildingMode.DRAFT, teamCount = 2, teamSize = 2, draftOrderStrategy = DraftOrderStrategy.SNAKE, currentTurnIndex = 0))
+            roomRepo.save(
+                Room(
+                    roomId = roomId,
+                    code = roomCode,
+                    hostId = "host",
+                    status = RoomStatus.WAITING,
+                    mode = TeamBuildingMode.DRAFT,
+                    teamCount = 2,
+                    teamSize = 2,
+                    draftOrderStrategy = DraftOrderStrategy.SNAKE,
+                    currentTurnIndex = 0,
+                ),
+            )
 
             assertThatThrownBy { cut.pick(roomCode, "leader-A", "선수1") }
                 .isInstanceOf(IllegalStateException::class.java)
@@ -95,7 +107,17 @@ class DraftServiceTest {
 
         @Test
         fun `경매 모드에서는 픽할 수 없다`() {
-            roomRepo.save(Room(roomId = roomId, code = roomCode, hostId = "host", status = RoomStatus.IN_PROGRESS, mode = TeamBuildingMode.AUCTION, teamCount = 2, teamSize = 2))
+            roomRepo.save(
+                Room(
+                    roomId = roomId,
+                    code = roomCode,
+                    hostId = "host",
+                    status = RoomStatus.IN_PROGRESS,
+                    mode = TeamBuildingMode.AUCTION,
+                    teamCount = 2,
+                    teamSize = 2,
+                ),
+            )
 
             assertThatThrownBy { cut.pick(roomCode, "leader-A", "선수1") }
                 .isInstanceOf(IllegalStateException::class.java)

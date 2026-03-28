@@ -82,7 +82,17 @@ class AuctionServiceTest {
 
         @Test
         fun `대기 중인 방에는 입찰할 수 없다`() {
-            roomRepo.save(Room(roomId = roomId, code = roomCode, hostId = "host", status = RoomStatus.WAITING, mode = TeamBuildingMode.AUCTION, teamCount = 2, teamSize = 2))
+            roomRepo.save(
+                Room(
+                    roomId = roomId,
+                    code = roomCode,
+                    hostId = "host",
+                    status = RoomStatus.WAITING,
+                    mode = TeamBuildingMode.AUCTION,
+                    teamCount = 2,
+                    teamSize = 2,
+                ),
+            )
 
             assertThatThrownBy { cut.placeBid(roomCode, "leader-A", 100) }
                 .isInstanceOf(IllegalStateException::class.java)
@@ -90,7 +100,17 @@ class AuctionServiceTest {
 
         @Test
         fun `드래프트 모드에서는 입찰할 수 없다`() {
-            roomRepo.save(Room(roomId = roomId, code = roomCode, hostId = "host", status = RoomStatus.IN_PROGRESS, mode = TeamBuildingMode.DRAFT, teamCount = 2, teamSize = 2))
+            roomRepo.save(
+                Room(
+                    roomId = roomId,
+                    code = roomCode,
+                    hostId = "host",
+                    status = RoomStatus.IN_PROGRESS,
+                    mode = TeamBuildingMode.DRAFT,
+                    teamCount = 2,
+                    teamSize = 2,
+                ),
+            )
 
             assertThatThrownBy { cut.placeBid(roomCode, "leader-A", 100) }
                 .isInstanceOf(IllegalStateException::class.java)
