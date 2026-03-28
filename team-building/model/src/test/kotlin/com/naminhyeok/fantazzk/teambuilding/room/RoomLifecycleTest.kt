@@ -27,7 +27,7 @@ class RoomLifecycleTest {
         )
 
     @Test
-    fun `create room initializes in WAITING status with host as first team leader`() {
+    fun `방 생성 시 WAITING 상태이며 호스트가 첫 번째 팀장이다`() {
         val room = createWaitingRoom()
 
         assertEquals(RoomStatus.WAITING, room.status)
@@ -37,7 +37,7 @@ class RoomLifecycleTest {
     }
 
     @Test
-    fun `addTeamLeader adds a new team leader`() {
+    fun `팀장을 추가할 수 있다`() {
         val room =
             createWaitingRoom()
                 .addTeamLeader(TeamLeaderId("leader-2"), "팀장2")
@@ -46,7 +46,7 @@ class RoomLifecycleTest {
     }
 
     @Test
-    fun `addTeamLeader fails when room is full`() {
+    fun `방이 가득 차면 팀장을 추가할 수 없다`() {
         val room =
             createWaitingRoom()
                 .addTeamLeader(TeamLeaderId("leader-2"), "팀장2")
@@ -57,7 +57,7 @@ class RoomLifecycleTest {
     }
 
     @Test
-    fun `addTeamLeader fails when not in WAITING status`() {
+    fun `대기 상태가 아니면 팀장을 추가할 수 없다`() {
         val room =
             createWaitingRoom()
                 .addTeamLeader(TeamLeaderId("leader-2"), "팀장2")
@@ -69,7 +69,7 @@ class RoomLifecycleTest {
     }
 
     @Test
-    fun `start transitions to IN_PROGRESS and initializes progression`() {
+    fun `시작하면 IN_PROGRESS 상태로 전이되고 경매 진행이 초기화된다`() {
         val room =
             createWaitingRoom()
                 .addTeamLeader(TeamLeaderId("leader-2"), "팀장2")
@@ -80,7 +80,7 @@ class RoomLifecycleTest {
     }
 
     @Test
-    fun `start fails when not all team leader slots are filled`() {
+    fun `모든 팀장 자리가 채워지지 않으면 시작할 수 없다`() {
         val room = createWaitingRoom()
 
         assertThrows<IllegalStateException> {
@@ -89,7 +89,7 @@ class RoomLifecycleTest {
     }
 
     @Test
-    fun `start draft room initializes draft progression with pick order`() {
+    fun `드래프트 방 시작 시 픽 순서가 초기화된다`() {
         val draftSettings =
             RoomSettings(
                 mode = TeamBuildingMode.DRAFT,
@@ -109,7 +109,6 @@ class RoomLifecycleTest {
                 .start()
 
         val draft = room.progression as Progression.Draft
-        // Snake: picksPerTeam=2 -> Round1: host,leader2  Round2: leader2,host
         assertEquals(4, draft.pickOrder.size)
     }
 }

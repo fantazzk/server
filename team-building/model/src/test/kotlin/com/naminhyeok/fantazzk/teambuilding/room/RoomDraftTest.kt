@@ -28,7 +28,7 @@ class RoomDraftTest {
     }
 
     @Test
-    fun `pick assigns player to current turn team leader`() {
+    fun `현재 턴의 팀장이 선수를 픽할 수 있다`() {
         val room = createStartedDraftRoom()
         val draft = room.progression as Progression.Draft
         val currentTurn = draft.currentTurn()
@@ -40,7 +40,7 @@ class RoomDraftTest {
     }
 
     @Test
-    fun `pick fails when it is not the team leader's turn`() {
+    fun `자신의 턴이 아니면 픽할 수 없다`() {
         val room = createStartedDraftRoom()
         val draft = room.progression as Progression.Draft
         val notCurrentTurn = draft.pickOrder[1]
@@ -51,7 +51,7 @@ class RoomDraftTest {
     }
 
     @Test
-    fun `pick fails when player is not available`() {
+    fun `존재하지 않는 선수는 픽할 수 없다`() {
         val room = createStartedDraftRoom()
         val draft = room.progression as Progression.Draft
 
@@ -61,11 +61,10 @@ class RoomDraftTest {
     }
 
     @Test
-    fun `draft completes when all picks are done`() {
+    fun `모든 픽이 완료되면 방이 완료된다`() {
         val room = createStartedDraftRoom()
         val draft = room.progression as Progression.Draft
 
-        // Snake with 2 teams, picksPerTeam=1: [host, leader2]
         val result =
             room
                 .pick(draft.pickOrder[0], "선수1")
@@ -76,7 +75,7 @@ class RoomDraftTest {
     }
 
     @Test
-    fun `snake draft pick order alternates direction`() {
+    fun `스네이크 드래프트는 매 라운드 방향이 바뀐다`() {
         val settings =
             RoomSettings(
                 mode = TeamBuildingMode.DRAFT,
@@ -97,7 +96,6 @@ class RoomDraftTest {
                 .start()
 
         val draft = room.progression as Progression.Draft
-        // picksPerTeam=2, snake: A, B, B, A
         assertEquals(listOf("A", "B", "B", "A"), draft.pickOrder.map { it.value })
     }
 }

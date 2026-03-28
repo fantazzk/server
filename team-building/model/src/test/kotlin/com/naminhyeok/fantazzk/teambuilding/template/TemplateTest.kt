@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test
 
 class TemplateTest {
     @Test
-    fun `create auction template`() {
+    fun `경매 템플릿을 생성할 수 있다`() {
         val template =
             Template(
                 id = TemplateId(1L),

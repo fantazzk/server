@@ -13,8 +13,8 @@ data class RoomSettings(
     val picksPerTeam: Int get() = teamSize - 1
 
     init {
-        require(teamCount > 0) { "teamCount must be positive" }
-        require(teamSize > 0) { "teamSize must be positive" }
-        budget?.let { require(it > 0) { "budget must be positive" } }
+        require(teamCount > 0) { "팀 수는 1 이상이어야 합니다" }
+        require(teamSize > 0) { "팀 인원은 1 이상이어야 합니다" }
+        budget?.let { require(it > 0) { "예산은 1 이상이어야 합니다" } }
     }
 }

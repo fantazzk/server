@@ -11,8 +11,8 @@ data class TeamLeader(
     fun addPlayer(player: Player): TeamLeader = copy(team = team + player)
 
     fun deductBudget(amount: Int): TeamLeader {
-        val current = requireNotNull(remainingBudget) { "No budget in this mode" }
-        require(amount <= current) { "Insufficient budget: $current < $amount" }
+        val current = requireNotNull(remainingBudget) { "이 모드에서는 예산이 존재하지 않습니다" }
+        require(amount <= current) { "예산이 부족합니다: 잔여 $current, 필요 $amount" }
         return copy(remainingBudget = current - amount)
     }
 }

@@ -28,7 +28,7 @@ class RoomAuctionTest {
     }
 
     @Test
-    fun `placeBid adds bid to current auction`() {
+    fun `입찰하면 현재 경매에 입찰 내역이 추가된다`() {
         val room =
             createStartedAuctionRoom()
                 .placeBid(TeamLeaderId("host"), 100)
@@ -39,7 +39,7 @@ class RoomAuctionTest {
     }
 
     @Test
-    fun `placeBid fails when bid exceeds remaining budget`() {
+    fun `예산을 초과하여 입찰할 수 없다`() {
         val room = createStartedAuctionRoom()
 
         assertThrows<IllegalArgumentException> {
@@ -48,7 +48,7 @@ class RoomAuctionTest {
     }
 
     @Test
-    fun `placeBid fails when not IN_PROGRESS`() {
+    fun `진행 중이 아닌 방에서는 입찰할 수 없다`() {
         val room =
             Room.create(
                 id = RoomId(1L),
@@ -65,7 +65,7 @@ class RoomAuctionTest {
     }
 
     @Test
-    fun `settleAuction with bids results in sold — player assigned, budget deducted`() {
+    fun `낙찰 시 선수가 팀에 배정되고 예산이 차감된다`() {
         val room =
             createStartedAuctionRoom()
                 .placeBid(TeamLeaderId("host"), 100)
@@ -75,7 +75,7 @@ class RoomAuctionTest {
         val winner = room.teamLeaders.first { it.id == TeamLeaderId("leader2") }
         assertEquals(1, winner.team.size)
         assertEquals("선수1", winner.team.first().name)
-        assertEquals(150, winner.remainingBudget) // 300 - 150
+        assertEquals(150, winner.remainingBudget)
 
         val auction = room.progression as Progression.Auction
         assertEquals(1, auction.history.size)
@@ -83,7 +83,7 @@ class RoomAuctionTest {
     }
 
     @Test
-    fun `settleAuction with no bids results in passed — player moves to back`() {
+    fun `유찰 시 선수가 풀 맨 뒤로 이동한다`() {
         val room =
             createStartedAuctionRoom()
                 .settleCurrentAuction()
@@ -99,13 +99,13 @@ class RoomAuctionTest {
     }
 
     @Test
-    fun `room completes when all teams are full`() {
+    fun `모든 팀 정원이 채워지면 방이 완료된다`() {
         val room =
             createStartedAuctionRoom()
                 .placeBid(TeamLeaderId("host"), 100)
-                .settleCurrentAuction() // 선수1 -> host
+                .settleCurrentAuction()
                 .placeBid(TeamLeaderId("leader2"), 100)
-                .settleCurrentAuction() // 선수2 -> leader2
+                .settleCurrentAuction()
 
         assertEquals(RoomStatus.COMPLETED, room.status)
         assertNull(room.playerPool.currentTarget())

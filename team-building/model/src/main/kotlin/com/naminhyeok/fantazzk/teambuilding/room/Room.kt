@@ -17,9 +17,9 @@ data class Room(
         id: TeamLeaderId,
         nickname: String,
     ): Room {
-        check(status == RoomStatus.WAITING) { "Can only add team leaders while WAITING" }
-        check(teamLeaders.size < settings.teamCount) { "Room is full" }
-        check(teamLeaders.none { it.id == id }) { "Team leader already joined" }
+        check(status == RoomStatus.WAITING) { "대기 중인 방에서만 팀장을 추가할 수 있습니다" }
+        check(teamLeaders.size < settings.teamCount) { "방이 가득 찼습니다" }
+        check(teamLeaders.none { it.id == id }) { "이미 참가한 팀장입니다" }
 
         val leader =
             TeamLeader(
@@ -31,14 +31,14 @@ data class Room(
     }
 
     fun start(): Room {
-        check(status == RoomStatus.WAITING) { "Can only start from WAITING" }
-        check(teamLeaders.size == settings.teamCount) { "All team leader slots must be filled" }
+        check(status == RoomStatus.WAITING) { "대기 중인 방에서만 시작할 수 있습니다" }
+        check(teamLeaders.size == settings.teamCount) { "모든 팀장 자리가 채워져야 시작할 수 있습니다" }
 
         val progression =
             when (settings.mode) {
                 TeamBuildingMode.AUCTION -> Progression.Auction()
                 TeamBuildingMode.DRAFT -> {
-                    val strategy = requireNotNull(settings.draftOrderStrategy) { "Draft requires order strategy" }
+                    val strategy = requireNotNull(settings.draftOrderStrategy) { "드래프트에는 픽 순서 전략이 필요합니다" }
                     val pickOrder =
                         Progression.Draft.generatePickOrder(
                             teamLeaders.map { it.id },
@@ -56,27 +56,27 @@ data class Room(
         teamLeaderId: TeamLeaderId,
         amount: Int,
     ): Room {
-        check(status == RoomStatus.IN_PROGRESS) { "Room is not in progress" }
+        check(status == RoomStatus.IN_PROGRESS) { "진행 중인 방에서만 가능합니다" }
         val auction =
             progression as? Progression.Auction
-                ?: error("Not in auction mode")
+                ?: error("경매 모드가 아닙니다")
 
         val leader = teamLeaders.first { it.id == teamLeaderId }
-        require(amount <= (leader.remainingBudget ?: 0)) { "Insufficient budget" }
+        require(amount <= (leader.remainingBudget ?: 0)) { "예산이 부족합니다" }
 
         val currentHighest = auction.highestBid()?.amount ?: 0
-        require(amount > currentHighest) { "Bid must be higher than current highest: $currentHighest" }
+        require(amount > currentHighest) { "현재 최고가($currentHighest)보다 높아야 합니다" }
 
         return copy(progression = auction.addBid(Bid(teamLeaderId, amount)))
     }
 
     fun settleCurrentAuction(): Room {
-        check(status == RoomStatus.IN_PROGRESS) { "Room is not in progress" }
+        check(status == RoomStatus.IN_PROGRESS) { "진행 중인 방에서만 가능합니다" }
         val auction =
             progression as? Progression.Auction
-                ?: error("Not in auction mode")
+                ?: error("경매 모드가 아닙니다")
 
-        val target = requireNotNull(playerPool.currentTarget()) { "No player to auction" }
+        val target = requireNotNull(playerPool.currentTarget()) { "경매할 선수가 없습니다" }
         val highestBid = auction.highestBid()
 
         return if (highestBid != null) {
@@ -129,16 +129,16 @@ data class Room(
         teamLeaderId: TeamLeaderId,
         playerName: String,
     ): Room {
-        check(status == RoomStatus.IN_PROGRESS) { "Room is not in progress" }
+        check(status == RoomStatus.IN_PROGRESS) { "진행 중인 방에서만 가능합니다" }
         val draft =
             progression as? Progression.Draft
-                ?: error("Not in draft mode")
+                ?: error("드래프트 모드가 아닙니다")
 
-        check(!draft.isFinished()) { "Draft is already finished" }
-        check(draft.currentTurn() == teamLeaderId) { "Not your turn" }
+        check(!draft.isFinished()) { "드래프트가 이미 종료되었습니다" }
+        check(draft.currentTurn() == teamLeaderId) { "현재 턴이 아닙니다" }
 
         val target = playerPool.players.firstOrNull { it.name == playerName && it.status == PlayerStatus.AVAILABLE }
-        requireNotNull(target) { "Player '$playerName' is not available" }
+        requireNotNull(target) { "선수 '$playerName'은(는) 선택할 수 없습니다" }
 
         val assignedPlayer = target.copy(status = PlayerStatus.ASSIGNED)
         val updatedLeaders =
