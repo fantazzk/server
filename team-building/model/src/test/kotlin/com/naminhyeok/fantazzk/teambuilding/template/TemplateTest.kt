@@ -1,0 +1,27 @@
+package com.naminhyeok.fantazzk.teambuilding.template
+
+import com.naminhyeok.fantazzk.teambuilding.TeamBuildingMode
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
+
+class TemplateTest {
+    @Test
+    fun `경매 템플릿을 생성할 수 있다`() {
+        val template =
+            Template(
+                id = TemplateId(1L),
+                name = "자낳대 시즌7 경매",
+                mode = TeamBuildingMode.AUCTION,
+                rules = Rules(teamCount = 5, teamSize = 5, budget = 300),
+                players =
+                    listOf(
+                        PlayerEntry("선수1"),
+                        PlayerEntry("선수2", mapOf("tier" to "S")),
+                    ),
+            )
+
+        assertThat(template.mode).isEqualTo(TeamBuildingMode.AUCTION)
+        assertThat(template.players).hasSize(2)
+        assertThat(template.rules.budget).isEqualTo(300)
+    }
+}
