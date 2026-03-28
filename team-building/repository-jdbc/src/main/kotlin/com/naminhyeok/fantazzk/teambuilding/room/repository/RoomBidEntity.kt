@@ -7,10 +7,10 @@ import org.springframework.data.relational.core.mapping.Table
 
 @Table("room_bid")
 class RoomBidEntity(
-    @Column("room_id") override val roomId: Long,
-    @Column("round") override val round: Int,
-    @Column("team_leader_id") override val teamLeaderId: String,
-    @Column("amount") override val amount: Int,
+    @Column override val roomId: Long,
+    @Column override val round: Int,
+    @Column override val teamLeaderId: String,
+    @Column override val amount: Int,
 ) : RoomBidModel {
     @Id
     var id: Long = 0L

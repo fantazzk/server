@@ -20,20 +20,31 @@ class TemplateRepositoryImpl(
         val entity =
             TemplateEntity(
                 name = template.name,
-                modeValue = template.mode.name,
+                mode = template.mode,
                 teamCount = template.teamCount,
                 teamSize = template.teamSize,
                 budget = template.budget,
-                draftOrderStrategyValue = template.draftOrderStrategy?.name,
+                draftOrderStrategy = template.draftOrderStrategy,
             )
         if (template.templateId != 0L) entity.id = template.templateId
-        return templateJdbcCrudRepository.save(entity)
+        return templateJdbcCrudRepository.save(entity).toModel()
     }
 
     override fun findById(identity: TemplateIdentity): TemplateModel? =
-        templateJdbcCrudRepository.findById(identity.templateId).orElse(null)
+        templateJdbcCrudRepository.findById(identity.templateId).orElse(null)?.toModel()
 
-    override fun findAll(): List<TemplateModel> = templateJdbcCrudRepository.findAll().toList()
+    override fun findAll(): List<TemplateModel> = templateJdbcCrudRepository.findAll().map { it.toModel() }
+
+    private fun TemplateEntity.toModel() =
+        Template(
+            templateId = id,
+            name = name,
+            mode = mode,
+            teamCount = teamCount,
+            teamSize = teamSize,
+            budget = budget,
+            draftOrderStrategy = draftOrderStrategy,
+        )
 }
 
 class TemplatePlayerRepositoryImpl(
@@ -46,9 +57,17 @@ class TemplatePlayerRepositoryImpl(
                 if (player.templatePlayerId != 0L) entity.id = player.templatePlayerId
                 entity
             }
-        return templatePlayerJdbcCrudRepository.saveAll(entities).toList()
+        return templatePlayerJdbcCrudRepository.saveAll(entities).map { it.toModel() }
     }
 
     override fun findByTemplateId(templateId: Long): List<TemplatePlayerModel> =
-        templatePlayerJdbcCrudRepository.findByTemplateId(templateId)
+        templatePlayerJdbcCrudRepository.findByTemplateId(templateId).map { it.toModel() }
+
+    private fun TemplatePlayerEntity.toModel() =
+        TemplatePlayer(
+            templatePlayerId = id,
+            templateId = templateId,
+            name = name,
+            displayOrder = displayOrder,
+        )
 }

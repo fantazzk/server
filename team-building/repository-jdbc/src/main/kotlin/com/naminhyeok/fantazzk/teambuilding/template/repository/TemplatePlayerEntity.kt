@@ -7,9 +7,9 @@ import org.springframework.data.relational.core.mapping.Table
 
 @Table("template_player")
 class TemplatePlayerEntity(
-    @Column("template_id") override val templateId: Long,
-    @Column("name") override val name: String,
-    @Column("display_order") override val displayOrder: Int,
+    @Column override val templateId: Long,
+    @Column override val name: String,
+    @Column override val displayOrder: Int,
 ) : TemplatePlayerModel {
     @Id
     var id: Long = 0L

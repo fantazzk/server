@@ -56,22 +56,37 @@ class RoomRepositoryImpl(
             RoomEntity(
                 code = room.code,
                 hostId = room.hostId,
-                statusValue = room.status.name,
-                modeValue = room.mode.name,
+                status = room.status,
+                mode = room.mode,
                 teamCount = room.teamCount,
                 teamSize = room.teamSize,
                 budget = room.budget,
-                draftOrderStrategyValue = room.draftOrderStrategy?.name,
+                draftOrderStrategy = room.draftOrderStrategy,
                 currentTurnIndex = room.currentTurnIndex,
                 currentAuctionRound = room.currentAuctionRound,
             )
         if (room.roomId != 0L) entity.id = room.roomId
-        return roomJdbcCrudRepository.save(entity)
+        return roomJdbcCrudRepository.save(entity).toModel()
     }
 
-    override fun findByCode(code: String): RoomModel? = roomJdbcCrudRepository.findByCode(code)
+    override fun findByCode(code: String): RoomModel? = roomJdbcCrudRepository.findByCode(code)?.toModel()
 
-    override fun findById(roomId: Long): RoomModel? = roomJdbcCrudRepository.findById(roomId).orElse(null)
+    override fun findById(roomId: Long): RoomModel? = roomJdbcCrudRepository.findById(roomId).orElse(null)?.toModel()
+
+    private fun RoomEntity.toModel() =
+        Room(
+            roomId = id,
+            code = code,
+            hostId = hostId,
+            status = status,
+            mode = mode,
+            teamCount = teamCount,
+            teamSize = teamSize,
+            budget = budget,
+            draftOrderStrategy = draftOrderStrategy,
+            currentTurnIndex = currentTurnIndex,
+            currentAuctionRound = currentAuctionRound,
+        )
 }
 
 class RoomPlayerRepositoryImpl(
@@ -82,11 +97,11 @@ class RoomPlayerRepositoryImpl(
             RoomPlayerEntity(
                 roomId = player.roomId,
                 name = player.name,
-                statusValue = player.status.name,
+                status = player.status,
                 displayOrder = player.displayOrder,
             )
         if (player.roomPlayerId != 0L) entity.id = player.roomPlayerId
-        return roomPlayerJdbcCrudRepository.save(entity)
+        return roomPlayerJdbcCrudRepository.save(entity).toModel()
     }
 
     override fun saveAll(players: List<RoomPlayer>): List<RoomPlayerModel> {
@@ -96,20 +111,31 @@ class RoomPlayerRepositoryImpl(
                     RoomPlayerEntity(
                         roomId = it.roomId,
                         name = it.name,
-                        statusValue = it.status.name,
+                        status = it.status,
                         displayOrder = it.displayOrder,
                     )
                 if (it.roomPlayerId != 0L) entity.id = it.roomPlayerId
                 entity
             }
-        return roomPlayerJdbcCrudRepository.saveAll(entities).toList()
+        return roomPlayerJdbcCrudRepository.saveAll(entities).map { it.toModel() }
     }
 
-    override fun findByRoomId(roomId: Long): List<RoomPlayerModel> = roomPlayerJdbcCrudRepository.findByRoomIdOrderByDisplayOrder(roomId)
+    override fun findByRoomId(roomId: Long): List<RoomPlayerModel> =
+        roomPlayerJdbcCrudRepository.findByRoomIdOrderByDisplayOrder(roomId).map { it.toModel() }
 
     override fun findFirstAvailable(roomId: Long): RoomPlayerModel? =
         roomPlayerJdbcCrudRepository.findByRoomIdOrderByDisplayOrder(roomId)
             .firstOrNull { it.status == PlayerStatus.AVAILABLE }
+            ?.toModel()
+
+    private fun RoomPlayerEntity.toModel() =
+        RoomPlayer(
+            roomPlayerId = id,
+            roomId = roomId,
+            name = name,
+            status = status,
+            displayOrder = displayOrder,
+        )
 }
 
 class RoomTeamLeaderRepositoryImpl(
@@ -124,15 +150,25 @@ class RoomTeamLeaderRepositoryImpl(
                 remainingBudget = leader.remainingBudget,
             )
         if (leader.roomTeamLeaderId != 0L) entity.id = leader.roomTeamLeaderId
-        return roomTeamLeaderJdbcCrudRepository.save(entity)
+        return roomTeamLeaderJdbcCrudRepository.save(entity).toModel()
     }
 
-    override fun findByRoomId(roomId: Long): List<RoomTeamLeaderModel> = roomTeamLeaderJdbcCrudRepository.findByRoomId(roomId)
+    override fun findByRoomId(roomId: Long): List<RoomTeamLeaderModel> =
+        roomTeamLeaderJdbcCrudRepository.findByRoomId(roomId).map { it.toModel() }
 
     override fun findByRoomIdAndTeamLeaderId(
         roomId: Long,
         teamLeaderId: String,
-    ): RoomTeamLeaderModel? = roomTeamLeaderJdbcCrudRepository.findByRoomIdAndTeamLeaderId(roomId, teamLeaderId)
+    ): RoomTeamLeaderModel? = roomTeamLeaderJdbcCrudRepository.findByRoomIdAndTeamLeaderId(roomId, teamLeaderId)?.toModel()
+
+    private fun RoomTeamLeaderEntity.toModel() =
+        RoomTeamLeader(
+            roomTeamLeaderId = id,
+            roomId = roomId,
+            teamLeaderId = teamLeaderId,
+            nickname = nickname,
+            remainingBudget = remainingBudget,
+        )
 }
 
 class RoomTeamMemberRepositoryImpl(
@@ -147,17 +183,27 @@ class RoomTeamMemberRepositoryImpl(
                 assignOrder = member.assignOrder,
             )
         if (member.roomTeamMemberId != 0L) entity.id = member.roomTeamMemberId
-        return roomTeamMemberJdbcCrudRepository.save(entity)
+        return roomTeamMemberJdbcCrudRepository.save(entity).toModel()
     }
 
-    override fun findByRoomId(roomId: Long): List<RoomTeamMemberModel> = roomTeamMemberJdbcCrudRepository.findByRoomId(roomId)
+    override fun findByRoomId(roomId: Long): List<RoomTeamMemberModel> =
+        roomTeamMemberJdbcCrudRepository.findByRoomId(roomId).map { it.toModel() }
 
     override fun findByRoomIdAndTeamLeaderId(
         roomId: Long,
         teamLeaderId: String,
-    ): List<RoomTeamMemberModel> = roomTeamMemberJdbcCrudRepository.findByRoomIdAndTeamLeaderId(roomId, teamLeaderId)
+    ): List<RoomTeamMemberModel> = roomTeamMemberJdbcCrudRepository.findByRoomIdAndTeamLeaderId(roomId, teamLeaderId).map { it.toModel() }
 
     override fun countByRoomId(roomId: Long): Int = roomTeamMemberJdbcCrudRepository.countByRoomId(roomId)
+
+    private fun RoomTeamMemberEntity.toModel() =
+        RoomTeamMember(
+            roomTeamMemberId = id,
+            roomId = roomId,
+            teamLeaderId = teamLeaderId,
+            playerName = playerName,
+            assignOrder = assignOrder,
+        )
 }
 
 class RoomBidRepositoryImpl(
@@ -172,16 +218,25 @@ class RoomBidRepositoryImpl(
                 amount = bid.amount,
             )
         if (bid.roomBidId != 0L) entity.id = bid.roomBidId
-        return roomBidJdbcCrudRepository.save(entity)
+        return roomBidJdbcCrudRepository.save(entity).toModel()
     }
 
     override fun findByRoomIdAndRound(
         roomId: Long,
         round: Int,
-    ): List<RoomBidModel> = roomBidJdbcCrudRepository.findByRoomIdAndRound(roomId, round)
+    ): List<RoomBidModel> = roomBidJdbcCrudRepository.findByRoomIdAndRound(roomId, round).map { it.toModel() }
 
     override fun findHighestByRoomIdAndRound(
         roomId: Long,
         round: Int,
-    ): RoomBidModel? = roomBidJdbcCrudRepository.findByRoomIdAndRound(roomId, round).maxByOrNull { it.amount }
+    ): RoomBidModel? = roomBidJdbcCrudRepository.findByRoomIdAndRound(roomId, round).maxByOrNull { it.amount }?.toModel()
+
+    private fun RoomBidEntity.toModel() =
+        RoomBid(
+            roomBidId = id,
+            roomId = roomId,
+            round = round,
+            teamLeaderId = teamLeaderId,
+            amount = amount,
+        )
 }

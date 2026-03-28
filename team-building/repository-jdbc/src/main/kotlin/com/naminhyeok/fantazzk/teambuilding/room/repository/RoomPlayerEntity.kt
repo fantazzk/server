@@ -8,14 +8,13 @@ import org.springframework.data.relational.core.mapping.Table
 
 @Table("room_player")
 class RoomPlayerEntity(
-    @Column("room_id") override val roomId: Long,
-    @Column("name") override val name: String,
-    @Column("status") val statusValue: String,
-    @Column("display_order") override val displayOrder: Int,
+    @Column override val roomId: Long,
+    @Column override val name: String,
+    @Column override val status: PlayerStatus,
+    @Column override val displayOrder: Int,
 ) : RoomPlayerModel {
     @Id
     var id: Long = 0L
 
     override val roomPlayerId: Long get() = id
-    override val status: PlayerStatus get() = PlayerStatus.valueOf(statusValue)
 }
