@@ -186,6 +186,9 @@ subprojects {
             implementation("io.micrometer:micrometer-tracing-bridge-otel")
             implementation("org.springframework.boot:spring-boot-starter-actuator")
             implementation("org.springframework.boot:spring-boot-starter-web")
+
+            testImplementation("org.springframework.boot:spring-boot-restclient")
+            testImplementation("org.springframework.boot:spring-boot-resttestclient")
         }
     }
 }

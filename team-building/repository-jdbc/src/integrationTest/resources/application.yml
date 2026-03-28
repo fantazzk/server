@@ -1,0 +1,7 @@
+spring:
+  datasource:
+    url: jdbc:tc:mysql:8.0.36:///test?serverTimezone=UTC&TC_REUSABLE=true&useUnicode=true&character_set_server=utf8mb4&connectionTimeZone=UTC
+    username: test
+    password: test
+  liquibase:
+    change-log: classpath:/db/changelog/team-building/db.changelog-initial-schema.yaml
