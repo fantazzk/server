@@ -20,5 +20,5 @@ data class TeamLeaders(val values: List<TeamLeader>) {
 
     fun ids(): List<TeamLeaderId> = values.map { it.id }
 
-    fun toTeams(): List<Team> = values.map { Team(teamLeader = it) }
+    fun toTeams(): List<Team> = values.map { Team(leaderNickname = it.nickname, members = it.team) }
 }

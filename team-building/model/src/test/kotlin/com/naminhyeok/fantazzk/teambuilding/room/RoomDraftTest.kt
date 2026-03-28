@@ -2,6 +2,7 @@ package com.naminhyeok.fantazzk.teambuilding.room
 
 import com.naminhyeok.fantazzk.teambuilding.DraftOrderStrategy
 import com.naminhyeok.fantazzk.teambuilding.TeamBuildingMode
+import com.naminhyeok.fantazzk.teambuilding.template.Rules
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
@@ -11,9 +12,7 @@ class RoomDraftTest {
         val settings =
             RoomSettings(
                 mode = TeamBuildingMode.DRAFT,
-                teamCount = 2,
-                teamSize = 2,
-                draftOrderStrategy = DraftOrderStrategy.SNAKE,
+                rules = Rules(teamCount = 2, teamSize = 2, draftOrderStrategy = DraftOrderStrategy.SNAKE),
             )
         val players = listOf(Player("선수1"), Player("선수2"))
         return Room.create(
@@ -78,9 +77,7 @@ class RoomDraftTest {
         val settings =
             RoomSettings(
                 mode = TeamBuildingMode.DRAFT,
-                teamCount = 2,
-                teamSize = 3,
-                draftOrderStrategy = DraftOrderStrategy.SNAKE,
+                rules = Rules(teamCount = 2, teamSize = 3, draftOrderStrategy = DraftOrderStrategy.SNAKE),
             )
         val players = (1..4).map { Player("선수$it") }
         val room =

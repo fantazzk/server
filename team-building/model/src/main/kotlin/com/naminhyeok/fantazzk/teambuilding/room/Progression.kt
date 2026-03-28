@@ -33,11 +33,11 @@ sealed class Progression {
                 strategy: DraftOrderStrategy,
                 picksPerTeam: Int,
             ): List<TeamLeaderId> {
-                val reversed = teamLeaders.reversed()
+                val reversed = if (strategy == DraftOrderStrategy.SNAKE) teamLeaders.reversed() else null
                 return (0 until picksPerTeam).flatMap { round ->
                     when (strategy) {
                         DraftOrderStrategy.SNAKE ->
-                            if (round % 2 == 0) teamLeaders else reversed
+                            if (round % 2 == 0) teamLeaders else reversed!!
                         DraftOrderStrategy.FIXED -> teamLeaders
                     }
                 }

@@ -2,6 +2,7 @@ package com.naminhyeok.fantazzk.teambuilding.room
 
 import com.naminhyeok.fantazzk.teambuilding.DraftOrderStrategy
 import com.naminhyeok.fantazzk.teambuilding.TeamBuildingMode
+import com.naminhyeok.fantazzk.teambuilding.template.Rules
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
@@ -10,9 +11,7 @@ class RoomLifecycleTest {
     private val auctionSettings =
         RoomSettings(
             mode = TeamBuildingMode.AUCTION,
-            teamCount = 2,
-            teamSize = 3,
-            budget = 300,
+            rules = Rules(teamCount = 2, teamSize = 3, budget = 300),
         )
     private val players = listOf(Player("선수1"), Player("선수2"), Player("선수3"), Player("선수4"))
 
@@ -90,9 +89,7 @@ class RoomLifecycleTest {
         val draftSettings =
             RoomSettings(
                 mode = TeamBuildingMode.DRAFT,
-                teamCount = 2,
-                teamSize = 3,
-                draftOrderStrategy = DraftOrderStrategy.SNAKE,
+                rules = Rules(teamCount = 2, teamSize = 3, draftOrderStrategy = DraftOrderStrategy.SNAKE),
             )
         val room =
             Room.create(

@@ -1,6 +1,7 @@
 package com.naminhyeok.fantazzk.teambuilding.room
 
 import com.naminhyeok.fantazzk.teambuilding.TeamBuildingMode
+import com.naminhyeok.fantazzk.teambuilding.template.Rules
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
@@ -10,9 +11,7 @@ class RoomAuctionTest {
         val settings =
             RoomSettings(
                 mode = TeamBuildingMode.AUCTION,
-                teamCount = 2,
-                teamSize = 2,
-                budget = 300,
+                rules = Rules(teamCount = 2, teamSize = 2, budget = 300),
             )
         val players = listOf(Player("선수1"), Player("선수2"))
         return Room.create(
@@ -53,7 +52,11 @@ class RoomAuctionTest {
                 code = "ABC123",
                 hostId = TeamLeaderId("host"),
                 hostNickname = "호스트",
-                settings = RoomSettings(mode = TeamBuildingMode.AUCTION, teamCount = 2, teamSize = 2, budget = 300),
+                settings =
+                    RoomSettings(
+                        mode = TeamBuildingMode.AUCTION,
+                        rules = Rules(teamCount = 2, teamSize = 2, budget = 300),
+                    ),
                 playerPool = PlayerPool(listOf(Player("선수1"), Player("선수2"))),
             )
 
