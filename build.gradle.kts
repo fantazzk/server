@@ -136,6 +136,16 @@ subprojects {
         val check by getting {
             dependsOn("integrationTest")
         }
+
+        if (moduleKind.isApplicationModule()) {
+            named("integrationTest") {
+                mustRunAfter(
+                    rootProject.subprojects
+                        .filter { it != project && it.moduleKind().isJdbcModule() }
+                        .map { "${it.path}:integrationTest" },
+                )
+            }
+        }
     }
 
     dependencies {
