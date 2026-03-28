@@ -19,10 +19,17 @@ interface RoomJdbcCrudRepository : CrudRepository<RoomEntity, Long> {
 
 interface RoomPlayerJdbcCrudRepository : CrudRepository<RoomPlayerEntity, Long> {
     fun findByRoomIdOrderByDisplayOrder(roomId: Long): List<RoomPlayerEntity>
+
+    fun findFirstByRoomIdAndStatusOrderByDisplayOrder(
+        roomId: Long,
+        status: PlayerStatus,
+    ): RoomPlayerEntity?
 }
 
 interface RoomTeamLeaderJdbcCrudRepository : CrudRepository<RoomTeamLeaderEntity, Long> {
     fun findByRoomId(roomId: Long): List<RoomTeamLeaderEntity>
+
+    fun findByRoomIdOrderById(roomId: Long): List<RoomTeamLeaderEntity>
 
     fun findByRoomIdAndTeamLeaderId(
         roomId: Long,
@@ -46,6 +53,11 @@ interface RoomBidJdbcCrudRepository : CrudRepository<RoomBidEntity, Long> {
         roomId: Long,
         round: Int,
     ): List<RoomBidEntity>
+
+    fun findFirstByRoomIdAndRoundOrderByAmountDesc(
+        roomId: Long,
+        round: Int,
+    ): RoomBidEntity?
 }
 
 class RoomRepositoryImpl(
@@ -124,8 +136,8 @@ class RoomPlayerRepositoryImpl(
         roomPlayerJdbcCrudRepository.findByRoomIdOrderByDisplayOrder(roomId).map { it.toModel() }
 
     override fun findFirstAvailable(roomId: Long): RoomPlayerModel? =
-        roomPlayerJdbcCrudRepository.findByRoomIdOrderByDisplayOrder(roomId)
-            .firstOrNull { it.status == PlayerStatus.AVAILABLE }
+        roomPlayerJdbcCrudRepository
+            .findFirstByRoomIdAndStatusOrderByDisplayOrder(roomId, PlayerStatus.AVAILABLE)
             ?.toModel()
 
     private fun RoomPlayerEntity.toModel() =
@@ -154,7 +166,7 @@ class RoomTeamLeaderRepositoryImpl(
     }
 
     override fun findByRoomId(roomId: Long): List<RoomTeamLeaderModel> =
-        roomTeamLeaderJdbcCrudRepository.findByRoomId(roomId).map { it.toModel() }
+        roomTeamLeaderJdbcCrudRepository.findByRoomIdOrderById(roomId).map { it.toModel() }
 
     override fun findByRoomIdAndTeamLeaderId(
         roomId: Long,
@@ -229,7 +241,7 @@ class RoomBidRepositoryImpl(
     override fun findHighestByRoomIdAndRound(
         roomId: Long,
         round: Int,
-    ): RoomBidModel? = roomBidJdbcCrudRepository.findByRoomIdAndRound(roomId, round).maxByOrNull { it.amount }?.toModel()
+    ): RoomBidModel? = roomBidJdbcCrudRepository.findFirstByRoomIdAndRoundOrderByAmountDesc(roomId, round)?.toModel()
 
     private fun RoomBidEntity.toModel() =
         RoomBid(

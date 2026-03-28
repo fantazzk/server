@@ -34,7 +34,9 @@ internal class DraftServiceImpl(
         val leaders = roomTeamLeaderRepository.findByRoomId(room.roomId)
         val strategy = requireNotNull(room.draftOrderStrategy) { "드래프트 모드에는 순서 전략이 필요합니다" }
         val pickOrder = generatePickOrder(leaders.map { it.teamLeaderId }, strategy, room.picksPerTeam)
-        val currentTurn = pickOrder[room.currentTurnIndex ?: 0]
+        val turnIndex = room.currentTurnIndex ?: 0
+        check(turnIndex < pickOrder.size) { "드래프트가 이미 종료되었습니다" }
+        val currentTurn = pickOrder[turnIndex]
         check(currentTurn == teamLeaderId) { "현재 턴이 아닙니다" }
 
         leaders.firstOrNull { it.teamLeaderId == teamLeaderId }
