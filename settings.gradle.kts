@@ -9,6 +9,7 @@ include(":team-building:service")
 include(":team-building:repository-jdbc")
 include(":team-building:api")
 include(":team-building:schema")
+include(":team-building:application-api")
 
 pluginManagement {
     buildscript {
