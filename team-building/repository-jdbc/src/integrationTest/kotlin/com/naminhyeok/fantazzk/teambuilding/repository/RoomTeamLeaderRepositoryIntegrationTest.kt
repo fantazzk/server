@@ -36,7 +36,15 @@ class RoomTeamLeaderRepositoryIntegrationTest(
     fun setUp() {
         room =
             roomRepository.save(
-                Room(code = "TL0001", hostId = "host", status = RoomStatus.WAITING, mode = TeamBuildingMode.AUCTION, teamCount = 2, teamSize = 2, budget = 300),
+                Room(
+                    code = "TL0001",
+                    hostId = "host",
+                    status = RoomStatus.WAITING,
+                    mode = TeamBuildingMode.AUCTION,
+                    teamCount = 2,
+                    teamSize = 2,
+                    budget = 300,
+                ),
             )
     }
 

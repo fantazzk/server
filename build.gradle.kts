@@ -148,6 +148,7 @@ subprojects {
         testImplementation(enforcedPlatform(SpringBootPlugin.BOM_COORDINATES))
         testImplementation("org.springframework.boot:spring-boot-starter-test")
         testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test")
+        testImplementation("com.tngtech.archunit:archunit-junit5:1.4.0")
     }
 
     // Spring Boot modules

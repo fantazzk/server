@@ -37,7 +37,15 @@ class RoomPlayerRepositoryIntegrationTest(
     fun setUp() {
         room =
             roomRepository.save(
-                Room(code = "PL0001", hostId = "host", status = RoomStatus.IN_PROGRESS, mode = TeamBuildingMode.AUCTION, teamCount = 2, teamSize = 2, budget = 300),
+                Room(
+                    code = "PL0001",
+                    hostId = "host",
+                    status = RoomStatus.IN_PROGRESS,
+                    mode = TeamBuildingMode.AUCTION,
+                    teamCount = 2,
+                    teamSize = 2,
+                    budget = 300,
+                ),
             )
     }
 
