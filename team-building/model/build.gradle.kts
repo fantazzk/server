@@ -1,1 +1,1 @@
-// Model module — no external dependencies
+dependencies { }

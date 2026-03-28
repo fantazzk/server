@@ -2,7 +2,6 @@ rootProject.name = "fantazzk-server"
 
 include(":application-api")
 
-include(":team-building")
 include(":team-building:model")
 include(":team-building:exception")
 include(":team-building:infrastructure")
