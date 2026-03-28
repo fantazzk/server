@@ -12,9 +12,4 @@ interface RoomTeamLeaderRepository {
         roomId: Long,
         teamLeaderId: String,
     ): RoomTeamLeaderModel?
-
-    fun updateRemainingBudget(
-        roomTeamLeaderId: Long,
-        remainingBudget: Int,
-    )
 }

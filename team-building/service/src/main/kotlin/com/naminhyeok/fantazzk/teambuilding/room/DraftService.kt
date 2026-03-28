@@ -44,7 +44,7 @@ internal class DraftServiceImpl(
         val target = players.firstOrNull { it.name == playerName && it.status == PlayerStatus.AVAILABLE }
         requireNotNull(target) { "선수 '$playerName'은(는) 선택할 수 없습니다" }
 
-        roomPlayerRepository.updateStatus(target.roomPlayerId, PlayerStatus.ASSIGNED)
+        roomPlayerRepository.save(RoomPlayer.from(target).copy(status = PlayerStatus.ASSIGNED))
 
         val assignedCount = roomTeamMemberRepository.countByRoomId(room.roomId)
         val member =
@@ -57,12 +57,16 @@ internal class DraftServiceImpl(
                 ),
             )
 
-        roomRepository.updateCurrentTurnIndex(room.roomId, (room.currentTurnIndex ?: 0) + 1)
-
+        val newTurnIndex = (room.currentTurnIndex ?: 0) + 1
         val totalRequired = room.teamCount * room.picksPerTeam
-        if (assignedCount + 1 >= totalRequired) {
-            roomRepository.updateStatus(room.roomId, RoomStatus.COMPLETED)
-        }
+        val completed = assignedCount + 1 >= totalRequired
+
+        roomRepository.save(
+            Room.from(room).copy(
+                currentTurnIndex = newTurnIndex,
+                status = if (completed) RoomStatus.COMPLETED else room.status,
+            ),
+        )
 
         return member
     }

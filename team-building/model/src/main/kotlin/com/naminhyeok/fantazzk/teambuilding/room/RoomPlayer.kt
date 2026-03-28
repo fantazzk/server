@@ -8,4 +8,15 @@ data class RoomPlayer(
     override val displayOrder: Int,
 ) : RoomPlayerModel {
     fun isAvailable(): Boolean = status == PlayerStatus.AVAILABLE
+
+    companion object {
+        fun from(model: RoomPlayerModel): RoomPlayer =
+            RoomPlayer(
+                roomPlayerId = model.roomPlayerId,
+                roomId = model.roomId,
+                name = model.name,
+                status = model.status,
+                displayOrder = model.displayOrder,
+            )
+    }
 }

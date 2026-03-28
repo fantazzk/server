@@ -7,13 +7,11 @@ import com.naminhyeok.fantazzk.teambuilding.room.RoomBidModel
 import com.naminhyeok.fantazzk.teambuilding.room.RoomModel
 import com.naminhyeok.fantazzk.teambuilding.room.RoomPlayer
 import com.naminhyeok.fantazzk.teambuilding.room.RoomPlayerModel
-import com.naminhyeok.fantazzk.teambuilding.room.RoomStatus
 import com.naminhyeok.fantazzk.teambuilding.room.RoomTeamLeader
 import com.naminhyeok.fantazzk.teambuilding.room.RoomTeamLeaderModel
 import com.naminhyeok.fantazzk.teambuilding.room.RoomTeamMember
 import com.naminhyeok.fantazzk.teambuilding.room.RoomTeamMemberModel
 import org.springframework.data.repository.CrudRepository
-import org.springframework.jdbc.core.simple.JdbcClient
 
 interface RoomJdbcCrudRepository : CrudRepository<RoomEntity, Long> {
     fun findByCode(code: String): RoomEntity?
@@ -50,11 +48,8 @@ interface RoomBidJdbcCrudRepository : CrudRepository<RoomBidEntity, Long> {
     ): List<RoomBidEntity>
 }
 
-// --- RepositoryImpl adapters ---
-
 class RoomRepositoryImpl(
     private val roomJdbcCrudRepository: RoomJdbcCrudRepository,
-    private val jdbcClient: JdbcClient,
 ) : RoomRepository {
     override fun save(room: Room): RoomModel {
         val entity =
@@ -76,46 +71,34 @@ class RoomRepositoryImpl(
 
     override fun findByCode(code: String): RoomModel? = roomJdbcCrudRepository.findByCode(code)
 
-    override fun updateStatus(
-        roomId: Long,
-        status: RoomStatus,
-    ) {
-        jdbcClient.sql("UPDATE room SET status = :status WHERE id = :id")
-            .param("status", status.name)
-            .param("id", roomId)
-            .update()
-    }
-
-    override fun updateCurrentTurnIndex(
-        roomId: Long,
-        currentTurnIndex: Int,
-    ) {
-        jdbcClient.sql("UPDATE room SET current_turn_index = :idx WHERE id = :id")
-            .param("idx", currentTurnIndex)
-            .param("id", roomId)
-            .update()
-    }
-
-    override fun updateCurrentAuctionRound(
-        roomId: Long,
-        currentAuctionRound: Int,
-    ) {
-        jdbcClient.sql("UPDATE room SET current_auction_round = :round WHERE id = :id")
-            .param("round", currentAuctionRound)
-            .param("id", roomId)
-            .update()
-    }
+    override fun findById(roomId: Long): RoomModel? = roomJdbcCrudRepository.findById(roomId).orElse(null)
 }
 
 class RoomPlayerRepositoryImpl(
     private val roomPlayerJdbcCrudRepository: RoomPlayerJdbcCrudRepository,
-    private val jdbcClient: JdbcClient,
 ) : RoomPlayerRepository {
+    override fun save(player: RoomPlayer): RoomPlayerModel {
+        val entity =
+            RoomPlayerEntity(
+                roomId = player.roomId,
+                name = player.name,
+                statusValue = player.status.name,
+                displayOrder = player.displayOrder,
+            )
+        if (player.roomPlayerId != 0L) entity.id = player.roomPlayerId
+        return roomPlayerJdbcCrudRepository.save(entity)
+    }
+
     override fun saveAll(players: List<RoomPlayer>): List<RoomPlayerModel> {
         val entities =
             players.map {
                 val entity =
-                    RoomPlayerEntity(roomId = it.roomId, name = it.name, statusValue = it.status.name, displayOrder = it.displayOrder)
+                    RoomPlayerEntity(
+                        roomId = it.roomId,
+                        name = it.name,
+                        statusValue = it.status.name,
+                        displayOrder = it.displayOrder,
+                    )
                 if (it.roomPlayerId != 0L) entity.id = it.roomPlayerId
                 entity
             }
@@ -127,40 +110,10 @@ class RoomPlayerRepositoryImpl(
     override fun findFirstAvailable(roomId: Long): RoomPlayerModel? =
         roomPlayerJdbcCrudRepository.findByRoomIdOrderByDisplayOrder(roomId)
             .firstOrNull { it.status == PlayerStatus.AVAILABLE }
-
-    override fun updateStatus(
-        roomPlayerId: Long,
-        status: PlayerStatus,
-    ) {
-        jdbcClient.sql("UPDATE room_player SET status = :status WHERE id = :id")
-            .param("status", status.name)
-            .param("id", roomPlayerId)
-            .update()
-    }
-
-    override fun moveToBack(
-        roomId: Long,
-        roomPlayerId: Long,
-    ) {
-        jdbcClient.sql(
-            """
-            UPDATE room_player
-            SET display_order = (
-                SELECT COALESCE(MAX(display_order), 0) + 1
-                FROM room_player rp WHERE rp.room_id = :roomId
-            )
-            WHERE id = :id
-            """.trimIndent(),
-        )
-            .param("roomId", roomId)
-            .param("id", roomPlayerId)
-            .update()
-    }
 }
 
 class RoomTeamLeaderRepositoryImpl(
     private val roomTeamLeaderJdbcCrudRepository: RoomTeamLeaderJdbcCrudRepository,
-    private val jdbcClient: JdbcClient,
 ) : RoomTeamLeaderRepository {
     override fun save(leader: RoomTeamLeader): RoomTeamLeaderModel {
         val entity =
@@ -180,16 +133,6 @@ class RoomTeamLeaderRepositoryImpl(
         roomId: Long,
         teamLeaderId: String,
     ): RoomTeamLeaderModel? = roomTeamLeaderJdbcCrudRepository.findByRoomIdAndTeamLeaderId(roomId, teamLeaderId)
-
-    override fun updateRemainingBudget(
-        roomTeamLeaderId: Long,
-        remainingBudget: Int,
-    ) {
-        jdbcClient.sql("UPDATE room_team_leader SET remaining_budget = :budget WHERE id = :id")
-            .param("budget", remainingBudget)
-            .param("id", roomTeamLeaderId)
-            .update()
-    }
 }
 
 class RoomTeamMemberRepositoryImpl(
@@ -221,7 +164,13 @@ class RoomBidRepositoryImpl(
     private val roomBidJdbcCrudRepository: RoomBidJdbcCrudRepository,
 ) : RoomBidRepository {
     override fun save(bid: RoomBid): RoomBidModel {
-        val entity = RoomBidEntity(roomId = bid.roomId, round = bid.round, teamLeaderId = bid.teamLeaderId, amount = bid.amount)
+        val entity =
+            RoomBidEntity(
+                roomId = bid.roomId,
+                round = bid.round,
+                teamLeaderId = bid.teamLeaderId,
+                amount = bid.amount,
+            )
         if (bid.roomBidId != 0L) entity.id = bid.roomBidId
         return roomBidJdbcCrudRepository.save(entity)
     }

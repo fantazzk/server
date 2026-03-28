@@ -15,4 +15,21 @@ data class Room(
     override val draftOrderStrategy: DraftOrderStrategy? = null,
     override val currentTurnIndex: Int? = null,
     override val currentAuctionRound: Int? = null,
-) : RoomModel
+) : RoomModel {
+    companion object {
+        fun from(model: RoomModel): Room =
+            Room(
+                roomId = model.roomId,
+                code = model.code,
+                hostId = model.hostId,
+                status = model.status,
+                mode = model.mode,
+                teamCount = model.teamCount,
+                teamSize = model.teamSize,
+                budget = model.budget,
+                draftOrderStrategy = model.draftOrderStrategy,
+                currentTurnIndex = model.currentTurnIndex,
+                currentAuctionRound = model.currentAuctionRound,
+            )
+    }
+}

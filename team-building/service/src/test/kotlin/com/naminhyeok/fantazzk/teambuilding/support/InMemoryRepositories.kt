@@ -7,7 +7,6 @@ import com.naminhyeok.fantazzk.teambuilding.room.RoomBidModel
 import com.naminhyeok.fantazzk.teambuilding.room.RoomModel
 import com.naminhyeok.fantazzk.teambuilding.room.RoomPlayer
 import com.naminhyeok.fantazzk.teambuilding.room.RoomPlayerModel
-import com.naminhyeok.fantazzk.teambuilding.room.RoomStatus
 import com.naminhyeok.fantazzk.teambuilding.room.RoomTeamLeader
 import com.naminhyeok.fantazzk.teambuilding.room.RoomTeamLeaderModel
 import com.naminhyeok.fantazzk.teambuilding.room.RoomTeamMember
@@ -65,31 +64,19 @@ class InMemoryRoomRepository : RoomRepository {
 
     override fun findByCode(code: String): RoomModel? = store.values.firstOrNull { it.code == code }
 
-    override fun updateStatus(
-        roomId: Long,
-        status: RoomStatus,
-    ) {
-        store.computeIfPresent(roomId) { _, r -> r.copy(status = status) }
-    }
-
-    override fun updateCurrentTurnIndex(
-        roomId: Long,
-        currentTurnIndex: Int,
-    ) {
-        store.computeIfPresent(roomId) { _, r -> r.copy(currentTurnIndex = currentTurnIndex) }
-    }
-
-    override fun updateCurrentAuctionRound(
-        roomId: Long,
-        currentAuctionRound: Int,
-    ) {
-        store.computeIfPresent(roomId) { _, r -> r.copy(currentAuctionRound = currentAuctionRound) }
-    }
+    override fun findById(roomId: Long): RoomModel? = store[roomId]
 }
 
 class InMemoryRoomPlayerRepository : RoomPlayerRepository {
     private val store = mutableListOf<RoomPlayer>()
     private var seq = 1L
+
+    override fun save(player: RoomPlayer): RoomPlayerModel {
+        val saved = if (player.roomPlayerId == 0L) player.copy(roomPlayerId = seq++) else player
+        val idx = store.indexOfFirst { it.roomPlayerId == saved.roomPlayerId }
+        if (idx >= 0) store[idx] = saved else store.add(saved)
+        return saved
+    }
 
     override fun saveAll(players: List<RoomPlayer>): List<RoomPlayerModel> {
         val saved = players.map { if (it.roomPlayerId == 0L) it.copy(roomPlayerId = seq++) else it }
@@ -102,25 +89,6 @@ class InMemoryRoomPlayerRepository : RoomPlayerRepository {
     override fun findFirstAvailable(roomId: Long): RoomPlayerModel? =
         store.filter { it.roomId == roomId && it.status == PlayerStatus.AVAILABLE }
             .minByOrNull { it.displayOrder }
-
-    override fun updateStatus(
-        roomPlayerId: Long,
-        status: PlayerStatus,
-    ) {
-        val idx = store.indexOfFirst { it.roomPlayerId == roomPlayerId }
-        if (idx >= 0) store[idx] = store[idx].copy(status = status)
-    }
-
-    override fun moveToBack(
-        roomId: Long,
-        roomPlayerId: Long,
-    ) {
-        val idx = store.indexOfFirst { it.roomPlayerId == roomPlayerId }
-        if (idx >= 0) {
-            val maxOrder = store.filter { it.roomId == roomId }.maxOf { it.displayOrder }
-            store[idx] = store[idx].copy(displayOrder = maxOrder + 1)
-        }
-    }
 }
 
 class InMemoryRoomTeamLeaderRepository : RoomTeamLeaderRepository {
@@ -129,7 +97,8 @@ class InMemoryRoomTeamLeaderRepository : RoomTeamLeaderRepository {
 
     override fun save(leader: RoomTeamLeader): RoomTeamLeaderModel {
         val saved = if (leader.roomTeamLeaderId == 0L) leader.copy(roomTeamLeaderId = seq++) else leader
-        store.add(saved)
+        val idx = store.indexOfFirst { it.roomTeamLeaderId == saved.roomTeamLeaderId }
+        if (idx >= 0) store[idx] = saved else store.add(saved)
         return saved
     }
 
@@ -139,14 +108,6 @@ class InMemoryRoomTeamLeaderRepository : RoomTeamLeaderRepository {
         roomId: Long,
         teamLeaderId: String,
     ): RoomTeamLeaderModel? = store.firstOrNull { it.roomId == roomId && it.teamLeaderId == teamLeaderId }
-
-    override fun updateRemainingBudget(
-        roomTeamLeaderId: Long,
-        remainingBudget: Int,
-    ) {
-        val idx = store.indexOfFirst { it.roomTeamLeaderId == roomTeamLeaderId }
-        if (idx >= 0) store[idx] = store[idx].copy(remainingBudget = remainingBudget)
-    }
 }
 
 class InMemoryRoomTeamMemberRepository : RoomTeamMemberRepository {
