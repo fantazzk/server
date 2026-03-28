@@ -86,9 +86,17 @@ class TemplateApiControllerTest {
         @Test
         fun `ID로 템플릿을 조회하면 200과 선수 목록을 반환한다`() {
             val template = template()
-            val players = listOf(
-                TemplatePlayer(templatePlayerId = 1L, templateId = 1L, name = "선수1", displayOrder = 0, createdAt = now, updatedAt = now),
-            )
+            val players =
+                listOf(
+                    TemplatePlayer(
+                        templatePlayerId = 1L,
+                        templateId = 1L,
+                        name = "선수1",
+                        displayOrder = 0,
+                        createdAt = now,
+                        updatedAt = now,
+                    ),
+                )
             every { templateLookUpService.get(any()) } returns template
             every { templateLookUpService.getPlayers(1L) } returns players
 
@@ -122,14 +130,15 @@ class TemplateApiControllerTest {
         }
     }
 
-    private fun template() = Template(
-        templateId = 1L,
-        name = "경매전",
-        mode = TeamBuildingMode.AUCTION,
-        teamCount = 2,
-        teamSize = 3,
-        budget = 300,
-        createdAt = now,
-        updatedAt = now,
-    )
+    private fun template() =
+        Template(
+            templateId = 1L,
+            name = "경매전",
+            mode = TeamBuildingMode.AUCTION,
+            teamCount = 2,
+            teamSize = 3,
+            budget = 300,
+            createdAt = now,
+            updatedAt = now,
+        )
 }

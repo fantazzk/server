@@ -176,11 +176,20 @@ class RoomApiControllerTest {
     }
 
     @Nested
-    inner class 입찰 {
+    inner class `입찰` {
         @Test
         fun `성공적으로 입찰하면 200과 방 정보를 반환한다`() {
             val room = room("BID001")
-            val bid = RoomBid(roomBidId = 1L, roomId = 1L, round = 1, teamLeaderId = "leader-A", amount = 100, createdAt = now, updatedAt = now)
+            val bid =
+                RoomBid(
+                    roomBidId = 1L,
+                    roomId = 1L,
+                    round = 1,
+                    teamLeaderId = "leader-A",
+                    amount = 100,
+                    createdAt = now,
+                    updatedAt = now,
+                )
             every { auctionService.placeBid("BID001", "leader-A", 100) } returns bid
             every { roomLookUpService.get("BID001") } returns room
             every { roomLookUpService.getTeamLeaders(room.roomId) } returns emptyList()
@@ -209,7 +218,7 @@ class RoomApiControllerTest {
     }
 
     @Nested
-    inner class 정산 {
+    inner class `정산` {
         @Test
         fun `성공적으로 정산하면 200과 방 정보를 반환한다`() {
             val room = room("SET001")
@@ -240,7 +249,16 @@ class RoomApiControllerTest {
         @Test
         fun `성공적으로 픽하면 200과 방 정보를 반환한다`() {
             val room = room("PICK01")
-            val member = RoomTeamMember(roomTeamMemberId = 1L, roomId = 1L, teamLeaderId = "leader-A", playerName = "선수1", assignOrder = 0, createdAt = now, updatedAt = now)
+            val member =
+                RoomTeamMember(
+                    roomTeamMemberId = 1L,
+                    roomId = 1L,
+                    teamLeaderId = "leader-A",
+                    playerName = "선수1",
+                    assignOrder = 0,
+                    createdAt = now,
+                    updatedAt = now,
+                )
             every { draftService.pick("PICK01", "leader-A", "선수1") } returns member
             every { roomLookUpService.get("PICK01") } returns room
             every { roomLookUpService.getTeamLeaders(room.roomId) } returns emptyList()
@@ -267,7 +285,10 @@ class RoomApiControllerTest {
         }
     }
 
-    private fun room(code: String, status: RoomStatus = RoomStatus.WAITING) = Room(
+    private fun room(
+        code: String,
+        status: RoomStatus = RoomStatus.WAITING,
+    ) = Room(
         roomId = 1L,
         code = code,
         hostId = "host",
@@ -280,24 +301,26 @@ class RoomApiControllerTest {
         updatedAt = now,
     )
 
-    private fun template() = Template(
-        templateId = 1L,
-        name = "테스트",
-        mode = TeamBuildingMode.AUCTION,
-        teamCount = 2,
-        teamSize = 2,
-        budget = 300,
-        createdAt = now,
-        updatedAt = now,
-    )
+    private fun template() =
+        Template(
+            templateId = 1L,
+            name = "테스트",
+            mode = TeamBuildingMode.AUCTION,
+            teamCount = 2,
+            teamSize = 2,
+            budget = 300,
+            createdAt = now,
+            updatedAt = now,
+        )
 
-    private fun leader(roomId: Long) = RoomTeamLeader(
-        roomTeamLeaderId = 1L,
-        roomId = roomId,
-        teamLeaderId = "leader-1",
-        nickname = "참가자",
-        remainingBudget = 300,
-        createdAt = now,
-        updatedAt = now,
-    )
+    private fun leader(roomId: Long) =
+        RoomTeamLeader(
+            roomTeamLeaderId = 1L,
+            roomId = roomId,
+            teamLeaderId = "leader-1",
+            nickname = "참가자",
+            remainingBudget = 300,
+            createdAt = now,
+            updatedAt = now,
+        )
 }
