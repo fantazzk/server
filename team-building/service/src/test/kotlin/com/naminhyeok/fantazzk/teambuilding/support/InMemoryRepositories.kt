@@ -78,6 +78,13 @@ class InMemoryRoomRepository : RoomRepository {
     ) {
         store.computeIfPresent(roomId) { _, r -> r.copy(currentTurnIndex = currentTurnIndex) }
     }
+
+    override fun updateCurrentAuctionRound(
+        roomId: Long,
+        currentAuctionRound: Int,
+    ) {
+        store.computeIfPresent(roomId) { _, r -> r.copy(currentAuctionRound = currentAuctionRound) }
+    }
 }
 
 class InMemoryRoomPlayerRepository : RoomPlayerRepository {
@@ -181,6 +188,4 @@ class InMemoryRoomBidRepository : RoomBidRepository {
         roomId: Long,
         round: Int,
     ): RoomBidModel? = store.filter { it.roomId == roomId && it.round == round }.maxByOrNull { it.amount }
-
-    override fun countByRoomId(roomId: Long): Int = store.count { it.roomId == roomId }
 }

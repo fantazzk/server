@@ -32,11 +32,12 @@ internal class DraftServiceImpl(
         check(room.isDraft()) { "드래프트 모드가 아닙니다" }
 
         val leaders = roomTeamLeaderRepository.findByRoomId(room.roomId)
-        val pickOrder = generatePickOrder(leaders.map { it.teamLeaderId }, room.draftOrderStrategy!!, room.teamSize - 1)
+        val strategy = requireNotNull(room.draftOrderStrategy) { "드래프트 모드에는 순서 전략이 필요합니다" }
+        val pickOrder = generatePickOrder(leaders.map { it.teamLeaderId }, strategy, room.picksPerTeam)
         val currentTurn = pickOrder[room.currentTurnIndex ?: 0]
         check(currentTurn == teamLeaderId) { "현재 턴이 아닙니다" }
 
-        roomTeamLeaderRepository.findByRoomIdAndTeamLeaderId(room.roomId, teamLeaderId)
+        leaders.firstOrNull { it.teamLeaderId == teamLeaderId }
             ?: throw RoomTeamLeaderNotFoundException()
 
         val players = roomPlayerRepository.findByRoomId(room.roomId)
@@ -45,22 +46,21 @@ internal class DraftServiceImpl(
 
         roomPlayerRepository.updateStatus(target.roomPlayerId, PlayerStatus.ASSIGNED)
 
-        val assignOrder = roomTeamMemberRepository.countByRoomId(room.roomId)
+        val assignedCount = roomTeamMemberRepository.countByRoomId(room.roomId)
         val member =
             roomTeamMemberRepository.save(
                 RoomTeamMember(
                     roomId = room.roomId,
                     teamLeaderId = teamLeaderId,
                     playerName = playerName,
-                    assignOrder = assignOrder,
+                    assignOrder = assignedCount,
                 ),
             )
 
-        val newTurnIndex = (room.currentTurnIndex ?: 0) + 1
-        roomRepository.updateCurrentTurnIndex(room.roomId, newTurnIndex)
+        roomRepository.updateCurrentTurnIndex(room.roomId, (room.currentTurnIndex ?: 0) + 1)
 
-        val totalRequired = room.teamCount * (room.teamSize - 1)
-        if (assignOrder + 1 >= totalRequired) {
+        val totalRequired = room.teamCount * room.picksPerTeam
+        if (assignedCount + 1 >= totalRequired) {
             roomRepository.updateStatus(room.roomId, RoomStatus.COMPLETED)
         }
 

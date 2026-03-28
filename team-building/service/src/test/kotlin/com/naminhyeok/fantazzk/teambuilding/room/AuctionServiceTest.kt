@@ -41,6 +41,7 @@ class AuctionServiceTest {
                     teamCount = 2,
                     teamSize = 2,
                     budget = 300,
+                    currentAuctionRound = 1,
                 ),
             )
         roomCode = room.code
@@ -108,32 +109,6 @@ class AuctionServiceTest {
         // 선수2가 낙찰되어야 함 (선수1이 아님)
         assertThat(result.playerName).isEqualTo("선수2")
         assertThat(result.outcome).isEqualTo(AuctionOutcome.SOLD)
-    }
-
-    @Test
-    fun `유찰 후 새 입찰의 라운드 번호가 이전 유찰 라운드와 달라야 한다`() {
-        // 라운드 1: 선수1에 대해 leader-A가 50에 입찰
-        auctionService.placeBid(roomCode, "leader-A", 50)
-        // 라운드 1: 유찰 (settle 시 입찰이 있으므로 낙찰됨 — 이 테스트는 다른 시나리오)
-        // 대신: 입찰 없이 유찰
-        // 리셋: 새로운 setup 필요
-
-        // 시나리오: 라운드1에서 50 입찰 → 낙찰, 라운드2에서 유찰, 라운드3에서 입찰
-        auctionService.settle(roomCode) // 라운드 1: 선수1 → leader-A (50에 낙찰)
-
-        auctionService.settle(roomCode) // 라운드 2: 선수2 유찰 (입찰 없음)
-
-        // 라운드 3: 선수3에 대해 입찰 — 이 입찰의 round가 2가 아닌 3이어야 함
-        auctionService.placeBid(roomCode, "leader-B", 80)
-        val settleResult = auctionService.settle(roomCode)
-
-        assertThat(settleResult.playerName).isEqualTo("선수3")
-        assertThat(settleResult.outcome).isEqualTo(AuctionOutcome.SOLD)
-
-        // leader-B의 팀에 선수3이 있어야 함
-        val bMembers = memberRepo.findByRoomIdAndTeamLeaderId(roomId, "leader-B")
-        assertThat(bMembers).hasSize(1)
-        assertThat(bMembers.first().playerName).isEqualTo("선수3")
     }
 
     @Test

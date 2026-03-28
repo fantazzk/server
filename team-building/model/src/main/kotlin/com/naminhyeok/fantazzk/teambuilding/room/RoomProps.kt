@@ -13,6 +13,7 @@ interface RoomProps {
     val budget: Int?
     val draftOrderStrategy: DraftOrderStrategy?
     val currentTurnIndex: Int?
+    val currentAuctionRound: Int?
 
     fun isWaiting(): Boolean = status == RoomStatus.WAITING
 

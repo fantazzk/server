@@ -1,8 +1,6 @@
 package com.naminhyeok.fantazzk.teambuilding.room
 
 interface RoomTeamLeaderIdentity {
-    companion object
-
     val roomTeamLeaderId: Long
 }
 

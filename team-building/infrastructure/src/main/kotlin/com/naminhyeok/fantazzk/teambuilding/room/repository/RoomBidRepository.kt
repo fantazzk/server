@@ -15,6 +15,4 @@ interface RoomBidRepository {
         roomId: Long,
         round: Int,
     ): RoomBidModel?
-
-    fun countByRoomId(roomId: Long): Int
 }

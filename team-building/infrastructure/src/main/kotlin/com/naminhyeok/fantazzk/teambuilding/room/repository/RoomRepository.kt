@@ -18,4 +18,9 @@ interface RoomRepository {
         roomId: Long,
         currentTurnIndex: Int,
     )
+
+    fun updateCurrentAuctionRound(
+        roomId: Long,
+        currentAuctionRound: Int,
+    )
 }

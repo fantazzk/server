@@ -14,4 +14,5 @@ data class Room(
     override val budget: Int? = null,
     override val draftOrderStrategy: DraftOrderStrategy? = null,
     override val currentTurnIndex: Int? = null,
+    override val currentAuctionRound: Int? = null,
 ) : RoomModel

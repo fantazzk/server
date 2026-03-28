@@ -35,15 +35,16 @@ internal class AuctionServiceImpl(
         teamLeaderId: String,
         amount: Int,
     ): RoomBidModel {
-        val room = findInProgressRoom(code)
-        check(room.isAuction()) { "경매 모드가 아닙니다" }
+        val room = findInProgressAuctionRoom(code)
 
         val leader =
             roomTeamLeaderRepository.findByRoomIdAndTeamLeaderId(room.roomId, teamLeaderId)
                 ?: throw RoomTeamLeaderNotFoundException()
-        (leader as RoomTeamLeader).validateBudget(amount)
 
-        val currentRound = roomTeamMemberRepository.countByRoomId(room.roomId) + 1
+        val budget = requireNotNull(leader.remainingBudget) { "이 모드에서는 예산이 존재하지 않습니다" }
+        require(amount <= budget) { "예산이 부족합니다: 잔여 $budget, 필요 $amount" }
+
+        val currentRound = room.currentAuctionRound ?: 1
         val highest = roomBidRepository.findHighestByRoomIdAndRound(room.roomId, currentRound)
         require(amount > (highest?.amount ?: 0)) { "현재 최고가보다 높아야 합니다" }
 
@@ -53,12 +54,13 @@ internal class AuctionServiceImpl(
     }
 
     override fun settle(code: String): AuctionSettleResult {
-        val room = findInProgressRoom(code)
-        check(room.isAuction()) { "경매 모드가 아닙니다" }
+        val room = findInProgressAuctionRoom(code)
 
         val target = requireNotNull(roomPlayerRepository.findFirstAvailable(room.roomId)) { "경매할 선수가 없습니다" }
-        val currentRound = roomTeamMemberRepository.countByRoomId(room.roomId) + 1
+        val currentRound = room.currentAuctionRound ?: 1
         val highest = roomBidRepository.findHighestByRoomIdAndRound(room.roomId, currentRound)
+
+        roomRepository.updateCurrentAuctionRound(room.roomId, currentRound + 1)
 
         return if (highest != null) {
             settleSold(room, target, highest)
@@ -79,17 +81,21 @@ internal class AuctionServiceImpl(
                 ?: throw RoomTeamLeaderNotFoundException()
         roomTeamLeaderRepository.updateRemainingBudget(winner.roomTeamLeaderId, winner.remainingBudget!! - bid.amount)
 
-        val assignOrder = roomTeamMemberRepository.countByRoomId(room.roomId)
+        val assignedCount = roomTeamMemberRepository.countByRoomId(room.roomId)
         roomTeamMemberRepository.save(
             RoomTeamMember(
                 roomId = room.roomId,
                 teamLeaderId = bid.teamLeaderId,
                 playerName = target.name,
-                assignOrder = assignOrder,
+                assignOrder = assignedCount,
             ),
         )
 
-        checkCompletion(room)
+        val totalRequired = room.teamCount * room.picksPerTeam
+        if (assignedCount + 1 >= totalRequired) {
+            roomRepository.updateStatus(room.roomId, RoomStatus.COMPLETED)
+        }
+
         return AuctionSettleResult(target.name, AuctionOutcome.SOLD)
     }
 
@@ -101,17 +107,10 @@ internal class AuctionServiceImpl(
         return AuctionSettleResult(target.name, AuctionOutcome.PASSED)
     }
 
-    private fun checkCompletion(room: RoomModel) {
-        val totalRequired = room.teamCount * (room.teamSize - 1)
-        val assigned = roomTeamMemberRepository.countByRoomId(room.roomId)
-        if (assigned >= totalRequired) {
-            roomRepository.updateStatus(room.roomId, RoomStatus.COMPLETED)
-        }
-    }
-
-    private fun findInProgressRoom(code: String): RoomModel {
+    private fun findInProgressAuctionRoom(code: String): RoomModel {
         val room = roomRepository.findByCode(code) ?: throw RoomNotFoundException()
         check(room.isInProgress()) { "진행 중인 방에서만 가능합니다" }
+        check(room.isAuction()) { "경매 모드가 아닙니다" }
         return room
     }
 }

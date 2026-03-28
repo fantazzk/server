@@ -1,8 +1,6 @@
 package com.naminhyeok.fantazzk.teambuilding.template
 
 interface TemplatePlayerIdentity {
-    companion object
-
     val templatePlayerId: Long
 }
 
