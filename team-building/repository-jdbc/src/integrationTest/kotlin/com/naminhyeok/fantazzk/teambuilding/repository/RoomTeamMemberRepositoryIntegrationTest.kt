@@ -28,7 +28,7 @@ import org.springframework.test.context.TestConstructor
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
 class RoomTeamMemberRepositoryIntegrationTest(
     private val roomRepository: RoomRepository,
-    private val roomTeamMemberRepository: RoomTeamMemberRepository,
+    private val cut: RoomTeamMemberRepository,
 ) {
     private lateinit var room: RoomModel
 
@@ -42,42 +42,42 @@ class RoomTeamMemberRepositoryIntegrationTest(
 
     @Test
     fun `팀 멤버를 저장하고 방 ID로 조회할 수 있다`() {
-        roomTeamMemberRepository.save(
+        cut.save(
             RoomTeamMember(roomId = room.roomId, teamLeaderId = "leader-1", playerName = "선수1", assignOrder = 0),
         )
-        roomTeamMemberRepository.save(
+        cut.save(
             RoomTeamMember(roomId = room.roomId, teamLeaderId = "leader-1", playerName = "선수2", assignOrder = 1),
         )
 
-        val members = roomTeamMemberRepository.findByRoomId(room.roomId)
+        val members = cut.findByRoomId(room.roomId)
         assertThat(members).hasSize(2)
     }
 
     @Test
     fun `팀장 ID로 팀 멤버를 조회할 수 있다`() {
-        roomTeamMemberRepository.save(
+        cut.save(
             RoomTeamMember(roomId = room.roomId, teamLeaderId = "leader-1", playerName = "선수1", assignOrder = 0),
         )
-        roomTeamMemberRepository.save(
+        cut.save(
             RoomTeamMember(roomId = room.roomId, teamLeaderId = "leader-2", playerName = "선수2", assignOrder = 1),
         )
 
-        val leaderMembers = roomTeamMemberRepository.findByRoomIdAndTeamLeaderId(room.roomId, "leader-1")
+        val leaderMembers = cut.findByRoomIdAndTeamLeaderId(room.roomId, "leader-1")
         assertThat(leaderMembers).hasSize(1)
         assertThat(leaderMembers.first().playerName).isEqualTo("선수1")
     }
 
     @Test
     fun `방의 팀 멤버 수를 셀 수 있다`() {
-        roomTeamMemberRepository.save(
+        cut.save(
             RoomTeamMember(roomId = room.roomId, teamLeaderId = "leader-1", playerName = "선수1", assignOrder = 0),
         )
 
-        assertThat(roomTeamMemberRepository.countByRoomId(room.roomId)).isEqualTo(1)
+        assertThat(cut.countByRoomId(room.roomId)).isEqualTo(1)
     }
 
     @Test
     fun `팀 멤버가 없으면 0을 반환한다`() {
-        assertThat(roomTeamMemberRepository.countByRoomId(room.roomId)).isEqualTo(0)
+        assertThat(cut.countByRoomId(room.roomId)).isEqualTo(0)
     }
 }

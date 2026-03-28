@@ -26,13 +26,13 @@ import org.springframework.test.context.TestConstructor
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
 class TemplateRepositoryIntegrationTest(
-    private val templateRepository: TemplateRepository,
+    private val cut: TemplateRepository,
     private val templatePlayerRepository: TemplatePlayerRepository,
 ) {
     @Test
     fun `템플릿을 저장하고 조회할 수 있다`() {
         val saved =
-            templateRepository.save(
+            cut.save(
                 Template(
                     name = "테스트 경매",
                     mode = TeamBuildingMode.AUCTION,
@@ -44,7 +44,7 @@ class TemplateRepositoryIntegrationTest(
 
         assertThat(saved.templateId).isGreaterThan(0)
 
-        val found = templateRepository.findById(TemplateIdentity.of(saved.templateId))
+        val found = cut.findById(TemplateIdentity.of(saved.templateId))
         assertThat(found).isNotNull
         assertThat(found!!.mode).isEqualTo(TeamBuildingMode.AUCTION)
         assertThat(found.budget).isEqualTo(300)
@@ -53,7 +53,7 @@ class TemplateRepositoryIntegrationTest(
     @Test
     fun `템플릿 선수를 저장하고 조회할 수 있다`() {
         val template =
-            templateRepository.save(
+            cut.save(
                 Template(name = "드래프트", mode = TeamBuildingMode.DRAFT, teamCount = 2, teamSize = 3),
             )
 

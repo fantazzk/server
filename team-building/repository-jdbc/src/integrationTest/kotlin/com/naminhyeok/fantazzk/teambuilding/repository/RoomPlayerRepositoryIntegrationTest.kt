@@ -29,7 +29,7 @@ import org.springframework.test.context.TestConstructor
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
 class RoomPlayerRepositoryIntegrationTest(
     private val roomRepository: RoomRepository,
-    private val roomPlayerRepository: RoomPlayerRepository,
+    private val cut: RoomPlayerRepository,
 ) {
     private lateinit var room: RoomModel
 
@@ -43,21 +43,21 @@ class RoomPlayerRepositoryIntegrationTest(
 
     @Test
     fun `선수를 저장하고 방 ID로 조회할 수 있다`() {
-        roomPlayerRepository.saveAll(
+        cut.saveAll(
             listOf(
                 RoomPlayer(roomId = room.roomId, name = "선수1", displayOrder = 0),
                 RoomPlayer(roomId = room.roomId, name = "선수2", displayOrder = 1),
             ),
         )
 
-        val players = roomPlayerRepository.findByRoomId(room.roomId)
+        val players = cut.findByRoomId(room.roomId)
         assertThat(players).hasSize(2)
         assertThat(players.map { it.name }).containsExactly("선수1", "선수2")
     }
 
     @Test
     fun `가용 선수 중 displayOrder가 가장 낮은 선수를 조회한다`() {
-        roomPlayerRepository.saveAll(
+        cut.saveAll(
             listOf(
                 RoomPlayer(roomId = room.roomId, name = "선수1", status = PlayerStatus.ASSIGNED, displayOrder = 0),
                 RoomPlayer(roomId = room.roomId, name = "선수2", displayOrder = 1),
@@ -65,32 +65,32 @@ class RoomPlayerRepositoryIntegrationTest(
             ),
         )
 
-        val firstAvailable = roomPlayerRepository.findFirstAvailable(room.roomId)
+        val firstAvailable = cut.findFirstAvailable(room.roomId)
         assertThat(firstAvailable).isNotNull
         assertThat(firstAvailable!!.name).isEqualTo("선수2")
     }
 
     @Test
     fun `모든 선수가 배정되면 가용 선수가 없다`() {
-        roomPlayerRepository.saveAll(
+        cut.saveAll(
             listOf(
                 RoomPlayer(roomId = room.roomId, name = "선수1", status = PlayerStatus.ASSIGNED, displayOrder = 0),
             ),
         )
 
-        assertThat(roomPlayerRepository.findFirstAvailable(room.roomId)).isNull()
+        assertThat(cut.findFirstAvailable(room.roomId)).isNull()
     }
 
     @Test
     fun `선수 상태를 업데이트할 수 있다`() {
         val saved =
-            roomPlayerRepository.saveAll(
+            cut.saveAll(
                 listOf(RoomPlayer(roomId = room.roomId, name = "선수1", displayOrder = 0)),
             ).first()
 
-        roomPlayerRepository.save(RoomPlayer.from(saved).copy(status = PlayerStatus.ASSIGNED))
+        cut.save(RoomPlayer.from(saved).copy(status = PlayerStatus.ASSIGNED))
 
-        val found = roomPlayerRepository.findByRoomId(room.roomId)
+        val found = cut.findByRoomId(room.roomId)
         assertThat(found.first().status).isEqualTo(PlayerStatus.ASSIGNED)
     }
 }

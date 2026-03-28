@@ -24,12 +24,12 @@ import org.springframework.test.context.TestConstructor
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
 class RoomRepositoryIntegrationTest(
-    private val roomRepository: RoomRepository,
+    private val cut: RoomRepository,
 ) {
     @Test
     fun `방을 저장하고 코드로 조회할 수 있다`() {
         val saved =
-            roomRepository.save(
+            cut.save(
                 Room(
                     code = "RM0001",
                     hostId = "host",
@@ -43,7 +43,7 @@ class RoomRepositoryIntegrationTest(
 
         assertThat(saved.roomId).isGreaterThan(0)
 
-        val found = roomRepository.findByCode("RM0001")
+        val found = cut.findByCode("RM0001")
         assertThat(found).isNotNull
         assertThat(found!!.status).isEqualTo(RoomStatus.WAITING)
         assertThat(found.mode).isEqualTo(TeamBuildingMode.AUCTION)
@@ -52,7 +52,7 @@ class RoomRepositoryIntegrationTest(
     @Test
     fun `방을 저장하고 ID로 조회할 수 있다`() {
         val saved =
-            roomRepository.save(
+            cut.save(
                 Room(
                     code = "RM0002",
                     hostId = "host",
@@ -65,7 +65,7 @@ class RoomRepositoryIntegrationTest(
                 ),
             )
 
-        val found = roomRepository.findById(saved.roomId)
+        val found = cut.findById(saved.roomId)
         assertThat(found).isNotNull
         assertThat(found!!.draftOrderStrategy).isEqualTo(DraftOrderStrategy.SNAKE)
         assertThat(found.currentTurnIndex).isEqualTo(0)
@@ -74,7 +74,7 @@ class RoomRepositoryIntegrationTest(
     @Test
     fun `방 상태를 업데이트할 수 있다`() {
         val saved =
-            roomRepository.save(
+            cut.save(
                 Room(
                     code = "RM0003",
                     hostId = "host",
@@ -87,9 +87,9 @@ class RoomRepositoryIntegrationTest(
             )
 
         val updated = Room.from(saved).copy(status = RoomStatus.IN_PROGRESS, currentAuctionRound = 1)
-        roomRepository.save(updated)
+        cut.save(updated)
 
-        val found = roomRepository.findByCode("RM0003")
+        val found = cut.findByCode("RM0003")
         assertThat(found!!.status).isEqualTo(RoomStatus.IN_PROGRESS)
         assertThat(found.currentAuctionRound).isEqualTo(1)
     }
