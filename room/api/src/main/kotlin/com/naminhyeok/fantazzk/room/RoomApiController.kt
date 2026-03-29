@@ -1,5 +1,6 @@
 package com.naminhyeok.fantazzk.room
 
+import com.naminhyeok.fantazzk.room.dto.ApiResponse
 import com.naminhyeok.fantazzk.room.dto.CreateRoomRequest
 import com.naminhyeok.fantazzk.room.dto.JoinRoomRequest
 import com.naminhyeok.fantazzk.room.dto.PickRequest
@@ -30,20 +31,20 @@ class RoomApiController(
     @Operation(summary = "방 생성", operationId = "createRoom")
     fun create(
         @RequestBody request: CreateRoomRequest,
-    ): RoomResponse {
+    ): ApiResponse<RoomResponse> {
         val room = roomCreateService.create(request.templateId, request.hostNickname)
         val leaders = roomLookupService.getTeamLeaders(room.roomId)
-        return RoomResponse.from(room, leaders)
+        return ApiResponse.success(RoomResponse.from(room, leaders))
     }
 
     @GetMapping("/{code}")
     @Operation(summary = "방 조회", operationId = "getRoom")
     fun getByCode(
         @PathVariable code: String,
-    ): RoomResponse {
+    ): ApiResponse<RoomResponse> {
         val room = roomLookupService.get(code)
         val leaders = roomLookupService.getTeamLeaders(room.roomId)
-        return RoomResponse.from(room, leaders)
+        return ApiResponse.success(RoomResponse.from(room, leaders))
     }
 
     @PostMapping("/{code}/join")
@@ -51,22 +52,22 @@ class RoomApiController(
     fun join(
         @PathVariable code: String,
         @RequestBody request: JoinRoomRequest,
-    ): RoomResponse {
+    ): ApiResponse<RoomResponse> {
         roomJoinService.join(code, request.nickname)
         val room = roomLookupService.get(code)
         val leaders = roomLookupService.getTeamLeaders(room.roomId)
-        return RoomResponse.from(room, leaders)
+        return ApiResponse.success(RoomResponse.from(room, leaders))
     }
 
     @PostMapping("/{code}/start")
     @Operation(summary = "방 시작", operationId = "startRoom")
     fun start(
         @PathVariable code: String,
-    ): RoomResponse {
+    ): ApiResponse<RoomResponse> {
         roomStartService.start(code)
         val room = roomLookupService.get(code)
         val leaders = roomLookupService.getTeamLeaders(room.roomId)
-        return RoomResponse.from(room, leaders)
+        return ApiResponse.success(RoomResponse.from(room, leaders))
     }
 
     @PostMapping("/{code}/bid")
@@ -74,22 +75,22 @@ class RoomApiController(
     fun placeBid(
         @PathVariable code: String,
         @RequestBody request: PlaceBidRequest,
-    ): RoomResponse {
+    ): ApiResponse<RoomResponse> {
         auctionService.placeBid(code, request.teamLeaderId, request.amount)
         val room = roomLookupService.get(code)
         val leaders = roomLookupService.getTeamLeaders(room.roomId)
-        return RoomResponse.from(room, leaders)
+        return ApiResponse.success(RoomResponse.from(room, leaders))
     }
 
     @PostMapping("/{code}/settle")
     @Operation(summary = "경매 정산", operationId = "settleAuction")
     fun settle(
         @PathVariable code: String,
-    ): RoomResponse {
+    ): ApiResponse<RoomResponse> {
         auctionService.settle(code)
         val room = roomLookupService.get(code)
         val leaders = roomLookupService.getTeamLeaders(room.roomId)
-        return RoomResponse.from(room, leaders)
+        return ApiResponse.success(RoomResponse.from(room, leaders))
     }
 
     @PostMapping("/{code}/pick")
@@ -97,10 +98,10 @@ class RoomApiController(
     fun pick(
         @PathVariable code: String,
         @RequestBody request: PickRequest,
-    ): RoomResponse {
+    ): ApiResponse<RoomResponse> {
         draftService.pick(code, request.teamLeaderId, request.playerName)
         val room = roomLookupService.get(code)
         val leaders = roomLookupService.getTeamLeaders(room.roomId)
-        return RoomResponse.from(room, leaders)
+        return ApiResponse.success(RoomResponse.from(room, leaders))
     }
 }

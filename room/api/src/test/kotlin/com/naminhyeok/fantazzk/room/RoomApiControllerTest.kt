@@ -1,6 +1,6 @@
 package com.naminhyeok.fantazzk.room
 
-import com.naminhyeok.fantazzk.room.exception.RoomNotFoundException
+import com.naminhyeok.fantazzk.room.exception.RoomException
 import io.mockk.every
 import io.mockk.justRun
 import io.mockk.mockk
@@ -49,18 +49,25 @@ class RoomApiControllerTest {
             mockMvc.get("/api/v1/rooms/ABC123")
                 .andExpect {
                     status { isOk() }
-                    jsonPath("$.code") { value("ABC123") }
-                    jsonPath("$.status") { value("WAITING") }
+                    jsonPath("$.resultType") { value("SUCCESS") }
+                    jsonPath("$.success.code") { value("ABC123") }
+                    jsonPath("$.success.status") { value("WAITING") }
+                    jsonPath("$.error") { doesNotExist() }
                 }
         }
 
         @Test
         fun `존재하지 않는 방을 조회하면 404를 반환한다`() {
-            every { roomLookupService.get("NOCODE") } throws RoomNotFoundException()
+            every { roomLookupService.get("NOCODE") } throws RoomException.RoomNotFoundException()
 
             mockMvc.get("/api/v1/rooms/NOCODE")
                 .andExpect {
                     status { isNotFound() }
+                    jsonPath("$.resultType") { value("ERROR") }
+                    jsonPath("$.success") { doesNotExist() }
+                    jsonPath("$.error.status") { value(404) }
+                    jsonPath("$.error.errorCode") { value("ROOM_NOT_FOUND") }
+                    jsonPath("$.error.reason") { value("방을 찾을 수 없습니다") }
                 }
         }
     }
@@ -78,19 +85,22 @@ class RoomApiControllerTest {
                 content = """{"templateId": 1, "hostNickname": "호스트"}"""
             }.andExpect {
                 status { isCreated() }
-                jsonPath("$.code") { value("NEW001") }
+                jsonPath("$.resultType") { value("SUCCESS") }
+                jsonPath("$.success.code") { value("NEW001") }
             }
         }
 
         @Test
         fun `존재하지 않는 템플릿으로 생성하면 404를 반환한다`() {
-            every { roomCreateService.create(any(), any()) } throws RoomNotFoundException()
+            every { roomCreateService.create(any(), any()) } throws RoomException.RoomNotFoundException()
 
             mockMvc.post("/api/v1/rooms") {
                 contentType = MediaType.APPLICATION_JSON
                 content = """{"templateId": 999, "hostNickname": "호스트"}"""
             }.andExpect {
                 status { isNotFound() }
+                jsonPath("$.resultType") { value("ERROR") }
+                jsonPath("$.error.errorCode") { value("ROOM_NOT_FOUND") }
             }
         }
     }
@@ -110,19 +120,22 @@ class RoomApiControllerTest {
                 content = """{"nickname": "참가자"}"""
             }.andExpect {
                 status { isOk() }
-                jsonPath("$.teamLeaders[0].nickname") { value("참가자") }
+                jsonPath("$.resultType") { value("SUCCESS") }
+                jsonPath("$.success.teamLeaders[0].nickname") { value("참가자") }
             }
         }
 
         @Test
         fun `존재하지 않는 방에 참가하면 404를 반환한다`() {
-            every { roomJoinService.join("NOROOM", any()) } throws RoomNotFoundException()
+            every { roomJoinService.join("NOROOM", any()) } throws RoomException.RoomNotFoundException()
 
             mockMvc.post("/api/v1/rooms/NOROOM/join") {
                 contentType = MediaType.APPLICATION_JSON
                 content = """{"nickname": "참가자"}"""
             }.andExpect {
                 status { isNotFound() }
+                jsonPath("$.resultType") { value("ERROR") }
+                jsonPath("$.error.errorCode") { value("ROOM_NOT_FOUND") }
             }
         }
 
@@ -135,6 +148,9 @@ class RoomApiControllerTest {
                 content = """{"nickname": "참가자"}"""
             }.andExpect {
                 status { isConflict() }
+                jsonPath("$.resultType") { value("ERROR") }
+                jsonPath("$.error.status") { value(409) }
+                jsonPath("$.error.errorCode") { value("INVALID_STATE") }
             }
         }
     }
@@ -151,7 +167,8 @@ class RoomApiControllerTest {
             mockMvc.post("/api/v1/rooms/START1/start")
                 .andExpect {
                     status { isOk() }
-                    jsonPath("$.status") { value("IN_PROGRESS") }
+                    jsonPath("$.resultType") { value("SUCCESS") }
+                    jsonPath("$.success.status") { value("IN_PROGRESS") }
                 }
         }
 
@@ -162,6 +179,8 @@ class RoomApiControllerTest {
             mockMvc.post("/api/v1/rooms/PROG01/start")
                 .andExpect {
                     status { isConflict() }
+                    jsonPath("$.resultType") { value("ERROR") }
+                    jsonPath("$.error.errorCode") { value("INVALID_STATE") }
                 }
         }
     }
@@ -190,7 +209,8 @@ class RoomApiControllerTest {
                 content = """{"teamLeaderId": "leader-A", "amount": 100}"""
             }.andExpect {
                 status { isOk() }
-                jsonPath("$.code") { value("BID001") }
+                jsonPath("$.resultType") { value("SUCCESS") }
+                jsonPath("$.success.code") { value("BID001") }
             }
         }
 
@@ -204,6 +224,8 @@ class RoomApiControllerTest {
                 content = """{"teamLeaderId": "leader-A", "amount": 9999}"""
             }.andExpect {
                 status { isBadRequest() }
+                jsonPath("$.resultType") { value("ERROR") }
+                jsonPath("$.error.errorCode") { value("BAD_REQUEST") }
             }
         }
     }
@@ -220,7 +242,8 @@ class RoomApiControllerTest {
             mockMvc.post("/api/v1/rooms/SET001/settle")
                 .andExpect {
                     status { isOk() }
-                    jsonPath("$.code") { value("SET001") }
+                    jsonPath("$.resultType") { value("SUCCESS") }
+                    jsonPath("$.success.code") { value("SET001") }
                 }
         }
 
@@ -231,6 +254,8 @@ class RoomApiControllerTest {
             mockMvc.post("/api/v1/rooms/SET001/settle")
                 .andExpect {
                     status { isBadRequest() }
+                    jsonPath("$.resultType") { value("ERROR") }
+                    jsonPath("$.error.errorCode") { value("BAD_REQUEST") }
                 }
         }
     }
@@ -259,7 +284,8 @@ class RoomApiControllerTest {
                 content = """{"teamLeaderId": "leader-A", "playerName": "선수1"}"""
             }.andExpect {
                 status { isOk() }
-                jsonPath("$.code") { value("PICK01") }
+                jsonPath("$.resultType") { value("SUCCESS") }
+                jsonPath("$.success.code") { value("PICK01") }
             }
         }
 
@@ -272,6 +298,8 @@ class RoomApiControllerTest {
                 content = """{"teamLeaderId": "leader-B", "playerName": "선수1"}"""
             }.andExpect {
                 status { isConflict() }
+                jsonPath("$.resultType") { value("ERROR") }
+                jsonPath("$.error.errorCode") { value("INVALID_STATE") }
             }
         }
     }
