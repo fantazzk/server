@@ -2,14 +2,23 @@ rootProject.name = "fantazzk-server"
 
 include(":application-api")
 
-include(":team-building:model")
-include(":team-building:exception")
-include(":team-building:infrastructure")
-include(":team-building:service")
-include(":team-building:repository-jdbc")
-include(":team-building:api")
 include(":team-building:schema")
-include(":team-building:application-api")
+
+include(":template:model")
+include(":template:exception")
+include(":template:infrastructure")
+include(":template:service")
+include(":template:repository-jdbc")
+include(":template:api")
+include(":template:application-api")
+
+include(":room:model")
+include(":room:exception")
+include(":room:infrastructure")
+include(":room:service")
+include(":room:repository-jdbc")
+include(":room:api")
+include(":room:application-api")
 
 pluginManagement {
     buildscript {
