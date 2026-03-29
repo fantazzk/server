@@ -1,0 +1,34 @@
+package com.naminhyeok.fantazzk.template.dto
+
+import com.naminhyeok.fantazzk.template.DraftOrderStrategy
+import com.naminhyeok.fantazzk.template.TeamBuildingMode
+import com.naminhyeok.fantazzk.template.TemplateModel
+import com.naminhyeok.fantazzk.template.TemplatePlayerModel
+
+data class TemplateResponse(
+    val id: Long,
+    val name: String,
+    val mode: TeamBuildingMode,
+    val teamCount: Int,
+    val teamSize: Int,
+    val budget: Int?,
+    val draftOrderStrategy: DraftOrderStrategy?,
+    val players: List<TemplatePlayerResponse>?,
+) {
+    companion object {
+        fun from(
+            template: TemplateModel,
+            players: List<TemplatePlayerModel>? = null,
+        ): TemplateResponse =
+            TemplateResponse(
+                id = template.templateId,
+                name = template.name,
+                mode = template.mode,
+                teamCount = template.teamCount,
+                teamSize = template.teamSize,
+                budget = template.budget,
+                draftOrderStrategy = template.draftOrderStrategy,
+                players = players?.map { TemplatePlayerResponse(name = it.name, displayOrder = it.displayOrder) },
+            )
+    }
+}
