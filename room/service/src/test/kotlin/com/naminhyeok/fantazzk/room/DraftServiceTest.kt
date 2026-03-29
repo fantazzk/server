@@ -114,6 +114,7 @@ class DraftServiceTest {
                     mode = TeamBuildingMode.AUCTION,
                     teamCount = 2,
                     teamSize = 2,
+                    budget = 300,
                 ),
             )
 

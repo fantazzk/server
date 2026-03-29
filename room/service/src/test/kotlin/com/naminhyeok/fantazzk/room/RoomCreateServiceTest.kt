@@ -59,6 +59,14 @@ class RoomCreateServiceTest {
             assertThat(room.draftOrderStrategy).isNull()
             assertThat(room.currentAuctionRound).isNull()
             assertThat(room.currentTurnIndex).isNull()
+            assertThat(Room.from(room).configuration).isEqualTo(
+                TeamBuildingConfiguration.Auction(
+                    teamCount = 2,
+                    teamSize = 2,
+                    budget = 300,
+                ),
+            )
+            assertThat(Room.from(room).progress).isEqualTo(RoomProgress.Waiting)
             assertThat(room.teamCount).isEqualTo(2)
             assertThat(room.teamSize).isEqualTo(2)
             assertThat(leader.teamLeaderId).isEqualTo(room.hostId)
@@ -87,6 +95,14 @@ class RoomCreateServiceTest {
             assertThat(room.draftOrderStrategy).isEqualTo(DraftOrderStrategy.SNAKE)
             assertThat(room.currentAuctionRound).isNull()
             assertThat(room.currentTurnIndex).isNull()
+            assertThat(Room.from(room).configuration).isEqualTo(
+                TeamBuildingConfiguration.Draft(
+                    teamCount = 2,
+                    teamSize = 2,
+                    strategy = DraftOrderStrategy.SNAKE,
+                ),
+            )
+            assertThat(Room.from(room).progress).isEqualTo(RoomProgress.Waiting)
             assertThat(leader.remainingBudget).isNull()
         }
     }

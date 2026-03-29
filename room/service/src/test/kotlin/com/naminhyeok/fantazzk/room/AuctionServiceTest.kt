@@ -89,6 +89,7 @@ class AuctionServiceTest {
                     mode = TeamBuildingMode.AUCTION,
                     teamCount = 2,
                     teamSize = 2,
+                    budget = 300,
                 ),
             )
 
@@ -107,6 +108,7 @@ class AuctionServiceTest {
                     mode = TeamBuildingMode.DRAFT,
                     teamCount = 2,
                     teamSize = 2,
+                    draftOrderStrategy = DraftOrderStrategy.SNAKE,
                 ),
             )
 

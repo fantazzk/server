@@ -1,6 +1,7 @@
 package com.naminhyeok.fantazzk.room
 
 import com.naminhyeok.fantazzk.room.exception.RoomException
+import com.naminhyeok.fantazzk.room.repository.RoomRepository
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomRepository
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomTeamLeaderRepository
 import org.assertj.core.api.Assertions.assertThat
@@ -28,11 +29,9 @@ class RoomJoinServiceTest {
 
         val room =
             roomRepo.save(
-                Room(
+                Room.createAuction(
                     code = "JOIN01",
                     hostId = "host",
-                    status = RoomStatus.WAITING,
-                    mode = TeamBuildingMode.AUCTION,
                     teamCount = 2,
                     teamSize = 2,
                     budget = 300,
@@ -69,18 +68,24 @@ class RoomJoinServiceTest {
         @Test
         fun `예산이 없는 방에 참가하면 팀장의 잔여 예산도 비워둔다`() {
             roomRepo.save(
-                Room(
-                    roomId = roomId,
+                Room.createDraft(
                     code = roomCode,
                     hostId = "host",
-                    status = RoomStatus.WAITING,
-                    mode = TeamBuildingMode.DRAFT,
                     teamCount = 2,
                     teamSize = 2,
-                    budget = null,
                     draftOrderStrategy = DraftOrderStrategy.SNAKE,
-                ),
+                ).copy(roomId = roomId),
             )
+
+            val leader = cut.join(roomCode, "드래프트참가자")
+
+            assertThat(leader.remainingBudget).isNull()
+        }
+
+        @Test
+        fun `legacy 드래프트 방의 stale budget은 무시하고 참가시킨다`() {
+            val legacyRoomRepo = LegacyRoomRepository(legacyDraftRoomModel())
+            cut = RoomJoinServiceImpl(legacyRoomRepo, leaderRepo)
 
             val leader = cut.join(roomCode, "드래프트참가자")
 
@@ -100,14 +105,15 @@ class RoomJoinServiceTest {
         @EnumSource(value = RoomStatus::class, names = ["WAITING"], mode = EnumSource.Mode.EXCLUDE)
         fun `WAITING이 아닌 상태의 방에는 참가할 수 없다`(status: RoomStatus) {
             roomRepo.save(
-                Room(
-                    roomId = roomId,
+                Room.createAuction(
                     code = roomCode,
                     hostId = "host",
-                    status = status,
-                    mode = TeamBuildingMode.AUCTION,
                     teamCount = 2,
                     teamSize = 2,
+                    budget = 300,
+                ).copy(
+                    roomId = roomId,
+                    status = status,
                 ),
             )
 
@@ -134,5 +140,35 @@ class RoomJoinServiceTest {
                 .isInstanceOf(IllegalStateException::class.java)
                 .hasMessage("방이 가득 찼습니다")
         }
+    }
+
+    private fun legacyDraftRoomModel(): RoomModel =
+        object : RoomModel {
+            override val roomId = this@RoomJoinServiceTest.roomId
+            override val code = this@RoomJoinServiceTest.roomCode
+            override val hostId = "host"
+            override val status = RoomStatus.WAITING
+            override val mode = TeamBuildingMode.DRAFT
+            override val teamCount = 2
+            override val teamSize = 2
+            override val budget = 300
+            override val draftOrderStrategy = DraftOrderStrategy.SNAKE
+            override val currentTurnIndex: Int? = null
+            override val currentAuctionRound: Int? = null
+            override val createdAt = java.time.Instant.parse("2025-01-01T00:00:00Z")
+            override val updatedAt = java.time.Instant.parse("2025-01-01T00:00:00Z")
+        }
+
+    private class LegacyRoomRepository(
+        private var room: RoomModel,
+    ) : RoomRepository {
+        override fun save(room: Room): RoomModel {
+            this.room = room
+            return room
+        }
+
+        override fun findByCode(code: String): RoomModel? = room.takeIf { it.code == code }
+
+        override fun findById(roomId: Long): RoomModel? = room.takeIf { it.roomId == roomId }
     }
 }

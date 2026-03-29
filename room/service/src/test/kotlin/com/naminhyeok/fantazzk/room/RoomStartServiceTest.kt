@@ -1,6 +1,7 @@
 package com.naminhyeok.fantazzk.room
 
 import com.naminhyeok.fantazzk.room.exception.RoomException
+import com.naminhyeok.fantazzk.room.repository.RoomRepository
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomRepository
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomTeamLeaderRepository
 import org.assertj.core.api.Assertions.assertThat
@@ -42,15 +43,13 @@ class RoomStartServiceTest {
         fun `WAITING이 아닌 상태의 방은 시작할 수 없다`(status: RoomStatus) {
             val room =
                 roomRepo.save(
-                    Room(
+                    Room.createAuction(
                         code = "STATE1",
                         hostId = "host",
-                        status = status,
-                        mode = TeamBuildingMode.AUCTION,
                         teamCount = 2,
                         teamSize = 2,
                         budget = 300,
-                    ),
+                    ).copy(status = status),
                 )
             fillLeaders(room)
 
@@ -98,6 +97,7 @@ class RoomStartServiceTest {
             val started = roomRepo.findByCode(room.code)!!
             assertThat(started.currentAuctionRound).isEqualTo(1)
             assertThat(started.currentTurnIndex).isNull()
+            assertThat(Room.from(started).progress).isEqualTo(RoomProgress.Auction(currentRound = 1))
         }
 
         @Test
@@ -116,7 +116,52 @@ class RoomStartServiceTest {
             val started = roomRepo.findByCode(room.code)!!
             assertThat(started.currentTurnIndex).isEqualTo(0)
             assertThat(started.currentAuctionRound).isNull()
+            assertThat(Room.from(started).progress).isEqualTo(RoomProgress.Draft(currentTurnIndex = 0))
         }
+
+        @Test
+        fun `legacy 경매 방의 stale draft strategy는 무시하고 시작한다`() {
+            val legacyRoomRepo = LegacyRoomRepository(legacyAuctionRoomModel())
+            cut = RoomStartServiceImpl(legacyRoomRepo, leaderRepo)
+            val room = legacyRoomRepo.findByCode("START2")!!
+            saveLeaders(room, room.teamCount)
+
+            cut.start(room.code)
+
+            val started = legacyRoomRepo.findByCode(room.code)!!
+            assertThat(started.status).isEqualTo(RoomStatus.IN_PROGRESS)
+            assertThat(started.currentAuctionRound).isEqualTo(1)
+        }
+    }
+
+    private fun legacyAuctionRoomModel(): RoomModel =
+        object : RoomModel {
+            override val roomId = 99L
+            override val code = "START2"
+            override val hostId = "host"
+            override val status = RoomStatus.WAITING
+            override val mode = TeamBuildingMode.AUCTION
+            override val teamCount = 2
+            override val teamSize = 2
+            override val budget = 300
+            override val draftOrderStrategy = DraftOrderStrategy.SNAKE
+            override val currentTurnIndex: Int? = null
+            override val currentAuctionRound: Int? = null
+            override val createdAt = java.time.Instant.parse("2025-01-01T00:00:00Z")
+            override val updatedAt = java.time.Instant.parse("2025-01-01T00:00:00Z")
+        }
+
+    private class LegacyRoomRepository(
+        private var room: RoomModel,
+    ) : RoomRepository {
+        override fun save(room: Room): RoomModel {
+            this.room = room
+            return room
+        }
+
+        override fun findByCode(code: String): RoomModel? = room.takeIf { it.code == code }
+
+        override fun findById(roomId: Long): RoomModel? = room.takeIf { it.roomId == roomId }
     }
 
     private fun createWaitingRoom(
@@ -128,15 +173,25 @@ class RoomStartServiceTest {
         currentAuctionRound: Int? = null,
     ): RoomModel =
         roomRepo.save(
-            Room(
-                code = "START1",
-                hostId = "host",
-                status = RoomStatus.WAITING,
-                mode = mode,
-                teamCount = teamCount,
-                teamSize = 2,
-                budget = budget,
-                draftOrderStrategy = draftOrderStrategy,
+            when (mode) {
+                TeamBuildingMode.AUCTION ->
+                    Room.createAuction(
+                        code = "START1",
+                        hostId = "host",
+                        teamCount = teamCount,
+                        teamSize = 2,
+                        budget = requireNotNull(budget) { "경매 방에는 예산이 필요합니다" },
+                    )
+
+                TeamBuildingMode.DRAFT ->
+                    Room.createDraft(
+                        code = "START1",
+                        hostId = "host",
+                        teamCount = teamCount,
+                        teamSize = 2,
+                        draftOrderStrategy = requireNotNull(draftOrderStrategy) { "드래프트 방에는 순서 전략이 필요합니다" },
+                    )
+            }.copy(
                 currentTurnIndex = currentTurnIndex,
                 currentAuctionRound = currentAuctionRound,
             ),
