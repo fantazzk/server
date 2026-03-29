@@ -80,6 +80,10 @@ management:
           - prometheus
           - loggers
 
+swagger:
+  username: ${SWAGGER_USERNAME}
+  password: ${SWAGGER_PASSWORD}
+
 ---
 
 spring:
@@ -112,3 +116,7 @@ management:
       exposure:
         include:
           - health
+
+swagger:
+  username: ${SWAGGER_USERNAME}
+  password: ${SWAGGER_PASSWORD}
