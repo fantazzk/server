@@ -59,6 +59,7 @@ cors:
   allowed-origins:
     - http://localhost:3000
     - http://localhost:5173
+    - https://dev-fantazzk.vercel.app
 
 ---
 
@@ -75,5 +76,4 @@ spring:
 
 cors:
   allowed-origins:
-    # FE 도메인 확정 후 추가
-    # - https://fantazzk.com
+    - https://fantazzk-rho.vercel.app
