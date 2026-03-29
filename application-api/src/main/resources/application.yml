@@ -15,6 +15,11 @@ cors:
     - http://localhost:3000
     - http://localhost:5173
 
+logging:
+  level:
+    root: INFO
+    com.naminhyeok.fantazzk: DEBUG
+
 server:
   shutdown: graceful
   tomcat:
@@ -64,6 +69,15 @@ cors:
     - http://localhost:5173
     - https://dev-fantazzk.vercel.app
 
+logging:
+  structured:
+    format:
+      console: logstash
+  level:
+    root: WARN
+    org.springframework: WARN
+    com.naminhyeok.fantazzk: INFO
+
 ---
 
 spring:
@@ -80,3 +94,12 @@ spring:
 cors:
   allowed-origins:
     - https://fantazzk-rho.vercel.app
+
+logging:
+  structured:
+    format:
+      console: logstash
+  level:
+    root: WARN
+    org.springframework: WARN
+    com.naminhyeok.fantazzk: INFO
