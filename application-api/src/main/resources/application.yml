@@ -27,13 +27,6 @@ server:
       enabled: true
 
 management:
-  endpoints:
-    web:
-      exposure:
-        include:
-          - health
-          - prometheus
-          - loggers
   endpoint:
     health:
       probes:
@@ -78,6 +71,15 @@ logging:
     org.springframework: WARN
     com.naminhyeok.fantazzk: INFO
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include:
+          - health
+          - prometheus
+          - loggers
+
 ---
 
 spring:
@@ -103,3 +105,10 @@ logging:
     root: WARN
     org.springframework: WARN
     com.naminhyeok.fantazzk: INFO
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include:
+          - health
