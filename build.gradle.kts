@@ -1,5 +1,7 @@
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
+import org.gradle.testing.jacoco.tasks.JacocoCoverageVerification
+import org.gradle.testing.jacoco.tasks.JacocoReport
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 import org.springframework.boot.gradle.plugin.SpringBootPlugin
 
@@ -148,6 +150,42 @@ subprojects {
                         .map { "${it.path}:integrationTest" },
                 )
             }
+        }
+    }
+
+    if (path == ":room:model") {
+        apply(plugin = "jacoco")
+
+        tasks.named<JacocoReport>("jacocoTestReport") {
+            dependsOn(tasks.named("test"))
+            reports {
+                xml.required.set(true)
+                html.required.set(true)
+            }
+        }
+
+        tasks.named<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
+            dependsOn(tasks.named("test"))
+            violationRules {
+                rule {
+                    limit {
+                        counter = "LINE"
+                        value = "COVEREDRATIO"
+                        minimum = "1.0".toBigDecimal()
+                    }
+                }
+                rule {
+                    limit {
+                        counter = "BRANCH"
+                        value = "COVEREDRATIO"
+                        minimum = "1.0".toBigDecimal()
+                    }
+                }
+            }
+        }
+
+        tasks.named("check") {
+            dependsOn("jacocoTestReport", "jacocoTestCoverageVerification")
         }
     }
 
