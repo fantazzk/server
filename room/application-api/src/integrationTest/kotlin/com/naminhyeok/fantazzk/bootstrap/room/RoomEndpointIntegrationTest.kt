@@ -8,6 +8,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.HttpStatus
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.test.context.TestConstructor
+import java.util.UUID
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureTestRestTemplate
@@ -38,11 +39,12 @@ class RoomEndpointIntegrationTest(
 
         assertThat(response.statusCode).isEqualTo(HttpStatus.CREATED)
 
-        val code = Regex(""""code"\s*:\s*"([A-Z0-9]{6})"""")
-            .find(response.body.orEmpty())
-            ?.groupValues
-            ?.get(1)
-            ?: error("room code not found in response: ${response.body}")
+        val code =
+            Regex(""""code"\s*:\s*"([A-Z0-9]{6})"""")
+                .find(response.body.orEmpty())
+                ?.groupValues
+                ?.get(1)
+                ?: error("room code not found in response: ${response.body}")
         val savedRoom = findRoomByCode(code)
         assertThat(savedRoom).isNotNull
         assertThat(savedRoom!!.status).isEqualTo("WAITING")
@@ -65,9 +67,10 @@ class RoomEndpointIntegrationTest(
 
     @Test
     fun `POST rooms join은 참가 팀장을 추가하고 기존 방과 선수 상태는 유지한다`() {
+        val roomCode = uniqueRoomCode()
         val roomId =
             insertRoom(
-                code = "JOINE1",
+                code = roomCode,
                 hostId = "host-join",
                 status = "WAITING",
                 mode = "AUCTION",
@@ -84,12 +87,12 @@ class RoomEndpointIntegrationTest(
                 "/api/v1/rooms/{code}/join",
                 mapOf("nickname" to "참가자"),
                 String::class.java,
-                "JOINE1",
+                roomCode,
             )
 
         assertThat(response.statusCode).isEqualTo(HttpStatus.OK)
 
-        val savedRoom = findRoomByCode("JOINE1")
+        val savedRoom = findRoomByCode(roomCode)
         assertThat(savedRoom).isNotNull
         assertThat(savedRoom!!.status).isEqualTo("WAITING")
 
@@ -118,9 +121,10 @@ class RoomEndpointIntegrationTest(
 
     @Test
     fun `POST rooms start는 방 상태를 진행 중으로 바꾸고 기존 팀장과 선수는 유지한다`() {
+        val roomCode = uniqueRoomCode()
         val roomId =
             insertRoom(
-                code = "STARTE",
+                code = roomCode,
                 hostId = "host-start",
                 status = "WAITING",
                 mode = "AUCTION",
@@ -140,12 +144,12 @@ class RoomEndpointIntegrationTest(
                 "/api/v1/rooms/{code}/start",
                 null,
                 String::class.java,
-                "STARTE",
+                roomCode,
             )
 
         assertThat(response.statusCode).isEqualTo(HttpStatus.OK)
 
-        val startedRoom = findRoomByCode("STARTE")
+        val startedRoom = findRoomByCode(roomCode)
         assertThat(startedRoom).isNotNull
         assertThat(startedRoom!!.status).isEqualTo("IN_PROGRESS")
         assertThat(startedRoom.currentAuctionRound).isEqualTo(1)
@@ -179,9 +183,10 @@ class RoomEndpointIntegrationTest(
 
     @Test
     fun `POST rooms start는 드래프트 방을 시작하면 현재 턴을 0으로 초기화하고 경매 라운드는 비운다`() {
+        val roomCode = uniqueRoomCode()
         val roomId =
             insertRoom(
-                code = "DRFT01",
+                code = roomCode,
                 hostId = "host-draft",
                 status = "WAITING",
                 mode = "DRAFT",
@@ -200,16 +205,29 @@ class RoomEndpointIntegrationTest(
                 "/api/v1/rooms/{code}/start",
                 null,
                 String::class.java,
-                "DRFT01",
+                roomCode,
             )
 
         assertThat(response.statusCode).isEqualTo(HttpStatus.OK)
 
-        val startedRoom = findRoomByCode("DRFT01")
+        val startedRoom = findRoomByCode(roomCode)
         assertThat(startedRoom).isNotNull
         assertThat(startedRoom!!.status).isEqualTo("IN_PROGRESS")
         assertThat(startedRoom.currentTurnIndex).isEqualTo(0)
         assertThat(startedRoom.currentAuctionRound).isNull()
+    }
+
+    @Test
+    fun `POST rooms는 존재하지 않는 템플릿이면 404를 반환한다`() {
+        val response =
+            restTemplate.postForEntity(
+                "/api/v1/rooms",
+                mapOf("templateId" to Long.MAX_VALUE, "hostNickname" to "호스트"),
+                String::class.java,
+            )
+
+        assertThat(response.statusCode).isEqualTo(HttpStatus.NOT_FOUND)
+        assertThat(response.body).contains("템플릿을 찾을 수 없습니다")
     }
 
     private fun insertTemplate(
@@ -399,6 +417,8 @@ class RoomEndpointIntegrationTest(
             },
             roomId,
         )
+
+    private fun uniqueRoomCode(): String = UUID.randomUUID().toString().replace("-", "").take(6).uppercase()
 
     private data class PersistedRoom(
         val roomId: Long,

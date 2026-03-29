@@ -1,6 +1,7 @@
 package com.naminhyeok.fantazzk.room
 
 import com.naminhyeok.fantazzk.room.exception.RoomException
+import com.naminhyeok.fantazzk.room.exception.RoomTemplateNotFoundException
 import io.mockk.every
 import io.mockk.justRun
 import io.mockk.mockk
@@ -100,8 +101,8 @@ class RoomApiControllerTest {
         }
 
         @Test
-        fun `존재하지 않는 템플릿으로 생성하면 404를 반환한다`() {
-            every { roomCreateService.create(any(), any()) } throws RoomException.RoomNotFoundException()
+        fun `템플릿이 없으면 404를 반환한다`() {
+            every { roomCreateService.create(999L, "호스트") } throws RoomTemplateNotFoundException()
 
             mockMvc.post("/api/v1/rooms") {
                 contentType = MediaType.APPLICATION_JSON
@@ -110,7 +111,7 @@ class RoomApiControllerTest {
                 status { isNotFound() }
                 jsonPath("$.resultType") { value("ERROR") }
                 jsonPath("$.error.status") { value(404) }
-                jsonPath("$.error.errorCode") { value("ROOM_NOT_FOUND") }
+                jsonPath("$.error.reason") { value("템플릿을 찾을 수 없습니다") }
             }
         }
 

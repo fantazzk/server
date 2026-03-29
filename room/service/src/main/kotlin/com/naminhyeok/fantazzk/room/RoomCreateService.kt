@@ -1,6 +1,8 @@
 package com.naminhyeok.fantazzk.room
 
+import com.naminhyeok.fantazzk.room.exception.RoomTemplateNotFoundException
 import com.naminhyeok.fantazzk.room.outport.TemplateLookupPort
+import com.naminhyeok.fantazzk.room.outport.TemplateLookupPortException
 import com.naminhyeok.fantazzk.room.repository.RoomPlayerRepository
 import com.naminhyeok.fantazzk.room.repository.RoomRepository
 import com.naminhyeok.fantazzk.room.repository.RoomTeamLeaderRepository
@@ -24,7 +26,12 @@ internal class RoomCreateServiceImpl(
         templateId: Long,
         hostNickname: String,
     ): RoomModel {
-        val template = templateLookupPort.getTemplate(templateId)
+        val template =
+            try {
+                templateLookupPort.getTemplate(templateId)
+            } catch (_: TemplateLookupPortException.NotFound) {
+                throw RoomTemplateNotFoundException()
+            }
         repeat(MAX_CODE_GENERATION_ATTEMPTS) {
             val code = generateCode()
             if (roomRepository.findByCode(code) != null) return@repeat

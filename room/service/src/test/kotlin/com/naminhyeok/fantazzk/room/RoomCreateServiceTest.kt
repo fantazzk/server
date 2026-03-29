@@ -1,5 +1,8 @@
 package com.naminhyeok.fantazzk.room
 
+import com.naminhyeok.fantazzk.room.exception.RoomTemplateNotFoundException
+import com.naminhyeok.fantazzk.room.outport.TemplateLookupPort
+import com.naminhyeok.fantazzk.room.outport.TemplateLookupPortException
 import com.naminhyeok.fantazzk.room.outport.TemplatePlayerSnapshot
 import com.naminhyeok.fantazzk.room.outport.TemplateSnapshot
 import com.naminhyeok.fantazzk.room.repository.RoomRepository
@@ -141,6 +144,28 @@ class RoomCreateServiceTest {
                     Triple("선수C", 1, PlayerStatus.AVAILABLE),
                     Triple("선수A", 2, PlayerStatus.AVAILABLE),
                 )
+        }
+    }
+
+    @Nested
+    inner class `템플릿 조회 실패` {
+        @Test
+        fun `포트에서 템플릿 없음 예외가 오면 방 도메인 예외로 번역한다`() {
+            cut =
+                RoomCreateServiceImpl(
+                    roomRepo,
+                    playerRepo,
+                    leaderRepo,
+                    object : TemplateLookupPort {
+                        override fun getTemplate(templateId: Long): TemplateSnapshot {
+                            throw TemplateLookupPortException.NotFound(templateId)
+                        }
+                    },
+                )
+
+            assertThatThrownBy { cut.create(999L, "호스트") }
+                .isInstanceOf(RoomTemplateNotFoundException::class.java)
+                .hasMessage("템플릿을 찾을 수 없습니다")
         }
     }
 
