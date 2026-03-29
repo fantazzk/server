@@ -3,10 +3,14 @@ package com.naminhyeok.fantazzk.bootstrap.root
 import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.info.Info
 import org.springframework.boot.autoconfigure.AutoConfiguration
+import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
+import org.springframework.web.servlet.config.annotation.CorsRegistry
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 import java.time.Clock
 
 @AutoConfiguration
+@EnableConfigurationProperties(CorsProperties::class)
 class FantazzkApplicationAutoConfiguration {
     @Bean
     fun clock(): Clock = Clock.systemUTC()
@@ -20,4 +24,16 @@ class FantazzkApplicationAutoConfiguration {
                     .version("v1")
                     .description("Team building through draft & auction"),
             )
+
+    @Bean
+    fun corsConfigurer(corsProperties: CorsProperties): WebMvcConfigurer =
+        object : WebMvcConfigurer {
+            override fun addCorsMappings(registry: CorsRegistry) {
+                registry.addMapping("/**")
+                    .allowedOrigins(*corsProperties.allowedOrigins.toTypedArray())
+                    .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
+                    .allowedHeaders("*")
+                    .allowCredentials(true)
+            }
+        }
 }
