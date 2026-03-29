@@ -82,6 +82,9 @@ subprojects {
     apply(plugin = "dev.detekt")
 
     // 도메인별 모듈 이름 충돌 방지 (예: order:repository-jdbc → order-repository-jdbc)
+    if (parent != rootProject) {
+        group = "${rootProject.group}.${parent?.name}"
+    }
     base {
         archivesName = if (parent != rootProject) "${parent?.name}-${name}" else name
     }
