@@ -6,6 +6,8 @@ dependencies {
     implementation(project(":room:repository-jdbc"))
     implementation(project(":integration:room-template"))
 
+    implementation("io.sentry:sentry-spring-boot-4-starter:8.37.1")
+
     implementation("org.liquibase:liquibase-core")
     implementation("org.springframework.boot:spring-boot-liquibase")
 
