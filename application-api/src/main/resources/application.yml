@@ -72,7 +72,6 @@ logging:
       console: logstash
   level:
     root: WARN
-    org.springframework: WARN
     com.naminhyeok.fantazzk: INFO
 
 ---
@@ -98,5 +97,4 @@ logging:
       console: logstash
   level:
     root: WARN
-    org.springframework: WARN
     com.naminhyeok.fantazzk: INFO
