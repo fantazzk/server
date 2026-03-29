@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
+import org.junit.jupiter.params.provider.ValueSource
 
 class RoomStartServiceTest {
     private lateinit var roomRepo: InMemoryRoomRepository
@@ -55,6 +56,7 @@ class RoomStartServiceTest {
 
             assertThatThrownBy { cut.start(room.code) }
                 .isInstanceOf(IllegalStateException::class.java)
+                .hasMessage("대기 중인 방에서만 시작할 수 있습니다")
         }
 
         @Test
@@ -66,30 +68,30 @@ class RoomStartServiceTest {
 
     @Nested
     inner class `팀장 전제 조건` {
-        @Test
-        fun `팀장이 부족하면 시작할 수 없다`() {
+        @ParameterizedTest(name = "팀장이 {0}명이면 시작할 수 없다")
+        @ValueSource(ints = [0, 1, 3])
+        fun `팀장 수는 teamCount와 정확히 일치해야 한다`(leaderCount: Int) {
             val room = createWaitingRoom(TeamBuildingMode.AUCTION, budget = 300)
-            leaderRepo.save(RoomTeamLeader(roomId = room.roomId, teamLeaderId = "leader-A", nickname = "팀장A", remainingBudget = 300))
+            saveLeaders(room, leaderCount)
 
             assertThatThrownBy { cut.start(room.code) }
                 .isInstanceOf(IllegalStateException::class.java)
-        }
-
-        @Test
-        fun `팀장이 한 명도 없으면 시작할 수 없다`() {
-            val room = createWaitingRoom(TeamBuildingMode.AUCTION, budget = 300)
-
-            assertThatThrownBy { cut.start(room.code) }
-                .isInstanceOf(IllegalStateException::class.java)
+                .hasMessage("모든 팀장 자리가 채워져야 시작할 수 있습니다")
         }
     }
 
     @Nested
     inner class `모드별 초기화` {
         @Test
-        fun `경매 모드는 currentAuctionRound를 1로 초기화한다`() {
-            val room = createWaitingRoom(TeamBuildingMode.AUCTION, budget = 300)
-            fillLeaders(room)
+        fun `경매 모드는 currentAuctionRound만 1로 초기화하고 현재 턴은 비운다`() {
+            val room =
+                createWaitingRoom(
+                    mode = TeamBuildingMode.AUCTION,
+                    budget = 300,
+                    currentTurnIndex = 4,
+                    currentAuctionRound = 8,
+                )
+            saveLeaders(room, room.teamCount)
 
             cut.start(room.code)
 
@@ -99,9 +101,15 @@ class RoomStartServiceTest {
         }
 
         @Test
-        fun `드래프트 모드는 currentTurnIndex를 0으로 초기화한다`() {
-            val room = createWaitingRoom(TeamBuildingMode.DRAFT, draftOrderStrategy = DraftOrderStrategy.SNAKE)
-            fillLeaders(room)
+        fun `드래프트 모드는 currentTurnIndex만 0으로 초기화하고 경매 라운드는 비운다`() {
+            val room =
+                createWaitingRoom(
+                    mode = TeamBuildingMode.DRAFT,
+                    draftOrderStrategy = DraftOrderStrategy.SNAKE,
+                    currentTurnIndex = 3,
+                    currentAuctionRound = 7,
+                )
+            saveLeaders(room, room.teamCount)
 
             cut.start(room.code)
 
@@ -115,6 +123,9 @@ class RoomStartServiceTest {
         mode: TeamBuildingMode,
         budget: Int? = null,
         draftOrderStrategy: DraftOrderStrategy? = null,
+        teamCount: Int = 2,
+        currentTurnIndex: Int? = null,
+        currentAuctionRound: Int? = null,
     ): RoomModel =
         roomRepo.save(
             Room(
@@ -122,15 +133,32 @@ class RoomStartServiceTest {
                 hostId = "host",
                 status = RoomStatus.WAITING,
                 mode = mode,
-                teamCount = 2,
+                teamCount = teamCount,
                 teamSize = 2,
                 budget = budget,
                 draftOrderStrategy = draftOrderStrategy,
+                currentTurnIndex = currentTurnIndex,
+                currentAuctionRound = currentAuctionRound,
             ),
         )
 
     private fun fillLeaders(room: RoomModel) {
-        leaderRepo.save(RoomTeamLeader(roomId = room.roomId, teamLeaderId = "leader-A", nickname = "팀장A", remainingBudget = room.budget))
-        leaderRepo.save(RoomTeamLeader(roomId = room.roomId, teamLeaderId = "leader-B", nickname = "팀장B", remainingBudget = room.budget))
+        saveLeaders(room, room.teamCount)
+    }
+
+    private fun saveLeaders(
+        room: RoomModel,
+        count: Int,
+    ) {
+        repeat(count) { index ->
+            leaderRepo.save(
+                RoomTeamLeader(
+                    roomId = room.roomId,
+                    teamLeaderId = "leader-${index + 1}",
+                    nickname = "팀장${index + 1}",
+                    remainingBudget = room.budget,
+                ),
+            )
+        }
     }
 }

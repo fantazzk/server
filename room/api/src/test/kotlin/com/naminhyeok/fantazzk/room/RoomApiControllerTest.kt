@@ -43,8 +43,9 @@ class RoomApiControllerTest {
         @Test
         fun `존재하는 방을 조회하면 200과 방 정보를 반환한다`() {
             val room = room("ABC123")
+            val leaders = listOf(leader(room.roomId))
             every { roomLookupService.get("ABC123") } returns room
-            every { roomLookupService.getTeamLeaders(room.roomId) } returns emptyList()
+            every { roomLookupService.getTeamLeaders(room.roomId) } returns leaders
 
             mockMvc.get("/api/v1/rooms/ABC123")
                 .andExpect {
@@ -52,6 +53,9 @@ class RoomApiControllerTest {
                     jsonPath("$.resultType") { value("SUCCESS") }
                     jsonPath("$.success.code") { value("ABC123") }
                     jsonPath("$.success.status") { value("WAITING") }
+                    jsonPath("$.success.teamLeaders[0].id") { value("leader-1") }
+                    jsonPath("$.success.teamLeaders[0].nickname") { value("참가자") }
+                    jsonPath("$.success.teamLeaders[0].remainingBudget") { value(300) }
                     jsonPath("$.error") { doesNotExist() }
                 }
         }
@@ -75,10 +79,11 @@ class RoomApiControllerTest {
     @Nested
     inner class `방 생성` {
         @Test
-        fun `유효한 요청으로 방을 생성하면 201을 반환한다`() {
+        fun `유효한 요청으로 방을 생성하면 요청 본문을 서비스 인자로 매핑하고 201을 반환한다`() {
             val room = room("NEW001")
-            every { roomCreateService.create(any(), "호스트") } returns room
-            every { roomLookupService.getTeamLeaders(room.roomId) } returns emptyList()
+            val leaders = listOf(leader(room.roomId))
+            every { roomCreateService.create(1L, "호스트") } returns room
+            every { roomLookupService.getTeamLeaders(room.roomId) } returns leaders
 
             mockMvc.post("/api/v1/rooms") {
                 contentType = MediaType.APPLICATION_JSON
@@ -87,6 +92,10 @@ class RoomApiControllerTest {
                 status { isCreated() }
                 jsonPath("$.resultType") { value("SUCCESS") }
                 jsonPath("$.success.code") { value("NEW001") }
+                jsonPath("$.success.status") { value("WAITING") }
+                jsonPath("$.success.teamLeaders[0].id") { value("leader-1") }
+                jsonPath("$.success.teamLeaders[0].nickname") { value("참가자") }
+                jsonPath("$.success.teamLeaders[0].remainingBudget") { value(300) }
             }
         }
 
@@ -100,7 +109,19 @@ class RoomApiControllerTest {
             }.andExpect {
                 status { isNotFound() }
                 jsonPath("$.resultType") { value("ERROR") }
+                jsonPath("$.error.status") { value(404) }
                 jsonPath("$.error.errorCode") { value("ROOM_NOT_FOUND") }
+            }
+        }
+
+        @Test
+        fun `본문이 없으면 400을 반환한다`() {
+            mockMvc.post("/api/v1/rooms") {
+                contentType = MediaType.APPLICATION_JSON
+            }.andExpect {
+                status { isBadRequest() }
+                jsonPath("$.resultType") { value("ERROR") }
+                jsonPath("$.error.errorCode") { value("REQUEST_ERROR") }
             }
         }
     }
@@ -108,7 +129,7 @@ class RoomApiControllerTest {
     @Nested
     inner class `방 참가` {
         @Test
-        fun `유효한 요청으로 참가하면 200과 팀장 정보를 반환한다`() {
+        fun `유효한 요청으로 참가하면 경로와 본문 값을 서비스 인자로 매핑한다`() {
             val room = room("JOIN01")
             val leader = leader(room.roomId)
             every { roomJoinService.join("JOIN01", "참가자") } returns leader
@@ -153,12 +174,24 @@ class RoomApiControllerTest {
                 jsonPath("$.error.errorCode") { value("INVALID_STATE") }
             }
         }
+
+        @Test
+        fun `잘못된 JSON 본문이면 400을 반환한다`() {
+            mockMvc.post("/api/v1/rooms/JOIN01/join") {
+                contentType = MediaType.APPLICATION_JSON
+                content = """{"nickname":"""
+            }.andExpect {
+                status { isBadRequest() }
+                jsonPath("$.resultType") { value("ERROR") }
+                jsonPath("$.error.errorCode") { value("REQUEST_ERROR") }
+            }
+        }
     }
 
     @Nested
     inner class `방 시작` {
         @Test
-        fun `성공적으로 시작하면 200과 방 정보를 반환한다`() {
+        fun `성공적으로 시작하면 경로 값을 서비스 인자로 매핑하고 200을 반환한다`() {
             val room = room("START1", status = RoomStatus.IN_PROGRESS)
             justRun { roomStartService.start("START1") }
             every { roomLookupService.get("START1") } returns room

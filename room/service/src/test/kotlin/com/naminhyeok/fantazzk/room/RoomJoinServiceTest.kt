@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
+import org.junit.jupiter.params.provider.ValueSource
 
 class RoomJoinServiceTest {
     private lateinit var roomRepo: InMemoryRoomRepository
@@ -48,12 +49,42 @@ class RoomJoinServiceTest {
     @Nested
     inner class `참가 성공` {
         @Test
-        fun `대기 중인 방에 참가하면 팀장으로 등록된다`() {
+        fun `정원이 한 자리 남은 대기 방에는 마지막 자리까지 참가할 수 있다`() {
             val leader = cut.join(roomCode, "참가자")
+            val leaders = leaderRepo.findByRoomId(roomId)
 
             assertThat(leader.nickname).isEqualTo("참가자")
             assertThat(leader.roomId).isEqualTo(roomId)
             assertThat(leader.remainingBudget).isEqualTo(300)
+            assertThat(leaders).hasSize(2)
+        }
+
+        @Test
+        fun `참가한 팀장의 잔여 예산은 방의 예산을 그대로 따른다`() {
+            val leader = cut.join(roomCode, "예산참가자")
+
+            assertThat(leader.remainingBudget).isEqualTo(300)
+        }
+
+        @Test
+        fun `예산이 없는 방에 참가하면 팀장의 잔여 예산도 비워둔다`() {
+            roomRepo.save(
+                Room(
+                    roomId = roomId,
+                    code = roomCode,
+                    hostId = "host",
+                    status = RoomStatus.WAITING,
+                    mode = TeamBuildingMode.DRAFT,
+                    teamCount = 2,
+                    teamSize = 2,
+                    budget = null,
+                    draftOrderStrategy = DraftOrderStrategy.SNAKE,
+                ),
+            )
+
+            val leader = cut.join(roomCode, "드래프트참가자")
+
+            assertThat(leader.remainingBudget).isNull()
         }
     }
 
@@ -82,16 +113,26 @@ class RoomJoinServiceTest {
 
             assertThatThrownBy { cut.join(roomCode, "참가자") }
                 .isInstanceOf(IllegalStateException::class.java)
+                .hasMessage("대기 중인 방에서만 참가할 수 있습니다")
         }
 
-        @Test
-        fun `방 정원이 가득 차면 참가할 수 없다`() {
-            leaderRepo.save(
-                RoomTeamLeader(roomId = roomId, teamLeaderId = "leader-2", nickname = "두번째", remainingBudget = 300),
-            )
+        @ParameterizedTest(name = "현재 팀장이 {0}명 더 있으면 참가할 수 없다")
+        @ValueSource(ints = [1, 2])
+        fun `방 정원이 가득 찼거나 초과된 상태면 참가할 수 없다`(additionalLeaders: Int) {
+            repeat(additionalLeaders) { index ->
+                leaderRepo.save(
+                    RoomTeamLeader(
+                        roomId = roomId,
+                        teamLeaderId = "leader-${index + 2}",
+                        nickname = "추가팀장${index + 1}",
+                        remainingBudget = 300,
+                    ),
+                )
+            }
 
             assertThatThrownBy { cut.join(roomCode, "세번째") }
                 .isInstanceOf(IllegalStateException::class.java)
+                .hasMessage("방이 가득 찼습니다")
         }
     }
 }
