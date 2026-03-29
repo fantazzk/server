@@ -74,4 +74,6 @@ spring:
     default-schema: production
 
 cors:
-  allowed-origins: []
+  allowed-origins:
+    # FE 도메인 확정 후 추가
+    # - https://fantazzk.com
