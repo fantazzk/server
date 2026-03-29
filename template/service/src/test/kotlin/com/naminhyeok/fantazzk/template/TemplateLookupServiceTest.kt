@@ -1,6 +1,6 @@
 package com.naminhyeok.fantazzk.template
 
-import com.naminhyeok.fantazzk.template.exception.TemplateNotFoundException
+import com.naminhyeok.fantazzk.template.exception.TemplateException
 import com.naminhyeok.fantazzk.template.support.InMemoryTemplatePlayerRepository
 import com.naminhyeok.fantazzk.template.support.InMemoryTemplateRepository
 import org.assertj.core.api.Assertions.assertThat
@@ -34,7 +34,7 @@ class TemplateLookupServiceTest {
     @Test
     fun `존재하지 않는 ID로 조회하면 예외가 발생한다`() {
         assertThatThrownBy { cut.get(TemplateIdentity.of(999L)) }
-            .isInstanceOf(TemplateNotFoundException::class.java)
+            .isInstanceOf(TemplateException.TemplateNotFoundException::class.java)
     }
 
     @Test

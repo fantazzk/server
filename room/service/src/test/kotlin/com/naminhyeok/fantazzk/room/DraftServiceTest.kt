@@ -1,6 +1,6 @@
 package com.naminhyeok.fantazzk.room
 
-import com.naminhyeok.fantazzk.room.exception.RoomNotFoundException
+import com.naminhyeok.fantazzk.room.exception.RoomException
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomPlayerRepository
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomRepository
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomTeamLeaderRepository
@@ -80,7 +80,7 @@ class DraftServiceTest {
         @Test
         fun `존재하지 않는 방에서 픽할 수 없다`() {
             assertThatThrownBy { cut.pick("NOROOM", "leader-A", "선수1") }
-                .isInstanceOf(RoomNotFoundException::class.java)
+                .isInstanceOf(RoomException.RoomNotFoundException::class.java)
         }
 
         @Test

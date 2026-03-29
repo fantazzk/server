@@ -1,6 +1,6 @@
 package com.naminhyeok.fantazzk.room
 
-import com.naminhyeok.fantazzk.room.exception.RoomNotFoundException
+import com.naminhyeok.fantazzk.room.exception.RoomException
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomRepository
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomTeamLeaderRepository
 import org.assertj.core.api.Assertions.assertThat
@@ -60,7 +60,7 @@ class RoomStartServiceTest {
         @Test
         fun `존재하지 않는 방은 시작할 수 없다`() {
             assertThatThrownBy { cut.start("NOROOM") }
-                .isInstanceOf(RoomNotFoundException::class.java)
+                .isInstanceOf(RoomException.RoomNotFoundException::class.java)
         }
     }
 

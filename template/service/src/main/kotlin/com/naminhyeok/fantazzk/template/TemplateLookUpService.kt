@@ -1,6 +1,6 @@
 package com.naminhyeok.fantazzk.template
 
-import com.naminhyeok.fantazzk.template.exception.TemplateNotFoundException
+import com.naminhyeok.fantazzk.template.exception.TemplateException
 import com.naminhyeok.fantazzk.template.repository.TemplatePlayerRepository
 import com.naminhyeok.fantazzk.template.repository.TemplateRepository
 
@@ -16,7 +16,8 @@ internal class TemplateLookupServiceImpl(
     private val templateRepository: TemplateRepository,
     private val templatePlayerRepository: TemplatePlayerRepository,
 ) : TemplateLookupService {
-    override fun get(identity: TemplateIdentity): TemplateModel = templateRepository.findById(identity) ?: throw TemplateNotFoundException()
+    override fun get(identity: TemplateIdentity): TemplateModel =
+        templateRepository.findById(identity) ?: throw TemplateException.TemplateNotFoundException()
 
     override fun getAll(): List<TemplateModel> = templateRepository.findAll()
 

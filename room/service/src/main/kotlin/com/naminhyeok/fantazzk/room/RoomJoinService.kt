@@ -1,6 +1,6 @@
 package com.naminhyeok.fantazzk.room
 
-import com.naminhyeok.fantazzk.room.exception.RoomNotFoundException
+import com.naminhyeok.fantazzk.room.exception.RoomException
 import com.naminhyeok.fantazzk.room.repository.RoomRepository
 import com.naminhyeok.fantazzk.room.repository.RoomTeamLeaderRepository
 import java.util.UUID
@@ -20,7 +20,7 @@ internal class RoomJoinServiceImpl(
         code: String,
         nickname: String,
     ): RoomTeamLeaderModel {
-        val room = roomRepository.findByCode(code) ?: throw RoomNotFoundException()
+        val room = roomRepository.findByCode(code) ?: throw RoomException.RoomNotFoundException()
         check(room.status == RoomStatus.WAITING) { "대기 중인 방에서만 참가할 수 있습니다" }
 
         val currentLeaders = roomTeamLeaderRepository.findByRoomId(room.roomId)
