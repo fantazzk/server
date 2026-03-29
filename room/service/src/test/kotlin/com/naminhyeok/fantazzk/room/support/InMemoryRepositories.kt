@@ -129,7 +129,11 @@ class InMemoryTemplateFetcher : TemplateFetcher {
     private val templates = mutableMapOf<Long, TemplateSnapshot>()
     private val players = mutableMapOf<Long, List<TemplatePlayerSnapshot>>()
 
-    fun addTemplate(templateId: Long, snapshot: TemplateSnapshot, playerSnapshots: List<TemplatePlayerSnapshot>) {
+    fun addTemplate(
+        templateId: Long,
+        snapshot: TemplateSnapshot,
+        playerSnapshots: List<TemplatePlayerSnapshot>,
+    ) {
         templates[templateId] = snapshot
         players[templateId] = playerSnapshots
     }
@@ -137,6 +141,5 @@ class InMemoryTemplateFetcher : TemplateFetcher {
     override fun getTemplate(templateId: Long): TemplateSnapshot =
         templates[templateId] ?: throw IllegalArgumentException("Template not found: $templateId")
 
-    override fun getPlayers(templateId: Long): List<TemplatePlayerSnapshot> =
-        players[templateId] ?: emptyList()
+    override fun getPlayers(templateId: Long): List<TemplatePlayerSnapshot> = players[templateId] ?: emptyList()
 }

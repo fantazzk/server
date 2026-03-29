@@ -4,6 +4,10 @@ dependencies {
     implementation(project(":room:infrastructure"))
     implementation(project(":room:repository-jdbc"))
     implementation(project(":template:api"))
+    implementation(project(":template:repository-jdbc"))
+
+    implementation("org.liquibase:liquibase-core")
+    implementation("org.springframework.boot:spring-boot-liquibase")
 
     runtimeOnly("org.postgresql:postgresql")
 

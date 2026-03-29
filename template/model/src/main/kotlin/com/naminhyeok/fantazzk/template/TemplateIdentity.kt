@@ -2,6 +2,7 @@ package com.naminhyeok.fantazzk.template
 
 interface TemplateIdentity {
     companion object
+
     val templateId: Long
 }
 

@@ -48,7 +48,13 @@ class RoomCreateServiceTest {
     fun `드래프트 템플릿으로 방을 생성하면 순서 전략이 설정된다`() {
         templateFetcher.addTemplate(
             2L,
-            TemplateSnapshot(mode = TeamBuildingMode.DRAFT, teamCount = 2, teamSize = 2, budget = null, draftOrderStrategy = DraftOrderStrategy.SNAKE),
+            TemplateSnapshot(
+                mode = TeamBuildingMode.DRAFT,
+                teamCount = 2,
+                teamSize = 2,
+                budget = null,
+                draftOrderStrategy = DraftOrderStrategy.SNAKE,
+            ),
             listOf(TemplatePlayerSnapshot("선수1", 0), TemplatePlayerSnapshot("선수2", 1)),
         )
 

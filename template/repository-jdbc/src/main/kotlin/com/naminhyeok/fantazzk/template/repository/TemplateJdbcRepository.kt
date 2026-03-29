@@ -29,8 +29,7 @@ class TemplateRepositoryImpl(
     override fun findById(identity: TemplateIdentity): TemplateModel? =
         templateJdbcCrudRepository.findById(identity.templateId).orElse(null)?.toModel()
 
-    override fun findAll(): List<TemplateModel> =
-        templateJdbcCrudRepository.findAll().map { it.toModel() }
+    override fun findAll(): List<TemplateModel> = templateJdbcCrudRepository.findAll().map { it.toModel() }
 
     private fun TemplateEntity.toModel() =
         Template(

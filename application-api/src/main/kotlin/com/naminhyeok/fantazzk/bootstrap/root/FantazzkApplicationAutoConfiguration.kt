@@ -41,6 +41,5 @@ class FantazzkApplicationAutoConfiguration {
         }
 
     @Bean
-    fun templateFetcher(templateLookUpService: TemplateLookUpService): TemplateFetcher =
-        TemplateFetcherAdapter(templateLookUpService)
+    fun templateFetcher(templateLookUpService: TemplateLookUpService): TemplateFetcher = TemplateFetcherAdapter(templateLookUpService)
 }

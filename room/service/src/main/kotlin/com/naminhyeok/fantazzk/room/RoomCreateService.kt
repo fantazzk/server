@@ -7,7 +7,10 @@ import com.naminhyeok.fantazzk.room.repository.RoomTeamLeaderRepository
 import java.util.UUID
 
 interface RoomCreateService {
-    fun create(templateId: Long, hostNickname: String): RoomModel
+    fun create(
+        templateId: Long,
+        hostNickname: String,
+    ): RoomModel
 }
 
 internal class RoomCreateServiceImpl(
@@ -16,7 +19,10 @@ internal class RoomCreateServiceImpl(
     private val roomTeamLeaderRepository: RoomTeamLeaderRepository,
     private val templateFetcher: TemplateFetcher,
 ) : RoomCreateService {
-    override fun create(templateId: Long, hostNickname: String): RoomModel {
+    override fun create(
+        templateId: Long,
+        hostNickname: String,
+    ): RoomModel {
         val template = templateFetcher.getTemplate(templateId)
         val players = templateFetcher.getPlayers(templateId)
 

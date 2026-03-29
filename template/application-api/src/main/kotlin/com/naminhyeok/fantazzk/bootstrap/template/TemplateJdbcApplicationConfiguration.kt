@@ -1,13 +1,13 @@
-package com.naminhyeok.fantazzk.template.repository
+package com.naminhyeok.fantazzk.bootstrap.template
 
-import org.springframework.boot.SpringBootConfiguration
+import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.context.annotation.Bean
 import org.springframework.core.convert.converter.Converter
 import org.springframework.data.jdbc.core.convert.JdbcCustomConversions
 import org.springframework.data.jdbc.repository.config.AbstractJdbcConfiguration
 
-@SpringBootConfiguration
-class TestApplication(
+@AutoConfiguration
+class TemplateJdbcApplicationConfiguration(
     private val templateJdbcConverters: List<Converter<*, *>>,
 ) : AbstractJdbcConfiguration() {
     @Bean

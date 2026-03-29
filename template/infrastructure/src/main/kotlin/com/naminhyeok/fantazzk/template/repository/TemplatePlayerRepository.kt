@@ -5,5 +5,6 @@ import com.naminhyeok.fantazzk.template.TemplatePlayerModel
 
 interface TemplatePlayerRepository {
     fun saveAll(players: List<TemplatePlayer>): List<TemplatePlayerModel>
+
     fun findByTemplateId(templateId: Long): List<TemplatePlayerModel>
 }

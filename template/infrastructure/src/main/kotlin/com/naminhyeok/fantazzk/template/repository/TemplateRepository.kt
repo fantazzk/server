@@ -6,6 +6,8 @@ import com.naminhyeok.fantazzk.template.TemplateModel
 
 interface TemplateRepository {
     fun save(template: Template): TemplateModel
+
     fun findById(identity: TemplateIdentity): TemplateModel?
+
     fun findAll(): List<TemplateModel>
 }

@@ -28,7 +28,9 @@ class RoomApiController(
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "방 생성", operationId = "createRoom")
-    fun create(@RequestBody request: CreateRoomRequest): RoomResponse {
+    fun create(
+        @RequestBody request: CreateRoomRequest,
+    ): RoomResponse {
         val room = roomCreateService.create(request.templateId, request.hostNickname)
         val leaders = roomLookUpService.getTeamLeaders(room.roomId)
         return RoomResponse.from(room, leaders)
@@ -36,7 +38,9 @@ class RoomApiController(
 
     @GetMapping("/{code}")
     @Operation(summary = "방 조회", operationId = "getRoom")
-    fun getByCode(@PathVariable code: String): RoomResponse {
+    fun getByCode(
+        @PathVariable code: String,
+    ): RoomResponse {
         val room = roomLookUpService.get(code)
         val leaders = roomLookUpService.getTeamLeaders(room.roomId)
         return RoomResponse.from(room, leaders)
@@ -44,7 +48,10 @@ class RoomApiController(
 
     @PostMapping("/{code}/join")
     @Operation(summary = "방 참가", operationId = "joinRoom")
-    fun join(@PathVariable code: String, @RequestBody request: JoinRoomRequest): RoomResponse {
+    fun join(
+        @PathVariable code: String,
+        @RequestBody request: JoinRoomRequest,
+    ): RoomResponse {
         roomJoinService.join(code, request.nickname)
         val room = roomLookUpService.get(code)
         val leaders = roomLookUpService.getTeamLeaders(room.roomId)
@@ -53,7 +60,9 @@ class RoomApiController(
 
     @PostMapping("/{code}/start")
     @Operation(summary = "방 시작", operationId = "startRoom")
-    fun start(@PathVariable code: String): RoomResponse {
+    fun start(
+        @PathVariable code: String,
+    ): RoomResponse {
         roomStartService.start(code)
         val room = roomLookUpService.get(code)
         val leaders = roomLookUpService.getTeamLeaders(room.roomId)
@@ -62,7 +71,10 @@ class RoomApiController(
 
     @PostMapping("/{code}/bid")
     @Operation(summary = "입찰", operationId = "placeBid")
-    fun placeBid(@PathVariable code: String, @RequestBody request: PlaceBidRequest): RoomResponse {
+    fun placeBid(
+        @PathVariable code: String,
+        @RequestBody request: PlaceBidRequest,
+    ): RoomResponse {
         auctionService.placeBid(code, request.teamLeaderId, request.amount)
         val room = roomLookUpService.get(code)
         val leaders = roomLookUpService.getTeamLeaders(room.roomId)
@@ -71,7 +83,9 @@ class RoomApiController(
 
     @PostMapping("/{code}/settle")
     @Operation(summary = "경매 정산", operationId = "settleAuction")
-    fun settle(@PathVariable code: String): RoomResponse {
+    fun settle(
+        @PathVariable code: String,
+    ): RoomResponse {
         auctionService.settle(code)
         val room = roomLookUpService.get(code)
         val leaders = roomLookUpService.getTeamLeaders(room.roomId)
@@ -80,7 +94,10 @@ class RoomApiController(
 
     @PostMapping("/{code}/pick")
     @Operation(summary = "드래프트 픽", operationId = "pick")
-    fun pick(@PathVariable code: String, @RequestBody request: PickRequest): RoomResponse {
+    fun pick(
+        @PathVariable code: String,
+        @RequestBody request: PickRequest,
+    ): RoomResponse {
         draftService.pick(code, request.teamLeaderId, request.playerName)
         val room = roomLookUpService.get(code)
         val leaders = roomLookUpService.getTeamLeaders(room.roomId)
