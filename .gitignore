@@ -25,3 +25,6 @@ Thumbs.db
 .env
 .env.dev
 .env.prod
+
+# Worktrees
+.worktrees/
