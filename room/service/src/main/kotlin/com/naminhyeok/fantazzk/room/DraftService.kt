@@ -32,10 +32,13 @@ internal class DraftServiceImpl(
 
         val leaders = roomTeamLeaderRepository.findByRoomId(room.roomId)
         val strategy = requireNotNull(room.draftOrderStrategy) { "드래프트 모드에는 순서 전략이 필요합니다" }
-        val pickOrder = generatePickOrder(leaders.map { it.teamLeaderId }, strategy, room.picksPerTeam)
-        check(turnIndex < pickOrder.size) { "드래프트가 이미 종료되었습니다" }
-        val currentTurn = pickOrder[turnIndex]
-        check(currentTurn == teamLeaderId) { "현재 턴이 아닙니다" }
+        val draftBoard =
+            DraftBoard(
+                teamLeaderIds = leaders.map { it.teamLeaderId },
+                strategy = strategy,
+                picksPerTeam = room.picksPerTeam,
+            )
+        draftBoard.requireTurnOwner(turnIndex = turnIndex, teamLeaderId = teamLeaderId)
 
         leaders.firstOrNull { it.teamLeaderId == teamLeaderId }
             ?: throw RoomException.TeamLeaderNotFoundException()
@@ -45,10 +48,8 @@ internal class DraftServiceImpl(
         requireNotNull(target) { "선수 '$playerName'은(는) 선택할 수 없습니다" }
 
         val assignedCount = roomTeamMemberRepository.countByRoomId(room.roomId)
-        val newTurnIndex = turnIndex + 1
-        val totalRequired = room.teamCount * room.picksPerTeam
-        val completed = assignedCount + 1 >= totalRequired
-        val nextRoom = room.advanceDraftTurn(nextTurnIndex = newTurnIndex, completed = completed)
+        val settlement = draftBoard.settlePick(turnIndex = turnIndex, assignedCountAfterPick = assignedCount + 1)
+        val nextRoom = room.advanceDraftTurn(nextTurnIndex = settlement.nextTurnIndex, completed = settlement.completed)
         val assignedPlayer = target.assign()
         val member =
             RoomTeamMember(
@@ -63,21 +64,5 @@ internal class DraftServiceImpl(
         roomRepository.save(nextRoom)
 
         return savedMember
-    }
-
-    companion object {
-        fun generatePickOrder(
-            teamLeaderIds: List<String>,
-            strategy: DraftOrderStrategy,
-            picksPerTeam: Int,
-        ): List<String> {
-            val reversed = if (strategy == DraftOrderStrategy.SNAKE) teamLeaderIds.reversed() else null
-            return (0 until picksPerTeam).flatMap { round ->
-                when (strategy) {
-                    DraftOrderStrategy.SNAKE -> if (round % 2 == 0) teamLeaderIds else reversed!!
-                    DraftOrderStrategy.FIXED -> teamLeaderIds
-                }
-            }
-        }
     }
 }

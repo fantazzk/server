@@ -169,13 +169,13 @@ class DraftServiceTest {
     inner class `픽 순서 전략` {
         @Test
         fun `SNAKE 전략은 홀수 라운드에서 순서가 뒤집힌다`() {
-            val order = DraftServiceImpl.generatePickOrder(listOf("A", "B"), DraftOrderStrategy.SNAKE, 2)
+            val order = DraftBoard(listOf("A", "B"), DraftOrderStrategy.SNAKE, 2).pickOrder()
             assertThat(order).containsExactly("A", "B", "B", "A")
         }
 
         @Test
         fun `FIXED 전략은 매 라운드 동일 순서를 유지한다`() {
-            val order = DraftServiceImpl.generatePickOrder(listOf("A", "B"), DraftOrderStrategy.FIXED, 2)
+            val order = DraftBoard(listOf("A", "B"), DraftOrderStrategy.FIXED, 2).pickOrder()
             assertThat(order).containsExactly("A", "B", "A", "B")
         }
     }

@@ -7,6 +7,129 @@ import org.junit.jupiter.api.Test
 
 class RoomDomainPoliciesTest {
     @Nested
+    inner class `드래프트 보드 정책` {
+        @Test
+        fun `SNAKE 전략은 짝수 라운드에서 역순으로 다음 픽 팀장을 계산한다`() {
+            val board =
+                DraftBoard(
+                    teamLeaderIds = listOf("A", "B", "C"),
+                    strategy = DraftOrderStrategy.SNAKE,
+                    picksPerTeam = 2,
+                )
+
+            assertThat(board.pickOrder()).containsExactly("A", "B", "C", "C", "B", "A")
+            assertThat(board.currentTeamLeader(turnIndex = 4)).isEqualTo("B")
+        }
+
+        @Test
+        fun `FIXED 전략은 매 라운드 같은 순서를 유지한다`() {
+            val board =
+                DraftBoard(
+                    teamLeaderIds = listOf("A", "B"),
+                    strategy = DraftOrderStrategy.FIXED,
+                    picksPerTeam = 3,
+                )
+
+            assertThat(board.pickOrder()).containsExactly("A", "B", "A", "B", "A", "B")
+        }
+
+        @Test
+        fun `현재 턴이 전체 픽 수를 넘기면 더 이상 팀장을 조회할 수 없다`() {
+            val board =
+                DraftBoard(
+                    teamLeaderIds = listOf("A", "B"),
+                    strategy = DraftOrderStrategy.FIXED,
+                    picksPerTeam = 1,
+                )
+
+            assertThatThrownBy { board.currentTeamLeader(turnIndex = 2) }
+                .isInstanceOf(IllegalStateException::class.java)
+                .hasMessageContaining("드래프트가 이미 종료되었습니다")
+        }
+
+        @Test
+        fun `현재 턴이 아닌 팀장은 픽할 수 없다`() {
+            val board =
+                DraftBoard(
+                    teamLeaderIds = listOf("A", "B"),
+                    strategy = DraftOrderStrategy.SNAKE,
+                    picksPerTeam = 2,
+                )
+
+            assertThatThrownBy { board.requireTurnOwner(turnIndex = 1, teamLeaderId = "A") }
+                .isInstanceOf(IllegalStateException::class.java)
+                .hasMessageContaining("현재 턴이 아닙니다")
+        }
+
+        @Test
+        fun `픽 정산 정책은 다음 턴과 방 완료 여부를 함께 계산한다`() {
+            val board =
+                DraftBoard(
+                    teamLeaderIds = listOf("A", "B"),
+                    strategy = DraftOrderStrategy.SNAKE,
+                    picksPerTeam = 2,
+                )
+
+            val settlement = board.settlePick(turnIndex = 2, assignedCountAfterPick = 4)
+
+            assertThat(settlement.nextTurnIndex).isEqualTo(3)
+            assertThat(settlement.completed).isTrue()
+        }
+    }
+
+    @Nested
+    inner class `경매 라운드 정책` {
+        @Test
+        fun `현재 최고가보다 낮거나 같은 금액은 입찰할 수 없다`() {
+            val round =
+                AuctionRound(
+                    round = 3,
+                    highestBid = RoomBid(roomId = 1L, round = 3, teamLeaderId = "leader-A", amount = 100),
+                )
+
+            assertThatThrownBy { round.requireHigherBid(amount = 100) }
+                .isInstanceOf(IllegalArgumentException::class.java)
+                .hasMessageContaining("현재 최고가보다 높아야 합니다")
+        }
+
+        @Test
+        fun `최고 입찰이 있으면 낙찰 정산 정책을 만든다`() {
+            val winningBid = RoomBid(roomId = 1L, round = 3, teamLeaderId = "leader-B", amount = 150)
+            val round = AuctionRound(round = 3, highestBid = winningBid)
+
+            val settlement = round.settle(playerName = "선수1", assignedCountAfterSettlement = 4, totalRequired = 4)
+
+            assertThat(settlement.playerName).isEqualTo("선수1")
+            assertThat(settlement.outcome).isEqualTo(AuctionOutcome.SOLD)
+            assertThat(settlement.nextRound).isEqualTo(4)
+            assertThat(settlement.completed).isTrue()
+            assertThat(settlement.winningBid).isEqualTo(winningBid)
+        }
+
+        @Test
+        fun `최고 입찰이 없으면 유찰 정산 정책을 만든다`() {
+            val round = AuctionRound(round = 3, highestBid = null)
+
+            val settlement = round.settle(playerName = "선수1", assignedCountAfterSettlement = 1, totalRequired = 4)
+
+            assertThat(settlement.playerName).isEqualTo("선수1")
+            assertThat(settlement.outcome).isEqualTo(AuctionOutcome.PASSED)
+            assertThat(settlement.nextRound).isEqualTo(4)
+            assertThat(settlement.completed).isFalse()
+            assertThat(settlement.winningBid).isNull()
+        }
+
+        @Test
+        fun `낙찰 팀의 정원이 가득 차면 더 이상 선수를 배정할 수 없다`() {
+            val round = AuctionRound(round = 3, highestBid = RoomBid(roomId = 1L, round = 3, teamLeaderId = "leader-B", amount = 150))
+
+            assertThatThrownBy { round.requireRosterCapacity(currentMemberCount = 2, picksPerTeam = 2) }
+                .isInstanceOf(IllegalStateException::class.java)
+                .hasMessageContaining("팀장의 팀원 정원이 가득 찼습니다")
+        }
+    }
+
+    @Nested
     inner class `방 생성 정책` {
         @Test
         fun `생성자는 모드별 설정 불변식을 강제한다`() {

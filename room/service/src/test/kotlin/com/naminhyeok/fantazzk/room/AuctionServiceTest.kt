@@ -138,6 +138,17 @@ class AuctionServiceTest {
         }
 
         @Test
+        fun `정산으로 다음 라운드가 된 뒤에는 이전 라운드 최고가와 무관하게 다시 입찰한다`() {
+            cut.placeBid(roomCode, "leader-A", 100)
+            cut.settle(roomCode)
+
+            val nextBid = cut.placeBid(roomCode, "leader-B", 100)
+
+            assertThat(nextBid.round).isEqualTo(2)
+            assertThat(nextBid.amount).isEqualTo(100)
+        }
+
+        @Test
         fun `현재 경매 라운드가 없으면 입찰 기록을 저장하지 않는다`() {
             roomRepo.save(
                 Room(
