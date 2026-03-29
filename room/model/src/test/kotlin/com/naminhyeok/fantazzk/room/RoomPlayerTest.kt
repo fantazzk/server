@@ -85,6 +85,15 @@ class RoomPlayerTest {
                 .isInstanceOf(IllegalArgumentException::class.java)
                 .hasMessageContaining("순서는 0 이상이어야 합니다")
         }
+
+        @Test
+        fun `배정된 선수는 뒤로 보낼 수 없다`() {
+            val player = RoomPlayer(roomId = 1L, name = "선수1", status = PlayerStatus.ASSIGNED, displayOrder = 3)
+
+            assertThatThrownBy { player.moveToBack(4) }
+                .isInstanceOf(IllegalStateException::class.java)
+                .hasMessageContaining("선수를 뒤로 보낼 수 없습니다")
+        }
     }
 
     @Nested
@@ -117,6 +126,30 @@ class RoomPlayerTest {
                     updatedAt = updatedAt,
                 ),
             )
+        }
+    }
+
+    @Nested
+    inner class `모델 확장` {
+        @Test
+        fun `RoomPlayerModel 확장은 aggregate의 상태 전이를 그대로 따른다`() {
+            val model =
+                playerModel(
+                    roomPlayerId = 11L,
+                    roomId = 3L,
+                    name = "선수11",
+                    status = PlayerStatus.AVAILABLE,
+                    displayOrder = 2,
+                    createdAt = Instant.parse("2025-01-03T00:00:00Z"),
+                    updatedAt = Instant.parse("2025-01-04T00:00:00Z"),
+                )
+
+            val assigned = model.assign()
+            val moved = model.moveToBack(5)
+
+            assertThat(assigned.status).isEqualTo(PlayerStatus.ASSIGNED)
+            assertThat(moved.displayOrder).isEqualTo(5)
+            assertThat(moved.status).isEqualTo(PlayerStatus.AVAILABLE)
         }
     }
 

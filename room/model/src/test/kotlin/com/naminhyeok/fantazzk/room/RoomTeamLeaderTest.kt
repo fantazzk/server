@@ -150,6 +150,31 @@ class RoomTeamLeaderTest {
         }
     }
 
+    @Nested
+    inner class `모델 확장` {
+        @Test
+        fun `RoomTeamLeaderModel 확장은 aggregate의 예산 규칙을 그대로 따른다`() {
+            val model =
+                leaderModel(
+                    roomTeamLeaderId = 12L,
+                    roomId = 2L,
+                    teamLeaderId = "leader-12",
+                    nickname = "주장",
+                    remainingBudget = 100,
+                    createdAt = Instant.parse("2025-02-03T00:00:00Z"),
+                    updatedAt = Instant.parse("2025-02-04T00:00:00Z"),
+                )
+
+            assertThatCode { model.requireCanBid(60) }.doesNotThrowAnyException()
+            assertThatCode { model.validateBudget(100) }.doesNotThrowAnyException()
+
+            val spent = model.spend(30)
+
+            assertThat(spent.remainingBudget).isEqualTo(70)
+            assertThat(spent.teamLeaderId).isEqualTo("leader-12")
+        }
+    }
+
     private fun leader(remainingBudget: Int?) =
         RoomTeamLeader(roomId = 1L, teamLeaderId = "leader-1", nickname = "팀장", remainingBudget = remainingBudget)
 

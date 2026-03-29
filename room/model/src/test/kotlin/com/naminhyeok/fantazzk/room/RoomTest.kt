@@ -345,6 +345,212 @@ class RoomTest {
         }
     }
 
+    @Nested
+    inner class `현재 위치와 모델 확장` {
+        @Test
+        fun `현재 경매 라운드와 드래프트 턴은 aggregate와 모델 확장에서 읽을 수 있다`() {
+            val auctionRoom =
+                room(
+                    status = RoomStatus.IN_PROGRESS,
+                    mode = TeamBuildingMode.AUCTION,
+                    currentAuctionRound = 2,
+                )
+            val draftRoom =
+                room(
+                    status = RoomStatus.IN_PROGRESS,
+                    mode = TeamBuildingMode.DRAFT,
+                    budget = null,
+                    draftOrderStrategy = DraftOrderStrategy.SNAKE,
+                    currentTurnIndex = 3,
+                )
+
+            assertThat(auctionRoom.requireCurrentAuctionRound()).isEqualTo(2)
+            assertThat(
+                roomModel(
+                    roomId = 21L,
+                    code = "ROOM21",
+                    hostId = "host-21",
+                    status = RoomStatus.IN_PROGRESS,
+                    mode = TeamBuildingMode.AUCTION,
+                    teamCount = 2,
+                    teamSize = 3,
+                    budget = 300,
+                    draftOrderStrategy = null,
+                    currentTurnIndex = null,
+                    currentAuctionRound = 2,
+                    createdAt = Instant.parse("2025-02-07T00:00:00Z"),
+                    updatedAt = Instant.parse("2025-02-08T00:00:00Z"),
+                ).requireCurrentAuctionRound(),
+            ).isEqualTo(2)
+            assertThat(draftRoom.requireCurrentTurnIndex()).isEqualTo(3)
+            assertThat(
+                roomModel(
+                    roomId = 22L,
+                    code = "ROOM22",
+                    hostId = "host-22",
+                    status = RoomStatus.IN_PROGRESS,
+                    mode = TeamBuildingMode.DRAFT,
+                    teamCount = 2,
+                    teamSize = 3,
+                    budget = null,
+                    draftOrderStrategy = DraftOrderStrategy.SNAKE,
+                    currentTurnIndex = 3,
+                    currentAuctionRound = null,
+                    createdAt = Instant.parse("2025-02-09T00:00:00Z"),
+                    updatedAt = Instant.parse("2025-02-10T00:00:00Z"),
+                ).requireCurrentTurnIndex(),
+            ).isEqualTo(3)
+        }
+
+        @Test
+        fun `legacy row에서 현재 위치가 비어 있으면 aggregate가 거부한다`() {
+            assertThatThrownBy {
+                room(
+                    status = RoomStatus.IN_PROGRESS,
+                    mode = TeamBuildingMode.AUCTION,
+                    currentAuctionRound = null,
+                ).requireCurrentAuctionRound()
+            }
+                .isInstanceOf(IllegalArgumentException::class.java)
+                .hasMessageContaining("현재 경매 라운드가 없습니다")
+
+            assertThatThrownBy {
+                room(
+                    status = RoomStatus.IN_PROGRESS,
+                    mode = TeamBuildingMode.DRAFT,
+                    budget = null,
+                    draftOrderStrategy = DraftOrderStrategy.SNAKE,
+                    currentTurnIndex = null,
+                ).requireCurrentTurnIndex()
+            }
+                .isInstanceOf(IllegalArgumentException::class.java)
+                .hasMessageContaining("현재 드래프트 턴이 없습니다")
+        }
+
+        @Test
+        fun `RoomModel 확장은 경매 진행 전이를 aggregate 규칙으로 위임한다`() {
+            val model =
+                roomModel(
+                    roomId = 23L,
+                    code = "ROOM23",
+                    hostId = "host-23",
+                    status = RoomStatus.IN_PROGRESS,
+                    mode = TeamBuildingMode.AUCTION,
+                    teamCount = 2,
+                    teamSize = 3,
+                    budget = 300,
+                    draftOrderStrategy = null,
+                    currentTurnIndex = null,
+                    currentAuctionRound = 2,
+                    createdAt = Instant.parse("2025-02-11T00:00:00Z"),
+                    updatedAt = Instant.parse("2025-02-12T00:00:00Z"),
+                )
+
+            val advanced = model.advanceAuction(nextRound = 3, completed = false)
+            val moved = model.moveAuctionTargetToNextRound(nextRound = 4)
+
+            assertThat(advanced.currentAuctionRound).isEqualTo(3)
+            assertThat(advanced.status).isEqualTo(RoomStatus.IN_PROGRESS)
+            assertThat(moved.currentAuctionRound).isEqualTo(4)
+            assertThat(moved.status).isEqualTo(RoomStatus.IN_PROGRESS)
+        }
+
+        @Test
+        fun `RoomModel 확장은 드래프트 진행 전이를 aggregate 규칙으로 위임한다`() {
+            val model =
+                roomModel(
+                    roomId = 24L,
+                    code = "ROOM24",
+                    hostId = "host-24",
+                    status = RoomStatus.IN_PROGRESS,
+                    mode = TeamBuildingMode.DRAFT,
+                    teamCount = 2,
+                    teamSize = 3,
+                    budget = null,
+                    draftOrderStrategy = DraftOrderStrategy.SNAKE,
+                    currentTurnIndex = 1,
+                    currentAuctionRound = null,
+                    createdAt = Instant.parse("2025-02-13T00:00:00Z"),
+                    updatedAt = Instant.parse("2025-02-14T00:00:00Z"),
+                )
+
+            val advanced = model.advanceDraftTurn(nextTurnIndex = 2, completed = false)
+
+            assertThat(advanced.currentTurnIndex).isEqualTo(2)
+            assertThat(advanced.status).isEqualTo(RoomStatus.IN_PROGRESS)
+            assertThat(advanced.currentAuctionRound).isNull()
+        }
+
+        @Test
+        fun `잘못된 모드나 상태에서는 진행 전이를 호출할 수 없다`() {
+            assertThatThrownBy {
+                room(
+                    status = RoomStatus.IN_PROGRESS,
+                    mode = TeamBuildingMode.DRAFT,
+                    budget = null,
+                    draftOrderStrategy = DraftOrderStrategy.SNAKE,
+                    currentTurnIndex = 0,
+                ).advanceAuction(nextRound = 2, completed = false)
+            }
+                .isInstanceOf(IllegalStateException::class.java)
+                .hasMessageContaining("경매 모드가 아닙니다")
+
+            assertThatThrownBy {
+                room(
+                    status = RoomStatus.WAITING,
+                    mode = TeamBuildingMode.AUCTION,
+                    currentAuctionRound = 1,
+                ).advanceAuction(nextRound = 2, completed = false)
+            }
+                .isInstanceOf(IllegalStateException::class.java)
+                .hasMessageContaining("진행 중인 방에서만 가능합니다")
+
+            assertThatThrownBy {
+                room(
+                    status = RoomStatus.IN_PROGRESS,
+                    mode = TeamBuildingMode.DRAFT,
+                    budget = null,
+                    draftOrderStrategy = DraftOrderStrategy.SNAKE,
+                    currentTurnIndex = 0,
+                ).moveAuctionTargetToNextRound(nextRound = 2)
+            }
+                .isInstanceOf(IllegalStateException::class.java)
+                .hasMessageContaining("경매 모드가 아닙니다")
+
+            assertThatThrownBy {
+                room(
+                    status = RoomStatus.WAITING,
+                    mode = TeamBuildingMode.AUCTION,
+                    currentAuctionRound = 1,
+                ).moveAuctionTargetToNextRound(nextRound = 2)
+            }
+                .isInstanceOf(IllegalStateException::class.java)
+                .hasMessageContaining("진행 중인 방에서만 가능합니다")
+
+            assertThatThrownBy {
+                room(
+                    status = RoomStatus.IN_PROGRESS,
+                    mode = TeamBuildingMode.AUCTION,
+                    currentAuctionRound = 1,
+                ).advanceDraftTurn(nextTurnIndex = 1, completed = false)
+            }
+                .isInstanceOf(IllegalStateException::class.java)
+                .hasMessageContaining("드래프트 모드가 아닙니다")
+
+            assertThatThrownBy {
+                room(
+                    status = RoomStatus.WAITING,
+                    mode = TeamBuildingMode.DRAFT,
+                    budget = null,
+                    draftOrderStrategy = DraftOrderStrategy.SNAKE,
+                    currentTurnIndex = 0,
+                ).advanceDraftTurn(nextTurnIndex = 1, completed = false)
+            }
+                .isInstanceOf(IllegalStateException::class.java)
+                .hasMessageContaining("진행 중인 방에서만 가능합니다")
+        }
+    }
+
     private fun room(
         roomId: Long = 0L,
         code: String = "TEST01",

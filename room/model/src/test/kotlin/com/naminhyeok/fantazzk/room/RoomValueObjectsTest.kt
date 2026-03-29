@@ -1,6 +1,7 @@
 package com.naminhyeok.fantazzk.room
 
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.time.Instant
@@ -97,6 +98,29 @@ class RoomValueObjectsTest {
             assertThat(member.assignOrder).isEqualTo(2)
             assertThat(member.createdAt).isEqualTo(createdAt)
             assertThat(member.updatedAt).isEqualTo(updatedAt)
+        }
+    }
+
+    @Nested
+    inner class `예산 상태 계약` {
+        @Test
+        fun `예산 상태는 null 여부에 따라 선택적으로 생성된다`() {
+            assertThat(BudgetState.from(70)?.remainingBudget).isEqualTo(70)
+            assertThat(BudgetState.from(null)).isNull()
+        }
+
+        @Test
+        fun `예산 상태는 음수를 거부하고 필수 예산을 강제한다`() {
+            assertThatThrownBy { BudgetState(-1) }
+                .isInstanceOf(IllegalArgumentException::class.java)
+                .hasMessageContaining("예산은 0 이상이어야 합니다")
+
+            val state = BudgetState.requireFrom(30)
+
+            assertThat(state.remainingBudget).isEqualTo(30)
+            assertThatThrownBy { BudgetState.requireFrom(null) }
+                .isInstanceOf(IllegalArgumentException::class.java)
+                .hasMessageContaining("예산이 존재하지 않습니다")
         }
     }
 }

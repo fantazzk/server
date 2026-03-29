@@ -1,6 +1,7 @@
 package com.naminhyeok.fantazzk.room
 
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatCode
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -8,6 +9,20 @@ import org.junit.jupiter.api.Test
 class RoomDomainPoliciesTest {
     @Nested
     inner class `드래프트 보드 정책` {
+        @Test
+        fun `드래프트 보드는 선언된 구성값을 그대로 노출한다`() {
+            val board =
+                DraftBoard(
+                    teamLeaderIds = listOf("A", "B", "C"),
+                    strategy = DraftOrderStrategy.SNAKE,
+                    picksPerTeam = 2,
+                )
+
+            assertThat(board.teamLeaderIds).containsExactly("A", "B", "C")
+            assertThat(board.strategy).isEqualTo(DraftOrderStrategy.SNAKE)
+            assertThat(board.picksPerTeam).isEqualTo(2)
+        }
+
         @Test
         fun `SNAKE 전략은 짝수 라운드에서 역순으로 다음 픽 팀장을 계산한다`() {
             val board =
@@ -48,6 +63,20 @@ class RoomDomainPoliciesTest {
         }
 
         @Test
+        fun `현재 턴은 음수일 수 없다`() {
+            val board =
+                DraftBoard(
+                    teamLeaderIds = listOf("A", "B"),
+                    strategy = DraftOrderStrategy.FIXED,
+                    picksPerTeam = 1,
+                )
+
+            assertThatThrownBy { board.currentTeamLeader(turnIndex = -1) }
+                .isInstanceOf(IllegalArgumentException::class.java)
+                .hasMessageContaining("드래프트 턴은 0 이상이어야 합니다")
+        }
+
+        @Test
         fun `현재 턴이 아닌 팀장은 픽할 수 없다`() {
             val board =
                 DraftBoard(
@@ -59,6 +88,18 @@ class RoomDomainPoliciesTest {
             assertThatThrownBy { board.requireTurnOwner(turnIndex = 1, teamLeaderId = "A") }
                 .isInstanceOf(IllegalStateException::class.java)
                 .hasMessageContaining("현재 턴이 아닙니다")
+        }
+
+        @Test
+        fun `현재 턴 팀장은 픽 소유권 검증을 통과한다`() {
+            val board =
+                DraftBoard(
+                    teamLeaderIds = listOf("A", "B"),
+                    strategy = DraftOrderStrategy.SNAKE,
+                    picksPerTeam = 2,
+                )
+
+            assertThatCode { board.requireTurnOwner(turnIndex = 1, teamLeaderId = "B") }.doesNotThrowAnyException()
         }
 
         @Test
@@ -75,10 +116,36 @@ class RoomDomainPoliciesTest {
             assertThat(settlement.nextTurnIndex).isEqualTo(3)
             assertThat(settlement.completed).isTrue()
         }
+
+        @Test
+        fun `픽 정산 정책은 아직 남은 픽이 있으면 완료되지 않는다`() {
+            val board =
+                DraftBoard(
+                    teamLeaderIds = listOf("A", "B"),
+                    strategy = DraftOrderStrategy.FIXED,
+                    picksPerTeam = 2,
+                )
+
+            val settlement = board.settlePick(turnIndex = 0, assignedCountAfterPick = 1)
+
+            assertThat(settlement.nextTurnIndex).isEqualTo(1)
+            assertThat(settlement.completed).isFalse()
+        }
     }
 
     @Nested
     inner class `경매 라운드 정책` {
+        @Test
+        fun `경매 라운드는 1 이상이어야 하고 기본값으로 최고 입찰이 비어 있다`() {
+            val round = AuctionRound(round = 1)
+
+            assertThat(round.round).isEqualTo(1)
+            assertThat(round.highestBid).isNull()
+            assertThatThrownBy { AuctionRound(round = 0) }
+                .isInstanceOf(IllegalArgumentException::class.java)
+                .hasMessageContaining("경매 라운드는 1 이상이어야 합니다")
+        }
+
         @Test
         fun `현재 최고가보다 낮거나 같은 금액은 입찰할 수 없다`() {
             val round =
@@ -93,6 +160,13 @@ class RoomDomainPoliciesTest {
         }
 
         @Test
+        fun `최고 입찰이 없으면 첫 입찰을 허용한다`() {
+            val round = AuctionRound(round = 1)
+
+            assertThatCode { round.requireHigherBid(amount = 1) }.doesNotThrowAnyException()
+        }
+
+        @Test
         fun `최고 입찰이 있으면 낙찰 정산 정책을 만든다`() {
             val winningBid = RoomBid(roomId = 1L, round = 3, teamLeaderId = "leader-B", amount = 150)
             val round = AuctionRound(round = 3, highestBid = winningBid)
@@ -103,6 +177,18 @@ class RoomDomainPoliciesTest {
             assertThat(settlement.outcome).isEqualTo(AuctionOutcome.SOLD)
             assertThat(settlement.nextRound).isEqualTo(4)
             assertThat(settlement.completed).isTrue()
+            assertThat(settlement.winningBid).isEqualTo(winningBid)
+        }
+
+        @Test
+        fun `최고 입찰이 있어도 아직 정원이 남아 있으면 방은 계속 진행된다`() {
+            val winningBid = RoomBid(roomId = 1L, round = 2, teamLeaderId = "leader-A", amount = 90)
+            val round = AuctionRound(round = 2, highestBid = winningBid)
+
+            val settlement = round.settle(playerName = "선수2", assignedCountAfterSettlement = 2, totalRequired = 4)
+
+            assertThat(settlement.outcome).isEqualTo(AuctionOutcome.SOLD)
+            assertThat(settlement.completed).isFalse()
             assertThat(settlement.winningBid).isEqualTo(winningBid)
         }
 
@@ -126,6 +212,13 @@ class RoomDomainPoliciesTest {
             assertThatThrownBy { round.requireRosterCapacity(currentMemberCount = 2, picksPerTeam = 2) }
                 .isInstanceOf(IllegalStateException::class.java)
                 .hasMessageContaining("팀장의 팀원 정원이 가득 찼습니다")
+        }
+
+        @Test
+        fun `정원이 남아 있으면 선수를 배정할 수 있다`() {
+            val round = AuctionRound(round = 3, highestBid = RoomBid(roomId = 1L, round = 3, teamLeaderId = "leader-B", amount = 150))
+
+            assertThatCode { round.requireRosterCapacity(currentMemberCount = 1, picksPerTeam = 2) }.doesNotThrowAnyException()
         }
     }
 
@@ -206,6 +299,100 @@ class RoomDomainPoliciesTest {
                 ),
             )
             assertThat(room.progress).isEqualTo(RoomProgress.Waiting)
+        }
+    }
+
+    @Nested
+    inner class `파생 상태 정책` {
+        @Test
+        fun `팀 구성 설정은 공통 속성과 모드별 속성을 함께 노출한다`() {
+            val auction = auctionRoom().configuration as TeamBuildingConfiguration.Auction
+            val draft = draftRoom().configuration as TeamBuildingConfiguration.Draft
+
+            assertThat(auction.mode).isEqualTo(TeamBuildingMode.AUCTION)
+            assertThat(auction.teamCount).isEqualTo(2)
+            assertThat(auction.teamSize).isEqualTo(3)
+            assertThat(auction.budget).isEqualTo(300)
+            assertThat(draft.mode).isEqualTo(TeamBuildingMode.DRAFT)
+            assertThat(draft.teamCount).isEqualTo(2)
+            assertThat(draft.teamSize).isEqualTo(3)
+            assertThat(draft.strategy).isEqualTo(DraftOrderStrategy.SNAKE)
+        }
+
+        @Test
+        fun `legacy row에서 필수 설정이 비어 있으면 팀 구성 설정을 만들 수 없다`() {
+            assertThatThrownBy {
+                TeamBuildingConfiguration.from(
+                    roomProps(
+                        mode = TeamBuildingMode.AUCTION,
+                        budget = null,
+                        draftOrderStrategy = null,
+                    ),
+                )
+            }
+                .isInstanceOf(IllegalArgumentException::class.java)
+                .hasMessageContaining("경매 모드에서는 예산이 존재해야 합니다")
+
+            assertThatThrownBy {
+                TeamBuildingConfiguration.from(
+                    roomProps(
+                        mode = TeamBuildingMode.DRAFT,
+                        budget = null,
+                        draftOrderStrategy = null,
+                    ),
+                )
+            }
+                .isInstanceOf(IllegalArgumentException::class.java)
+                .hasMessageContaining("드래프트 모드에서는 순서 전략이 존재해야 합니다")
+        }
+
+        @Test
+        fun `방 진행 상태는 현재 위치와 상태를 함께 노출한다`() {
+            val waiting = RoomProgress.from(roomProps(status = RoomStatus.WAITING))
+            val auction = RoomProgress.from(roomProps(status = RoomStatus.IN_PROGRESS, currentAuctionRound = 2))
+            val draft =
+                RoomProgress.from(
+                    roomProps(
+                        status = RoomStatus.IN_PROGRESS,
+                        mode = TeamBuildingMode.DRAFT,
+                        budget = null,
+                        draftOrderStrategy = DraftOrderStrategy.SNAKE,
+                        currentTurnIndex = 1,
+                        currentAuctionRound = null,
+                    ),
+                )
+            val completed = RoomProgress.from(roomProps(status = RoomStatus.COMPLETED))
+
+            assertThat(waiting.status).isEqualTo(RoomStatus.WAITING)
+            assertThat((auction as RoomProgress.Auction).currentRound).isEqualTo(2)
+            assertThat(auction.status).isEqualTo(RoomStatus.IN_PROGRESS)
+            assertThat((draft as RoomProgress.Draft).currentTurnIndex).isEqualTo(1)
+            assertThat(draft.status).isEqualTo(RoomStatus.IN_PROGRESS)
+            assertThat(completed.status).isEqualTo(RoomStatus.COMPLETED)
+        }
+
+        @Test
+        fun `legacy row에서 현재 위치가 비어 있으면 진행 상태를 만들 수 없다`() {
+            assertThatThrownBy {
+                RoomProgress.from(roomProps(status = RoomStatus.IN_PROGRESS, currentAuctionRound = null))
+            }
+                .isInstanceOf(IllegalArgumentException::class.java)
+                .hasMessageContaining("현재 라운드가 존재해야 합니다")
+
+            assertThatThrownBy {
+                RoomProgress.from(
+                    roomProps(
+                        status = RoomStatus.IN_PROGRESS,
+                        mode = TeamBuildingMode.DRAFT,
+                        budget = null,
+                        draftOrderStrategy = DraftOrderStrategy.SNAKE,
+                        currentTurnIndex = null,
+                        currentAuctionRound = null,
+                    ),
+                )
+            }
+                .isInstanceOf(IllegalArgumentException::class.java)
+                .hasMessageContaining("현재 턴이 존재해야 합니다")
         }
     }
 
@@ -442,4 +629,27 @@ class RoomDomainPoliciesTest {
             currentTurnIndex = currentTurnIndex,
             currentAuctionRound = currentAuctionRound,
         )
+
+    private fun roomProps(
+        status: RoomStatus = RoomStatus.WAITING,
+        mode: TeamBuildingMode = TeamBuildingMode.AUCTION,
+        teamCount: Int = 2,
+        teamSize: Int = 3,
+        budget: Int? = if (mode == TeamBuildingMode.AUCTION) 300 else null,
+        draftOrderStrategy: DraftOrderStrategy? = if (mode == TeamBuildingMode.DRAFT) DraftOrderStrategy.SNAKE else null,
+        currentTurnIndex: Int? = null,
+        currentAuctionRound: Int? = null,
+    ): RoomProps =
+        object : RoomProps {
+            override val code = "ROOMPS"
+            override val hostId = "host-props"
+            override val status = status
+            override val mode = mode
+            override val teamCount = teamCount
+            override val teamSize = teamSize
+            override val budget = budget
+            override val draftOrderStrategy = draftOrderStrategy
+            override val currentTurnIndex = currentTurnIndex
+            override val currentAuctionRound = currentAuctionRound
+        }
 }
