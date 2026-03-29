@@ -3,8 +3,7 @@ dependencies {
     implementation(project(":team-building:api"))
     implementation(project(":team-building:repository-jdbc"))
 
-    implementation("org.testcontainers:testcontainers-mysql")
-    runtimeOnly("com.mysql:mysql-connector-j") {
-        exclude(group = "com.google.protobuf", module = "protobuf-java")
-    }
+    runtimeOnly("org.postgresql:postgresql")
+
+    integrationTestImplementation("org.testcontainers:testcontainers-postgresql")
 }

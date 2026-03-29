@@ -1,6 +1,8 @@
 spring:
+  profiles:
+    active: test
   datasource:
-    url: jdbc:tc:mysql:8.0.36:///test?serverTimezone=UTC&TC_REUSABLE=true&useUnicode=true&character_set_server=utf8mb4&connectionTimeZone=UTC
+    url: jdbc:tc:postgresql:16:///test
     username: test
     password: test
   liquibase:
