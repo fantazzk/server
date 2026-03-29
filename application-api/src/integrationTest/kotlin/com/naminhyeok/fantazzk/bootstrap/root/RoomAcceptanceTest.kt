@@ -41,7 +41,7 @@ class RoomAcceptanceTest(
             )
 
         assertThat(createTemplateResponse.statusCode).isEqualTo(HttpStatus.CREATED)
-        val createdTemplate = bodyOf(createTemplateResponse)
+        val createdTemplate = successBodyOf(createTemplateResponse)
         val templateId = createdTemplate.path("id").asLong()
         assertThat(templateId).isGreaterThan(0L)
         assertThat(createdTemplate.path("name").asText()).isEqualTo("경매 템플릿 $suffix")
@@ -61,7 +61,7 @@ class RoomAcceptanceTest(
             )
 
         assertThat(createRoomResponse.statusCode).isEqualTo(HttpStatus.CREATED)
-        val createdRoom = bodyOf(createRoomResponse)
+        val createdRoom = successBodyOf(createRoomResponse)
         val roomCode = createdRoom.path("code").asText()
         assertThat(roomCode).matches("[A-Z0-9]{6}")
         assertThat(createdRoom.path("status").asText()).isEqualTo("WAITING")
@@ -81,7 +81,7 @@ class RoomAcceptanceTest(
             )
 
         assertThat(joinRoomResponse.statusCode).isEqualTo(HttpStatus.OK)
-        val joinedRoom = bodyOf(joinRoomResponse)
+        val joinedRoom = successBodyOf(joinRoomResponse)
         assertThat(joinedRoom.path("code").asText()).isEqualTo(roomCode)
         assertThat(joinedRoom.path("status").asText()).isEqualTo("WAITING")
         val joinedLeaders = teamLeaders(joinedRoom)
@@ -100,7 +100,7 @@ class RoomAcceptanceTest(
             )
 
         assertThat(startRoomResponse.statusCode).isEqualTo(HttpStatus.OK)
-        val startedRoom = bodyOf(startRoomResponse)
+        val startedRoom = successBodyOf(startRoomResponse)
         assertThat(startedRoom.path("code").asText()).isEqualTo(roomCode)
         assertThat(startedRoom.path("status").asText()).isEqualTo("IN_PROGRESS")
         val startedLeaders = teamLeaders(startedRoom)
@@ -117,7 +117,7 @@ class RoomAcceptanceTest(
             )
 
         assertThat(getRoomResponse.statusCode).isEqualTo(HttpStatus.OK)
-        val foundRoom = bodyOf(getRoomResponse)
+        val foundRoom = successBodyOf(getRoomResponse)
         assertThat(foundRoom.path("code").asText()).isEqualTo(roomCode)
         assertThat(foundRoom.path("status").asText()).isEqualTo("IN_PROGRESS")
         val foundLeaders = teamLeaders(foundRoom)
@@ -132,6 +132,14 @@ class RoomAcceptanceTest(
         val body = response.body
         assertThat(body).isNotBlank()
         return objectMapper.readTree(body)
+    }
+
+    private fun successBodyOf(response: ResponseEntity<String>): JsonNode {
+        val body = bodyOf(response)
+        assertThat(body.path("resultType").asText()).isEqualTo("SUCCESS")
+        val success = body.path("success")
+        assertThat(success.isMissingNode).isFalse()
+        return success
     }
 
     private fun teamLeaders(room: JsonNode): List<JsonNode> {

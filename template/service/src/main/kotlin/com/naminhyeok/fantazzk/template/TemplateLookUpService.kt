@@ -18,8 +18,7 @@ internal class TemplateLookupServiceImpl(
     private val templateRepository: TemplateRepository,
     private val templatePlayerRepository: TemplatePlayerRepository,
 ) : TemplateLookupService {
-    override fun get(identity: TemplateIdentity): TemplateModel =
-        find(identity) ?: throw TemplateException.TemplateNotFoundException()
+    override fun get(identity: TemplateIdentity): TemplateModel = find(identity) ?: throw TemplateException.TemplateNotFoundException()
 
     override fun find(identity: TemplateIdentity): TemplateModel? = templateRepository.findById(identity)
 

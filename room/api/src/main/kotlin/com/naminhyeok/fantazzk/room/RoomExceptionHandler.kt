@@ -53,6 +53,7 @@ class RoomExceptionHandler : ResponseEntityExceptionHandler() {
             when (ex) {
                 is RoomException.RoomNotFoundException -> HttpStatus.NOT_FOUND to LogLevel.WARN
                 is RoomException.TeamLeaderNotFoundException -> HttpStatus.NOT_FOUND to LogLevel.WARN
+                is com.naminhyeok.fantazzk.room.exception.RoomTemplateNotFoundException -> HttpStatus.NOT_FOUND to LogLevel.WARN
             }
         log(logLevel, "RoomException", ex)
         return ResponseEntity.status(status)
