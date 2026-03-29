@@ -1,2 +1,3 @@
 com.naminhyeok.fantazzk.bootstrap.template.TemplateApplicationAutoConfiguration
 com.naminhyeok.fantazzk.bootstrap.template.TemplateJdbcApplicationConfiguration
+com.naminhyeok.fantazzk.bootstrap.template.SwaggerSecurityAutoConfiguration
