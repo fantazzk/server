@@ -10,8 +10,8 @@ import org.junit.jupiter.api.Test
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration
 import org.springframework.boot.data.jdbc.test.autoconfigure.DataJdbcTest
 import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase
-import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.boot.liquibase.autoconfigure.LiquibaseAutoConfiguration
+import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.test.context.TestConstructor
 
 @ImportAutoConfiguration(

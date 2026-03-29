@@ -20,8 +20,7 @@ data class BudgetState(
     companion object {
         fun from(remainingBudget: Int?): BudgetState? = remainingBudget?.let(::BudgetState)
 
-        fun requireFrom(remainingBudget: Int?): BudgetState =
-            requireNotNull(from(remainingBudget)) { "이 모드에서는 예산이 존재하지 않습니다" }
+        fun requireFrom(remainingBudget: Int?): BudgetState = requireNotNull(from(remainingBudget)) { "이 모드에서는 예산이 존재하지 않습니다" }
     }
 
     private fun requireNonNegativeAmount(amount: Int) {

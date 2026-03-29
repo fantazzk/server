@@ -199,8 +199,7 @@ fun RoomModel.advanceAuction(
     completed: Boolean,
 ): Room = Room.from(this).advanceAuction(nextRound = nextRound, completed = completed)
 
-fun RoomModel.moveAuctionTargetToNextRound(nextRound: Int): Room =
-    Room.from(this).moveAuctionTargetToNextRound(nextRound = nextRound)
+fun RoomModel.moveAuctionTargetToNextRound(nextRound: Int): Room = Room.from(this).moveAuctionTargetToNextRound(nextRound = nextRound)
 
 fun RoomModel.advanceDraftTurn(
     nextTurnIndex: Int,
