@@ -32,6 +32,11 @@ management:
       probes:
         enabled: true
 
+sentry:
+  enabled: false
+  dsn: ${SENTRY_DSN:}
+  send-default-pii: false
+
 ---
 
 spring:
@@ -42,6 +47,9 @@ spring:
     url: jdbc:tc:postgresql:16:///test
     username: test
     password: test
+
+sentry:
+  enabled: false
 
 ---
 
@@ -58,6 +66,11 @@ spring:
       minimum-idle: 0
   liquibase:
     default-schema: dev
+
+sentry:
+  enabled: true
+  dsn: ${SENTRY_DSN}
+  environment: dev
 
 cors:
   allowed-origins:
@@ -98,6 +111,11 @@ spring:
       minimum-idle: 0
   liquibase:
     default-schema: production
+
+sentry:
+  enabled: true
+  dsn: ${SENTRY_DSN}
+  environment: production
 
 cors:
   allowed-origins:
