@@ -11,7 +11,7 @@ import com.naminhyeok.fantazzk.room.RoomTeamLeader
 import com.naminhyeok.fantazzk.room.RoomTeamLeaderModel
 import com.naminhyeok.fantazzk.room.RoomTeamMember
 import com.naminhyeok.fantazzk.room.RoomTeamMemberModel
-import com.naminhyeok.fantazzk.room.outport.TemplateFetcher
+import com.naminhyeok.fantazzk.room.outport.TemplateLookupPort
 import com.naminhyeok.fantazzk.room.outport.TemplatePlayerSnapshot
 import com.naminhyeok.fantazzk.room.outport.TemplateSnapshot
 import com.naminhyeok.fantazzk.room.repository.RoomBidRepository
@@ -125,7 +125,7 @@ class InMemoryRoomBidRepository : RoomBidRepository {
     ): RoomBidModel? = store.filter { it.roomId == roomId && it.round == round }.maxByOrNull { it.amount }
 }
 
-class InMemoryTemplateFetcher : TemplateFetcher {
+class InMemoryTemplateLookupPort : TemplateLookupPort {
     private val templates = mutableMapOf<Long, TemplateSnapshot>()
     private val players = mutableMapOf<Long, List<TemplatePlayerSnapshot>>()
 

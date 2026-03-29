@@ -1,6 +1,6 @@
 package com.naminhyeok.fantazzk.room
 
-import com.naminhyeok.fantazzk.room.outport.TemplateFetcher
+import com.naminhyeok.fantazzk.room.outport.TemplateLookupPort
 import com.naminhyeok.fantazzk.room.repository.RoomPlayerRepository
 import com.naminhyeok.fantazzk.room.repository.RoomRepository
 import com.naminhyeok.fantazzk.room.repository.RoomTeamLeaderRepository
@@ -17,14 +17,14 @@ internal class RoomCreateServiceImpl(
     private val roomRepository: RoomRepository,
     private val roomPlayerRepository: RoomPlayerRepository,
     private val roomTeamLeaderRepository: RoomTeamLeaderRepository,
-    private val templateFetcher: TemplateFetcher,
+    private val templateLookupPort: TemplateLookupPort,
 ) : RoomCreateService {
     override fun create(
         templateId: Long,
         hostNickname: String,
     ): RoomModel {
-        val template = templateFetcher.getTemplate(templateId)
-        val players = templateFetcher.getPlayers(templateId)
+        val template = templateLookupPort.getTemplate(templateId)
+        val players = templateLookupPort.getPlayers(templateId)
 
         val room =
             roomRepository.save(

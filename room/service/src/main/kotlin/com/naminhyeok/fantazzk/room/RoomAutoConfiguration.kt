@@ -1,6 +1,6 @@
 package com.naminhyeok.fantazzk.room
 
-import com.naminhyeok.fantazzk.room.outport.TemplateFetcher
+import com.naminhyeok.fantazzk.room.outport.TemplateLookupPort
 import com.naminhyeok.fantazzk.room.repository.RoomBidRepository
 import com.naminhyeok.fantazzk.room.repository.RoomPlayerRepository
 import com.naminhyeok.fantazzk.room.repository.RoomRepository
@@ -26,8 +26,8 @@ class RoomAutoConfiguration {
         roomRepository: RoomRepository,
         roomPlayerRepository: RoomPlayerRepository,
         roomTeamLeaderRepository: RoomTeamLeaderRepository,
-        templateFetcher: TemplateFetcher,
-    ): RoomCreateService = RoomCreateServiceImpl(roomRepository, roomPlayerRepository, roomTeamLeaderRepository, templateFetcher)
+        templateLookupPort: TemplateLookupPort,
+    ): RoomCreateService = RoomCreateServiceImpl(roomRepository, roomPlayerRepository, roomTeamLeaderRepository, templateLookupPort)
 
     @Bean
     fun roomJoinService(

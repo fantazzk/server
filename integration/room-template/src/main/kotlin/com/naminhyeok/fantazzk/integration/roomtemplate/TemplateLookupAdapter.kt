@@ -1,17 +1,17 @@
-package com.naminhyeok.fantazzk.bootstrap.root.adapter
+package com.naminhyeok.fantazzk.integration.roomtemplate
 
 import com.naminhyeok.fantazzk.room.DraftOrderStrategy
 import com.naminhyeok.fantazzk.room.TeamBuildingMode
-import com.naminhyeok.fantazzk.room.outport.TemplateFetcher
+import com.naminhyeok.fantazzk.room.outport.TemplateLookupPort
 import com.naminhyeok.fantazzk.room.outport.TemplatePlayerSnapshot
 import com.naminhyeok.fantazzk.room.outport.TemplateSnapshot
 import com.naminhyeok.fantazzk.template.TemplateIdentity
 import com.naminhyeok.fantazzk.template.TemplateLookUpService
 import com.naminhyeok.fantazzk.template.of
 
-class TemplateFetcherAdapter(
+class TemplateLookupAdapter(
     private val templateLookUpService: TemplateLookUpService,
-) : TemplateFetcher {
+) : TemplateLookupPort {
     override fun getTemplate(templateId: Long): TemplateSnapshot {
         val template = templateLookUpService.get(TemplateIdentity.of(templateId))
         return TemplateSnapshot(

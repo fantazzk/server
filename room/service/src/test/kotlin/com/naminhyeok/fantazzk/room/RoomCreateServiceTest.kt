@@ -5,7 +5,7 @@ import com.naminhyeok.fantazzk.room.outport.TemplateSnapshot
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomPlayerRepository
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomRepository
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomTeamLeaderRepository
-import com.naminhyeok.fantazzk.room.support.InMemoryTemplateFetcher
+import com.naminhyeok.fantazzk.room.support.InMemoryTemplateLookupPort
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.RepeatedTest
@@ -15,7 +15,7 @@ class RoomCreateServiceTest {
     private lateinit var roomRepo: InMemoryRoomRepository
     private lateinit var playerRepo: InMemoryRoomPlayerRepository
     private lateinit var leaderRepo: InMemoryRoomTeamLeaderRepository
-    private lateinit var templateFetcher: InMemoryTemplateFetcher
+    private lateinit var templateLookupPort: InMemoryTemplateLookupPort
     private lateinit var cut: RoomCreateService
 
     @BeforeEach
@@ -23,13 +23,13 @@ class RoomCreateServiceTest {
         roomRepo = InMemoryRoomRepository()
         playerRepo = InMemoryRoomPlayerRepository()
         leaderRepo = InMemoryRoomTeamLeaderRepository()
-        templateFetcher = InMemoryTemplateFetcher()
-        cut = RoomCreateServiceImpl(roomRepo, playerRepo, leaderRepo, templateFetcher)
+        templateLookupPort = InMemoryTemplateLookupPort()
+        cut = RoomCreateServiceImpl(roomRepo, playerRepo, leaderRepo, templateLookupPort)
     }
 
     @Test
     fun `경매 템플릿으로 방을 생성하면 예산이 설정된다`() {
-        templateFetcher.addTemplate(
+        templateLookupPort.addTemplate(
             1L,
             TemplateSnapshot(mode = TeamBuildingMode.AUCTION, teamCount = 2, teamSize = 2, budget = 300, draftOrderStrategy = null),
             listOf(TemplatePlayerSnapshot("선수1", 0), TemplatePlayerSnapshot("선수2", 1)),
@@ -46,7 +46,7 @@ class RoomCreateServiceTest {
 
     @Test
     fun `드래프트 템플릿으로 방을 생성하면 순서 전략이 설정된다`() {
-        templateFetcher.addTemplate(
+        templateLookupPort.addTemplate(
             2L,
             TemplateSnapshot(
                 mode = TeamBuildingMode.DRAFT,
@@ -67,7 +67,7 @@ class RoomCreateServiceTest {
 
     @RepeatedTest(10)
     fun `방 생성 시 6자리 영대문자+숫자 코드가 발급된다`() {
-        templateFetcher.addTemplate(
+        templateLookupPort.addTemplate(
             1L,
             TemplateSnapshot(mode = TeamBuildingMode.AUCTION, teamCount = 2, teamSize = 2, budget = 300, draftOrderStrategy = null),
             emptyList(),
@@ -81,7 +81,7 @@ class RoomCreateServiceTest {
 
     @Test
     fun `방 생성 시 호스트가 첫 번째 팀장으로 등록된다`() {
-        templateFetcher.addTemplate(
+        templateLookupPort.addTemplate(
             1L,
             TemplateSnapshot(mode = TeamBuildingMode.AUCTION, teamCount = 2, teamSize = 2, budget = 300, draftOrderStrategy = null),
             emptyList(),
@@ -98,7 +98,7 @@ class RoomCreateServiceTest {
 
     @Test
     fun `방 생성 시 템플릿 선수 목록이 방 선수로 복사된다`() {
-        templateFetcher.addTemplate(
+        templateLookupPort.addTemplate(
             1L,
             TemplateSnapshot(mode = TeamBuildingMode.AUCTION, teamCount = 2, teamSize = 2, budget = 300, draftOrderStrategy = null),
             listOf(TemplatePlayerSnapshot("선수A", 0), TemplatePlayerSnapshot("선수B", 1), TemplatePlayerSnapshot("선수C", 2)),

@@ -20,6 +20,8 @@ include(":room:repository-jdbc")
 include(":room:api")
 include(":room:application-api")
 
+include(":integration:room-template")
+
 pluginManagement {
     buildscript {
         repositories {

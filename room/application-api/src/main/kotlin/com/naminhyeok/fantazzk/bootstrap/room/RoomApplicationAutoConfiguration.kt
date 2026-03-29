@@ -1,8 +1,5 @@
 package com.naminhyeok.fantazzk.bootstrap.room
 
-import com.naminhyeok.fantazzk.bootstrap.room.adapter.TemplateFetcherAdapter
-import com.naminhyeok.fantazzk.room.outport.TemplateFetcher
-import com.naminhyeok.fantazzk.template.TemplateLookUpService
 import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.info.Info
 import org.springframework.boot.autoconfigure.AutoConfiguration
@@ -23,7 +20,4 @@ class RoomApplicationAutoConfiguration {
                     .version("v1")
                     .description("팀 빌딩 방 관리"),
             )
-
-    @Bean
-    fun templateFetcher(templateLookUpService: TemplateLookUpService): TemplateFetcher = TemplateFetcherAdapter(templateLookUpService)
 }
