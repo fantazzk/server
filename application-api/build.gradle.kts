@@ -1,7 +1,13 @@
 dependencies {
     implementation(project(":team-building:schema"))
-    implementation(project(":team-building:api"))
-    implementation(project(":team-building:repository-jdbc"))
+    implementation(project(":template:api"))
+    implementation(project(":template:repository-jdbc"))
+    implementation(project(":room:api"))
+    implementation(project(":room:repository-jdbc"))
+    implementation(project(":integration:room-template"))
+
+    implementation("org.liquibase:liquibase-core")
+    implementation("org.springframework.boot:spring-boot-liquibase")
 
     runtimeOnly("org.postgresql:postgresql")
 
