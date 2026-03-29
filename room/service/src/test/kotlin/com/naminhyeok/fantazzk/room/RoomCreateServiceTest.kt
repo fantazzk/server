@@ -31,8 +31,14 @@ class RoomCreateServiceTest {
     fun `경매 템플릿으로 방을 생성하면 예산이 설정된다`() {
         templateLookupPort.addTemplate(
             1L,
-            TemplateSnapshot(mode = TeamBuildingMode.AUCTION, teamCount = 2, teamSize = 2, budget = 300, draftOrderStrategy = null),
-            listOf(TemplatePlayerSnapshot("선수1", 0), TemplatePlayerSnapshot("선수2", 1)),
+            TemplateSnapshot(
+                mode = TeamBuildingMode.AUCTION,
+                teamCount = 2,
+                teamSize = 2,
+                budget = 300,
+                draftOrderStrategy = null,
+                players = listOf(TemplatePlayerSnapshot("선수1", 0), TemplatePlayerSnapshot("선수2", 1)),
+            ),
         )
 
         val room = cut.create(1L, "호스트")
@@ -54,8 +60,8 @@ class RoomCreateServiceTest {
                 teamSize = 2,
                 budget = null,
                 draftOrderStrategy = DraftOrderStrategy.SNAKE,
+                players = listOf(TemplatePlayerSnapshot("선수1", 0), TemplatePlayerSnapshot("선수2", 1)),
             ),
-            listOf(TemplatePlayerSnapshot("선수1", 0), TemplatePlayerSnapshot("선수2", 1)),
         )
 
         val room = cut.create(2L, "호스트")
@@ -69,8 +75,14 @@ class RoomCreateServiceTest {
     fun `방 생성 시 6자리 영대문자+숫자 코드가 발급된다`() {
         templateLookupPort.addTemplate(
             1L,
-            TemplateSnapshot(mode = TeamBuildingMode.AUCTION, teamCount = 2, teamSize = 2, budget = 300, draftOrderStrategy = null),
-            emptyList(),
+            TemplateSnapshot(
+                mode = TeamBuildingMode.AUCTION,
+                teamCount = 2,
+                teamSize = 2,
+                budget = 300,
+                draftOrderStrategy = null,
+                players = emptyList(),
+            ),
         )
 
         val room = cut.create(1L, "호스트")
@@ -83,8 +95,14 @@ class RoomCreateServiceTest {
     fun `방 생성 시 호스트가 첫 번째 팀장으로 등록된다`() {
         templateLookupPort.addTemplate(
             1L,
-            TemplateSnapshot(mode = TeamBuildingMode.AUCTION, teamCount = 2, teamSize = 2, budget = 300, draftOrderStrategy = null),
-            emptyList(),
+            TemplateSnapshot(
+                mode = TeamBuildingMode.AUCTION,
+                teamCount = 2,
+                teamSize = 2,
+                budget = 300,
+                draftOrderStrategy = null,
+                players = emptyList(),
+            ),
         )
 
         val room = cut.create(1L, "호스트닉네임")
@@ -100,8 +118,19 @@ class RoomCreateServiceTest {
     fun `방 생성 시 템플릿 선수 목록이 방 선수로 복사된다`() {
         templateLookupPort.addTemplate(
             1L,
-            TemplateSnapshot(mode = TeamBuildingMode.AUCTION, teamCount = 2, teamSize = 2, budget = 300, draftOrderStrategy = null),
-            listOf(TemplatePlayerSnapshot("선수A", 0), TemplatePlayerSnapshot("선수B", 1), TemplatePlayerSnapshot("선수C", 2)),
+            TemplateSnapshot(
+                mode = TeamBuildingMode.AUCTION,
+                teamCount = 2,
+                teamSize = 2,
+                budget = 300,
+                draftOrderStrategy = null,
+                players =
+                    listOf(
+                        TemplatePlayerSnapshot("선수A", 0),
+                        TemplatePlayerSnapshot("선수B", 1),
+                        TemplatePlayerSnapshot("선수C", 2),
+                    ),
+            ),
         )
 
         val room = cut.create(1L, "호스트")

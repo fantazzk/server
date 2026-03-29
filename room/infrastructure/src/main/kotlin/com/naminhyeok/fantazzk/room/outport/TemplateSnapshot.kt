@@ -9,4 +9,5 @@ data class TemplateSnapshot(
     val teamSize: Int,
     val budget: Int?,
     val draftOrderStrategy: DraftOrderStrategy?,
+    val players: List<TemplatePlayerSnapshot>,
 )

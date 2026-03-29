@@ -8,16 +8,16 @@ import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
-class TemplateLookUpServiceTest {
+class TemplateLookupServiceTest {
     private lateinit var templateRepo: InMemoryTemplateRepository
     private lateinit var playerRepo: InMemoryTemplatePlayerRepository
-    private lateinit var cut: TemplateLookUpService
+    private lateinit var cut: TemplateLookupService
 
     @BeforeEach
     fun setUp() {
         templateRepo = InMemoryTemplateRepository()
         playerRepo = InMemoryTemplatePlayerRepository()
-        cut = TemplateLookUpServiceImpl(templateRepo, playerRepo)
+        cut = TemplateLookupServiceImpl(templateRepo, playerRepo)
     }
 
     @Test

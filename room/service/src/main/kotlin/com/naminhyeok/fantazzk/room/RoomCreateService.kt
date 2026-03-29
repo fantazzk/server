@@ -24,7 +24,6 @@ internal class RoomCreateServiceImpl(
         hostNickname: String,
     ): RoomModel {
         val template = templateLookupPort.getTemplate(templateId)
-        val players = templateLookupPort.getPlayers(templateId)
 
         val room =
             roomRepository.save(
@@ -41,7 +40,7 @@ internal class RoomCreateServiceImpl(
             )
 
         roomPlayerRepository.saveAll(
-            players.map { player ->
+            template.players.map { player ->
                 RoomPlayer(roomId = room.roomId, name = player.name, displayOrder = player.displayOrder)
             },
         )

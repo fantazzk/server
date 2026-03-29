@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/v1/templates")
 class TemplateApiController(
     private val templateCreateService: TemplateCreateService,
-    private val templateLookUpService: TemplateLookUpService,
+    private val templateLookupService: TemplateLookupService,
 ) {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -41,12 +41,12 @@ class TemplateApiController(
     fun getById(
         @PathVariable id: Long,
     ): TemplateResponse {
-        val template = templateLookUpService.get(TemplateIdentity.of(id))
-        val players = templateLookUpService.getPlayers(template.templateId)
+        val template = templateLookupService.get(TemplateIdentity.of(id))
+        val players = templateLookupService.getPlayers(template.templateId)
         return TemplateResponse.from(template, players)
     }
 
     @GetMapping
     @Operation(summary = "템플릿 목록 조회", operationId = "listTemplates")
-    fun list(): List<TemplateResponse> = templateLookUpService.getAll().map { TemplateResponse.from(it) }
+    fun list(): List<TemplateResponse> = templateLookupService.getAll().map { TemplateResponse.from(it) }
 }

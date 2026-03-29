@@ -1,2 +1,2 @@
 com.naminhyeok.fantazzk.bootstrap.root.FantazzkApplicationAutoConfiguration
-com.naminhyeok.fantazzk.bootstrap.root.CombinedJdbcConfiguration
+com.naminhyeok.fantazzk.bootstrap.root.RootCombinedJdbcConfiguration

@@ -1,2 +1,2 @@
 com.naminhyeok.fantazzk.bootstrap.room.RoomApplicationAutoConfiguration
-com.naminhyeok.fantazzk.bootstrap.room.CombinedJdbcConfiguration
+com.naminhyeok.fantazzk.bootstrap.room.RoomCombinedJdbcConfiguration

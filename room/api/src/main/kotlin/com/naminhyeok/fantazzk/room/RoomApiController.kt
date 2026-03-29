@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/v1/rooms")
 class RoomApiController(
     private val roomCreateService: RoomCreateService,
-    private val roomLookUpService: RoomLookUpService,
+    private val roomLookupService: RoomLookupService,
     private val roomJoinService: RoomJoinService,
     private val roomStartService: RoomStartService,
     private val auctionService: AuctionService,
@@ -32,7 +32,7 @@ class RoomApiController(
         @RequestBody request: CreateRoomRequest,
     ): RoomResponse {
         val room = roomCreateService.create(request.templateId, request.hostNickname)
-        val leaders = roomLookUpService.getTeamLeaders(room.roomId)
+        val leaders = roomLookupService.getTeamLeaders(room.roomId)
         return RoomResponse.from(room, leaders)
     }
 
@@ -41,8 +41,8 @@ class RoomApiController(
     fun getByCode(
         @PathVariable code: String,
     ): RoomResponse {
-        val room = roomLookUpService.get(code)
-        val leaders = roomLookUpService.getTeamLeaders(room.roomId)
+        val room = roomLookupService.get(code)
+        val leaders = roomLookupService.getTeamLeaders(room.roomId)
         return RoomResponse.from(room, leaders)
     }
 
@@ -53,8 +53,8 @@ class RoomApiController(
         @RequestBody request: JoinRoomRequest,
     ): RoomResponse {
         roomJoinService.join(code, request.nickname)
-        val room = roomLookUpService.get(code)
-        val leaders = roomLookUpService.getTeamLeaders(room.roomId)
+        val room = roomLookupService.get(code)
+        val leaders = roomLookupService.getTeamLeaders(room.roomId)
         return RoomResponse.from(room, leaders)
     }
 
@@ -64,8 +64,8 @@ class RoomApiController(
         @PathVariable code: String,
     ): RoomResponse {
         roomStartService.start(code)
-        val room = roomLookUpService.get(code)
-        val leaders = roomLookUpService.getTeamLeaders(room.roomId)
+        val room = roomLookupService.get(code)
+        val leaders = roomLookupService.getTeamLeaders(room.roomId)
         return RoomResponse.from(room, leaders)
     }
 
@@ -76,8 +76,8 @@ class RoomApiController(
         @RequestBody request: PlaceBidRequest,
     ): RoomResponse {
         auctionService.placeBid(code, request.teamLeaderId, request.amount)
-        val room = roomLookUpService.get(code)
-        val leaders = roomLookUpService.getTeamLeaders(room.roomId)
+        val room = roomLookupService.get(code)
+        val leaders = roomLookupService.getTeamLeaders(room.roomId)
         return RoomResponse.from(room, leaders)
     }
 
@@ -87,8 +87,8 @@ class RoomApiController(
         @PathVariable code: String,
     ): RoomResponse {
         auctionService.settle(code)
-        val room = roomLookUpService.get(code)
-        val leaders = roomLookUpService.getTeamLeaders(room.roomId)
+        val room = roomLookupService.get(code)
+        val leaders = roomLookupService.getTeamLeaders(room.roomId)
         return RoomResponse.from(room, leaders)
     }
 
@@ -99,8 +99,8 @@ class RoomApiController(
         @RequestBody request: PickRequest,
     ): RoomResponse {
         draftService.pick(code, request.teamLeaderId, request.playerName)
-        val room = roomLookUpService.get(code)
-        val leaders = roomLookUpService.getTeamLeaders(room.roomId)
+        val room = roomLookupService.get(code)
+        val leaders = roomLookupService.getTeamLeaders(room.roomId)
         return RoomResponse.from(room, leaders)
     }
 }

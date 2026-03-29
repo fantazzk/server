@@ -7,7 +7,7 @@ import com.naminhyeok.fantazzk.room.repository.RoomRepository
 import com.naminhyeok.fantazzk.room.repository.RoomTeamLeaderRepository
 import com.naminhyeok.fantazzk.room.repository.RoomTeamMemberRepository
 
-interface RoomLookUpService {
+interface RoomLookupService {
     fun get(code: String): RoomModel
 
     fun getPlayers(roomId: Long): List<RoomPlayerModel>
@@ -22,13 +22,13 @@ interface RoomLookUpService {
     ): List<RoomBidModel>
 }
 
-internal class RoomLookUpServiceImpl(
+internal class RoomLookupServiceImpl(
     private val roomRepository: RoomRepository,
     private val roomPlayerRepository: RoomPlayerRepository,
     private val roomTeamLeaderRepository: RoomTeamLeaderRepository,
     private val roomTeamMemberRepository: RoomTeamMemberRepository,
     private val roomBidRepository: RoomBidRepository,
-) : RoomLookUpService {
+) : RoomLookupService {
     override fun get(code: String): RoomModel = roomRepository.findByCode(code) ?: throw RoomNotFoundException()
 
     override fun getPlayers(roomId: Long): List<RoomPlayerModel> = roomPlayerRepository.findByRoomId(roomId)

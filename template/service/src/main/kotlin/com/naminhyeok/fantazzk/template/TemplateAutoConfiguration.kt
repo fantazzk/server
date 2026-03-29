@@ -8,10 +8,10 @@ import org.springframework.context.annotation.Bean
 @AutoConfiguration
 class TemplateAutoConfiguration {
     @Bean
-    fun templateLookUpService(
+    fun templateLookupService(
         templateRepository: TemplateRepository,
         templatePlayerRepository: TemplatePlayerRepository,
-    ): TemplateLookUpService = TemplateLookUpServiceImpl(templateRepository, templatePlayerRepository)
+    ): TemplateLookupService = TemplateLookupServiceImpl(templateRepository, templatePlayerRepository)
 
     @Bean
     fun templateCreateService(

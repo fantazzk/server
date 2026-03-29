@@ -12,7 +12,6 @@ import com.naminhyeok.fantazzk.room.RoomTeamLeaderModel
 import com.naminhyeok.fantazzk.room.RoomTeamMember
 import com.naminhyeok.fantazzk.room.RoomTeamMemberModel
 import com.naminhyeok.fantazzk.room.outport.TemplateLookupPort
-import com.naminhyeok.fantazzk.room.outport.TemplatePlayerSnapshot
 import com.naminhyeok.fantazzk.room.outport.TemplateSnapshot
 import com.naminhyeok.fantazzk.room.repository.RoomBidRepository
 import com.naminhyeok.fantazzk.room.repository.RoomPlayerRepository
@@ -127,19 +126,14 @@ class InMemoryRoomBidRepository : RoomBidRepository {
 
 class InMemoryTemplateLookupPort : TemplateLookupPort {
     private val templates = mutableMapOf<Long, TemplateSnapshot>()
-    private val players = mutableMapOf<Long, List<TemplatePlayerSnapshot>>()
 
     fun addTemplate(
         templateId: Long,
         snapshot: TemplateSnapshot,
-        playerSnapshots: List<TemplatePlayerSnapshot>,
     ) {
         templates[templateId] = snapshot
-        players[templateId] = playerSnapshots
     }
 
     override fun getTemplate(templateId: Long): TemplateSnapshot =
         templates[templateId] ?: throw IllegalArgumentException("Template not found: $templateId")
-
-    override fun getPlayers(templateId: Long): List<TemplatePlayerSnapshot> = players[templateId] ?: emptyList()
 }

@@ -14,13 +14,13 @@ import java.time.Instant
 
 class TemplateApiControllerTest {
     private val templateCreateService: TemplateCreateService = mockk()
-    private val templateLookUpService: TemplateLookUpService = mockk()
+    private val templateLookupService: TemplateLookupService = mockk()
 
     private val now = Instant.now()
 
     private val mockMvc: MockMvc =
         MockMvcBuilders
-            .standaloneSetup(TemplateApiController(templateCreateService, templateLookUpService))
+            .standaloneSetup(TemplateApiController(templateCreateService, templateLookupService))
             .setControllerAdvice(TemplateExceptionHandler())
             .build()
 
@@ -95,8 +95,8 @@ class TemplateApiControllerTest {
                         updatedAt = now,
                     ),
                 )
-            every { templateLookUpService.get(any()) } returns template
-            every { templateLookUpService.getPlayers(1L) } returns players
+            every { templateLookupService.get(any()) } returns template
+            every { templateLookupService.getPlayers(1L) } returns players
 
             mockMvc.get("/api/v1/templates/1")
                 .andExpect {
@@ -108,7 +108,7 @@ class TemplateApiControllerTest {
 
         @Test
         fun `존재하지 않는 ID로 조회하면 404를 반환한다`() {
-            every { templateLookUpService.get(any()) } throws TemplateNotFoundException()
+            every { templateLookupService.get(any()) } throws TemplateNotFoundException()
 
             mockMvc.get("/api/v1/templates/999")
                 .andExpect {
@@ -118,7 +118,7 @@ class TemplateApiControllerTest {
 
         @Test
         fun `전체 목록을 조회하면 200을 반환한다`() {
-            every { templateLookUpService.getAll() } returns listOf(template())
+            every { templateLookupService.getAll() } returns listOf(template())
 
             mockMvc.get("/api/v1/templates")
                 .andExpect {

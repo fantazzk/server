@@ -11,13 +11,13 @@ import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
-class RoomLookUpServiceTest {
+class RoomLookupServiceTest {
     private lateinit var roomRepo: InMemoryRoomRepository
     private lateinit var playerRepo: InMemoryRoomPlayerRepository
     private lateinit var leaderRepo: InMemoryRoomTeamLeaderRepository
     private lateinit var memberRepo: InMemoryRoomTeamMemberRepository
     private lateinit var bidRepo: InMemoryRoomBidRepository
-    private lateinit var cut: RoomLookUpService
+    private lateinit var cut: RoomLookupService
 
     private var roomId: Long = 0L
 
@@ -28,7 +28,7 @@ class RoomLookUpServiceTest {
         leaderRepo = InMemoryRoomTeamLeaderRepository()
         memberRepo = InMemoryRoomTeamMemberRepository()
         bidRepo = InMemoryRoomBidRepository()
-        cut = RoomLookUpServiceImpl(roomRepo, playerRepo, leaderRepo, memberRepo, bidRepo)
+        cut = RoomLookupServiceImpl(roomRepo, playerRepo, leaderRepo, memberRepo, bidRepo)
 
         val room =
             roomRepo.save(

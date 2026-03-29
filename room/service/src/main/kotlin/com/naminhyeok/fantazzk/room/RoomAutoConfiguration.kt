@@ -12,14 +12,14 @@ import org.springframework.context.annotation.Bean
 @AutoConfiguration
 class RoomAutoConfiguration {
     @Bean
-    fun roomLookUpService(
+    fun roomLookupService(
         roomRepository: RoomRepository,
         roomPlayerRepository: RoomPlayerRepository,
         roomTeamLeaderRepository: RoomTeamLeaderRepository,
         roomTeamMemberRepository: RoomTeamMemberRepository,
         roomBidRepository: RoomBidRepository,
-    ): RoomLookUpService =
-        RoomLookUpServiceImpl(roomRepository, roomPlayerRepository, roomTeamLeaderRepository, roomTeamMemberRepository, roomBidRepository)
+    ): RoomLookupService =
+        RoomLookupServiceImpl(roomRepository, roomPlayerRepository, roomTeamLeaderRepository, roomTeamMemberRepository, roomBidRepository)
 
     @Bean
     fun roomCreateService(
