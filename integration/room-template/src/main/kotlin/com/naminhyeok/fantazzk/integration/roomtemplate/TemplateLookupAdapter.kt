@@ -15,14 +15,8 @@ class TemplateLookupAdapter(
 ) : TemplateLookupPort {
     override fun getTemplate(templateId: Long): TemplateSnapshot {
         val template =
-            try {
-                templateLookupService.get(TemplateIdentity.of(templateId))
-            } catch (ex: RuntimeException) {
-                if (ex::class.qualifiedName == TEMPLATE_NOT_FOUND_EXCEPTION_CLASS_NAME) {
-                    throw TemplateLookupPortException.NotFound(templateId)
-                }
-                throw ex
-            }
+            templateLookupService.find(TemplateIdentity.of(templateId))
+                ?: throw TemplateLookupPortException.NotFound(templateId)
         val players = templateLookupService.getPlayers(template.templateId)
         return TemplateSnapshot(
             mode = TeamBuildingMode.valueOf(template.mode.name),
@@ -32,10 +26,5 @@ class TemplateLookupAdapter(
             draftOrderStrategy = template.draftOrderStrategy?.let { DraftOrderStrategy.valueOf(it.name) },
             players = players.map { TemplatePlayerSnapshot(name = it.name, displayOrder = it.displayOrder) },
         )
-    }
-
-    private companion object {
-        private const val TEMPLATE_NOT_FOUND_EXCEPTION_CLASS_NAME =
-            "com.naminhyeok.fantazzk.template.exception.TemplateNotFoundException"
     }
 }

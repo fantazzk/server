@@ -38,6 +38,27 @@ class TemplateLookupServiceTest {
     }
 
     @Test
+    fun `존재하지 않는 ID를 find로 조회하면 null을 반환한다`() {
+        val found = cut.find(TemplateIdentity.of(999L))
+
+        assertThat(found).isNull()
+    }
+
+    @Test
+    fun `find는 존재하는 템플릿을 그대로 반환한다`() {
+        val saved =
+            templateRepo.save(
+                Template(name = "find", mode = TeamBuildingMode.DRAFT, teamCount = 2, teamSize = 2),
+            )
+
+        val found = cut.find(TemplateIdentity.of(saved.templateId))
+
+        assertThat(found).isNotNull
+        assertThat(found!!.templateId).isEqualTo(saved.templateId)
+        assertThat(found.name).isEqualTo("find")
+    }
+
+    @Test
     fun `전체 템플릿 목록을 조회할 수 있다`() {
         templateRepo.save(Template(name = "첫째", mode = TeamBuildingMode.AUCTION, teamCount = 2, teamSize = 2, budget = 300))
         templateRepo.save(Template(name = "둘째", mode = TeamBuildingMode.DRAFT, teamCount = 2, teamSize = 2))

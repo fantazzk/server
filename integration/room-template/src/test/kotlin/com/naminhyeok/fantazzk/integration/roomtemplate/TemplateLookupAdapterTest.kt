@@ -1,0 +1,65 @@
+package com.naminhyeok.fantazzk.integration.roomtemplate
+
+import com.naminhyeok.fantazzk.room.DraftOrderStrategy
+import com.naminhyeok.fantazzk.room.TeamBuildingMode
+import com.naminhyeok.fantazzk.room.outport.TemplateLookupPortException
+import com.naminhyeok.fantazzk.template.TemplateIdentity
+import com.naminhyeok.fantazzk.template.TemplateLookupService
+import com.naminhyeok.fantazzk.template.TemplateModel
+import com.naminhyeok.fantazzk.template.TemplatePlayer
+import com.naminhyeok.fantazzk.template.of
+import io.mockk.every
+import io.mockk.mockk
+import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+
+class TemplateLookupAdapterTest {
+    private val templateLookupService: TemplateLookupService = mockk()
+    private lateinit var cut: TemplateLookupAdapter
+
+    @BeforeEach
+    fun setUp() {
+        cut = TemplateLookupAdapter(templateLookupService)
+    }
+
+    @Test
+    fun `find가 null이면 room 포트 not found 예외로 번역한다`() {
+        every { templateLookupService.find(TemplateIdentity.of(999L)) } returns null
+
+        assertThatThrownBy { cut.getTemplate(999L) }
+            .isInstanceOf(TemplateLookupPortException.NotFound::class.java)
+            .hasMessage("템플릿을 찾을 수 없습니다")
+    }
+
+    @Test
+    fun `find와 getPlayers 결과를 room 포트 snapshot으로 변환한다`() {
+        every { templateLookupService.find(TemplateIdentity.of(1L)) } returns templateModel()
+        every { templateLookupService.getPlayers(1L) } returns listOf(TemplatePlayer(templateId = 1L, name = "선수1", displayOrder = 0))
+
+        val snapshot = cut.getTemplate(1L)
+
+        assertThat(snapshot.mode).isEqualTo(TeamBuildingMode.DRAFT)
+        assertThat(snapshot.teamCount).isEqualTo(2)
+        assertThat(snapshot.teamSize).isEqualTo(3)
+        assertThat(snapshot.budget).isNull()
+        assertThat(snapshot.draftOrderStrategy).isEqualTo(DraftOrderStrategy.SNAKE)
+        assertThat(snapshot.players.single().name).isEqualTo("선수1")
+        assertThat(snapshot.players.single().displayOrder).isEqualTo(0)
+    }
+
+    private fun templateModel(): TemplateModel =
+        object : TemplateModel {
+            override val templateId: Long = 1L
+            override val name: String = "드래프트 템플릿"
+            override val mode: com.naminhyeok.fantazzk.template.TeamBuildingMode = com.naminhyeok.fantazzk.template.TeamBuildingMode.DRAFT
+            override val teamCount: Int = 2
+            override val teamSize: Int = 3
+            override val budget: Int? = null
+            override val draftOrderStrategy: com.naminhyeok.fantazzk.template.DraftOrderStrategy? =
+                com.naminhyeok.fantazzk.template.DraftOrderStrategy.SNAKE
+            override val createdAt = java.time.Instant.parse("2025-01-01T00:00:00Z")
+            override val updatedAt = java.time.Instant.parse("2025-01-01T00:00:00Z")
+        }
+}
