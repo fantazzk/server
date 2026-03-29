@@ -1,7 +1,6 @@
 package com.naminhyeok.fantazzk.room
 
-import com.naminhyeok.fantazzk.room.exception.RoomNotFoundException
-import com.naminhyeok.fantazzk.room.exception.RoomTeamLeaderNotFoundException
+import com.naminhyeok.fantazzk.room.exception.RoomException
 import com.naminhyeok.fantazzk.room.repository.RoomBidRepository
 import com.naminhyeok.fantazzk.room.repository.RoomPlayerRepository
 import com.naminhyeok.fantazzk.room.repository.RoomRepository
@@ -39,7 +38,7 @@ internal class AuctionServiceImpl(
 
         val leader =
             roomTeamLeaderRepository.findByRoomIdAndTeamLeaderId(room.roomId, teamLeaderId)
-                ?: throw RoomTeamLeaderNotFoundException()
+                ?: throw RoomException.TeamLeaderNotFoundException()
 
         leader.validateBudget(amount)
 
@@ -77,7 +76,7 @@ internal class AuctionServiceImpl(
 
         val winner =
             roomTeamLeaderRepository.findByRoomIdAndTeamLeaderId(room.roomId, bid.teamLeaderId)
-                ?: throw RoomTeamLeaderNotFoundException()
+                ?: throw RoomException.TeamLeaderNotFoundException()
         val budget = requireNotNull(winner.remainingBudget) { "경매 모드에서 예산이 존재하지 않습니다" }
         roomTeamLeaderRepository.save(
             RoomTeamLeader.from(winner).copy(remainingBudget = budget - bid.amount),
@@ -122,7 +121,7 @@ internal class AuctionServiceImpl(
     }
 
     private fun findInProgressAuctionRoom(code: String): RoomModel {
-        val room = roomRepository.findByCode(code) ?: throw RoomNotFoundException()
+        val room = roomRepository.findByCode(code) ?: throw RoomException.RoomNotFoundException()
         check(room.isInProgress()) { "진행 중인 방에서만 가능합니다" }
         check(room.isAuction()) { "경매 모드가 아닙니다" }
         return room

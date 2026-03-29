@@ -1,6 +1,6 @@
 package com.naminhyeok.fantazzk.room
 
-import com.naminhyeok.fantazzk.room.exception.RoomNotFoundException
+import com.naminhyeok.fantazzk.room.exception.RoomException
 import com.naminhyeok.fantazzk.room.repository.RoomBidRepository
 import com.naminhyeok.fantazzk.room.repository.RoomPlayerRepository
 import com.naminhyeok.fantazzk.room.repository.RoomRepository
@@ -29,7 +29,7 @@ internal class RoomLookupServiceImpl(
     private val roomTeamMemberRepository: RoomTeamMemberRepository,
     private val roomBidRepository: RoomBidRepository,
 ) : RoomLookupService {
-    override fun get(code: String): RoomModel = roomRepository.findByCode(code) ?: throw RoomNotFoundException()
+    override fun get(code: String): RoomModel = roomRepository.findByCode(code) ?: throw RoomException.RoomNotFoundException()
 
     override fun getPlayers(roomId: Long): List<RoomPlayerModel> = roomPlayerRepository.findByRoomId(roomId)
 

@@ -1,6 +1,6 @@
 package com.naminhyeok.fantazzk.template
 
-import com.naminhyeok.fantazzk.template.exception.TemplateNotFoundException
+import com.naminhyeok.fantazzk.template.exception.TemplateException
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.jupiter.api.Nested
@@ -48,9 +48,10 @@ class TemplateApiControllerTest {
                     """.trimIndent()
             }.andExpect {
                 status { isCreated() }
-                jsonPath("$.name") { value("경매전") }
-                jsonPath("$.mode") { value("AUCTION") }
-                jsonPath("$.budget") { value(300) }
+                jsonPath("$.resultType") { value("SUCCESS") }
+                jsonPath("$.success.name") { value("경매전") }
+                jsonPath("$.success.mode") { value("AUCTION") }
+                jsonPath("$.success.budget") { value(300) }
             }
         }
 
@@ -75,6 +76,8 @@ class TemplateApiControllerTest {
                     """.trimIndent()
             }.andExpect {
                 status { isBadRequest() }
+                jsonPath("$.resultType") { value("ERROR") }
+                jsonPath("$.error.errorCode") { value("BAD_REQUEST") }
             }
         }
     }
@@ -101,18 +104,23 @@ class TemplateApiControllerTest {
             mockMvc.get("/api/v1/templates/1")
                 .andExpect {
                     status { isOk() }
-                    jsonPath("$.name") { value("경매전") }
-                    jsonPath("$.players[0].name") { value("선수1") }
+                    jsonPath("$.resultType") { value("SUCCESS") }
+                    jsonPath("$.success.name") { value("경매전") }
+                    jsonPath("$.success.players[0].name") { value("선수1") }
                 }
         }
 
         @Test
         fun `존재하지 않는 ID로 조회하면 404를 반환한다`() {
-            every { templateLookupService.get(any()) } throws TemplateNotFoundException()
+            every { templateLookupService.get(any()) } throws TemplateException.TemplateNotFoundException()
 
             mockMvc.get("/api/v1/templates/999")
                 .andExpect {
                     status { isNotFound() }
+                    jsonPath("$.resultType") { value("ERROR") }
+                    jsonPath("$.error.status") { value(404) }
+                    jsonPath("$.error.errorCode") { value("TEMPLATE_NOT_FOUND") }
+                    jsonPath("$.error.reason") { value("템플릿을 찾을 수 없습니다") }
                 }
         }
 
@@ -123,7 +131,8 @@ class TemplateApiControllerTest {
             mockMvc.get("/api/v1/templates")
                 .andExpect {
                     status { isOk() }
-                    jsonPath("$[0].name") { value("경매전") }
+                    jsonPath("$.resultType") { value("SUCCESS") }
+                    jsonPath("$.success[0].name") { value("경매전") }
                 }
         }
     }

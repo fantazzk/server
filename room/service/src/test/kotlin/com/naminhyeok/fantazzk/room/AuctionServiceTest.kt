@@ -1,7 +1,6 @@
 package com.naminhyeok.fantazzk.room
 
-import com.naminhyeok.fantazzk.room.exception.RoomNotFoundException
-import com.naminhyeok.fantazzk.room.exception.RoomTeamLeaderNotFoundException
+import com.naminhyeok.fantazzk.room.exception.RoomException
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomBidRepository
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomPlayerRepository
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomRepository
@@ -76,7 +75,7 @@ class AuctionServiceTest {
         @Test
         fun `존재하지 않는 방에 입찰할 수 없다`() {
             assertThatThrownBy { cut.placeBid("NOROOM", "leader-A", 100) }
-                .isInstanceOf(RoomNotFoundException::class.java)
+                .isInstanceOf(RoomException.RoomNotFoundException::class.java)
         }
 
         @Test
@@ -118,7 +117,7 @@ class AuctionServiceTest {
         @Test
         fun `존재하지 않는 팀장은 입찰할 수 없다`() {
             assertThatThrownBy { cut.placeBid(roomCode, "unknown-leader", 100) }
-                .isInstanceOf(RoomTeamLeaderNotFoundException::class.java)
+                .isInstanceOf(RoomException.TeamLeaderNotFoundException::class.java)
         }
 
         @Test
@@ -196,7 +195,7 @@ class AuctionServiceTest {
         @Test
         fun `존재하지 않는 방은 정산할 수 없다`() {
             assertThatThrownBy { cut.settle("NOROOM") }
-                .isInstanceOf(RoomNotFoundException::class.java)
+                .isInstanceOf(RoomException.RoomNotFoundException::class.java)
         }
 
         @Test

@@ -1,5 +1,6 @@
 package com.naminhyeok.fantazzk.template
 
+import com.naminhyeok.fantazzk.template.dto.ApiResponse
 import com.naminhyeok.fantazzk.template.dto.CreateTemplateRequest
 import com.naminhyeok.fantazzk.template.dto.TemplateResponse
 import io.swagger.v3.oas.annotations.Operation
@@ -23,16 +24,18 @@ class TemplateApiController(
     @Operation(summary = "템플릿 생성", operationId = "createTemplate")
     fun create(
         @RequestBody request: CreateTemplateRequest,
-    ): TemplateResponse =
-        TemplateResponse.from(
-            templateCreateService.create(
-                name = request.name,
-                mode = request.mode,
-                teamCount = request.teamCount,
-                teamSize = request.teamSize,
-                budget = request.budget,
-                draftOrderStrategy = request.draftOrderStrategy,
-                playerNames = request.playerNames,
+    ): ApiResponse<TemplateResponse> =
+        ApiResponse.success(
+            TemplateResponse.from(
+                templateCreateService.create(
+                    name = request.name,
+                    mode = request.mode,
+                    teamCount = request.teamCount,
+                    teamSize = request.teamSize,
+                    budget = request.budget,
+                    draftOrderStrategy = request.draftOrderStrategy,
+                    playerNames = request.playerNames,
+                ),
             ),
         )
 
@@ -40,13 +43,13 @@ class TemplateApiController(
     @Operation(summary = "템플릿 조회", operationId = "getTemplate")
     fun getById(
         @PathVariable id: Long,
-    ): TemplateResponse {
+    ): ApiResponse<TemplateResponse> {
         val template = templateLookupService.get(TemplateIdentity.of(id))
         val players = templateLookupService.getPlayers(template.templateId)
-        return TemplateResponse.from(template, players)
+        return ApiResponse.success(TemplateResponse.from(template, players))
     }
 
     @GetMapping
     @Operation(summary = "템플릿 목록 조회", operationId = "listTemplates")
-    fun list(): List<TemplateResponse> = templateLookupService.getAll().map { TemplateResponse.from(it) }
+    fun list(): ApiResponse<List<TemplateResponse>> = ApiResponse.success(templateLookupService.getAll().map { TemplateResponse.from(it) })
 }

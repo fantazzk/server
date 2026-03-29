@@ -1,6 +1,6 @@
 package com.naminhyeok.fantazzk.room
 
-import com.naminhyeok.fantazzk.room.exception.RoomNotFoundException
+import com.naminhyeok.fantazzk.room.exception.RoomException
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomBidRepository
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomPlayerRepository
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomRepository
@@ -54,7 +54,7 @@ class RoomLookupServiceTest {
     @Test
     fun `존재하지 않는 코드로 조회하면 예외가 발생한다`() {
         assertThatThrownBy { cut.get("NOCODE") }
-            .isInstanceOf(RoomNotFoundException::class.java)
+            .isInstanceOf(RoomException.RoomNotFoundException::class.java)
     }
 
     @Test

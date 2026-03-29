@@ -1,6 +1,6 @@
 package com.naminhyeok.fantazzk.room
 
-import com.naminhyeok.fantazzk.room.exception.RoomNotFoundException
+import com.naminhyeok.fantazzk.room.exception.RoomException
 import com.naminhyeok.fantazzk.room.repository.RoomRepository
 import com.naminhyeok.fantazzk.room.repository.RoomTeamLeaderRepository
 
@@ -13,7 +13,7 @@ internal class RoomStartServiceImpl(
     private val roomTeamLeaderRepository: RoomTeamLeaderRepository,
 ) : RoomStartService {
     override fun start(code: String) {
-        val room = roomRepository.findByCode(code) ?: throw RoomNotFoundException()
+        val room = roomRepository.findByCode(code) ?: throw RoomException.RoomNotFoundException()
         check(room.isWaiting()) { "대기 중인 방에서만 시작할 수 있습니다" }
 
         val leaders = roomTeamLeaderRepository.findByRoomId(room.roomId)
