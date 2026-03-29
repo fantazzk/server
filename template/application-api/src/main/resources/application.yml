@@ -39,3 +39,25 @@ spring:
     url: jdbc:tc:postgresql:16:///test
     username: test
     password: test
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+swagger:
+  username: ${SWAGGER_USERNAME}
+  password: ${SWAGGER_PASSWORD}
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: production
+
+swagger:
+  username: ${SWAGGER_USERNAME}
+  password: ${SWAGGER_PASSWORD}

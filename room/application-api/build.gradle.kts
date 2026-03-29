@@ -7,6 +7,7 @@ dependencies {
 
     implementation("org.liquibase:liquibase-core")
     implementation("org.springframework.boot:spring-boot-liquibase")
+    implementation("org.springframework.boot:spring-boot-starter-security")
 
     runtimeOnly("org.postgresql:postgresql")
 
