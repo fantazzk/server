@@ -130,8 +130,10 @@ class InMemoryRoomTeamMemberRepository : RoomTeamMemberRepository {
 
     override fun countByRoomId(roomId: Long): Int = store.count { it.roomId == roomId }
 
-    override fun countByRoomIdAndTeamLeaderId(roomId: Long, teamLeaderId: String): Int =
-        store.count { it.roomId == roomId && it.teamLeaderId == teamLeaderId }
+    override fun countByRoomIdAndTeamLeaderId(
+        roomId: Long,
+        teamLeaderId: String,
+    ): Int = store.count { it.roomId == roomId && it.teamLeaderId == teamLeaderId }
 }
 
 class InMemoryRoomBidRepository : RoomBidRepository {

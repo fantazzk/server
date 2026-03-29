@@ -12,13 +12,14 @@ class TemplateTest {
     inner class `생성 검증` {
         @Test
         fun `유효한 값으로 템플릿을 생성할 수 있다`() {
-            val template = Template(
-                name = "경매전",
-                mode = TeamBuildingMode.AUCTION,
-                teamCount = 5,
-                teamSize = 5,
-                budget = 300,
-            )
+            val template =
+                Template(
+                    name = "경매전",
+                    mode = TeamBuildingMode.AUCTION,
+                    teamCount = 5,
+                    teamSize = 5,
+                    budget = 300,
+                )
 
             assertThat(template.picksPerTeam).isEqualTo(4)
         }
