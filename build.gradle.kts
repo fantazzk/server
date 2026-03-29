@@ -161,7 +161,7 @@ subprojects {
         testImplementation(enforcedPlatform(SpringBootPlugin.BOM_COORDINATES))
         testImplementation("org.springframework.boot:spring-boot-starter-test")
         testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test")
-        testImplementation("com.tngtech.archunit:archunit-junit5:1.4.0")
+        testImplementation("com.tngtech.archunit:archunit-junit5:1.4.1")
         testImplementation(rootProject.libs.mockk)
         testImplementation(rootProject.libs.springmockk)
     }
@@ -173,6 +173,7 @@ subprojects {
         dependencies {
             implementation(enforcedPlatform(SpringBootPlugin.BOM_COORDINATES))
             implementation("org.springframework.boot:spring-boot-starter")
+            implementation("org.springframework:spring-tx")
             implementation("tools.jackson.module:jackson-module-kotlin")
         }
     }

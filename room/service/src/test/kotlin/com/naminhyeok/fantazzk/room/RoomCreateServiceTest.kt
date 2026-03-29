@@ -2,14 +2,17 @@ package com.naminhyeok.fantazzk.room
 
 import com.naminhyeok.fantazzk.room.outport.TemplatePlayerSnapshot
 import com.naminhyeok.fantazzk.room.outport.TemplateSnapshot
+import com.naminhyeok.fantazzk.room.repository.RoomRepository
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomPlayerRepository
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomRepository
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomTeamLeaderRepository
 import com.naminhyeok.fantazzk.room.support.InMemoryTemplateLookupPort
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
+import org.springframework.dao.DuplicateKeyException
 
 class RoomCreateServiceTest {
     private lateinit var roomRepo: InMemoryRoomRepository
@@ -139,5 +142,79 @@ class RoomCreateServiceTest {
         assertThat(roomPlayers).hasSize(3)
         assertThat(roomPlayers.map { it.name }).containsExactly("선수A", "선수B", "선수C")
         assertThat(roomPlayers).allMatch { it.status == PlayerStatus.AVAILABLE }
+    }
+
+    @Test
+    fun `방 저장 시 코드 중복이 발생하면 새 코드로 재시도한다`() {
+        val retryingRoomRepo = DuplicateOnceRoomRepository()
+        templateLookupPort.addTemplate(
+            1L,
+            TemplateSnapshot(
+                mode = TeamBuildingMode.AUCTION,
+                teamCount = 2,
+                teamSize = 2,
+                budget = 300,
+                draftOrderStrategy = null,
+                players = emptyList(),
+            ),
+        )
+        cut = RoomCreateServiceImpl(retryingRoomRepo, playerRepo, leaderRepo, templateLookupPort)
+
+        val room = cut.create(1L, "호스트")
+
+        assertThat(room.roomId).isPositive()
+        assertThat(retryingRoomRepo.saveAttempts).isEqualTo(2)
+    }
+
+    @Test
+    fun `방 저장 시 코드 중복이 계속 발생하면 생성에 실패한다`() {
+        val alwaysDuplicateRoomRepo = AlwaysDuplicateRoomRepository()
+        templateLookupPort.addTemplate(
+            1L,
+            TemplateSnapshot(
+                mode = TeamBuildingMode.AUCTION,
+                teamCount = 2,
+                teamSize = 2,
+                budget = 300,
+                draftOrderStrategy = null,
+                players = emptyList(),
+            ),
+        )
+        cut = RoomCreateServiceImpl(alwaysDuplicateRoomRepo, playerRepo, leaderRepo, templateLookupPort)
+
+        assertThatThrownBy { cut.create(1L, "호스트") }
+            .isInstanceOf(IllegalStateException::class.java)
+            .hasMessage("방 코드를 생성할 수 없습니다")
+        assertThat(alwaysDuplicateRoomRepo.saveAttempts).isEqualTo(5)
+    }
+
+    private class DuplicateOnceRoomRepository : RoomRepository {
+        private val delegate = InMemoryRoomRepository()
+        var saveAttempts: Int = 0
+
+        override fun save(room: Room): RoomModel {
+            saveAttempts += 1
+            if (saveAttempts == 1) {
+                throw DuplicateKeyException("duplicate room code")
+            }
+            return delegate.save(room)
+        }
+
+        override fun findByCode(code: String): RoomModel? = delegate.findByCode(code)
+
+        override fun findById(roomId: Long): RoomModel? = delegate.findById(roomId)
+    }
+
+    private class AlwaysDuplicateRoomRepository : RoomRepository {
+        var saveAttempts: Int = 0
+
+        override fun save(room: Room): RoomModel {
+            saveAttempts += 1
+            throw DuplicateKeyException("duplicate room code")
+        }
+
+        override fun findByCode(code: String): RoomModel? = null
+
+        override fun findById(roomId: Long): RoomModel? = null
     }
 }

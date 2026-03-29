@@ -4,15 +4,20 @@ import com.tngtech.archunit.core.domain.JavaClasses
 import com.tngtech.archunit.core.importer.ClassFileImporter
 import com.tngtech.archunit.core.importer.ImportOption
 import com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import kotlin.reflect.KVisibility
 
 class ModuleDependencyArchTest {
-    // ArchUnit 1.4.0이 Java 25 class format을 지원하지 않아 importJars/importUrls가 빈 결과 반환.
-    // Java 25 호환 버전 출시 시 importUrls 방식으로 전환하고 allowEmptyShould 제거할 것.
     private val classes: JavaClasses =
         ClassFileImporter()
             .withImportOption(ImportOption.DoNotIncludeTests())
             .importPackages("com.naminhyeok.fantazzk")
+
+    @Test
+    fun `아키텍처 검증 대상 프로덕션 클래스가 비어있지 않다`() {
+        assertThat(classes).isNotEmpty()
+    }
 
     @Test
     fun `컴포넌트 스캔 어노테이션 사용 금지`() {
@@ -22,17 +27,18 @@ class ModuleDependencyArchTest {
             .orShould().beAnnotatedWith("org.springframework.stereotype.Repository")
             .orShould().beAnnotatedWith("org.springframework.context.annotation.ComponentScan")
             .orShould().beAnnotatedWith("org.springframework.boot.autoconfigure.SpringBootApplication")
-            .allowEmptyShould(true)
             .check(classes)
     }
 
     @Test
     fun `service impl 클래스는 public이면 안 된다`() {
-        noClasses()
-            .that().haveSimpleNameEndingWith("ServiceImpl")
-            .should().bePublic()
-            .allowEmptyShould(true)
-            .check(classes)
+        val publicServiceImpls =
+            classes
+                .filter { it.simpleName.endsWith("ServiceImpl") }
+                .filter { it.reflect().kotlin.visibility == KVisibility.PUBLIC }
+                .map { it.name }
+
+        assertThat(publicServiceImpls).isEmpty()
     }
 
     @Test
@@ -40,7 +46,6 @@ class ModuleDependencyArchTest {
         noClasses()
             .that().resideInAPackage("com.naminhyeok.fantazzk.room..")
             .should().dependOnClassesThat().resideInAPackage("com.naminhyeok.fantazzk.template..")
-            .allowEmptyShould(true)
             .check(classes)
     }
 
@@ -49,7 +54,22 @@ class ModuleDependencyArchTest {
         noClasses()
             .that().resideInAPackage("com.naminhyeok.fantazzk.template..")
             .should().dependOnClassesThat().resideInAPackage("com.naminhyeok.fantazzk.room..")
-            .allowEmptyShould(true)
+            .check(classes)
+    }
+
+    @Test
+    fun `bootstrap은 room outport를 직접 참조하면 안 된다`() {
+        noClasses()
+            .that().resideInAPackage("com.naminhyeok.fantazzk.bootstrap..")
+            .should().dependOnClassesThat().resideInAPackage("com.naminhyeok.fantazzk.room.outport..")
+            .check(classes)
+    }
+
+    @Test
+    fun `bootstrap은 template lookup service를 직접 참조하면 안 된다`() {
+        noClasses()
+            .that().resideInAPackage("com.naminhyeok.fantazzk.bootstrap..")
+            .should().dependOnClassesThat().haveFullyQualifiedName("com.naminhyeok.fantazzk.template.TemplateLookupService")
             .check(classes)
     }
 }
