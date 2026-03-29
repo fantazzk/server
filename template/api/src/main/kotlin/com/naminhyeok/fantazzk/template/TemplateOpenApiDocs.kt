@@ -24,29 +24,116 @@ internal object TemplateOpenApiDocs {
     const val TEMPLATE_ID_PARAMETER = "조회할 템플릿의 ID 입니다."
 
     const val CREATE_AUCTION_TEMPLATE_REQUEST_EXAMPLE =
-        """{"name":"주말 풋살 경매전","mode":"AUCTION","teamCount":2,"teamSize":3,"budget":300,"draftOrderStrategy":null,"playerNames":["김민수","이준호","박성우"]}"""
+        """
+        {
+          "name":"주말 풋살 경매전",
+          "mode":"AUCTION",
+          "teamCount":2,
+          "teamSize":3,
+          "budget":300,
+          "draftOrderStrategy":null,
+          "playerNames":["김민수","이준호","박성우"]
+        }
+        """
 
     const val CREATE_DRAFT_TEMPLATE_REQUEST_EXAMPLE =
-        """{"name":"사내 리그 드래프트전","mode":"DRAFT","teamCount":2,"teamSize":3,"budget":null,"draftOrderStrategy":"SNAKE","playerNames":["김민수","이준호","박성우"]}"""
+        """
+        {
+          "name":"사내 리그 드래프트전",
+          "mode":"DRAFT",
+          "teamCount":2,
+          "teamSize":3,
+          "budget":null,
+          "draftOrderStrategy":"SNAKE",
+          "playerNames":["김민수","이준호","박성우"]
+        }
+        """
 
     const val CREATED_TEMPLATE_RESPONSE =
-        """{"resultType":"SUCCESS","success":{"id":1,"name":"주말 풋살 경매전","mode":"AUCTION","teamCount":2,"teamSize":3,"budget":300,"draftOrderStrategy":null,"players":null},"error":null}"""
+        """
+        {
+          "resultType":"SUCCESS",
+          "success":{
+            "id":1,
+            "name":"주말 풋살 경매전",
+            "mode":"AUCTION",
+            "teamCount":2,
+            "teamSize":3,
+            "budget":300,
+            "draftOrderStrategy":null,
+            "players":null
+          },
+          "error":null
+        }
+        """
 
     const val TEMPLATE_DETAIL_RESPONSE =
-        """{"resultType":"SUCCESS","success":{"id":1,"name":"주말 풋살 경매전","mode":"DRAFT","teamCount":2,"teamSize":3,"budget":null,"draftOrderStrategy":"SNAKE","players":[{"name":"김민수","displayOrder":0},{"name":"이준호","displayOrder":1},{"name":"박성우","displayOrder":2}]},"error":null}"""
+        """
+        {
+          "resultType":"SUCCESS",
+          "success":{
+            "id":1,
+            "name":"주말 풋살 경매전",
+            "mode":"DRAFT",
+            "teamCount":2,
+            "teamSize":3,
+            "budget":null,
+            "draftOrderStrategy":"SNAKE",
+            "players":[
+              {"name":"김민수","displayOrder":0},
+              {"name":"이준호","displayOrder":1},
+              {"name":"박성우","displayOrder":2}
+            ]
+          },
+          "error":null
+        }
+        """
 
     const val TEMPLATE_LIST_RESPONSE =
-        """{"resultType":"SUCCESS","success":[{"id":1,"name":"주말 풋살 경매전","mode":"AUCTION","teamCount":2,"teamSize":3,"budget":300,"draftOrderStrategy":null,"players":null},{"id":2,"name":"사내 리그 드래프트전","mode":"DRAFT","teamCount":2,"teamSize":3,"budget":null,"draftOrderStrategy":"SNAKE","players":null}],"error":null}"""
+        """
+        {
+          "resultType":"SUCCESS",
+          "success":[
+            {"id":1,"name":"주말 풋살 경매전","mode":"AUCTION","teamCount":2,"teamSize":3,"budget":300,"draftOrderStrategy":null,"players":null},
+            {"id":2,"name":"사내 리그 드래프트전","mode":"DRAFT","teamCount":2,"teamSize":3,"budget":null,"draftOrderStrategy":"SNAKE","players":null}
+          ],
+          "error":null
+        }
+        """
 
     const val TEMPLATE_NOT_FOUND_RESPONSE =
-        """{"resultType":"ERROR","success":null,"error":{"status":404,"errorCode":"TEMPLATE_NOT_FOUND","reason":"템플릿을 찾을 수 없습니다","data":null}}"""
+        """
+        {
+          "resultType":"ERROR",
+          "success":null,
+          "error":{"status":404,"errorCode":"TEMPLATE_NOT_FOUND","reason":"템플릿을 찾을 수 없습니다","data":null}
+        }
+        """
 
     const val TEMPLATE_TEAM_COUNT_BAD_REQUEST_RESPONSE =
-        """{"resultType":"ERROR","success":null,"error":{"status":400,"errorCode":"BAD_REQUEST","reason":"팀 수는 0보다 커야 합니다","data":null}}"""
+        """
+        {
+          "resultType":"ERROR",
+          "success":null,
+          "error":{"status":400,"errorCode":"BAD_REQUEST","reason":"팀 수는 0보다 커야 합니다","data":null}
+        }
+        """
 
     const val TEMPLATE_TEAM_SIZE_BAD_REQUEST_RESPONSE =
-        """{"resultType":"ERROR","success":null,"error":{"status":400,"errorCode":"BAD_REQUEST","reason":"팀 크기는 0보다 커야 합니다","data":null}}"""
+        """
+        {
+          "resultType":"ERROR",
+          "success":null,
+          "error":{"status":400,"errorCode":"BAD_REQUEST","reason":"팀 크기는 0보다 커야 합니다","data":null}
+        }
+        """
 
     const val TEMPLATE_BUDGET_BAD_REQUEST_RESPONSE =
-        """{"resultType":"ERROR","success":null,"error":{"status":400,"errorCode":"BAD_REQUEST","reason":"예산은 0보다 커야 합니다","data":null}}"""
+        """
+        {
+          "resultType":"ERROR",
+          "success":null,
+          "error":{"status":400,"errorCode":"BAD_REQUEST","reason":"예산은 0보다 커야 합니다","data":null}
+        }
+        """
 }
