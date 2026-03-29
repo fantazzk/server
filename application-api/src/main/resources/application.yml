@@ -8,6 +8,11 @@ spring:
   liquibase:
     change-log: classpath:/db/changelog/db.changelog-master.yaml
 
+cors:
+  allowed-origins:
+    - http://localhost:3000
+    - http://localhost:5173
+
 server:
   tomcat:
     mbeanregistry:
@@ -50,6 +55,12 @@ spring:
   liquibase:
     default-schema: dev
 
+cors:
+  allowed-origins:
+    - http://localhost:3000
+    - http://localhost:5173
+    - https://dev-fantazzk.vercel.app
+
 ---
 
 spring:
@@ -62,3 +73,7 @@ spring:
     password: ${DATABASE_PASSWORD}
   liquibase:
     default-schema: production
+
+cors:
+  allowed-origins:
+    - https://fantazzk-rho.vercel.app
