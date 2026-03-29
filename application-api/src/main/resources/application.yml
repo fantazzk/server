@@ -1,6 +1,8 @@
 spring:
   application:
     name: fantazzk-server
+  lifecycle:
+    timeout-per-shutdown-phase: 25s
   datasource:
     url: jdbc:postgresql://localhost:54322/postgres
     username: postgres
@@ -14,6 +16,7 @@ cors:
     - http://localhost:5173
 
 server:
+  shutdown: graceful
   tomcat:
     mbeanregistry:
       enabled: true
