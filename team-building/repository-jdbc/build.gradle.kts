@@ -3,9 +3,7 @@ dependencies {
     implementation("org.liquibase:liquibase-core")
 
     integrationTestImplementation("org.springframework.boot:spring-boot-liquibase")
-    integrationTestImplementation("org.testcontainers:testcontainers-mysql")
+    integrationTestImplementation("org.testcontainers:testcontainers-postgresql")
     integrationTestImplementation(project(":team-building:schema"))
-    integrationTestRuntimeOnly("com.mysql:mysql-connector-j") {
-        exclude(group = "com.google.protobuf", module = "protobuf-java")
-    }
+    integrationTestRuntimeOnly("org.postgresql:postgresql")
 }

@@ -2,9 +2,9 @@ spring:
   application:
     name: fantazzk-server
   datasource:
-    url: jdbc:tc:mysql:8.0.36:///test?serverTimezone=UTC&TC_REUSABLE=true&useUnicode=true&character_set_server=utf8mb4&connectionTimeZone=UTC&forceConnectionTimeZoneToSession=false&preserveInstants=true&cacheDefaultTimezone=false&zeroDateTimeBehavior=convertToNull&jdbcCompliantTruncation=false&sessionVariables=sql_mode%3D'STRICT_ALL_TABLES'&rewriteBatchedStatements=true
-    username: test
-    password: test
+    url: jdbc:postgresql://localhost:54322/postgres
+    username: postgres
+    password: postgres
   liquibase:
     change-log: classpath:/db/changelog/db.changelog-master.yaml
 
@@ -31,13 +31,34 @@ management:
 spring:
   config:
     activate:
-      on-profile: local-dev
+      on-profile: test
+  datasource:
+    url: jdbc:tc:postgresql:16:///test
+    username: test
+    password: test
 
-server:
-  port: 8080
+---
 
-management:
-  endpoints:
-    web:
-      exposure:
-        include: '*'
+spring:
+  config:
+    activate:
+      on-profile: dev
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+  liquibase:
+    default-schema: dev
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: production
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+  liquibase:
+    default-schema: production

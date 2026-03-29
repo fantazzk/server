@@ -4,7 +4,7 @@ databaseChangeLog:
       author: team-building
       changes:
         - sqlFile:
-            dbms: mysql
+            dbms: postgresql
             encoding: UTF-8
             endDelimiter: ';'
             path: db/changelog/team-building/initial_schema.sql

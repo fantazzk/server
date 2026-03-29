@@ -20,3 +20,8 @@ Thumbs.db
 # Spring Boot
 *.log
 .kotlin/
+
+# Environment
+.env
+.env.dev
+.env.prod

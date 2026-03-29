@@ -1,6 +1,6 @@
 CREATE TABLE template
 (
-    id                    BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id                    BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     name                  VARCHAR(255) NOT NULL,
     mode                  VARCHAR(20)  NOT NULL,
     team_count            INT          NOT NULL,
@@ -12,7 +12,7 @@ CREATE TABLE template
 
 CREATE TABLE template_player
 (
-    id            BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id            BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     template_id   BIGINT       NOT NULL,
     name          VARCHAR(255) NOT NULL,
     display_order INT          NOT NULL,
@@ -21,7 +21,7 @@ CREATE TABLE template_player
 
 CREATE TABLE room
 (
-    id                    BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id                    BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     code                  VARCHAR(6)   NOT NULL UNIQUE,
     host_id               VARCHAR(36)  NOT NULL,
     status                VARCHAR(20)  NOT NULL,
@@ -33,14 +33,14 @@ CREATE TABLE room
     current_turn_index    INT,
     current_auction_round INT,
     created_at            TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at            TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    updated_at            TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX idx_room_code ON room (code);
 
 CREATE TABLE room_player
 (
-    id            BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id            BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     room_id       BIGINT       NOT NULL,
     name          VARCHAR(255) NOT NULL,
     status        VARCHAR(20)  NOT NULL,
@@ -50,7 +50,7 @@ CREATE TABLE room_player
 
 CREATE TABLE room_team_leader
 (
-    id               BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id               BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     room_id          BIGINT       NOT NULL,
     team_leader_id   VARCHAR(36)  NOT NULL,
     nickname         VARCHAR(255) NOT NULL,
@@ -60,7 +60,7 @@ CREATE TABLE room_team_leader
 
 CREATE TABLE room_team_member
 (
-    id             BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id             BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     room_id        BIGINT       NOT NULL,
     team_leader_id VARCHAR(36)  NOT NULL,
     player_name    VARCHAR(255) NOT NULL,
@@ -70,7 +70,7 @@ CREATE TABLE room_team_member
 
 CREATE TABLE room_bid
 (
-    id             BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id             BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     room_id        BIGINT      NOT NULL,
     round          INT         NOT NULL,
     team_leader_id VARCHAR(36) NOT NULL,
