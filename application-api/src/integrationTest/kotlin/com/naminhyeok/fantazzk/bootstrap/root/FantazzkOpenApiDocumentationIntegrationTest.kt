@@ -56,7 +56,9 @@ class FantazzkOpenApiDocumentationIntegrationTest(
             templateCreateOperation.at("/responses/201/content/application~1json/examples/createdTemplate/value/success/name").asText(),
         ).isEqualTo("주말 풋살 경매전")
         assertThat(
-            templateCreateOperation.at("/responses/400/content/application~1json/examples/teamCountMustBePositive/value/error/reason").asText(),
+            templateCreateOperation
+                .at("/responses/400/content/application~1json/examples/teamCountMustBePositive/value/error/reason")
+                .asText(),
         ).isEqualTo("팀 수는 0보다 커야 합니다")
     }
 
