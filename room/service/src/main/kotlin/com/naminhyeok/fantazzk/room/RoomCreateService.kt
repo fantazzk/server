@@ -28,7 +28,7 @@ internal class RoomCreateServiceImpl(
         val room =
             roomRepository.save(
                 Room(
-                    code = generateCode(),
+                    code = generateUniqueCode(),
                     hostId = UUID.randomUUID().toString(),
                     status = RoomStatus.WAITING,
                     mode = template.mode,
@@ -57,8 +57,16 @@ internal class RoomCreateServiceImpl(
         return room
     }
 
-    private fun generateCode(): String {
+    private fun generateUniqueCode(): String {
         val chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-        return (1..6).map { chars.random() }.joinToString("")
+        repeat(MAX_CODE_GENERATION_ATTEMPTS) {
+            val code = (1..6).map { chars.random() }.joinToString("")
+            if (roomRepository.findByCode(code) == null) return code
+        }
+        throw IllegalStateException("방 코드를 생성할 수 없습니다")
+    }
+
+    companion object {
+        private const val MAX_CODE_GENERATION_ATTEMPTS = 5
     }
 }
