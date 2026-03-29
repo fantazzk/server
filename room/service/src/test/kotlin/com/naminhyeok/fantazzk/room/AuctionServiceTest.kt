@@ -136,6 +136,29 @@ class AuctionServiceTest {
                 .isInstanceOf(IllegalArgumentException::class.java)
                 .hasMessageContaining("현재 최고가보다 높아야 합니다")
         }
+
+        @Test
+        fun `현재 경매 라운드가 없으면 입찰 기록을 저장하지 않는다`() {
+            roomRepo.save(
+                Room(
+                    roomId = roomId,
+                    code = roomCode,
+                    hostId = "host",
+                    status = RoomStatus.IN_PROGRESS,
+                    mode = TeamBuildingMode.AUCTION,
+                    teamCount = 2,
+                    teamSize = 2,
+                    budget = 300,
+                    currentAuctionRound = null,
+                ),
+            )
+
+            assertThatThrownBy { cut.placeBid(roomCode, "leader-A", 100) }
+                .isInstanceOf(IllegalArgumentException::class.java)
+                .hasMessageContaining("현재 경매 라운드가 없습니다")
+
+            assertThat(bidRepo.findHighestByRoomIdAndRound(roomId, 1)).isNull()
+        }
     }
 
     @Nested
@@ -152,6 +175,12 @@ class AuctionServiceTest {
             val members = memberRepo.findByRoomIdAndTeamLeaderId(roomId, "leader-B")
             assertThat(members).hasSize(1)
             assertThat(members.first().playerName).isEqualTo("선수1")
+
+            val winner = leaderRepo.findByRoomIdAndTeamLeaderId(roomId, "leader-B")!!
+            assertThat(winner.remainingBudget).isEqualTo(150)
+
+            val assignedPlayer = playerRepo.findByRoomId(roomId).first { it.name == "선수1" }
+            assertThat(assignedPlayer.status).isEqualTo(PlayerStatus.ASSIGNED)
         }
 
         @Test
@@ -178,6 +207,10 @@ class AuctionServiceTest {
 
             val nextTarget = playerRepo.findFirstAvailable(roomId)
             assertThat(nextTarget?.name).isEqualTo("선수2")
+
+            val movedPlayer = playerRepo.findByRoomId(roomId).first { it.name == "선수1" }
+            assertThat(movedPlayer.displayOrder).isEqualTo(3)
+            assertThat(movedPlayer.status).isEqualTo(PlayerStatus.AVAILABLE)
         }
 
         @Test
@@ -203,11 +236,41 @@ class AuctionServiceTest {
         @Test
         fun `경매할 선수가 없으면 정산할 수 없다`() {
             playerRepo.findByRoomId(roomId).forEach { player ->
-                playerRepo.save(RoomPlayer.from(player).copy(status = PlayerStatus.ASSIGNED))
+                playerRepo.save(player.assign())
             }
 
             assertThatThrownBy { cut.settle(roomCode) }
                 .isInstanceOf(IllegalArgumentException::class.java)
+        }
+
+        @Test
+        fun `현재 경매 라운드가 없으면 정산 전에 어떤 상태도 변경하지 않는다`() {
+            roomRepo.save(
+                Room(
+                    roomId = roomId,
+                    code = roomCode,
+                    hostId = "host",
+                    status = RoomStatus.IN_PROGRESS,
+                    mode = TeamBuildingMode.AUCTION,
+                    teamCount = 2,
+                    teamSize = 2,
+                    budget = 300,
+                    currentAuctionRound = null,
+                ),
+            )
+            bidRepo.save(RoomBid(roomId = roomId, round = 1, teamLeaderId = "leader-A", amount = 100))
+
+            assertThatThrownBy { cut.settle(roomCode) }
+                .isInstanceOf(IllegalArgumentException::class.java)
+                .hasMessageContaining("현재 경매 라운드가 없습니다")
+
+            val player = playerRepo.findByRoomId(roomId).first { it.name == "선수1" }
+            assertThat(player.status).isEqualTo(PlayerStatus.AVAILABLE)
+
+            val leader = leaderRepo.findByRoomIdAndTeamLeaderId(roomId, "leader-A")!!
+            assertThat(leader.remainingBudget).isEqualTo(300)
+            assertThat(memberRepo.countByRoomId(roomId)).isZero()
+            assertThat(roomRepo.findByCode(roomCode)?.currentAuctionRound).isNull()
         }
     }
 }

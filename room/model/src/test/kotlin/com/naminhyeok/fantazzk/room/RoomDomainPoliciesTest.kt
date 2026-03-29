@@ -197,6 +197,93 @@ class RoomDomainPoliciesTest {
         }
     }
 
+    @Nested
+    inner class `진행 전이 정책` {
+        @Test
+        fun `경매 낙찰 정산은 다음 라운드로 진행하고 필요하면 방을 완료한다`() {
+            val room =
+                auctionRoom(
+                    status = RoomStatus.IN_PROGRESS,
+                    currentAuctionRound = 2,
+                )
+
+            val advanced = room.advanceAuction(nextRound = 3, completed = true)
+
+            assertThat(advanced.currentAuctionRound).isEqualTo(3)
+            assertThat(advanced.status).isEqualTo(RoomStatus.COMPLETED)
+            assertThat(advanced.currentTurnIndex).isNull()
+        }
+
+        @Test
+        fun `경매 낙찰 정산은 현재 이하 라운드로 진행할 수 없다`() {
+            val room =
+                auctionRoom(
+                    status = RoomStatus.IN_PROGRESS,
+                    currentAuctionRound = 2,
+                )
+
+            assertThatThrownBy { room.advanceAuction(nextRound = 2, completed = false) }
+                .isInstanceOf(IllegalArgumentException::class.java)
+                .hasMessageContaining("다음 경매 라운드는 현재보다 커야 합니다")
+        }
+
+        @Test
+        fun `경매 유찰 정산은 상태를 유지한 채 다음 라운드로 이동한다`() {
+            val room =
+                auctionRoom(
+                    status = RoomStatus.IN_PROGRESS,
+                    currentAuctionRound = 2,
+                )
+
+            val advanced = room.moveAuctionTargetToNextRound(nextRound = 3)
+
+            assertThat(advanced.currentAuctionRound).isEqualTo(3)
+            assertThat(advanced.status).isEqualTo(RoomStatus.IN_PROGRESS)
+            assertThat(advanced.currentTurnIndex).isNull()
+        }
+
+        @Test
+        fun `경매 유찰 정산은 이전 라운드로 되감을 수 없다`() {
+            val room =
+                auctionRoom(
+                    status = RoomStatus.IN_PROGRESS,
+                    currentAuctionRound = 2,
+                )
+
+            assertThatThrownBy { room.moveAuctionTargetToNextRound(nextRound = -1) }
+                .isInstanceOf(IllegalArgumentException::class.java)
+                .hasMessageContaining("다음 경매 라운드는 현재보다 커야 합니다")
+        }
+
+        @Test
+        fun `드래프트 픽 정산은 다음 턴으로 진행하고 필요하면 방을 완료한다`() {
+            val room =
+                draftRoom(
+                    status = RoomStatus.IN_PROGRESS,
+                    currentTurnIndex = 1,
+                )
+
+            val advanced = room.advanceDraftTurn(nextTurnIndex = 2, completed = true)
+
+            assertThat(advanced.currentTurnIndex).isEqualTo(2)
+            assertThat(advanced.status).isEqualTo(RoomStatus.COMPLETED)
+            assertThat(advanced.currentAuctionRound).isNull()
+        }
+
+        @Test
+        fun `드래프트 픽 정산은 현재 이하 턴으로 진행할 수 없다`() {
+            val room =
+                draftRoom(
+                    status = RoomStatus.IN_PROGRESS,
+                    currentTurnIndex = 1,
+                )
+
+            assertThatThrownBy { room.advanceDraftTurn(nextTurnIndex = 1, completed = false) }
+                .isInstanceOf(IllegalArgumentException::class.java)
+                .hasMessageContaining("다음 드래프트 턴은 현재보다 커야 합니다")
+        }
+    }
+
     private fun auctionRoom(
         status: RoomStatus = RoomStatus.WAITING,
         teamCount: Int = 2,

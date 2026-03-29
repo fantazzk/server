@@ -35,14 +35,14 @@ internal class AuctionServiceImpl(
         amount: Int,
     ): RoomBidModel {
         val room = findInProgressAuctionRoom(code)
+        val currentRound = room.requireCurrentAuctionRound()
 
         val leader =
             roomTeamLeaderRepository.findByRoomIdAndTeamLeaderId(room.roomId, teamLeaderId)
                 ?: throw RoomException.TeamLeaderNotFoundException()
 
-        leader.validateBudget(amount)
+        leader.requireCanBid(amount)
 
-        val currentRound = room.currentAuctionRound ?: 1
         val highest = roomBidRepository.findHighestByRoomIdAndRound(room.roomId, currentRound)
         require(amount > (highest?.amount ?: 0)) { "현재 최고가보다 높아야 합니다" }
 
@@ -53,9 +53,9 @@ internal class AuctionServiceImpl(
 
     override fun settle(code: String): AuctionSettleResult {
         val room = findInProgressAuctionRoom(code)
+        val currentRound = room.requireCurrentAuctionRound()
 
         val target = requireNotNull(roomPlayerRepository.findFirstAvailable(room.roomId)) { "경매할 선수가 없습니다" }
-        val currentRound = room.currentAuctionRound ?: 1
         val nextRound = currentRound + 1
         val highest = roomBidRepository.findHighestByRoomIdAndRound(room.roomId, currentRound)
 
@@ -72,38 +72,32 @@ internal class AuctionServiceImpl(
         bid: RoomBidModel,
         nextRound: Int,
     ): AuctionSettleResult {
-        roomPlayerRepository.save(RoomPlayer.from(target).copy(status = PlayerStatus.ASSIGNED))
-
         val winner =
             roomTeamLeaderRepository.findByRoomIdAndTeamLeaderId(room.roomId, bid.teamLeaderId)
                 ?: throw RoomException.TeamLeaderNotFoundException()
-        val budget = requireNotNull(winner.remainingBudget) { "경매 모드에서 예산이 존재하지 않습니다" }
-        roomTeamLeaderRepository.save(
-            RoomTeamLeader.from(winner).copy(remainingBudget = budget - bid.amount),
-        )
 
         val leaderMemberCount =
             roomTeamMemberRepository.countByRoomIdAndTeamLeaderId(room.roomId, bid.teamLeaderId)
         check(leaderMemberCount < room.picksPerTeam) { "팀장의 팀원 정원이 가득 찼습니다" }
 
         val assignedCount = roomTeamMemberRepository.countByRoomId(room.roomId)
-        roomTeamMemberRepository.save(
+        val totalRequired = room.teamCount * room.picksPerTeam
+        val completed = assignedCount + 1 >= totalRequired
+        val nextRoom = room.advanceAuction(nextRound = nextRound, completed = completed)
+        val assignedPlayer = target.assign()
+        val updatedWinner = winner.spend(bid.amount)
+        val member =
             RoomTeamMember(
                 roomId = room.roomId,
                 teamLeaderId = bid.teamLeaderId,
                 playerName = target.name,
                 assignOrder = assignedCount,
-            ),
-        )
+            )
 
-        val totalRequired = room.teamCount * room.picksPerTeam
-        val completed = assignedCount + 1 >= totalRequired
-        roomRepository.save(
-            Room.from(room).copy(
-                currentAuctionRound = nextRound,
-                status = if (completed) RoomStatus.COMPLETED else room.status,
-            ),
-        )
+        roomPlayerRepository.save(assignedPlayer)
+        roomTeamLeaderRepository.save(updatedWinner)
+        roomTeamMemberRepository.save(member)
+        roomRepository.save(nextRoom)
 
         return AuctionSettleResult(target.name, AuctionOutcome.SOLD)
     }
@@ -113,10 +107,13 @@ internal class AuctionServiceImpl(
         target: RoomPlayerModel,
         nextRound: Int,
     ): AuctionSettleResult {
+        val nextRoom = room.moveAuctionTargetToNextRound(nextRound = nextRound)
         val players = roomPlayerRepository.findByRoomId(room.roomId)
         val maxOrder = players.maxOf { it.displayOrder }
-        roomPlayerRepository.save(RoomPlayer.from(target).copy(displayOrder = maxOrder + 1))
-        roomRepository.save(Room.from(room).copy(currentAuctionRound = nextRound))
+        val movedTarget = target.moveToBack(maxOrder + 1)
+
+        roomPlayerRepository.save(movedTarget)
+        roomRepository.save(nextRoom)
         return AuctionSettleResult(target.name, AuctionOutcome.PASSED)
     }
 

@@ -1,6 +1,7 @@
 package com.naminhyeok.fantazzk.room
 
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -33,6 +34,56 @@ class RoomPlayerTest {
         fun `isAvailable은 AVAILABLE 상태에서만 true를 반환한다`(status: PlayerStatus) {
             val player = RoomPlayer(roomId = 1L, name = "선수1", status = status, displayOrder = 0)
             assertThat(player.isAvailable()).isEqualTo(status == PlayerStatus.AVAILABLE)
+        }
+    }
+
+    @Nested
+    inner class `상태 전이` {
+        @Test
+        fun `선수를 배정하면 ASSIGNED 상태가 된다`() {
+            val player = RoomPlayer(roomId = 1L, name = "선수1", displayOrder = 0)
+
+            val assigned = player.assign()
+
+            assertThat(assigned.status).isEqualTo(PlayerStatus.ASSIGNED)
+            assertThat(assigned.displayOrder).isEqualTo(player.displayOrder)
+        }
+
+        @Test
+        fun `이미 배정된 선수는 다시 배정할 수 없다`() {
+            val player = RoomPlayer(roomId = 1L, name = "선수1", status = PlayerStatus.ASSIGNED, displayOrder = 0)
+
+            assertThatThrownBy { player.assign() }
+                .isInstanceOf(IllegalStateException::class.java)
+                .hasMessageContaining("선수를 배정할 수 없습니다")
+        }
+
+        @Test
+        fun `선수를 뒤로 보내면 순서만 갱신되고 상태는 유지된다`() {
+            val player = RoomPlayer(roomId = 1L, name = "선수1", displayOrder = 0)
+
+            val moved = player.moveToBack(3)
+
+            assertThat(moved.displayOrder).isEqualTo(3)
+            assertThat(moved.status).isEqualTo(PlayerStatus.AVAILABLE)
+        }
+
+        @Test
+        fun `선수는 현재 순서보다 뒤로만 이동할 수 있다`() {
+            val player = RoomPlayer(roomId = 1L, name = "선수1", displayOrder = 3)
+
+            assertThatThrownBy { player.moveToBack(3) }
+                .isInstanceOf(IllegalArgumentException::class.java)
+                .hasMessageContaining("현재 순서보다 뒤로만 이동할 수 있습니다")
+        }
+
+        @Test
+        fun `선수는 음수 순서로 이동할 수 없다`() {
+            val player = RoomPlayer(roomId = 1L, name = "선수1", displayOrder = 3)
+
+            assertThatThrownBy { player.moveToBack(-1) }
+                .isInstanceOf(IllegalArgumentException::class.java)
+                .hasMessageContaining("순서는 0 이상이어야 합니다")
         }
     }
 

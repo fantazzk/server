@@ -63,6 +63,9 @@ class DraftServiceTest {
 
             assertThat(member.teamLeaderId).isEqualTo("leader-A")
             assertThat(member.playerName).isEqualTo("선수1")
+
+            val assignedPlayer = playerRepo.findByRoomId(roomId).first { it.name == "선수1" }
+            assertThat(assignedPlayer.status).isEqualTo(PlayerStatus.ASSIGNED)
         }
 
         @Test
@@ -133,6 +136,32 @@ class DraftServiceTest {
         fun `존재하지 않는 선수는 픽할 수 없다`() {
             assertThatThrownBy { cut.pick(roomCode, "leader-A", "없는선수") }
                 .isInstanceOf(IllegalArgumentException::class.java)
+        }
+
+        @Test
+        fun `현재 드래프트 턴이 없으면 픽 전에 어떤 상태도 변경하지 않는다`() {
+            roomRepo.save(
+                Room(
+                    roomId = roomId,
+                    code = roomCode,
+                    hostId = "host",
+                    status = RoomStatus.IN_PROGRESS,
+                    mode = TeamBuildingMode.DRAFT,
+                    teamCount = 2,
+                    teamSize = 2,
+                    draftOrderStrategy = DraftOrderStrategy.SNAKE,
+                    currentTurnIndex = null,
+                ),
+            )
+
+            assertThatThrownBy { cut.pick(roomCode, "leader-A", "선수1") }
+                .isInstanceOf(IllegalArgumentException::class.java)
+                .hasMessageContaining("현재 드래프트 턴이 없습니다")
+
+            val player = playerRepo.findByRoomId(roomId).first { it.name == "선수1" }
+            assertThat(player.status).isEqualTo(PlayerStatus.AVAILABLE)
+            assertThat(memberRepo.countByRoomId(roomId)).isZero()
+            assertThat(roomRepo.findByCode(roomCode)?.currentTurnIndex).isNull()
         }
     }
 

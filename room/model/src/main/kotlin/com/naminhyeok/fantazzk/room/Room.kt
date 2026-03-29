@@ -69,6 +69,48 @@ data class Room(
         }
     }
 
+    fun requireCurrentAuctionRound(): Int = requireNotNull(currentAuctionRound) { "현재 경매 라운드가 없습니다" }
+
+    fun requireCurrentTurnIndex(): Int = requireNotNull(currentTurnIndex) { "현재 드래프트 턴이 없습니다" }
+
+    fun advanceAuction(
+        nextRound: Int,
+        completed: Boolean,
+    ): Room {
+        check(isAuction()) { "경매 모드가 아닙니다" }
+        check(isInProgress()) { "진행 중인 방에서만 가능합니다" }
+        requireNextAuctionRound(nextRound)
+        return copy(
+            currentAuctionRound = nextRound,
+            status = if (completed) RoomStatus.COMPLETED else status,
+            currentTurnIndex = null,
+        )
+    }
+
+    fun moveAuctionTargetToNextRound(nextRound: Int): Room {
+        check(isAuction()) { "경매 모드가 아닙니다" }
+        check(isInProgress()) { "진행 중인 방에서만 가능합니다" }
+        requireNextAuctionRound(nextRound)
+        return copy(
+            currentAuctionRound = nextRound,
+            currentTurnIndex = null,
+        )
+    }
+
+    fun advanceDraftTurn(
+        nextTurnIndex: Int,
+        completed: Boolean,
+    ): Room {
+        check(isDraft()) { "드래프트 모드가 아닙니다" }
+        check(isInProgress()) { "진행 중인 방에서만 가능합니다" }
+        requireNextDraftTurn(nextTurnIndex)
+        return copy(
+            currentTurnIndex = nextTurnIndex,
+            status = if (completed) RoomStatus.COMPLETED else status,
+            currentAuctionRound = null,
+        )
+    }
+
     companion object {
         fun createAuction(
             code: String,
@@ -136,4 +178,31 @@ data class Room(
                     is TeamBuildingConfiguration.Draft -> null
                 },
         )
+
+    private fun requireNextAuctionRound(nextRound: Int) {
+        val currentRound = requireCurrentAuctionRound()
+        require(nextRound > currentRound) { "다음 경매 라운드는 현재보다 커야 합니다" }
+    }
+
+    private fun requireNextDraftTurn(nextTurnIndex: Int) {
+        val currentIndex = requireCurrentTurnIndex()
+        require(nextTurnIndex > currentIndex) { "다음 드래프트 턴은 현재보다 커야 합니다" }
+    }
 }
+
+fun RoomModel.requireCurrentAuctionRound(): Int = Room.from(this).requireCurrentAuctionRound()
+
+fun RoomModel.requireCurrentTurnIndex(): Int = Room.from(this).requireCurrentTurnIndex()
+
+fun RoomModel.advanceAuction(
+    nextRound: Int,
+    completed: Boolean,
+): Room = Room.from(this).advanceAuction(nextRound = nextRound, completed = completed)
+
+fun RoomModel.moveAuctionTargetToNextRound(nextRound: Int): Room =
+    Room.from(this).moveAuctionTargetToNextRound(nextRound = nextRound)
+
+fun RoomModel.advanceDraftTurn(
+    nextTurnIndex: Int,
+    completed: Boolean,
+): Room = Room.from(this).advanceDraftTurn(nextTurnIndex = nextTurnIndex, completed = completed)

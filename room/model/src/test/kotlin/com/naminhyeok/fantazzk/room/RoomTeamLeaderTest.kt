@@ -56,13 +56,13 @@ class RoomTeamLeaderTest {
         @Test
         fun `잔여 예산 이하로 입찰하면 검증을 통과한다`() {
             val leader = leader(remainingBudget = 100)
-            assertThatCode { leader.validateBudget(100) }.doesNotThrowAnyException()
+            assertThatCode { leader.requireCanBid(100) }.doesNotThrowAnyException()
         }
 
         @Test
         fun `잔여 예산을 초과하면 예외가 발생한다`() {
             val leader = leader(remainingBudget = 100)
-            assertThatThrownBy { leader.validateBudget(101) }
+            assertThatThrownBy { leader.requireCanBid(101) }
                 .isInstanceOf(IllegalArgumentException::class.java)
                 .hasMessageContaining("예산이 부족합니다")
         }
@@ -70,9 +70,50 @@ class RoomTeamLeaderTest {
         @Test
         fun `예산이 null인 모드에서 검증하면 예외가 발생한다`() {
             val leader = leader(remainingBudget = null)
-            assertThatThrownBy { leader.validateBudget(1) }
+            assertThatThrownBy { leader.requireCanBid(1) }
                 .isInstanceOf(IllegalArgumentException::class.java)
                 .hasMessageContaining("예산이 존재하지 않습니다")
+        }
+
+        @Test
+        fun `음수 금액은 입찰 검증을 통과할 수 없다`() {
+            val leader = leader(remainingBudget = 100)
+
+            assertThatThrownBy { leader.requireCanBid(-1) }
+                .isInstanceOf(IllegalArgumentException::class.java)
+                .hasMessageContaining("금액은 0 이상이어야 합니다")
+        }
+    }
+
+    @Nested
+    inner class `예산 전이` {
+        @Test
+        fun `팀장은 낙찰 금액만큼 예산을 차감한다`() {
+            val leader = leader(remainingBudget = 100)
+
+            val spent = leader.spend(30)
+
+            assertThat(spent.remainingBudget).isEqualTo(70)
+            assertThat(spent.roomTeamLeaderId).isEqualTo(leader.roomTeamLeaderId)
+            assertThat(spent.teamLeaderId).isEqualTo(leader.teamLeaderId)
+        }
+
+        @Test
+        fun `예산을 초과하는 금액은 차감할 수 없다`() {
+            val leader = leader(remainingBudget = 100)
+
+            assertThatThrownBy { leader.spend(101) }
+                .isInstanceOf(IllegalArgumentException::class.java)
+                .hasMessageContaining("예산이 부족합니다")
+        }
+
+        @Test
+        fun `음수 금액은 차감할 수 없다`() {
+            val leader = leader(remainingBudget = 100)
+
+            assertThatThrownBy { leader.spend(-1) }
+                .isInstanceOf(IllegalArgumentException::class.java)
+                .hasMessageContaining("금액은 0 이상이어야 합니다")
         }
     }
 
