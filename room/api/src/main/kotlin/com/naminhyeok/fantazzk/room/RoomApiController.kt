@@ -10,10 +10,8 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.ExampleObject
-import io.swagger.v3.oas.annotations.responses.ApiResponse as SwaggerApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
-import io.swagger.v3.oas.annotations.parameters.RequestBody as SwaggerRequestBody
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.GetMapping
@@ -23,6 +21,8 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
+import io.swagger.v3.oas.annotations.parameters.RequestBody as SwaggerRequestBody
+import io.swagger.v3.oas.annotations.responses.ApiResponse as SwaggerApiResponse
 
 @Tag(name = "Room", description = RoomOpenApiDocs.TAG_DESCRIPTION)
 @RestController
@@ -56,7 +56,12 @@ class RoomApiController(
                 content = [
                     Content(
                         mediaType = MediaType.APPLICATION_JSON_VALUE,
-                        examples = [ExampleObject(name = "codeGenerationFailed", value = RoomOpenApiDocs.INVALID_STATE_CREATE_FAILED_RESPONSE)],
+                        examples = [
+                            ExampleObject(
+                                name = "codeGenerationFailed",
+                                value = RoomOpenApiDocs.INVALID_STATE_CREATE_FAILED_RESPONSE,
+                            ),
+                        ],
                     ),
                 ],
             ),
@@ -330,7 +335,12 @@ class RoomApiController(
                 content = [
                     Content(
                         mediaType = MediaType.APPLICATION_JSON_VALUE,
-                        examples = [ExampleObject(name = "noPlayerToSettle", value = RoomOpenApiDocs.BAD_REQUEST_NO_PLAYER_TO_SETTLE_RESPONSE)],
+                        examples = [
+                            ExampleObject(
+                                name = "noPlayerToSettle",
+                                value = RoomOpenApiDocs.BAD_REQUEST_NO_PLAYER_TO_SETTLE_RESPONSE,
+                            ),
+                        ],
                     ),
                 ],
             ),
@@ -389,7 +399,12 @@ class RoomApiController(
                 content = [
                     Content(
                         mediaType = MediaType.APPLICATION_JSON_VALUE,
-                        examples = [ExampleObject(name = "playerNotAvailable", value = RoomOpenApiDocs.BAD_REQUEST_PLAYER_NOT_AVAILABLE_RESPONSE)],
+                        examples = [
+                            ExampleObject(
+                                name = "playerNotAvailable",
+                                value = RoomOpenApiDocs.BAD_REQUEST_PLAYER_NOT_AVAILABLE_RESPONSE,
+                            ),
+                        ],
                     ),
                 ],
             ),

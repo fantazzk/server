@@ -53,40 +53,132 @@ internal object RoomOpenApiDocs {
     const val PICK_REQUEST_EXAMPLE = """{"teamLeaderId":"leader-01","playerName":"김민수"}"""
 
     const val CREATED_ROOM_RESPONSE =
-        """{"resultType":"SUCCESS","success":{"code":"ROOM01","status":"WAITING","teamLeaders":[{"id":"leader-01","nickname":"호스트","remainingBudget":300}]},"error":null}"""
+        """
+        {
+          "resultType":"SUCCESS",
+          "success":{
+            "code":"ROOM01",
+            "status":"WAITING",
+            "teamLeaders":[
+              {"id":"leader-01","nickname":"호스트","remainingBudget":300}
+            ]
+          },
+          "error":null
+        }
+        """
 
     const val JOINED_ROOM_RESPONSE =
-        """{"resultType":"SUCCESS","success":{"code":"ROOM01","status":"WAITING","teamLeaders":[{"id":"leader-01","nickname":"호스트","remainingBudget":300},{"id":"leader-02","nickname":"참가자","remainingBudget":300}]},"error":null}"""
+        """
+        {
+          "resultType":"SUCCESS",
+          "success":{
+            "code":"ROOM01",
+            "status":"WAITING",
+            "teamLeaders":[
+              {"id":"leader-01","nickname":"호스트","remainingBudget":300},
+              {"id":"leader-02","nickname":"참가자","remainingBudget":300}
+            ]
+          },
+          "error":null
+        }
+        """
 
     const val STARTED_ROOM_RESPONSE =
-        """{"resultType":"SUCCESS","success":{"code":"ROOM01","status":"IN_PROGRESS","teamLeaders":[{"id":"leader-01","nickname":"호스트","remainingBudget":300},{"id":"leader-02","nickname":"참가자","remainingBudget":300}]},"error":null}"""
+        """
+        {
+          "resultType":"SUCCESS",
+          "success":{
+            "code":"ROOM01",
+            "status":"IN_PROGRESS",
+            "teamLeaders":[
+              {"id":"leader-01","nickname":"호스트","remainingBudget":300},
+              {"id":"leader-02","nickname":"참가자","remainingBudget":300}
+            ]
+          },
+          "error":null
+        }
+        """
 
     const val ROOM_NOT_FOUND_RESPONSE =
-        """{"resultType":"ERROR","success":null,"error":{"status":404,"errorCode":"ROOM_NOT_FOUND","reason":"방을 찾을 수 없습니다","data":null}}"""
+        """
+        {
+          "resultType":"ERROR",
+          "success":null,
+          "error":{"status":404,"errorCode":"ROOM_NOT_FOUND","reason":"방을 찾을 수 없습니다","data":null}
+        }
+        """
 
     const val TEAM_LEADER_NOT_FOUND_RESPONSE =
-        """{"resultType":"ERROR","success":null,"error":{"status":404,"errorCode":"ROOM_TEAM_LEADER_NOT_FOUND","reason":"팀장을 찾을 수 없습니다","data":null}}"""
+        """
+        {
+          "resultType":"ERROR",
+          "success":null,
+          "error":{"status":404,"errorCode":"ROOM_TEAM_LEADER_NOT_FOUND","reason":"팀장을 찾을 수 없습니다","data":null}
+        }
+        """
 
     const val INTERNAL_ERROR_RESPONSE =
-        """{"resultType":"ERROR","success":null,"error":{"status":500,"errorCode":"INTERNAL_ERROR","reason":"예기치 못한 에러가 발생했습니다","data":null}}"""
+        """
+        {
+          "resultType":"ERROR",
+          "success":null,
+          "error":{"status":500,"errorCode":"INTERNAL_ERROR","reason":"예기치 못한 에러가 발생했습니다","data":null}
+        }
+        """
 
     const val INVALID_STATE_CREATE_FAILED_RESPONSE =
-        """{"resultType":"ERROR","success":null,"error":{"status":409,"errorCode":"INVALID_STATE","reason":"방 코드를 생성할 수 없습니다","data":null}}"""
+        """
+        {
+          "resultType":"ERROR",
+          "success":null,
+          "error":{"status":409,"errorCode":"INVALID_STATE","reason":"방 코드를 생성할 수 없습니다","data":null}
+        }
+        """
 
     const val INVALID_STATE_JOIN_WAITING_REQUIRED_RESPONSE =
-        """{"resultType":"ERROR","success":null,"error":{"status":409,"errorCode":"INVALID_STATE","reason":"대기 중인 방에서만 참가할 수 있습니다","data":null}}"""
+        """
+        {
+          "resultType":"ERROR",
+          "success":null,
+          "error":{"status":409,"errorCode":"INVALID_STATE","reason":"대기 중인 방에서만 참가할 수 있습니다","data":null}
+        }
+        """
 
     const val INVALID_STATE_START_WAITING_REQUIRED_RESPONSE =
-        """{"resultType":"ERROR","success":null,"error":{"status":409,"errorCode":"INVALID_STATE","reason":"대기 중인 방에서만 시작할 수 있습니다","data":null}}"""
+        """
+        {
+          "resultType":"ERROR",
+          "success":null,
+          "error":{"status":409,"errorCode":"INVALID_STATE","reason":"대기 중인 방에서만 시작할 수 있습니다","data":null}
+        }
+        """
 
     const val INVALID_STATE_ROOM_FULL_RESPONSE =
-        """{"resultType":"ERROR","success":null,"error":{"status":409,"errorCode":"INVALID_STATE","reason":"방이 가득 찼습니다","data":null}}"""
+        """
+        {
+          "resultType":"ERROR",
+          "success":null,
+          "error":{"status":409,"errorCode":"INVALID_STATE","reason":"방이 가득 찼습니다","data":null}
+        }
+        """
 
     const val INVALID_STATE_LEADERS_REQUIRED_RESPONSE =
-        """{"resultType":"ERROR","success":null,"error":{"status":409,"errorCode":"INVALID_STATE","reason":"모든 팀장 자리가 채워져야 시작할 수 있습니다","data":null}}"""
+        """
+        {
+          "resultType":"ERROR",
+          "success":null,
+          "error":{"status":409,"errorCode":"INVALID_STATE","reason":"모든 팀장 자리가 채워져야 시작할 수 있습니다","data":null}
+        }
+        """
 
     const val INVALID_STATE_PROGRESS_REQUIRED_RESPONSE =
-        """{"resultType":"ERROR","success":null,"error":{"status":409,"errorCode":"INVALID_STATE","reason":"진행 중인 방에서만 가능합니다","data":null}}"""
+        """
+        {
+          "resultType":"ERROR",
+          "success":null,
+          "error":{"status":409,"errorCode":"INVALID_STATE","reason":"진행 중인 방에서만 가능합니다","data":null}
+        }
+        """
 
     const val INVALID_STATE_NOT_AUCTION_RESPONSE =
         """{"resultType":"ERROR","success":null,"error":{"status":409,"errorCode":"INVALID_STATE","reason":"경매 모드가 아닙니다","data":null}}"""
@@ -107,5 +199,11 @@ internal object RoomOpenApiDocs {
         """{"resultType":"ERROR","success":null,"error":{"status":400,"errorCode":"BAD_REQUEST","reason":"경매할 선수가 없습니다","data":null}}"""
 
     const val BAD_REQUEST_PLAYER_NOT_AVAILABLE_RESPONSE =
-        """{"resultType":"ERROR","success":null,"error":{"status":400,"errorCode":"BAD_REQUEST","reason":"선수 '김민수'은(는) 선택할 수 없습니다","data":null}}"""
+        """
+        {
+          "resultType":"ERROR",
+          "success":null,
+          "error":{"status":400,"errorCode":"BAD_REQUEST","reason":"선수 '김민수'은(는) 선택할 수 없습니다","data":null}
+        }
+        """
 }
