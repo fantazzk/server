@@ -16,6 +16,42 @@ class FantazzkApplicationConfigTest {
         assertThat(exposedEndpoints).isEqualTo(listOf("health"))
     }
 
+    @Test
+    fun `dev 프로필은 hikari maximum pool size를 5로 제한한다`() {
+        val devDocument =
+            readYamlDocuments()
+                .first { nestedValue(it, "spring", "config", "activate", "on-profile") == "dev" }
+
+        assertThat(nestedValue(devDocument, "spring", "datasource", "hikari", "maximum-pool-size")).isEqualTo(5)
+    }
+
+    @Test
+    fun `dev 프로필은 hikari minimum idle을 0으로 유지한다`() {
+        val devDocument =
+            readYamlDocuments()
+                .first { nestedValue(it, "spring", "config", "activate", "on-profile") == "dev" }
+
+        assertThat(nestedValue(devDocument, "spring", "datasource", "hikari", "minimum-idle")).isEqualTo(0)
+    }
+
+    @Test
+    fun `프로덕션 프로필은 hikari maximum pool size를 5로 제한한다`() {
+        val productionDocument =
+            readYamlDocuments()
+                .first { nestedValue(it, "spring", "config", "activate", "on-profile") == "production" }
+
+        assertThat(nestedValue(productionDocument, "spring", "datasource", "hikari", "maximum-pool-size")).isEqualTo(5)
+    }
+
+    @Test
+    fun `프로덕션 프로필은 hikari minimum idle을 0으로 유지한다`() {
+        val productionDocument =
+            readYamlDocuments()
+                .first { nestedValue(it, "spring", "config", "activate", "on-profile") == "production" }
+
+        assertThat(nestedValue(productionDocument, "spring", "datasource", "hikari", "minimum-idle")).isEqualTo(0)
+    }
+
     private fun readYamlDocuments(): List<Map<*, *>> =
         checkNotNull(javaClass.classLoader.getResourceAsStream("application.yml"))
             .use { inputStream ->
