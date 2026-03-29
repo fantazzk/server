@@ -61,12 +61,59 @@ class RoomPlayerRepositoryIntegrationTest(
     }
 
     @Test
-    fun `가용 선수 중 displayOrder가 가장 낮은 선수를 조회한다`() {
+    fun `방에 선수가 없으면 빈 목록을 반환한다`() {
+        assertThat(cut.findByRoomId(room.roomId)).isEmpty()
+    }
+
+    @Test
+    fun `방 선수 목록은 displayOrder 기준으로 정렬되고 다른 방 선수는 제외된다`() {
+        val anotherRoom =
+            roomRepository.save(
+                Room(
+                    code = "PL0002",
+                    hostId = "host-2",
+                    status = RoomStatus.IN_PROGRESS,
+                    mode = TeamBuildingMode.AUCTION,
+                    teamCount = 2,
+                    teamSize = 2,
+                    budget = 300,
+                ),
+            )
+
+        cut.saveAll(
+            listOf(
+                RoomPlayer(roomId = room.roomId, name = "세번째", displayOrder = 2),
+                RoomPlayer(roomId = room.roomId, name = "첫번째", displayOrder = 0),
+                RoomPlayer(roomId = room.roomId, name = "두번째", displayOrder = 1),
+                RoomPlayer(roomId = anotherRoom.roomId, name = "다른방선수", displayOrder = 0),
+            ),
+        )
+
+        val players = cut.findByRoomId(room.roomId)
+        assertThat(players.map { it.name }).containsExactly("첫번째", "두번째", "세번째")
+    }
+
+    @Test
+    fun `가용 선수 조회는 현재 방에서 displayOrder가 가장 낮은 AVAILABLE 선수만 반환한다`() {
+        val anotherRoom =
+            roomRepository.save(
+                Room(
+                    code = "PL0003",
+                    hostId = "host-3",
+                    status = RoomStatus.IN_PROGRESS,
+                    mode = TeamBuildingMode.AUCTION,
+                    teamCount = 2,
+                    teamSize = 2,
+                    budget = 300,
+                ),
+            )
+
         cut.saveAll(
             listOf(
                 RoomPlayer(roomId = room.roomId, name = "선수1", status = PlayerStatus.ASSIGNED, displayOrder = 0),
                 RoomPlayer(roomId = room.roomId, name = "선수2", displayOrder = 1),
                 RoomPlayer(roomId = room.roomId, name = "선수3", displayOrder = 2),
+                RoomPlayer(roomId = anotherRoom.roomId, name = "다른방선수", displayOrder = 0),
             ),
         )
 

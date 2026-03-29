@@ -5,9 +5,9 @@ import com.naminhyeok.fantazzk.room.RoomTeamMemberModel
 import org.springframework.data.repository.CrudRepository
 
 interface RoomTeamMemberJdbcCrudRepository : CrudRepository<RoomTeamMemberEntity, Long> {
-    fun findByRoomId(roomId: Long): List<RoomTeamMemberEntity>
+    fun findByRoomIdOrderByAssignOrder(roomId: Long): List<RoomTeamMemberEntity>
 
-    fun findByRoomIdAndTeamLeaderId(
+    fun findByRoomIdAndTeamLeaderIdOrderByAssignOrder(
         roomId: Long,
         teamLeaderId: String,
     ): List<RoomTeamMemberEntity>
@@ -38,12 +38,15 @@ class RoomTeamMemberRepositoryImpl(
     }
 
     override fun findByRoomId(roomId: Long): List<RoomTeamMemberModel> =
-        roomTeamMemberJdbcCrudRepository.findByRoomId(roomId).map { it.toModel() }
+        roomTeamMemberJdbcCrudRepository.findByRoomIdOrderByAssignOrder(roomId).map { it.toModel() }
 
     override fun findByRoomIdAndTeamLeaderId(
         roomId: Long,
         teamLeaderId: String,
-    ): List<RoomTeamMemberModel> = roomTeamMemberJdbcCrudRepository.findByRoomIdAndTeamLeaderId(roomId, teamLeaderId).map { it.toModel() }
+    ): List<RoomTeamMemberModel> =
+        roomTeamMemberJdbcCrudRepository
+            .findByRoomIdAndTeamLeaderIdOrderByAssignOrder(roomId, teamLeaderId)
+            .map { it.toModel() }
 
     override fun countByRoomId(roomId: Long): Int = roomTeamMemberJdbcCrudRepository.countByRoomId(roomId)
 
