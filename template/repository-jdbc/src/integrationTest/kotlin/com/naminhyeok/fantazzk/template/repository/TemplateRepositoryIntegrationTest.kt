@@ -10,6 +10,7 @@ import com.naminhyeok.fantazzk.template.config.TemplateJdbcConfiguration
 import com.naminhyeok.fantazzk.template.configuration
 import com.naminhyeok.fantazzk.template.of
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration
 import org.springframework.boot.data.jdbc.test.autoconfigure.DataJdbcTest
@@ -109,7 +110,7 @@ class TemplateRepositoryIntegrationTest(
     }
 
     @Test
-    fun `레거시 invalid row도 raw 템플릿 모델로는 조회할 수 있다`() {
+    fun `유효하지 않은 row는 조회 시 즉시 실패한다`() {
         val templateId =
             jdbcTemplate.queryForObject(
                 """
@@ -126,11 +127,8 @@ class TemplateRepositoryIntegrationTest(
                 null,
             )!!
 
-        val found = cut.findById(TemplateIdentity.of(templateId))
-
-        assertThat(found).isNotNull
-        assertThat(found!!.name).isEqualTo("레거시 경매 템플릿")
-        assertThat(found.mode).isEqualTo(TeamBuildingMode.AUCTION)
-        assertThat(found.budget).isNull()
+        assertThatThrownBy { cut.findById(TemplateIdentity.of(templateId)) }
+            .isInstanceOf(IllegalArgumentException::class.java)
+            .hasMessage("경매 템플릿에는 예산이 필요합니다")
     }
 }

@@ -1,14 +1,10 @@
 package com.naminhyeok.fantazzk.template.repository
 
-import com.naminhyeok.fantazzk.template.AuditProps
-import com.naminhyeok.fantazzk.template.DraftOrderStrategy
-import com.naminhyeok.fantazzk.template.TeamBuildingMode
 import com.naminhyeok.fantazzk.template.Template
+import com.naminhyeok.fantazzk.template.TemplateConfiguration
 import com.naminhyeok.fantazzk.template.TemplateIdentity
 import com.naminhyeok.fantazzk.template.TemplateModel
-import com.naminhyeok.fantazzk.template.TemplateProps
 import org.springframework.data.repository.CrudRepository
-import java.time.Instant
 
 interface TemplateJdbcCrudRepository : CrudRepository<TemplateEntity, Long>
 
@@ -37,27 +33,11 @@ class TemplateRepositoryImpl(
     override fun findAll(): List<TemplateModel> = templateJdbcCrudRepository.findAll().map { it.toModel() }
 
     private fun TemplateEntity.toModel() =
-        PersistedTemplate(
+        Template(
             templateId = id,
             name = name,
-            mode = mode,
-            teamCount = teamCount,
-            teamSize = teamSize,
-            budget = budget,
-            draftOrderStrategy = draftOrderStrategy,
+            templateConfiguration = TemplateConfiguration.from(mode, teamCount, teamSize, budget, draftOrderStrategy),
             createdAt = createdAt,
             updatedAt = updatedAt,
         )
 }
-
-private data class PersistedTemplate(
-    override val templateId: Long,
-    override val name: String,
-    override val mode: TeamBuildingMode,
-    override val teamCount: Int,
-    override val teamSize: Int,
-    override val budget: Int?,
-    override val draftOrderStrategy: DraftOrderStrategy?,
-    override val createdAt: Instant,
-    override val updatedAt: Instant,
-) : TemplateModel, TemplateProps, AuditProps

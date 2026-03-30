@@ -167,32 +167,6 @@ class TemplateEndpointIntegrationTest(
         assertThat(response.body).contains("유효하지 않은 템플릿입니다")
     }
 
-    @Test
-    fun `GET templates는 invalid 설정의 레거시 템플릿을 목록에서 제외한다`() {
-        insertTemplate(
-            name = "깨진 경매 템플릿",
-            mode = "AUCTION",
-            teamCount = 2,
-            teamSize = 2,
-            budget = null,
-            draftOrderStrategy = null,
-        )
-        insertTemplate(
-            name = "정상 템플릿",
-            mode = "DRAFT",
-            teamCount = 2,
-            teamSize = 2,
-            budget = null,
-            draftOrderStrategy = "SNAKE",
-        )
-
-        val response = restTemplate.getForEntity("/api/v1/templates", String::class.java)
-
-        assertThat(response.statusCode).isEqualTo(HttpStatus.OK)
-        assertThat(response.body).doesNotContain("깨진 경매 템플릿")
-        assertThat(response.body).contains("정상 템플릿")
-    }
-
     private fun insertTemplate(
         name: String,
         mode: String,

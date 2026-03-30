@@ -14,6 +14,8 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import com.naminhyeok.fantazzk.template.DraftOrderStrategy as TemplateDraftOrderStrategy
+import com.naminhyeok.fantazzk.template.TeamBuildingMode as TemplateTeamBuildingMode
 
 class TemplateLookupAdapterTest {
     private val templateLookupService: TemplateLookupService = mockk()
@@ -50,16 +52,6 @@ class TemplateLookupAdapterTest {
     }
 
     @Test
-    fun `모드별 필드 조합이 잘못된 템플릿은 invalid 예외로 번역한다`() {
-        every { templateLookupService.find(TemplateIdentity.of(1L)) } returns invalidAuctionTemplateModel()
-        every { templateLookupService.getPlayers(1L) } returns listOf(TemplatePlayer(templateId = 1L, name = "선수1", displayOrder = 0))
-
-        assertThatThrownBy { cut.getTemplate(1L) }
-            .isInstanceOf(TemplateLookupPortException.Invalid::class.java)
-            .hasMessage("유효하지 않은 템플릿입니다")
-    }
-
-    @Test
     fun `선수 수가 exact count를 만족하지 않으면 invalid 예외로 번역한다`() {
         every { templateLookupService.find(TemplateIdentity.of(1L)) } returns exactCountTemplateModel()
         every { templateLookupService.getPlayers(1L) } returns listOf(TemplatePlayer(templateId = 1L, name = "선수1", displayOrder = 0))
@@ -73,25 +65,11 @@ class TemplateLookupAdapterTest {
         object : TemplateModel {
             override val templateId: Long = 1L
             override val name: String = "드래프트 템플릿"
-            override val mode: com.naminhyeok.fantazzk.template.TeamBuildingMode = com.naminhyeok.fantazzk.template.TeamBuildingMode.DRAFT
+            override val mode: TemplateTeamBuildingMode = TemplateTeamBuildingMode.DRAFT
             override val teamCount: Int = 1
             override val teamSize: Int = 2
             override val budget: Int? = null
-            override val draftOrderStrategy: com.naminhyeok.fantazzk.template.DraftOrderStrategy? =
-                com.naminhyeok.fantazzk.template.DraftOrderStrategy.SNAKE
-            override val createdAt = java.time.Instant.parse("2025-01-01T00:00:00Z")
-            override val updatedAt = java.time.Instant.parse("2025-01-01T00:00:00Z")
-        }
-
-    private fun invalidAuctionTemplateModel(): TemplateModel =
-        object : TemplateModel {
-            override val templateId: Long = 1L
-            override val name: String = "깨진 경매 템플릿"
-            override val mode = com.naminhyeok.fantazzk.template.TeamBuildingMode.AUCTION
-            override val teamCount: Int = 2
-            override val teamSize: Int = 2
-            override val budget: Int? = null
-            override val draftOrderStrategy: com.naminhyeok.fantazzk.template.DraftOrderStrategy? = null
+            override val draftOrderStrategy: TemplateDraftOrderStrategy? = TemplateDraftOrderStrategy.SNAKE
             override val createdAt = java.time.Instant.parse("2025-01-01T00:00:00Z")
             override val updatedAt = java.time.Instant.parse("2025-01-01T00:00:00Z")
         }
@@ -100,11 +78,11 @@ class TemplateLookupAdapterTest {
         object : TemplateModel {
             override val templateId: Long = 1L
             override val name: String = "정상 템플릿"
-            override val mode = com.naminhyeok.fantazzk.template.TeamBuildingMode.AUCTION
+            override val mode = TemplateTeamBuildingMode.AUCTION
             override val teamCount: Int = 2
             override val teamSize: Int = 2
             override val budget: Int? = 300
-            override val draftOrderStrategy: com.naminhyeok.fantazzk.template.DraftOrderStrategy? = null
+            override val draftOrderStrategy: TemplateDraftOrderStrategy? = null
             override val createdAt = java.time.Instant.parse("2025-01-01T00:00:00Z")
             override val updatedAt = java.time.Instant.parse("2025-01-01T00:00:00Z")
         }

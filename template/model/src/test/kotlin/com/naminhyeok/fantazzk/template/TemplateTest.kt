@@ -98,35 +98,6 @@ class TemplateTest {
         }
 
         @Test
-        fun `hasValidConfiguration은 유효한 설정이면 true를 반환한다`() {
-            val template =
-                Template.create(
-                    name = "경매전",
-                    configuration = TemplateConfiguration.Auction(teamCount = 2, teamSize = 2, budgetValue = 300),
-                )
-
-            assertThat(template.hasValidConfiguration()).isTrue()
-        }
-
-        @Test
-        fun `hasValidConfiguration은 레거시 invalid 설정이면 false를 반환한다`() {
-            val template =
-                object : TemplateModel {
-                    override val templateId = 7L
-                    override val name = "깨진 경매전"
-                    override val mode = TeamBuildingMode.AUCTION
-                    override val teamCount = 2
-                    override val teamSize = 2
-                    override val budget: Int? = null
-                    override val draftOrderStrategy: DraftOrderStrategy? = null
-                    override val createdAt = Instant.parse("2025-01-01T00:00:00Z")
-                    override val updatedAt = Instant.parse("2025-01-02T00:00:00Z")
-                }
-
-            assertThat(template.hasValidConfiguration()).isFalse()
-        }
-
-        @Test
         fun `requireValidRoster는 exact player count를 만족하면 통과한다`() {
             val template =
                 Template.create(
