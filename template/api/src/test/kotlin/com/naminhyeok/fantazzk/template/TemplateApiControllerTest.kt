@@ -147,8 +147,7 @@ class TemplateApiControllerTest {
                         updatedAt = now,
                     ),
                 )
-            every { templateLookupService.get(any()) } returns template
-            every { templateLookupService.getPlayers(1L) } returns players
+            every { templateLookupService.getDetail(any()) } returns TemplateDetail(template, players)
 
             mockMvc.get("/api/v1/templates/1")
                 .andExpect {
@@ -161,7 +160,7 @@ class TemplateApiControllerTest {
 
         @Test
         fun `존재하지 않는 ID로 조회하면 404를 반환한다`() {
-            every { templateLookupService.get(any()) } throws TemplateException.TemplateNotFoundException()
+            every { templateLookupService.getDetail(any()) } throws TemplateException.TemplateNotFoundException()
 
             mockMvc.get("/api/v1/templates/999")
                 .andExpect {

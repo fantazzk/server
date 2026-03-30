@@ -3,7 +3,6 @@ package com.naminhyeok.fantazzk.template
 import com.naminhyeok.fantazzk.template.dto.ApiResponse
 import com.naminhyeok.fantazzk.template.dto.CreateTemplateRequest
 import com.naminhyeok.fantazzk.template.dto.TemplateResponse
-import com.naminhyeok.fantazzk.template.exception.TemplateException
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
@@ -125,14 +124,8 @@ class TemplateApiController(
         @Parameter(description = TemplateOpenApiDocs.TEMPLATE_ID_PARAMETER, example = "1")
         @PathVariable id: Long,
     ): ApiResponse<TemplateResponse> {
-        val template = templateLookupService.get(TemplateIdentity.of(id))
-        val players = templateLookupService.getPlayers(template.templateId)
-        try {
-            template.requireValidRoster(players)
-        } catch (_: IllegalArgumentException) {
-            throw TemplateException.TemplateInvalidException()
-        }
-        return ApiResponse.success(TemplateResponse.from(template, players))
+        val detail = templateLookupService.getDetail(TemplateIdentity.of(id))
+        return ApiResponse.success(TemplateResponse.from(detail.template, detail.players))
     }
 
     @GetMapping

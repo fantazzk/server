@@ -102,4 +102,45 @@ class TemplateLookupServiceTest {
         val players = cut.getPlayers(template.templateId)
         assertThat(players).hasSize(2)
     }
+
+    @Test
+    fun `상세 조회는 템플릿과 선수 목록을 함께 반환한다`() {
+        val template =
+            templateRepo.save(
+                Template.create(
+                    name = "테스트",
+                    configuration = TemplateConfiguration.Auction(teamCount = 2, teamSize = 2, budgetValue = 300),
+                ),
+            )
+        playerRepo.saveAll(
+            listOf(
+                TemplatePlayer(templateId = template.templateId, name = "선수1", displayOrder = 0),
+                TemplatePlayer(templateId = template.templateId, name = "선수2", displayOrder = 1),
+            ),
+        )
+
+        val detail = cut.getDetail(TemplateIdentity.of(template.templateId))
+
+        assertThat(detail.template.templateId).isEqualTo(template.templateId)
+        assertThat(detail.players.map { it.name }).containsExactly("선수1", "선수2")
+    }
+
+    @Test
+    fun `상세 조회는 선수 수가 exact count를 만족하지 않으면 템플릿 invalid 예외를 던진다`() {
+        val template =
+            templateRepo.save(
+                Template.create(
+                    name = "테스트",
+                    configuration = TemplateConfiguration.Auction(teamCount = 2, teamSize = 2, budgetValue = 300),
+                ),
+            )
+        playerRepo.saveAll(
+            listOf(
+                TemplatePlayer(templateId = template.templateId, name = "선수1", displayOrder = 0),
+            ),
+        )
+
+        assertThatThrownBy { cut.getDetail(TemplateIdentity.of(template.templateId)) }
+            .isInstanceOf(TemplateException.TemplateInvalidException::class.java)
+    }
 }
