@@ -33,7 +33,7 @@ class RoomAcceptanceTest(
                     "name" to "경매 템플릿 $suffix",
                     "mode" to "AUCTION",
                     "teamCount" to 2,
-                    "teamSize" to 1,
+                    "teamSize" to 2,
                     "budget" to 500,
                     "playerNames" to listOf("선수A-$suffix", "선수B-$suffix"),
                 ),
@@ -47,7 +47,7 @@ class RoomAcceptanceTest(
         assertThat(createdTemplate.path("name").asText()).isEqualTo("경매 템플릿 $suffix")
         assertThat(createdTemplate.path("mode").asText()).isEqualTo("AUCTION")
         assertThat(createdTemplate.path("teamCount").asInt()).isEqualTo(2)
-        assertThat(createdTemplate.path("teamSize").asInt()).isEqualTo(1)
+        assertThat(createdTemplate.path("teamSize").asInt()).isEqualTo(2)
         assertThat(createdTemplate.path("budget").asInt()).isEqualTo(500)
 
         val createRoomResponse =

@@ -8,7 +8,9 @@ import com.naminhyeok.fantazzk.room.outport.TemplatePlayerSnapshot
 import com.naminhyeok.fantazzk.room.outport.TemplateSnapshot
 import com.naminhyeok.fantazzk.template.TemplateIdentity
 import com.naminhyeok.fantazzk.template.TemplateLookupService
+import com.naminhyeok.fantazzk.template.configuration
 import com.naminhyeok.fantazzk.template.of
+import com.naminhyeok.fantazzk.template.requireValidRoster
 
 class TemplateLookupAdapter(
     private val templateLookupService: TemplateLookupService,
@@ -17,7 +19,13 @@ class TemplateLookupAdapter(
         val template =
             templateLookupService.find(TemplateIdentity.of(templateId))
                 ?: throw TemplateLookupPortException.NotFound(templateId)
-        val players = templateLookupService.getPlayers(template.templateId)
+        val players = templateLookupService.getPlayers(template.templateId).sortedBy { it.displayOrder }
+        try {
+            template.configuration
+            template.requireValidRoster(players)
+        } catch (_: IllegalArgumentException) {
+            throw TemplateLookupPortException.Invalid(templateId)
+        }
         return TemplateSnapshot(
             mode = TeamBuildingMode.valueOf(template.mode.name),
             teamCount = template.teamCount,

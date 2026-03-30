@@ -153,7 +153,7 @@ subprojects {
         }
     }
 
-    if (path == ":room:model") {
+    if (moduleKind == ModuleKind.MODEL) {
         apply(plugin = "jacoco")
 
         tasks.named<JacocoReport>("jacocoTestReport") {

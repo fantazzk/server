@@ -24,7 +24,10 @@ class TemplateLookupServiceTest {
     fun `ID로 템플릿을 조회할 수 있다`() {
         val saved =
             templateRepo.save(
-                Template(name = "테스트", mode = TeamBuildingMode.AUCTION, teamCount = 2, teamSize = 2, budget = 300),
+                Template.create(
+                    name = "테스트",
+                    configuration = TemplateConfiguration.Auction(teamCount = 2, teamSize = 2, budgetValue = 300),
+                ),
             )
 
         val found = cut.get(TemplateIdentity.of(saved.templateId))
@@ -48,7 +51,10 @@ class TemplateLookupServiceTest {
     fun `find는 존재하는 템플릿을 그대로 반환한다`() {
         val saved =
             templateRepo.save(
-                Template(name = "find", mode = TeamBuildingMode.DRAFT, teamCount = 2, teamSize = 2),
+                Template.create(
+                    name = "find",
+                    configuration = TemplateConfiguration.Draft(teamCount = 2, teamSize = 2, strategy = DraftOrderStrategy.SNAKE),
+                ),
             )
 
         val found = cut.find(TemplateIdentity.of(saved.templateId))
@@ -60,8 +66,18 @@ class TemplateLookupServiceTest {
 
     @Test
     fun `전체 템플릿 목록을 조회할 수 있다`() {
-        templateRepo.save(Template(name = "첫째", mode = TeamBuildingMode.AUCTION, teamCount = 2, teamSize = 2, budget = 300))
-        templateRepo.save(Template(name = "둘째", mode = TeamBuildingMode.DRAFT, teamCount = 2, teamSize = 2))
+        templateRepo.save(
+            Template.create(
+                name = "첫째",
+                configuration = TemplateConfiguration.Auction(teamCount = 2, teamSize = 2, budgetValue = 300),
+            ),
+        )
+        templateRepo.save(
+            Template.create(
+                name = "둘째",
+                configuration = TemplateConfiguration.Draft(teamCount = 2, teamSize = 2, strategy = DraftOrderStrategy.SNAKE),
+            ),
+        )
 
         val all = cut.getAll()
         assertThat(all).hasSize(2)
@@ -71,7 +87,10 @@ class TemplateLookupServiceTest {
     fun `템플릿의 선수 목록을 조회할 수 있다`() {
         val template =
             templateRepo.save(
-                Template(name = "테스트", mode = TeamBuildingMode.AUCTION, teamCount = 2, teamSize = 2, budget = 300),
+                Template.create(
+                    name = "테스트",
+                    configuration = TemplateConfiguration.Auction(teamCount = 2, teamSize = 2, budgetValue = 300),
+                ),
             )
         playerRepo.saveAll(
             listOf(

@@ -3,6 +3,7 @@ package com.naminhyeok.fantazzk.template
 import com.naminhyeok.fantazzk.template.dto.ApiResponse
 import com.naminhyeok.fantazzk.template.dto.CreateTemplateRequest
 import com.naminhyeok.fantazzk.template.dto.TemplateResponse
+import com.naminhyeok.fantazzk.template.exception.TemplateException
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
@@ -62,6 +63,10 @@ class TemplateApiController(
                                 name = "budgetMustBePositive",
                                 value = TemplateOpenApiDocs.TEMPLATE_BUDGET_BAD_REQUEST_RESPONSE,
                             ),
+                            ExampleObject(
+                                name = "playerCountMustMatch",
+                                value = TemplateOpenApiDocs.TEMPLATE_PLAYER_COUNT_BAD_REQUEST_RESPONSE,
+                            ),
                         ],
                     ),
                 ],
@@ -86,15 +91,7 @@ class TemplateApiController(
     ): ApiResponse<TemplateResponse> =
         ApiResponse.success(
             TemplateResponse.from(
-                templateCreateService.create(
-                    name = request.name,
-                    mode = request.mode,
-                    teamCount = request.teamCount,
-                    teamSize = request.teamSize,
-                    budget = request.budget,
-                    draftOrderStrategy = request.draftOrderStrategy,
-                    playerNames = request.playerNames,
-                ),
+                templateCreateService.create(request.toCommand()),
             ),
         )
 
@@ -130,6 +127,11 @@ class TemplateApiController(
     ): ApiResponse<TemplateResponse> {
         val template = templateLookupService.get(TemplateIdentity.of(id))
         val players = templateLookupService.getPlayers(template.templateId)
+        try {
+            template.requireValidRoster(players)
+        } catch (_: IllegalArgumentException) {
+            throw TemplateException.TemplateInvalidException()
+        }
         return ApiResponse.success(TemplateResponse.from(template, players))
     }
 
@@ -150,4 +152,29 @@ class TemplateApiController(
         ],
     )
     fun list(): ApiResponse<List<TemplateResponse>> = ApiResponse.success(templateLookupService.getAll().map { TemplateResponse.from(it) })
+
+    private fun CreateTemplateRequest.toCommand(): CreateTemplateCommand =
+        when (mode) {
+            TeamBuildingMode.AUCTION -> {
+                require(draftOrderStrategy == null) { "경매 템플릿에는 드래프트 순서 전략을 지정할 수 없습니다" }
+                CreateTemplateCommand.Auction(
+                    name = name,
+                    teamCount = teamCount,
+                    teamSize = teamSize,
+                    budget = requireNotNull(budget) { "경매 템플릿에는 예산이 필요합니다" },
+                    playerNames = playerNames,
+                )
+            }
+
+            TeamBuildingMode.DRAFT -> {
+                require(budget == null) { "드래프트 템플릿에는 예산을 지정할 수 없습니다" }
+                CreateTemplateCommand.Draft(
+                    name = name,
+                    teamCount = teamCount,
+                    teamSize = teamSize,
+                    strategy = requireNotNull(draftOrderStrategy) { "드래프트 템플릿에는 순서 전략이 필요합니다" },
+                    playerNames = playerNames,
+                )
+            }
+        }
 }

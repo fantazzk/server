@@ -52,6 +52,7 @@ class TemplateExceptionHandler : ResponseEntityExceptionHandler() {
         val (status, logLevel) =
             when (ex) {
                 is TemplateException.TemplateNotFoundException -> HttpStatus.NOT_FOUND to LogLevel.WARN
+                is TemplateException.TemplateInvalidException -> HttpStatus.CONFLICT to LogLevel.WARN
             }
         log(logLevel, "TemplateException", ex)
         return ResponseEntity.status(status)

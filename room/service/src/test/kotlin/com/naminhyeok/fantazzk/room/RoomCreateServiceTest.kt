@@ -183,6 +183,25 @@ class RoomCreateServiceTest {
                 .isInstanceOf(RoomTemplateNotFoundException::class.java)
                 .hasMessage("템플릿을 찾을 수 없습니다")
         }
+
+        @Test
+        fun `포트에서 invalid 템플릿 예외가 오면 생성 불가 상태로 번역한다`() {
+            cut =
+                RoomCreateServiceImpl(
+                    roomRepo,
+                    playerRepo,
+                    leaderRepo,
+                    object : TemplateLookupPort {
+                        override fun getTemplate(templateId: Long): TemplateSnapshot {
+                            throw TemplateLookupPortException.Invalid(templateId)
+                        }
+                    },
+                )
+
+            assertThatThrownBy { cut.create(999L, "호스트") }
+                .isInstanceOf(IllegalStateException::class.java)
+                .hasMessage("유효하지 않은 템플릿입니다")
+        }
     }
 
     @Nested

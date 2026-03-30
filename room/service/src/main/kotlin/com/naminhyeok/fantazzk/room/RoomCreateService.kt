@@ -31,6 +31,8 @@ internal class RoomCreateServiceImpl(
                 templateLookupPort.getTemplate(templateId)
             } catch (_: TemplateLookupPortException.NotFound) {
                 throw RoomTemplateNotFoundException()
+            } catch (_: TemplateLookupPortException.Invalid) {
+                throw IllegalStateException("유효하지 않은 템플릿입니다")
             }
         repeat(MAX_CODE_GENERATION_ATTEMPTS) {
             val code = generateCode()

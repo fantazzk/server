@@ -30,7 +30,15 @@ class TemplateApiControllerTest {
         fun `유효한 요청으로 템플릿을 생성하면 201을 반환한다`() {
             val template = template()
             every {
-                templateCreateService.create("경매전", TeamBuildingMode.AUCTION, 2, 3, 300, null, listOf("선수1", "선수2"))
+                templateCreateService.create(
+                    CreateTemplateCommand.Auction(
+                        name = "경매전",
+                        teamCount = 2,
+                        teamSize = 2,
+                        budget = 300,
+                        playerNames = listOf("선수1", "선수2"),
+                    ),
+                )
             } returns template
 
             mockMvc.post("/api/v1/templates") {
@@ -41,7 +49,7 @@ class TemplateApiControllerTest {
                         "name": "경매전",
                         "mode": "AUCTION",
                         "teamCount": 2,
-                        "teamSize": 3,
+                        "teamSize": 2,
                         "budget": 300,
                         "playerNames": ["선수1", "선수2"]
                     }
@@ -56,10 +64,18 @@ class TemplateApiControllerTest {
         }
 
         @Test
-        fun `유효하지 않은 값으로 생성하면 400을 반환한다`() {
+        fun `선수 수가 exact count와 다르면 400을 반환한다`() {
             every {
-                templateCreateService.create(any(), any(), eq(0), any(), any(), any(), any())
-            } throws IllegalArgumentException("팀 수는 1 이상이어야 합니다")
+                templateCreateService.create(
+                    CreateTemplateCommand.Auction(
+                        name = "실패",
+                        teamCount = 2,
+                        teamSize = 2,
+                        budget = 300,
+                        playerNames = listOf("선수1"),
+                    ),
+                )
+            } throws IllegalArgumentException("선수 수는 정확히 2명이어야 합니다")
 
             mockMvc.post("/api/v1/templates") {
                 contentType = MediaType.APPLICATION_JSON
@@ -68,16 +84,41 @@ class TemplateApiControllerTest {
                     {
                         "name": "실패",
                         "mode": "AUCTION",
-                        "teamCount": 0,
+                        "teamCount": 2,
                         "teamSize": 2,
                         "budget": 300,
-                        "playerNames": []
+                        "playerNames": ["선수1"]
                     }
                     """.trimIndent()
             }.andExpect {
                 status { isBadRequest() }
                 jsonPath("$.resultType") { value("ERROR") }
                 jsonPath("$.error.errorCode") { value("BAD_REQUEST") }
+                jsonPath("$.error.reason") { value("선수 수는 정확히 2명이어야 합니다") }
+            }
+        }
+
+        @Test
+        fun `드래프트 요청이 예산을 포함하면 400을 반환한다`() {
+            mockMvc.post("/api/v1/templates") {
+                contentType = MediaType.APPLICATION_JSON
+                content =
+                    """
+                    {
+                        "name": "드래프트",
+                        "mode": "DRAFT",
+                        "teamCount": 2,
+                        "teamSize": 2,
+                        "budget": 300,
+                        "draftOrderStrategy": "SNAKE",
+                        "playerNames": ["선수1", "선수2"]
+                    }
+                    """.trimIndent()
+            }.andExpect {
+                status { isBadRequest() }
+                jsonPath("$.resultType") { value("ERROR") }
+                jsonPath("$.error.errorCode") { value("BAD_REQUEST") }
+                jsonPath("$.error.reason") { value("드래프트 템플릿에는 예산을 지정할 수 없습니다") }
             }
         }
     }
@@ -94,6 +135,14 @@ class TemplateApiControllerTest {
                         templateId = 1L,
                         name = "선수1",
                         displayOrder = 0,
+                        createdAt = now,
+                        updatedAt = now,
+                    ),
+                    TemplatePlayer(
+                        templatePlayerId = 2L,
+                        templateId = 1L,
+                        name = "선수2",
+                        displayOrder = 1,
                         createdAt = now,
                         updatedAt = now,
                     ),
@@ -141,10 +190,7 @@ class TemplateApiControllerTest {
         Template(
             templateId = 1L,
             name = "경매전",
-            mode = TeamBuildingMode.AUCTION,
-            teamCount = 2,
-            teamSize = 3,
-            budget = 300,
+            templateConfiguration = TemplateConfiguration.Auction(teamCount = 2, teamSize = 2, budgetValue = 300),
             createdAt = now,
             updatedAt = now,
         )
