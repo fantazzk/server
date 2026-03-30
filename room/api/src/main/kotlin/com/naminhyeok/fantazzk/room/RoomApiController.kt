@@ -268,14 +268,11 @@ class RoomApiController(
             ),
             SwaggerApiResponse(
                 responseCode = "404",
-                description = "방 또는 팀장을 찾을 수 없습니다",
+                description = "존재하지 않는 방입니다",
                 content = [
                     Content(
                         mediaType = MediaType.APPLICATION_JSON_VALUE,
-                        examples = [
-                            ExampleObject(name = "roomNotFound", value = RoomOpenApiDocs.ROOM_NOT_FOUND_RESPONSE),
-                            ExampleObject(name = "teamLeaderNotFound", value = RoomOpenApiDocs.TEAM_LEADER_NOT_FOUND_RESPONSE),
-                        ],
+                        examples = [ExampleObject(name = "roomNotFound", value = RoomOpenApiDocs.ROOM_NOT_FOUND_RESPONSE)],
                     ),
                 ],
             ),
@@ -410,14 +407,11 @@ class RoomApiController(
             ),
             SwaggerApiResponse(
                 responseCode = "404",
-                description = "방 또는 팀장을 찾을 수 없습니다",
+                description = "존재하지 않는 방입니다",
                 content = [
                     Content(
                         mediaType = MediaType.APPLICATION_JSON_VALUE,
-                        examples = [
-                            ExampleObject(name = "roomNotFound", value = RoomOpenApiDocs.ROOM_NOT_FOUND_RESPONSE),
-                            ExampleObject(name = "teamLeaderNotFound", value = RoomOpenApiDocs.TEAM_LEADER_NOT_FOUND_RESPONSE),
-                        ],
+                        examples = [ExampleObject(name = "roomNotFound", value = RoomOpenApiDocs.ROOM_NOT_FOUND_RESPONSE)],
                     ),
                 ],
             ),

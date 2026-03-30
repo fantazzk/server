@@ -63,6 +63,43 @@ class FantazzkOpenApiDocumentationIntegrationTest(
     }
 
     @Test
+    fun `드래프트 픽 API 문서는 실제로 도달 가능한 404 응답만 노출한다`() {
+        val document = openApiDocument()
+        val pickOperation = document.at("/paths/~1api~1v1~1rooms~1{code}~1pick/post")
+
+        assertThat(pickOperation.at("/responses/404/description").asText()).isEqualTo("존재하지 않는 방입니다")
+        assertThat(
+            pickOperation.at("/responses/404/content/application~1json/examples/roomNotFound/value/error/errorCode").asText(),
+        ).isEqualTo("ROOM_NOT_FOUND")
+        assertThat(pickOperation.at("/responses/404/content/application~1json/examples/teamLeaderNotFound").isMissingNode).isTrue()
+    }
+
+    @Test
+    fun `방 조회 API 문서는 방 미존재 404만 노출한다`() {
+        val document = openApiDocument()
+        val getRoomOperation = document.at("/paths/~1api~1v1~1rooms~1{code}/get")
+
+        assertThat(getRoomOperation.at("/responses/404/description").asText()).isEqualTo("존재하지 않는 방입니다")
+        assertThat(
+            getRoomOperation.at("/responses/404/content/application~1json/examples/roomNotFound/value/error/errorCode").asText(),
+        ).isEqualTo("ROOM_NOT_FOUND")
+        assertThat(getRoomOperation.at("/responses/404/content/application~1json/examples/teamLeaderNotFound").isMissingNode).isTrue()
+    }
+
+    @Test
+    fun `템플릿 상세 조회 예시는 드래프트 예시와 일관된 이름을 사용한다`() {
+        val document = openApiDocument()
+        val templateGetOperation = document.at("/paths/~1api~1v1~1templates~1{id}/get")
+
+        assertThat(
+            templateGetOperation.at("/responses/200/content/application~1json/examples/templateDetail/value/success/name").asText(),
+        ).isEqualTo("사내 리그 드래프트전")
+        assertThat(
+            templateGetOperation.at("/responses/200/content/application~1json/examples/templateDetail/value/success/mode").asText(),
+        ).isEqualTo("DRAFT")
+    }
+
+    @Test
     fun `핵심 DTO schema 설명이 OpenAPI components에 노출된다`() {
         val document = openApiDocument()
         val schemas = document.at("/components/schemas").toString()

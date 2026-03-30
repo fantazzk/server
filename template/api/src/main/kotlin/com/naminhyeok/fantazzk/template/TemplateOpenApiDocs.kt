@@ -73,7 +73,7 @@ internal object TemplateOpenApiDocs {
           "resultType":"SUCCESS",
           "success":{
             "id":1,
-            "name":"주말 풋살 경매전",
+            "name":"사내 리그 드래프트전",
             "mode":"DRAFT",
             "teamCount":2,
             "teamSize":3,
