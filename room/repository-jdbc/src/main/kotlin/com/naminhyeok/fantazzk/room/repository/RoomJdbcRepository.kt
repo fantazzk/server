@@ -35,20 +35,5 @@ class RoomRepositoryImpl(
 
     override fun findById(roomId: Long): RoomModel? = roomJdbcCrudRepository.findById(roomId).orElse(null)?.toModel()
 
-    private fun RoomEntity.toModel() =
-        Room(
-            roomId = id,
-            code = code,
-            hostId = hostId,
-            status = status,
-            mode = mode,
-            teamCount = teamCount,
-            teamSize = teamSize,
-            budget = budget,
-            draftOrderStrategy = draftOrderStrategy,
-            currentTurnIndex = currentTurnIndex,
-            currentAuctionRound = currentAuctionRound,
-            createdAt = createdAt,
-            updatedAt = updatedAt,
-        )
+    private fun RoomEntity.toModel() = Room.from(this)
 }

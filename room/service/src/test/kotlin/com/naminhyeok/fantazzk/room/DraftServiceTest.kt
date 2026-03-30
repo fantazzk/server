@@ -63,6 +63,9 @@ class DraftServiceTest {
 
             assertThat(member.teamLeaderId).isEqualTo("leader-A")
             assertThat(member.playerName).isEqualTo("선수1")
+
+            val assignedPlayer = playerRepo.findByRoomId(roomId).first { it.name == "선수1" }
+            assertThat(assignedPlayer.status).isEqualTo(PlayerStatus.ASSIGNED)
         }
 
         @Test
@@ -114,6 +117,7 @@ class DraftServiceTest {
                     mode = TeamBuildingMode.AUCTION,
                     teamCount = 2,
                     teamSize = 2,
+                    budget = 300,
                 ),
             )
 
@@ -133,19 +137,45 @@ class DraftServiceTest {
             assertThatThrownBy { cut.pick(roomCode, "leader-A", "없는선수") }
                 .isInstanceOf(IllegalArgumentException::class.java)
         }
+
+        @Test
+        fun `현재 드래프트 턴이 없으면 픽 전에 어떤 상태도 변경하지 않는다`() {
+            roomRepo.save(
+                Room(
+                    roomId = roomId,
+                    code = roomCode,
+                    hostId = "host",
+                    status = RoomStatus.IN_PROGRESS,
+                    mode = TeamBuildingMode.DRAFT,
+                    teamCount = 2,
+                    teamSize = 2,
+                    draftOrderStrategy = DraftOrderStrategy.SNAKE,
+                    currentTurnIndex = null,
+                ),
+            )
+
+            assertThatThrownBy { cut.pick(roomCode, "leader-A", "선수1") }
+                .isInstanceOf(IllegalArgumentException::class.java)
+                .hasMessageContaining("현재 드래프트 턴이 없습니다")
+
+            val player = playerRepo.findByRoomId(roomId).first { it.name == "선수1" }
+            assertThat(player.status).isEqualTo(PlayerStatus.AVAILABLE)
+            assertThat(memberRepo.countByRoomId(roomId)).isZero()
+            assertThat(roomRepo.findByCode(roomCode)?.currentTurnIndex).isNull()
+        }
     }
 
     @Nested
     inner class `픽 순서 전략` {
         @Test
         fun `SNAKE 전략은 홀수 라운드에서 순서가 뒤집힌다`() {
-            val order = DraftServiceImpl.generatePickOrder(listOf("A", "B"), DraftOrderStrategy.SNAKE, 2)
+            val order = DraftBoard(listOf("A", "B"), DraftOrderStrategy.SNAKE, 2).pickOrder()
             assertThat(order).containsExactly("A", "B", "B", "A")
         }
 
         @Test
         fun `FIXED 전략은 매 라운드 동일 순서를 유지한다`() {
-            val order = DraftServiceImpl.generatePickOrder(listOf("A", "B"), DraftOrderStrategy.FIXED, 2)
+            val order = DraftBoard(listOf("A", "B"), DraftOrderStrategy.FIXED, 2).pickOrder()
             assertThat(order).containsExactly("A", "B", "A", "B")
         }
     }

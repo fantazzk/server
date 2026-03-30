@@ -1,6 +1,8 @@
 package com.naminhyeok.fantazzk.room
 
+import com.naminhyeok.fantazzk.room.exception.RoomTemplateNotFoundException
 import com.naminhyeok.fantazzk.room.outport.TemplateLookupPort
+import com.naminhyeok.fantazzk.room.outport.TemplateLookupPortException
 import com.naminhyeok.fantazzk.room.repository.RoomPlayerRepository
 import com.naminhyeok.fantazzk.room.repository.RoomRepository
 import com.naminhyeok.fantazzk.room.repository.RoomTeamLeaderRepository
@@ -24,24 +26,42 @@ internal class RoomCreateServiceImpl(
         templateId: Long,
         hostNickname: String,
     ): RoomModel {
-        val template = templateLookupPort.getTemplate(templateId)
+        val template =
+            try {
+                templateLookupPort.getTemplate(templateId)
+            } catch (_: TemplateLookupPortException.NotFound) {
+                throw RoomTemplateNotFoundException()
+            }
         repeat(MAX_CODE_GENERATION_ATTEMPTS) {
             val code = generateCode()
             if (roomRepository.findByCode(code) != null) return@repeat
 
+            val hostId = UUID.randomUUID().toString()
             val room =
                 try {
                     roomRepository.save(
-                        Room(
-                            code = code,
-                            hostId = UUID.randomUUID().toString(),
-                            status = RoomStatus.WAITING,
-                            mode = template.mode,
-                            teamCount = template.teamCount,
-                            teamSize = template.teamSize,
-                            budget = template.budget,
-                            draftOrderStrategy = template.draftOrderStrategy,
-                        ),
+                        when (template.mode) {
+                            TeamBuildingMode.AUCTION ->
+                                Room.createAuction(
+                                    code = code,
+                                    hostId = hostId,
+                                    teamCount = template.teamCount,
+                                    teamSize = template.teamSize,
+                                    budget = requireNotNull(template.budget) { "경매 템플릿에는 예산이 필요합니다" },
+                                )
+
+                            TeamBuildingMode.DRAFT ->
+                                Room.createDraft(
+                                    code = code,
+                                    hostId = hostId,
+                                    teamCount = template.teamCount,
+                                    teamSize = template.teamSize,
+                                    draftOrderStrategy =
+                                        requireNotNull(template.draftOrderStrategy) {
+                                            "드래프트 템플릿에는 순서 전략이 필요합니다"
+                                        },
+                                )
+                        },
                     )
                 } catch (_: DuplicateKeyException) {
                     return@repeat
@@ -54,12 +74,7 @@ internal class RoomCreateServiceImpl(
             )
 
             roomTeamLeaderRepository.save(
-                RoomTeamLeader(
-                    roomId = room.roomId,
-                    teamLeaderId = room.hostId,
-                    nickname = hostNickname,
-                    remainingBudget = template.budget,
-                ),
+                Room.from(room).createHostLeader(hostNickname),
             )
 
             return room

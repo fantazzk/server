@@ -3,6 +3,7 @@ package com.naminhyeok.fantazzk.integration.roomtemplate
 import com.naminhyeok.fantazzk.room.DraftOrderStrategy
 import com.naminhyeok.fantazzk.room.TeamBuildingMode
 import com.naminhyeok.fantazzk.room.outport.TemplateLookupPort
+import com.naminhyeok.fantazzk.room.outport.TemplateLookupPortException
 import com.naminhyeok.fantazzk.room.outport.TemplatePlayerSnapshot
 import com.naminhyeok.fantazzk.room.outport.TemplateSnapshot
 import com.naminhyeok.fantazzk.template.TemplateIdentity
@@ -13,7 +14,9 @@ class TemplateLookupAdapter(
     private val templateLookupService: TemplateLookupService,
 ) : TemplateLookupPort {
     override fun getTemplate(templateId: Long): TemplateSnapshot {
-        val template = templateLookupService.get(TemplateIdentity.of(templateId))
+        val template =
+            templateLookupService.find(TemplateIdentity.of(templateId))
+                ?: throw TemplateLookupPortException.NotFound(templateId)
         val players = templateLookupService.getPlayers(template.templateId)
         return TemplateSnapshot(
             mode = TeamBuildingMode.valueOf(template.mode.name),

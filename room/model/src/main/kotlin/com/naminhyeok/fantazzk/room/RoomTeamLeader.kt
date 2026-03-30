@@ -11,6 +11,15 @@ data class RoomTeamLeader(
     override val createdAt: Instant = Instant.now(),
     override val updatedAt: Instant = Instant.now(),
 ) : RoomTeamLeaderModel {
+    fun requireCanBid(amount: Int) {
+        budgetState().requireCanBid(amount)
+    }
+
+    fun spend(amount: Int): RoomTeamLeader =
+        copy(
+            remainingBudget = budgetState().spend(amount).remainingBudget,
+        )
+
     companion object {
         fun from(model: RoomTeamLeaderModel): RoomTeamLeader =
             RoomTeamLeader(
@@ -23,4 +32,6 @@ data class RoomTeamLeader(
                 updatedAt = model.updatedAt,
             )
     }
+
+    private fun budgetState(): BudgetState = BudgetState.requireFrom(remainingBudget)
 }

@@ -1,14 +1,174 @@
 package com.naminhyeok.fantazzk.room
 
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
+import java.time.Instant
 
 class RoomPlayerTest {
-    @ParameterizedTest(name = "{0} 상태의 선수 isAvailable 검증")
-    @EnumSource(PlayerStatus::class)
-    fun `isAvailable은 AVAILABLE 상태에서만 true를 반환한다`(status: PlayerStatus) {
-        val player = RoomPlayer(roomId = 1L, name = "선수1", status = status, displayOrder = 0)
-        assertThat(player.isAvailable()).isEqualTo(status == PlayerStatus.AVAILABLE)
+    @Nested
+    inner class `생성 계약` {
+        @Test
+        fun `새 선수는 기본 식별자와 상태를 가진다`() {
+            val beforeCreate = Instant.now()
+            val player = RoomPlayer(roomId = 1L, name = "선수1", displayOrder = 0)
+            val afterCreate = Instant.now()
+
+            assertThat(player.roomPlayerId).isZero()
+            assertThat(player.roomId).isEqualTo(1L)
+            assertThat(player.name).isEqualTo("선수1")
+            assertThat(player.status).isEqualTo(PlayerStatus.AVAILABLE)
+            assertThat(player.displayOrder).isZero()
+            assertThat(player.createdAt).isBetween(beforeCreate, afterCreate)
+            assertThat(player.updatedAt).isBetween(beforeCreate, afterCreate)
+        }
     }
+
+    @Nested
+    inner class `상태 판별` {
+        @ParameterizedTest(name = "{0} 상태의 선수 isAvailable 검증")
+        @EnumSource(PlayerStatus::class)
+        fun `isAvailable은 AVAILABLE 상태에서만 true를 반환한다`(status: PlayerStatus) {
+            val player = RoomPlayer(roomId = 1L, name = "선수1", status = status, displayOrder = 0)
+            assertThat(player.isAvailable()).isEqualTo(status == PlayerStatus.AVAILABLE)
+        }
+    }
+
+    @Nested
+    inner class `상태 전이` {
+        @Test
+        fun `선수를 배정하면 ASSIGNED 상태가 된다`() {
+            val player = RoomPlayer(roomId = 1L, name = "선수1", displayOrder = 0)
+
+            val assigned = player.assign()
+
+            assertThat(assigned.status).isEqualTo(PlayerStatus.ASSIGNED)
+            assertThat(assigned.displayOrder).isEqualTo(player.displayOrder)
+        }
+
+        @Test
+        fun `이미 배정된 선수는 다시 배정할 수 없다`() {
+            val player = RoomPlayer(roomId = 1L, name = "선수1", status = PlayerStatus.ASSIGNED, displayOrder = 0)
+
+            assertThatThrownBy { player.assign() }
+                .isInstanceOf(IllegalStateException::class.java)
+                .hasMessageContaining("선수를 배정할 수 없습니다")
+        }
+
+        @Test
+        fun `선수를 뒤로 보내면 순서만 갱신되고 상태는 유지된다`() {
+            val player = RoomPlayer(roomId = 1L, name = "선수1", displayOrder = 0)
+
+            val moved = player.moveToBack(3)
+
+            assertThat(moved.displayOrder).isEqualTo(3)
+            assertThat(moved.status).isEqualTo(PlayerStatus.AVAILABLE)
+        }
+
+        @Test
+        fun `선수는 현재 순서보다 뒤로만 이동할 수 있다`() {
+            val player = RoomPlayer(roomId = 1L, name = "선수1", displayOrder = 3)
+
+            assertThatThrownBy { player.moveToBack(3) }
+                .isInstanceOf(IllegalArgumentException::class.java)
+                .hasMessageContaining("현재 순서보다 뒤로만 이동할 수 있습니다")
+        }
+
+        @Test
+        fun `선수는 음수 순서로 이동할 수 없다`() {
+            val player = RoomPlayer(roomId = 1L, name = "선수1", displayOrder = 3)
+
+            assertThatThrownBy { player.moveToBack(-1) }
+                .isInstanceOf(IllegalArgumentException::class.java)
+                .hasMessageContaining("순서는 0 이상이어야 합니다")
+        }
+
+        @Test
+        fun `배정된 선수는 뒤로 보낼 수 없다`() {
+            val player = RoomPlayer(roomId = 1L, name = "선수1", status = PlayerStatus.ASSIGNED, displayOrder = 3)
+
+            assertThatThrownBy { player.moveToBack(4) }
+                .isInstanceOf(IllegalStateException::class.java)
+                .hasMessageContaining("선수를 뒤로 보낼 수 없습니다")
+        }
+    }
+
+    @Nested
+    inner class `모델 변환` {
+        @Test
+        fun `RoomPlayerModel에서 RoomPlayer를 복원할 수 있다`() {
+            val createdAt = Instant.parse("2025-01-01T00:00:00Z")
+            val updatedAt = Instant.parse("2025-01-02T00:00:00Z")
+            val model =
+                playerModel(
+                    roomPlayerId = 9L,
+                    roomId = 3L,
+                    name = "선수9",
+                    status = PlayerStatus.ASSIGNED,
+                    displayOrder = 7,
+                    createdAt = createdAt,
+                    updatedAt = updatedAt,
+                )
+
+            val player = RoomPlayer.from(model)
+
+            assertThat(player).isEqualTo(
+                RoomPlayer(
+                    roomPlayerId = 9L,
+                    roomId = 3L,
+                    name = "선수9",
+                    status = PlayerStatus.ASSIGNED,
+                    displayOrder = 7,
+                    createdAt = createdAt,
+                    updatedAt = updatedAt,
+                ),
+            )
+        }
+    }
+
+    @Nested
+    inner class `모델 확장` {
+        @Test
+        fun `RoomPlayerModel 확장은 aggregate의 상태 전이를 그대로 따른다`() {
+            val model =
+                playerModel(
+                    roomPlayerId = 11L,
+                    roomId = 3L,
+                    name = "선수11",
+                    status = PlayerStatus.AVAILABLE,
+                    displayOrder = 2,
+                    createdAt = Instant.parse("2025-01-03T00:00:00Z"),
+                    updatedAt = Instant.parse("2025-01-04T00:00:00Z"),
+                )
+
+            val assigned = model.assign()
+            val moved = model.moveToBack(5)
+
+            assertThat(assigned.status).isEqualTo(PlayerStatus.ASSIGNED)
+            assertThat(moved.displayOrder).isEqualTo(5)
+            assertThat(moved.status).isEqualTo(PlayerStatus.AVAILABLE)
+        }
+    }
+
+    private fun playerModel(
+        roomPlayerId: Long,
+        roomId: Long,
+        name: String,
+        status: PlayerStatus,
+        displayOrder: Int,
+        createdAt: Instant,
+        updatedAt: Instant,
+    ): RoomPlayerModel =
+        object : RoomPlayerModel {
+            override val roomPlayerId = roomPlayerId
+            override val roomId = roomId
+            override val name = name
+            override val status = status
+            override val displayOrder = displayOrder
+            override val createdAt = createdAt
+            override val updatedAt = updatedAt
+        }
 }

@@ -28,14 +28,17 @@ internal class DraftServiceImpl(
         val room = roomRepository.findByCode(code) ?: throw RoomException.RoomNotFoundException()
         check(room.isInProgress()) { "진행 중인 방에서만 가능합니다" }
         check(room.isDraft()) { "드래프트 모드가 아닙니다" }
+        val turnIndex = room.requireCurrentTurnIndex()
 
         val leaders = roomTeamLeaderRepository.findByRoomId(room.roomId)
         val strategy = requireNotNull(room.draftOrderStrategy) { "드래프트 모드에는 순서 전략이 필요합니다" }
-        val pickOrder = generatePickOrder(leaders.map { it.teamLeaderId }, strategy, room.picksPerTeam)
-        val turnIndex = room.currentTurnIndex ?: 0
-        check(turnIndex < pickOrder.size) { "드래프트가 이미 종료되었습니다" }
-        val currentTurn = pickOrder[turnIndex]
-        check(currentTurn == teamLeaderId) { "현재 턴이 아닙니다" }
+        val draftBoard =
+            DraftBoard(
+                teamLeaderIds = leaders.map { it.teamLeaderId },
+                strategy = strategy,
+                picksPerTeam = room.picksPerTeam,
+            )
+        draftBoard.requireTurnOwner(turnIndex = turnIndex, teamLeaderId = teamLeaderId)
 
         leaders.firstOrNull { it.teamLeaderId == teamLeaderId }
             ?: throw RoomException.TeamLeaderNotFoundException()
@@ -44,46 +47,22 @@ internal class DraftServiceImpl(
         val target = players.firstOrNull { it.name == playerName && it.status == PlayerStatus.AVAILABLE }
         requireNotNull(target) { "선수 '$playerName'은(는) 선택할 수 없습니다" }
 
-        roomPlayerRepository.save(RoomPlayer.from(target).copy(status = PlayerStatus.ASSIGNED))
-
         val assignedCount = roomTeamMemberRepository.countByRoomId(room.roomId)
+        val settlement = draftBoard.settlePick(turnIndex = turnIndex, assignedCountAfterPick = assignedCount + 1)
+        val nextRoom = room.advanceDraftTurn(nextTurnIndex = settlement.nextTurnIndex, completed = settlement.completed)
+        val assignedPlayer = target.assign()
         val member =
-            roomTeamMemberRepository.save(
-                RoomTeamMember(
-                    roomId = room.roomId,
-                    teamLeaderId = teamLeaderId,
-                    playerName = playerName,
-                    assignOrder = assignedCount,
-                ),
+            RoomTeamMember(
+                roomId = room.roomId,
+                teamLeaderId = teamLeaderId,
+                playerName = playerName,
+                assignOrder = assignedCount,
             )
 
-        val newTurnIndex = (room.currentTurnIndex ?: 0) + 1
-        val totalRequired = room.teamCount * room.picksPerTeam
-        val completed = assignedCount + 1 >= totalRequired
+        roomPlayerRepository.save(assignedPlayer)
+        val savedMember = roomTeamMemberRepository.save(member)
+        roomRepository.save(nextRoom)
 
-        roomRepository.save(
-            Room.from(room).copy(
-                currentTurnIndex = newTurnIndex,
-                status = if (completed) RoomStatus.COMPLETED else room.status,
-            ),
-        )
-
-        return member
-    }
-
-    companion object {
-        fun generatePickOrder(
-            teamLeaderIds: List<String>,
-            strategy: DraftOrderStrategy,
-            picksPerTeam: Int,
-        ): List<String> {
-            val reversed = if (strategy == DraftOrderStrategy.SNAKE) teamLeaderIds.reversed() else null
-            return (0 until picksPerTeam).flatMap { round ->
-                when (strategy) {
-                    DraftOrderStrategy.SNAKE -> if (round % 2 == 0) teamLeaderIds else reversed!!
-                    DraftOrderStrategy.FIXED -> teamLeaderIds
-                }
-            }
-        }
+        return savedMember
     }
 }
