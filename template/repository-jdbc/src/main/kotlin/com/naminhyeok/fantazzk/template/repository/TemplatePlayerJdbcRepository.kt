@@ -5,7 +5,7 @@ import com.naminhyeok.fantazzk.template.TemplatePlayerModel
 import org.springframework.data.repository.CrudRepository
 
 interface TemplatePlayerJdbcCrudRepository : CrudRepository<TemplatePlayerEntity, Long> {
-    fun findByTemplateId(templateId: Long): List<TemplatePlayerEntity>
+    fun findByTemplateIdOrderByDisplayOrderAsc(templateId: Long): List<TemplatePlayerEntity>
 }
 
 class TemplatePlayerRepositoryImpl(
@@ -29,7 +29,7 @@ class TemplatePlayerRepositoryImpl(
     }
 
     override fun findByTemplateId(templateId: Long): List<TemplatePlayerModel> =
-        templatePlayerJdbcCrudRepository.findByTemplateId(templateId).map { it.toModel() }
+        templatePlayerJdbcCrudRepository.findByTemplateIdOrderByDisplayOrderAsc(templateId).map { it.toModel() }
 
     private fun TemplatePlayerEntity.toModel() =
         TemplatePlayer(

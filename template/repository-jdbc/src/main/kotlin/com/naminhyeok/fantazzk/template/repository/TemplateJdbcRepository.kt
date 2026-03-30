@@ -1,6 +1,7 @@
 package com.naminhyeok.fantazzk.template.repository
 
 import com.naminhyeok.fantazzk.template.Template
+import com.naminhyeok.fantazzk.template.TemplateConfiguration
 import com.naminhyeok.fantazzk.template.TemplateIdentity
 import com.naminhyeok.fantazzk.template.TemplateModel
 import org.springframework.data.repository.CrudRepository
@@ -35,11 +36,7 @@ class TemplateRepositoryImpl(
         Template(
             templateId = id,
             name = name,
-            mode = mode,
-            teamCount = teamCount,
-            teamSize = teamSize,
-            budget = budget,
-            draftOrderStrategy = draftOrderStrategy,
+            templateConfiguration = TemplateConfiguration.from(mode, teamCount, teamSize, budget, draftOrderStrategy),
             createdAt = createdAt,
             updatedAt = updatedAt,
         )

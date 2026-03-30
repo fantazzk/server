@@ -5,17 +5,29 @@ import java.time.Instant
 data class Template(
     override val templateId: Long = 0L,
     override val name: String,
-    override val mode: TeamBuildingMode,
-    override val teamCount: Int,
-    override val teamSize: Int,
-    override val budget: Int? = null,
-    override val draftOrderStrategy: DraftOrderStrategy? = null,
+    private val templateConfiguration: TemplateConfiguration,
     override val createdAt: Instant = Instant.now(),
     override val updatedAt: Instant = Instant.now(),
 ) : TemplateModel {
-    init {
-        require(teamCount > 0) { "팀 수는 0보다 커야 합니다" }
-        require(teamSize > 0) { "팀 크기는 0보다 커야 합니다" }
-        budget?.let { require(it > 0) { "예산은 0보다 커야 합니다" } }
+    override val mode: TeamBuildingMode
+        get() = templateConfiguration.mode
+
+    override val teamCount: Int
+        get() = templateConfiguration.teamCount
+
+    override val teamSize: Int
+        get() = templateConfiguration.teamSize
+
+    override val budget: Int?
+        get() = templateConfiguration.budget
+
+    override val draftOrderStrategy: DraftOrderStrategy?
+        get() = templateConfiguration.draftOrderStrategy
+
+    companion object {
+        fun create(
+            name: String,
+            configuration: TemplateConfiguration,
+        ): Template = Template(name = name, templateConfiguration = configuration)
     }
 }

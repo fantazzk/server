@@ -230,6 +230,30 @@ class RoomEndpointIntegrationTest(
         assertThat(response.body).contains("템플릿을 찾을 수 없습니다")
     }
 
+    @Test
+    fun `POST rooms는 유효하지 않은 템플릿이면 409를 반환한다`() {
+        val templateId =
+            insertTemplate(
+                name = "깨진 템플릿",
+                mode = "AUCTION",
+                teamCount = 2,
+                teamSize = 2,
+                budget = null,
+            )
+        insertTemplatePlayer(templateId, "선수1", 0)
+        insertTemplatePlayer(templateId, "선수2", 1)
+
+        val response =
+            restTemplate.postForEntity(
+                "/api/v1/rooms",
+                mapOf("templateId" to templateId, "hostNickname" to "호스트"),
+                String::class.java,
+            )
+
+        assertThat(response.statusCode).isEqualTo(HttpStatus.CONFLICT)
+        assertThat(response.body).contains("유효하지 않은 템플릿입니다")
+    }
+
     private fun insertTemplate(
         name: String,
         mode: String,

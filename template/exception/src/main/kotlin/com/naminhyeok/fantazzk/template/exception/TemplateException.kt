@@ -8,4 +8,9 @@ sealed class TemplateException(
         errorCode = "TEMPLATE_NOT_FOUND",
         message = "템플릿을 찾을 수 없습니다",
     )
+
+    class TemplateInvalidException : TemplateException(
+        errorCode = "TEMPLATE_INVALID",
+        message = "유효하지 않은 템플릿입니다",
+    )
 }

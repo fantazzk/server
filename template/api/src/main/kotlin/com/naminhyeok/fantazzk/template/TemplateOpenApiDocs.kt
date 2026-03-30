@@ -9,6 +9,7 @@ internal object TemplateOpenApiDocs {
             "- mode 가 DRAFT 이면 draftOrderStrategy 값을 사용합니다.\n" +
             "- 현재 구현에서는 teamCount 와 teamSize 가 0보다 커야 합니다.\n" +
             "- budget 이 있으면 0보다 커야 합니다.\n" +
+            "- playerNames 는 정확히 teamCount * (teamSize - 1) 명이어야 합니다.\n" +
             "- playerNames 의 순서가 템플릿 선수의 displayOrder 로 저장됩니다."
 
     const val GET_DESCRIPTION =
@@ -29,10 +30,10 @@ internal object TemplateOpenApiDocs {
           "name":"주말 풋살 경매전",
           "mode":"AUCTION",
           "teamCount":2,
-          "teamSize":3,
+          "teamSize":2,
           "budget":300,
           "draftOrderStrategy":null,
-          "playerNames":["김민수","이준호","박성우"]
+          "playerNames":["김민수","이준호"]
         }
         """
 
@@ -42,10 +43,10 @@ internal object TemplateOpenApiDocs {
           "name":"사내 리그 드래프트전",
           "mode":"DRAFT",
           "teamCount":2,
-          "teamSize":3,
+          "teamSize":2,
           "budget":null,
           "draftOrderStrategy":"SNAKE",
-          "playerNames":["김민수","이준호","박성우"]
+          "playerNames":["김민수","이준호"]
         }
         """
 
@@ -58,7 +59,7 @@ internal object TemplateOpenApiDocs {
             "name":"주말 풋살 경매전",
             "mode":"AUCTION",
             "teamCount":2,
-            "teamSize":3,
+            "teamSize":2,
             "budget":300,
             "draftOrderStrategy":null,
             "players":null
@@ -76,13 +77,12 @@ internal object TemplateOpenApiDocs {
             "name":"사내 리그 드래프트전",
             "mode":"DRAFT",
             "teamCount":2,
-            "teamSize":3,
+            "teamSize":2,
             "budget":null,
             "draftOrderStrategy":"SNAKE",
             "players":[
               {"name":"김민수","displayOrder":0},
-              {"name":"이준호","displayOrder":1},
-              {"name":"박성우","displayOrder":2}
+              {"name":"이준호","displayOrder":1}
             ]
           },
           "error":null
@@ -94,8 +94,8 @@ internal object TemplateOpenApiDocs {
         {
           "resultType":"SUCCESS",
           "success":[
-            {"id":1,"name":"주말 풋살 경매전","mode":"AUCTION","teamCount":2,"teamSize":3,"budget":300,"draftOrderStrategy":null,"players":null},
-            {"id":2,"name":"사내 리그 드래프트전","mode":"DRAFT","teamCount":2,"teamSize":3,"budget":null,"draftOrderStrategy":"SNAKE","players":null}
+            {"id":1,"name":"주말 풋살 경매전","mode":"AUCTION","teamCount":2,"teamSize":2,"budget":300,"draftOrderStrategy":null,"players":null},
+            {"id":2,"name":"사내 리그 드래프트전","mode":"DRAFT","teamCount":2,"teamSize":2,"budget":null,"draftOrderStrategy":"SNAKE","players":null}
           ],
           "error":null
         }
@@ -134,6 +134,15 @@ internal object TemplateOpenApiDocs {
           "resultType":"ERROR",
           "success":null,
           "error":{"status":400,"errorCode":"BAD_REQUEST","reason":"예산은 0보다 커야 합니다","data":null}
+        }
+        """
+
+    const val TEMPLATE_PLAYER_COUNT_BAD_REQUEST_RESPONSE =
+        """
+        {
+          "resultType":"ERROR",
+          "success":null,
+          "error":{"status":400,"errorCode":"BAD_REQUEST","reason":"선수 수는 정확히 2명이어야 합니다","data":null}
         }
         """
 }
