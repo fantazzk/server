@@ -1,1 +1,1 @@
-// container module
+dependencies { }

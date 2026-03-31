@@ -1,6 +1,8 @@
 spring:
   application:
     name: fantazzk-server
+  modulith:
+    detection-strategy: explicitly-annotated
   lifecycle:
     timeout-per-shutdown-phase: 25s
   datasource:

@@ -1,0 +1,44 @@
+package com.naminhyeok.fantazzk.template.repository.jdbc
+
+import com.naminhyeok.fantazzk.template.infrastructure.TemplateRepository
+import com.naminhyeok.fantazzk.template.model.Template
+import com.naminhyeok.fantazzk.template.model.TemplateConfiguration
+import com.naminhyeok.fantazzk.template.model.TemplateIdentity
+import com.naminhyeok.fantazzk.template.model.TemplateModel
+import org.springframework.data.repository.CrudRepository
+
+interface TemplateJdbcCrudRepository : CrudRepository<TemplateEntity, Long>
+
+class TemplateRepositoryImpl(
+    private val templateJdbcCrudRepository: TemplateJdbcCrudRepository,
+) : TemplateRepository {
+    override fun save(template: Template): TemplateModel {
+        val entity =
+            TemplateEntity(
+                name = template.name,
+                mode = template.mode,
+                teamCount = template.teamCount,
+                teamSize = template.teamSize,
+                budget = template.budget,
+                draftOrderStrategy = template.draftOrderStrategy,
+                createdAt = template.createdAt,
+                updatedAt = template.updatedAt,
+            )
+        if (template.templateId != 0L) entity.id = template.templateId
+        return templateJdbcCrudRepository.save(entity).toModel()
+    }
+
+    override fun findById(identity: TemplateIdentity): TemplateModel? =
+        templateJdbcCrudRepository.findById(identity.templateId).orElse(null)?.toModel()
+
+    override fun findAll(): List<TemplateModel> = templateJdbcCrudRepository.findAll().map { it.toModel() }
+
+    private fun TemplateEntity.toModel() =
+        Template(
+            templateId = id,
+            name = name,
+            templateConfiguration = TemplateConfiguration.from(mode, teamCount, teamSize, budget, draftOrderStrategy),
+            createdAt = createdAt,
+            updatedAt = updatedAt,
+        )
+}

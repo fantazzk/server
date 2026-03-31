@@ -8,17 +8,16 @@ import javax.xml.parsers.DocumentBuilderFactory
 
 class StandaloneLoggingConfigurationStructureTest {
     @Test
-    fun `standalone 런처는 default와 non-default 프로필 모두에서 콘솔 로깅을 정의한다`() {
-        standaloneLoggingConfigurations().forEach { path ->
-            val profilesByName = parseProfiles(path)
+    fun `루트 런처는 default와 non-default 프로필 모두에서 콘솔 로깅을 정의한다`() {
+        val path = loggingConfiguration()
+        val profilesByName = parseProfiles(path)
 
-            assertThat(profilesByName.keys)
-                .describedAs("%s should define both default and non-default logging profiles", path)
-                .contains("default", "!default")
+        assertThat(profilesByName.keys)
+            .describedAs("%s should define both default and non-default logging profiles", path)
+            .contains("default", "!default")
 
-            assertDefaultProfileUsesConsoleAppender(path, profilesByName.getValue("default"))
-            assertNonDefaultProfileUsesStructuredConsoleAppender(path, profilesByName.getValue("!default"))
-        }
+        assertDefaultProfileUsesConsoleAppender(path, profilesByName.getValue("default"))
+        assertNonDefaultProfileUsesStructuredConsoleAppender(path, profilesByName.getValue("!default"))
     }
 
     private fun assertDefaultProfileUsesConsoleAppender(
@@ -81,12 +80,7 @@ class StandaloneLoggingConfigurationStructureTest {
             .associateBy { it.getAttribute("name") }
     }
 
-    private fun standaloneLoggingConfigurations(): List<Path> =
-        listOf(
-            Path.of("src/main/resources/logback-spring.xml"),
-            Path.of("../room/application-api/src/main/resources/logback-spring.xml"),
-            Path.of("../template/application-api/src/main/resources/logback-spring.xml"),
-        )
+    private fun loggingConfiguration(): Path = Path.of("src/main/resources/logback-spring.xml")
 
     private fun Element.childElements(tagName: String): List<Element> =
         childNodes

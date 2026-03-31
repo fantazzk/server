@@ -42,34 +42,22 @@ class ModuleDependencyArchTest {
     }
 
     @Test
-    fun `도메인 간 직접 의존 금지 — room은 template을 직접 참조하면 안 된다`() {
+    fun `room은 template internal 구현을 직접 참조하면 안 된다`() {
         noClasses()
             .that().resideInAPackage("com.naminhyeok.fantazzk.room..")
-            .should().dependOnClassesThat().resideInAPackage("com.naminhyeok.fantazzk.template..")
+            .should().dependOnClassesThat().resideInAnyPackage(
+                "com.naminhyeok.fantazzk.template.internal..",
+                "com.naminhyeok.fantazzk.template.infrastructure..",
+                "com.naminhyeok.fantazzk.template.repository.jdbc..",
+            )
             .check(classes)
     }
 
     @Test
-    fun `도메인 간 직접 의존 금지 — template은 room을 직접 참조하면 안 된다`() {
+    fun `template은 room을 직접 참조하면 안 된다`() {
         noClasses()
             .that().resideInAPackage("com.naminhyeok.fantazzk.template..")
             .should().dependOnClassesThat().resideInAPackage("com.naminhyeok.fantazzk.room..")
-            .check(classes)
-    }
-
-    @Test
-    fun `bootstrap은 room outport를 직접 참조하면 안 된다`() {
-        noClasses()
-            .that().resideInAPackage("com.naminhyeok.fantazzk.bootstrap..")
-            .should().dependOnClassesThat().resideInAPackage("com.naminhyeok.fantazzk.room.outport..")
-            .check(classes)
-    }
-
-    @Test
-    fun `bootstrap은 template lookup service를 직접 참조하면 안 된다`() {
-        noClasses()
-            .that().resideInAPackage("com.naminhyeok.fantazzk.bootstrap..")
-            .should().dependOnClassesThat().haveFullyQualifiedName("com.naminhyeok.fantazzk.template.TemplateLookupService")
             .check(classes)
     }
 }

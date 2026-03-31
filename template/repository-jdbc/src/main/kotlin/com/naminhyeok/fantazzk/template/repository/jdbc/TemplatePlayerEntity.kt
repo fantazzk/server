@@ -1,0 +1,21 @@
+package com.naminhyeok.fantazzk.template.repository.jdbc
+
+import com.naminhyeok.fantazzk.template.model.TemplatePlayerModel
+import org.springframework.data.annotation.Id
+import org.springframework.data.relational.core.mapping.Column
+import org.springframework.data.relational.core.mapping.Table
+import java.time.Instant
+
+@Table("template_player")
+class TemplatePlayerEntity(
+    @Column override val templateId: Long,
+    @Column override val name: String,
+    @Column override val displayOrder: Int,
+    @Column override val createdAt: Instant = Instant.now(),
+    @Column override val updatedAt: Instant = Instant.now(),
+) : TemplatePlayerModel {
+    @Id
+    var id: Long = 0L
+
+    override val templatePlayerId: Long get() = id
+}

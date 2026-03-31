@@ -1,0 +1,8 @@
+package com.naminhyeok.fantazzk.template.web
+
+import org.springframework.boot.autoconfigure.AutoConfiguration
+import org.springframework.context.annotation.Import
+
+@Import(TemplateApiController::class, TemplateExceptionHandler::class)
+@AutoConfiguration
+class TemplateApiAutoConfiguration

@@ -1,2 +1,2 @@
-com.naminhyeok.fantazzk.template.config.TemplateJdbcConfiguration
-com.naminhyeok.fantazzk.template.repository.TemplateRepositoryAutoConfiguration
+com.naminhyeok.fantazzk.template.repository.jdbc.TemplateJdbcConfiguration
+com.naminhyeok.fantazzk.template.repository.jdbc.TemplateRepositoryAutoConfiguration

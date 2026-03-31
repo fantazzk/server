@@ -1,2 +1,2 @@
-com.naminhyeok.fantazzk.room.config.RoomJdbcConfiguration
-com.naminhyeok.fantazzk.room.repository.RoomRepositoryAutoConfiguration
+com.naminhyeok.fantazzk.room.repository.jdbc.RoomJdbcConfiguration
+com.naminhyeok.fantazzk.room.repository.jdbc.RoomRepositoryAutoConfiguration
