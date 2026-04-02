@@ -13,7 +13,7 @@ class TemplateTest {
     @Nested
     inner class `템플릿 생성` {
         @Test
-        fun `Template createAuction은 선수 컬렉션을 displayOrder 순서로 보관한다`() {
+        fun `Template createAuction은 입력한 선수 순서를 displayOrder로 보관한다`() {
             val template =
                 Template.createAuction(
                     name = "통합 템플릿",
@@ -23,7 +23,7 @@ class TemplateTest {
                     playerNames = listOf("선수2", "선수1"),
                 )
 
-            assertThat(template.players().map { it.name }).containsExactly("선수1", "선수2")
+            assertThat(template.players().map { it.name }).containsExactly("선수2", "선수1")
             assertThat(template.players().map { it.displayOrder }).containsExactly(0, 1)
         }
 

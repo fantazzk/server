@@ -140,7 +140,6 @@ class Template protected constructor(
         apply {
             persistentPlayers.clear()
             playerNames
-                .sorted()
                 .mapIndexed { index, playerName ->
                     TemplatePlayer(
                         name = playerName,

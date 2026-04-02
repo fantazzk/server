@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
 import org.springframework.context.ApplicationEventPublisher
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.dao.DuplicateKeyException
 
 class RoomCreateServiceTest {
@@ -230,6 +231,26 @@ class RoomCreateServiceTest {
         }
 
         @Test
+        fun `JPA 저장소에서 무결성 예외가 발생해도 다른 코드로 재시도한다`() {
+            val retryingRoomRepo = DuplicateOnceWithDataIntegrityRetryRoomRepository()
+            addAuctionTemplate(templateId = 1L)
+            cut =
+                RoomCreateServiceImpl(
+                    retryingRoomRepo,
+                    templateCatalog,
+                    events,
+                )
+
+            val room = cut.create(1L, "호스트")
+
+            assertThat(room.roomId).isPositive()
+            assertThat(retryingRoomRepo.saveAttempts).isEqualTo(2)
+            assertThat(retryingRoomRepo.attemptedCodes).hasSize(2)
+            assertThat(retryingRoomRepo.attemptedCodes.distinct()).hasSize(2)
+            assertThat(room.code).isNotEqualTo(retryingRoomRepo.collidingCode)
+        }
+
+        @Test
         fun `조회 단계에서 계속 충돌하는 코드만 생성되면 최대 횟수까지만 재시도한다`() {
             val alwaysExistingCodeRoomRepository = AlwaysExistingCodeRoomRepository()
             addAuctionTemplate(templateId = 1L)
@@ -313,6 +334,28 @@ class RoomCreateServiceTest {
         override fun findByCode(code: String): Room? = null
 
         override fun findById(roomId: RoomId): Room? = null
+    }
+
+    private class DuplicateOnceWithDataIntegrityRetryRoomRepository : RoomRepository {
+        private val delegate = InMemoryRoomRepository()
+        var saveAttempts: Int = 0
+        val attemptedCodes = mutableListOf<String>()
+        var collidingCode: String? = null
+
+        override fun save(room: Room): Room {
+            saveAttempts += 1
+            attemptedCodes += room.code
+            if (saveAttempts == 1) {
+                collidingCode = room.code
+                throw DataIntegrityViolationException("duplicate room code")
+            }
+            check(room.code != collidingCode) { "중복된 방 코드를 그대로 재사용했습니다" }
+            return delegate.save(room)
+        }
+
+        override fun findByCode(code: String): Room? = delegate.findByCode(code)
+
+        override fun findById(roomId: RoomId): Room? = delegate.findById(roomId)
     }
 
     private class AlwaysExistingCodeRoomRepository : RoomRepository {

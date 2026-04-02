@@ -190,7 +190,7 @@ class TemplateModuleIntegrationTest {
 
         val detail = templateFinder.getDetail(TemplateId(template.templateId))
 
-        assertThat(detail.players.map { it.name }).containsExactly("선수1", "선수2", "선수3", "선수4")
+        assertThat(detail.players.map { it.name }).containsExactly("선수3", "선수1", "선수2", "선수4")
     }
 
     @Test
@@ -212,7 +212,7 @@ class TemplateModuleIntegrationTest {
         assertThat(blueprint.teamCount).isEqualTo(2)
         assertThat(blueprint.teamSize).isEqualTo(3)
         assertThat(blueprint.draftOrderStrategy).isEqualTo(TemplateDraftOrderStrategy.FIXED)
-        assertThat(blueprint.players.map { it.name }).containsExactly("선수1", "선수2", "선수3", "선수4")
+        assertThat(blueprint.players.map { it.name }).containsExactly("선수4", "선수1", "선수3", "선수2")
     }
 
     @Test

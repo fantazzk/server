@@ -10,6 +10,7 @@ import com.naminhyeok.fantazzk.template.TemplateCatalogException
 import com.naminhyeok.fantazzk.template.TemplateDraftOrderStrategy
 import com.naminhyeok.fantazzk.template.TemplateMode
 import org.springframework.context.ApplicationEventPublisher
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -58,6 +59,8 @@ internal class RoomCreateServiceImpl(
                         ),
                     )
                 } catch (_: DuplicateKeyException) {
+                    return@repeat
+                } catch (_: DataIntegrityViolationException) {
                     return@repeat
                 }
 
