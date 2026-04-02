@@ -103,6 +103,15 @@ class SpringModulithArchitectureTest {
     }
 
     @Test
+    fun `빌드 설정은 JPA 전환 이후 메인 JDBC starter 와 불필요한 data jdbc 테스트 슬라이스를 제거한다`() {
+        val buildScript = Path.of("build.gradle.kts").readText()
+
+        assertThat(buildScript).doesNotContain("implementation(\"org.springframework.boot:spring-boot-starter-data-jdbc\")")
+        assertThat(buildScript).doesNotContain("integrationTestImplementation(\"org.springframework.boot:spring-boot-data-jdbc-test\")")
+        assertThat(buildScript).contains("integrationTestImplementation(\"org.springframework.boot:spring-boot-jdbc-test\")")
+    }
+
+    @Test
     fun `스프링 모듈리스 문서기가 모듈 다이어그램과 캔버스를 생성한다`() {
         val outputDirectory = Path.of("build/spring-modulith")
         Files.createDirectories(outputDirectory)
