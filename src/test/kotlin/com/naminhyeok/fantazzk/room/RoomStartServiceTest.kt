@@ -3,11 +3,7 @@ package com.naminhyeok.fantazzk.room
 import com.naminhyeok.fantazzk.room.application.RoomStartService
 import com.naminhyeok.fantazzk.room.application.RoomStartServiceImpl
 import com.naminhyeok.fantazzk.room.exception.RoomException
-import com.naminhyeok.fantazzk.room.support.InMemoryRoomBidRepository
-import com.naminhyeok.fantazzk.room.support.InMemoryRoomPlayerRepository
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomRepository
-import com.naminhyeok.fantazzk.room.support.InMemoryRoomTeamLeaderRepository
-import com.naminhyeok.fantazzk.room.support.InMemoryRoomTeamMemberRepository
 import io.mockk.mockk
 import io.mockk.verify
 import org.assertj.core.api.Assertions.assertThat
@@ -22,20 +18,12 @@ import org.springframework.context.ApplicationEventPublisher
 
 class RoomStartServiceTest {
     private lateinit var roomRepo: InMemoryRoomRepository
-    private lateinit var playerRepo: InMemoryRoomPlayerRepository
-    private lateinit var leaderRepo: InMemoryRoomTeamLeaderRepository
-    private lateinit var memberRepo: InMemoryRoomTeamMemberRepository
-    private lateinit var bidRepo: InMemoryRoomBidRepository
     private lateinit var events: ApplicationEventPublisher
     private lateinit var cut: RoomStartService
 
     @BeforeEach
     fun setUp() {
-        playerRepo = InMemoryRoomPlayerRepository()
-        leaderRepo = InMemoryRoomTeamLeaderRepository()
-        memberRepo = InMemoryRoomTeamMemberRepository()
-        bidRepo = InMemoryRoomBidRepository()
-        roomRepo = InMemoryRoomRepository(playerRepo, leaderRepo, memberRepo, bidRepo)
+        roomRepo = InMemoryRoomRepository()
         events = mockk(relaxed = true)
         cut = RoomStartServiceImpl(roomRepo, events)
     }
@@ -195,12 +183,17 @@ class RoomStartServiceTest {
         count: Int,
     ) {
         repeat(count) { index ->
-            leaderRepo.save(
-                RoomTeamLeader(
-                    roomId = room.roomId,
-                    teamLeaderId = "leader-${index + 1}",
-                    nickname = "팀장${index + 1}",
-                    remainingBudget = room.budget,
+            val current = roomRepo.findById(RoomId(room.roomId))!!
+            roomRepo.save(
+                current.copy(
+                    leaders =
+                        current.leaders +
+                            RoomTeamLeader(
+                                roomId = room.roomId,
+                                teamLeaderId = "leader-${index + 1}",
+                                nickname = "팀장${index + 1}",
+                                remainingBudget = room.budget,
+                            ),
                 ),
             )
         }

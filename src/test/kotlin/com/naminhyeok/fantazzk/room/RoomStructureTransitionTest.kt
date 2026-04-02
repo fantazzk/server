@@ -52,6 +52,24 @@ class RoomStructureTransitionTest {
     }
 
     @Test
+    fun `room main 코드에는 더 이상 split child repository surface 가 존재하지 않는다`() {
+        listOf(
+            "com.naminhyeok.fantazzk.room.repository.RoomPlayerRepository",
+            "com.naminhyeok.fantazzk.room.repository.RoomTeamLeaderRepository",
+            "com.naminhyeok.fantazzk.room.repository.RoomTeamMemberRepository",
+            "com.naminhyeok.fantazzk.room.repository.RoomBidRepository",
+            "com.naminhyeok.fantazzk.room.repository.RoomPlayerJdbcRepository",
+            "com.naminhyeok.fantazzk.room.repository.RoomTeamLeaderJdbcRepository",
+            "com.naminhyeok.fantazzk.room.repository.RoomTeamMemberJdbcRepository",
+            "com.naminhyeok.fantazzk.room.repository.RoomBidJdbcRepository",
+            "com.naminhyeok.fantazzk.room.repository.RoomRepositoryConfiguration",
+        ).forEach { className ->
+            assertThatThrownBy { Class.forName(className) }
+                .isInstanceOf(ClassNotFoundException::class.java)
+        }
+    }
+
+    @Test
     fun `room 리포지토리와 조회 서비스는 concrete domain 타입을 사용한다`() {
         assertThat(
             RoomRepository::class.java.getMethod("save", Room::class.java).returnType,

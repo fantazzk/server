@@ -3,11 +3,7 @@ package com.naminhyeok.fantazzk.room
 import com.naminhyeok.fantazzk.room.application.RoomJoinService
 import com.naminhyeok.fantazzk.room.application.RoomJoinServiceImpl
 import com.naminhyeok.fantazzk.room.exception.RoomException
-import com.naminhyeok.fantazzk.room.support.InMemoryRoomBidRepository
-import com.naminhyeok.fantazzk.room.support.InMemoryRoomPlayerRepository
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomRepository
-import com.naminhyeok.fantazzk.room.support.InMemoryRoomTeamLeaderRepository
-import com.naminhyeok.fantazzk.room.support.InMemoryRoomTeamMemberRepository
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -21,10 +17,6 @@ import org.springframework.context.ApplicationEventPublisher
 
 class RoomJoinServiceTest {
     private lateinit var roomRepo: InMemoryRoomRepository
-    private lateinit var playerRepo: InMemoryRoomPlayerRepository
-    private lateinit var leaderRepo: InMemoryRoomTeamLeaderRepository
-    private lateinit var memberRepo: InMemoryRoomTeamMemberRepository
-    private lateinit var bidRepo: InMemoryRoomBidRepository
     private lateinit var events: ApplicationEventPublisher
     private lateinit var cut: RoomJoinService
 
@@ -33,11 +25,7 @@ class RoomJoinServiceTest {
 
     @BeforeEach
     fun setUp() {
-        playerRepo = InMemoryRoomPlayerRepository()
-        leaderRepo = InMemoryRoomTeamLeaderRepository()
-        memberRepo = InMemoryRoomTeamMemberRepository()
-        bidRepo = InMemoryRoomBidRepository()
-        roomRepo = InMemoryRoomRepository(playerRepo, leaderRepo, memberRepo, bidRepo)
+        roomRepo = InMemoryRoomRepository()
         events = mockk(relaxed = true)
         cut = RoomJoinServiceImpl(roomRepo, events)
 
@@ -54,9 +42,11 @@ class RoomJoinServiceTest {
         roomCode = room.code
         roomId = room.roomId
 
-        leaderRepo.save(
-            RoomTeamLeader(roomId = roomId, teamLeaderId = "host", nickname = "호스트", remainingBudget = 300),
-        )
+        persistRoom {
+            it.copy(
+                leaders = listOf(RoomTeamLeader(roomId = roomId, teamLeaderId = "host", nickname = "호스트", remainingBudget = 300)),
+            )
+        }
     }
 
     @Nested
@@ -64,7 +54,7 @@ class RoomJoinServiceTest {
         @Test
         fun `정원이 한 자리 남은 대기 방에는 마지막 자리까지 참가할 수 있다`() {
             val leader = cut.join(roomCode, "참가자")
-            val leaders = leaderRepo.findByRoomId(roomId)
+            val leaders = currentRoom().leaders
 
             assertThat(leader.nickname).isEqualTo("참가자")
             assertThat(leader.roomId).isEqualTo(roomId)
@@ -81,15 +71,18 @@ class RoomJoinServiceTest {
 
         @Test
         fun `예산이 없는 방에 참가하면 팀장의 잔여 예산도 비워둔다`() {
-            roomRepo.save(
+            persistRoom {
                 Room.createDraft(
                     code = roomCode,
                     hostId = "host",
                     teamCount = 2,
                     teamSize = 2,
                     draftOrderStrategy = DraftOrderStrategy.SNAKE,
-                ).copy(roomId = roomId),
-            )
+                ).copy(
+                    roomId = roomId,
+                    leaders = currentRoom().leaders,
+                )
+            }
 
             val leader = cut.join(roomCode, "드래프트참가자")
 
@@ -108,7 +101,7 @@ class RoomJoinServiceTest {
         @ParameterizedTest(name = "{0} 상태의 방에는 참가할 수 없다")
         @EnumSource(value = RoomStatus::class, names = ["WAITING"], mode = EnumSource.Mode.EXCLUDE)
         fun `WAITING이 아닌 상태의 방에는 참가할 수 없다`(status: RoomStatus) {
-            roomRepo.save(
+            persistRoom {
                 Room.createAuction(
                     code = roomCode,
                     hostId = "host",
@@ -118,8 +111,9 @@ class RoomJoinServiceTest {
                 ).copy(
                     roomId = roomId,
                     status = status,
-                ),
-            )
+                    leaders = currentRoom().leaders,
+                )
+            }
 
             assertThatThrownBy { cut.join(roomCode, "참가자") }
                 .isInstanceOf(IllegalStateException::class.java)
@@ -130,19 +124,29 @@ class RoomJoinServiceTest {
         @ValueSource(ints = [1, 2])
         fun `방 정원이 가득 찼거나 초과된 상태면 참가할 수 없다`(additionalLeaders: Int) {
             repeat(additionalLeaders) { index ->
-                leaderRepo.save(
-                    RoomTeamLeader(
-                        roomId = roomId,
-                        teamLeaderId = "leader-${index + 2}",
-                        nickname = "추가팀장${index + 1}",
-                        remainingBudget = 300,
-                    ),
-                )
+                persistRoom { room ->
+                    room.copy(
+                        leaders =
+                            room.leaders +
+                                RoomTeamLeader(
+                                    roomId = roomId,
+                                    teamLeaderId = "leader-${index + 2}",
+                                    nickname = "추가팀장${index + 1}",
+                                    remainingBudget = 300,
+                                ),
+                    )
+                }
             }
 
             assertThatThrownBy { cut.join(roomCode, "세번째") }
                 .isInstanceOf(IllegalStateException::class.java)
                 .hasMessage("방이 가득 찼습니다")
         }
+    }
+
+    private fun currentRoom(): Room = roomRepo.findByCode(roomCode)!!
+
+    private fun persistRoom(transform: (Room) -> Room) {
+        roomRepo.save(transform(currentRoom()))
     }
 }

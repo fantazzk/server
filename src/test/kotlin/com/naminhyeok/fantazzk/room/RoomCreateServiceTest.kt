@@ -4,11 +4,7 @@ import com.naminhyeok.fantazzk.room.application.RoomCreateService
 import com.naminhyeok.fantazzk.room.application.RoomCreateServiceImpl
 import com.naminhyeok.fantazzk.room.exception.RoomTemplateNotFoundException
 import com.naminhyeok.fantazzk.room.repository.RoomRepository
-import com.naminhyeok.fantazzk.room.support.InMemoryRoomBidRepository
-import com.naminhyeok.fantazzk.room.support.InMemoryRoomPlayerRepository
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomRepository
-import com.naminhyeok.fantazzk.room.support.InMemoryRoomTeamLeaderRepository
-import com.naminhyeok.fantazzk.room.support.InMemoryRoomTeamMemberRepository
 import com.naminhyeok.fantazzk.room.support.InMemoryTemplateCatalog
 import com.naminhyeok.fantazzk.template.TemplateBlueprint
 import com.naminhyeok.fantazzk.template.TemplateCatalog
@@ -28,21 +24,13 @@ import org.springframework.dao.DuplicateKeyException
 
 class RoomCreateServiceTest {
     private lateinit var roomRepo: InMemoryRoomRepository
-    private lateinit var playerRepo: InMemoryRoomPlayerRepository
-    private lateinit var leaderRepo: InMemoryRoomTeamLeaderRepository
-    private lateinit var memberRepo: InMemoryRoomTeamMemberRepository
-    private lateinit var bidRepo: InMemoryRoomBidRepository
     private lateinit var templateCatalog: InMemoryTemplateCatalog
     private lateinit var events: ApplicationEventPublisher
     private lateinit var cut: RoomCreateService
 
     @BeforeEach
     fun setUp() {
-        playerRepo = InMemoryRoomPlayerRepository()
-        leaderRepo = InMemoryRoomTeamLeaderRepository()
-        memberRepo = InMemoryRoomTeamMemberRepository()
-        bidRepo = InMemoryRoomBidRepository()
-        roomRepo = InMemoryRoomRepository(playerRepo, leaderRepo, memberRepo, bidRepo)
+        roomRepo = InMemoryRoomRepository()
         templateCatalog = InMemoryTemplateCatalog()
         events = mockk(relaxed = true)
         cut = RoomCreateServiceImpl(roomRepo, templateCatalog, events)
@@ -66,7 +54,7 @@ class RoomCreateServiceTest {
             )
 
             val room = cut.create(1L, "호스트")
-            val leader = leaderRepo.findByRoomId(room.roomId).single()
+            val leader = room.leaders.single()
 
             assertThat(room.status).isEqualTo(RoomStatus.WAITING)
             assertThat(room.mode).isEqualTo(TeamBuildingMode.AUCTION)
@@ -104,7 +92,7 @@ class RoomCreateServiceTest {
             )
 
             val room = cut.create(2L, "호스트")
-            val leader = leaderRepo.findByRoomId(room.roomId).single()
+            val leader = room.leaders.single()
 
             assertThat(room.mode).isEqualTo(TeamBuildingMode.DRAFT)
             assertThat(room.budget).isNull()
@@ -141,7 +129,7 @@ class RoomCreateServiceTest {
 
             val room = cut.create(1L, "호스트닉네임")
 
-            val leaders = leaderRepo.findByRoomId(room.roomId)
+            val leaders = room.leaders
             assertThat(leaders).hasSize(1)
             assertThat(leaders.first().nickname).isEqualTo("호스트닉네임")
             assertThat(leaders.first().teamLeaderId).isEqualTo(room.hostId)
@@ -168,7 +156,7 @@ class RoomCreateServiceTest {
             )
 
             val room = cut.create(1L, "호스트")
-            val roomPlayers = playerRepo.findByRoomId(room.roomId)
+            val roomPlayers = room.players
 
             assertThat(roomPlayers).hasSize(3)
             assertThat(roomPlayers.map { Triple(it.name, it.displayOrder, it.status) })
