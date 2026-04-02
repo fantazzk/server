@@ -7,7 +7,9 @@ import org.junit.jupiter.api.Test
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.exists
 import kotlin.io.path.readLines
+import kotlin.io.path.readText
 
 class SpringModulithMigrationTest {
     @Test
@@ -68,6 +70,55 @@ class SpringModulithMigrationTest {
         assertThatCode {
             Class.forName("com.naminhyeok.fantazzk.template.TemplateCatalog")
         }.doesNotThrowAnyException()
+    }
+
+    @Test
+    fun `메인 앱과 통합 테스트는 루트 Liquibase 마스터만 사용한다`() {
+        val rootMasterPath = "classpath:/db/changelog/db.changelog-master.yaml"
+        val mainApplication = Path.of("src/main/resources/application.yml").readText()
+        val integrationApplication = Path.of("src/integrationTest/resources/application.yml").readText()
+
+        assertThat(mainApplication).contains("change-log: $rootMasterPath")
+        assertThat(integrationApplication).contains("change-log: $rootMasterPath")
+        assertThat(integrationApplication).doesNotContain("classpath:/db/changelog/team-building/db.changelog-master.yaml")
+    }
+
+    @Test
+    fun `JPA 전환 이후 modulith JDBC 스키마 자동 초기화 설정은 제거된다`() {
+        val mainApplication = Path.of("src/main/resources/application.yml").readText()
+
+        assertThat(mainApplication).doesNotContain("schema-initialization")
+        assertThat(mainApplication).doesNotContain("spring.modulith.events.jdbc")
+    }
+
+    @Test
+    fun `죽은 JDBC 설정과 스프링 데이터 JDBC 엔티티 소스는 제거된다`() {
+        listOf(
+            "com.naminhyeok.fantazzk.RootCombinedJdbcConfiguration",
+            "com.naminhyeok.fantazzk.room.config.RoomJdbcConfiguration",
+            "com.naminhyeok.fantazzk.template.config.TemplateJdbcConfiguration",
+            "com.naminhyeok.fantazzk.room.repository.RoomEntity",
+            "com.naminhyeok.fantazzk.room.repository.RoomPlayerEntity",
+            "com.naminhyeok.fantazzk.room.repository.RoomTeamLeaderEntity",
+            "com.naminhyeok.fantazzk.room.repository.RoomTeamMemberEntity",
+            "com.naminhyeok.fantazzk.room.repository.RoomBidEntity",
+        ).forEach { className ->
+            assertThatThrownBy { Class.forName(className) }
+                .isInstanceOf(ClassNotFoundException::class.java)
+        }
+
+        listOf(
+            "src/main/kotlin/com/naminhyeok/fantazzk/RootCombinedJdbcConfiguration.kt",
+            "src/main/kotlin/com/naminhyeok/fantazzk/room/config/RoomJdbcConfiguration.kt",
+            "src/main/kotlin/com/naminhyeok/fantazzk/template/config/TemplateJdbcConfiguration.kt",
+            "src/main/kotlin/com/naminhyeok/fantazzk/room/repository/RoomEntity.kt",
+            "src/main/kotlin/com/naminhyeok/fantazzk/room/repository/RoomPlayerEntity.kt",
+            "src/main/kotlin/com/naminhyeok/fantazzk/room/repository/RoomTeamLeaderEntity.kt",
+            "src/main/kotlin/com/naminhyeok/fantazzk/room/repository/RoomTeamMemberEntity.kt",
+            "src/main/kotlin/com/naminhyeok/fantazzk/room/repository/RoomBidEntity.kt",
+        ).map { Path.of(it) }.forEach { path ->
+            assertThat(path.exists()).isFalse()
+        }
     }
 
     @Test

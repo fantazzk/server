@@ -7,6 +7,7 @@ import com.naminhyeok.fantazzk.template.application.TemplateFinderImpl
 import com.naminhyeok.fantazzk.template.domain.Template
 import com.naminhyeok.fantazzk.template.repository.TemplateRepository
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import java.lang.reflect.Modifier
 
@@ -27,6 +28,20 @@ class TemplateStructureTransitionTest {
         val parameterTypes = TemplateApiController::class.java.declaredConstructors.single().parameterTypes.toList()
         assertThat(parameterTypes.map { it.name }).doesNotContain("com.naminhyeok.fantazzk.template.query.TemplateQueryService")
         assertThat(parameterTypes).contains(TemplateFinder::class.java)
+    }
+
+    @Test
+    fun `template 메인 코드에는 더 이상 spi 와 jdbc 설정 타입이 존재하지 않는다`() {
+        listOf(
+            "com.naminhyeok.fantazzk.template.spi.TemplateLookup",
+            "com.naminhyeok.fantazzk.template.spi.TemplateSpiPackageInfo",
+            "com.naminhyeok.fantazzk.template.infrastructure.spi.TemplateLookupAdapter",
+            "com.naminhyeok.fantazzk.template.infrastructure.spi.TemplateSpiConfiguration",
+            "com.naminhyeok.fantazzk.template.config.TemplateJdbcConfiguration",
+        ).forEach { className ->
+            assertThatThrownBy { Class.forName(className) }
+                .isInstanceOf(ClassNotFoundException::class.java)
+        }
     }
 
     @Test

@@ -9,11 +9,6 @@ spring:
     password: postgres
   liquibase:
     change-log: classpath:/db/changelog/db.changelog-master.yaml
-  modulith:
-    events:
-      jdbc:
-        schema-initialization:
-          enabled: true
 
 cors:
   allowed-origins:

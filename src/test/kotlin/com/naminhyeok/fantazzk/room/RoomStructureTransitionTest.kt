@@ -70,6 +70,22 @@ class RoomStructureTransitionTest {
     }
 
     @Test
+    fun `room 메인 코드에는 더 이상 jdbc 설정과 JDBC 전용 엔티티가 존재하지 않는다`() {
+        listOf(
+            "com.naminhyeok.fantazzk.RootCombinedJdbcConfiguration",
+            "com.naminhyeok.fantazzk.room.config.RoomJdbcConfiguration",
+            "com.naminhyeok.fantazzk.room.repository.RoomEntity",
+            "com.naminhyeok.fantazzk.room.repository.RoomPlayerEntity",
+            "com.naminhyeok.fantazzk.room.repository.RoomTeamLeaderEntity",
+            "com.naminhyeok.fantazzk.room.repository.RoomTeamMemberEntity",
+            "com.naminhyeok.fantazzk.room.repository.RoomBidEntity",
+        ).forEach { className ->
+            assertThatThrownBy { Class.forName(className) }
+                .isInstanceOf(ClassNotFoundException::class.java)
+        }
+    }
+
+    @Test
     fun `room 리포지토리와 조회 서비스는 concrete domain 타입을 사용한다`() {
         assertThat(
             RoomRepository::class.java.getMethod("save", Room::class.java).returnType,

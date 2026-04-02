@@ -13,6 +13,7 @@ import org.springframework.modulith.core.ApplicationModules
 import org.springframework.modulith.docs.Documenter
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.readText
 import kotlin.io.path.extension
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.listDirectoryEntries
@@ -74,6 +75,31 @@ class SpringModulithArchitectureTest {
 
         assertThat(repositories).isNotEmpty()
         assertThat(repositories).allMatch { it.isAnnotationPresent(Repository::class.java) }
+    }
+
+    @Test
+    fun `메인 소스는 더 이상 spring data jdbc 전용 타입을 사용하지 않는다`() {
+        val sourceRoot = Path.of("src/main/kotlin/com/naminhyeok/fantazzk")
+        val jdbcUsages =
+            Files.walk(sourceRoot).use { paths ->
+                paths
+                    .filter { Files.isRegularFile(it) && it.fileName.toString().endsWith(".kt") }
+                    .toList()
+                    .mapNotNull { path ->
+                        val content = path.readText()
+                        if (
+                            "org.springframework.data.jdbc" in content ||
+                            "org.springframework.data.relational.core.mapping" in content ||
+                            "AbstractJdbcConfiguration" in content
+                        ) {
+                            sourceRoot.relativize(path).toString()
+                        } else {
+                            null
+                        }
+                    }
+            }
+
+        assertThat(jdbcUsages).isEmpty()
     }
 
     @Test

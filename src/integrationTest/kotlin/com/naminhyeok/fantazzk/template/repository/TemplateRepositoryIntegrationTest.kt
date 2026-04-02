@@ -1,11 +1,8 @@
 package com.naminhyeok.fantazzk.template.repository
 
-import com.naminhyeok.fantazzk.RootCombinedJdbcConfiguration
-import com.naminhyeok.fantazzk.room.config.RoomJdbcConfiguration
 import com.naminhyeok.fantazzk.template.DraftOrderStrategy
 import com.naminhyeok.fantazzk.template.TeamBuildingMode
 import com.naminhyeok.fantazzk.template.TemplateId
-import com.naminhyeok.fantazzk.template.config.TemplateJdbcConfiguration
 import com.naminhyeok.fantazzk.template.domain.Template
 import com.naminhyeok.fantazzk.template.domain.TemplateConfiguration
 import org.assertj.core.api.Assertions.assertThat
@@ -21,9 +18,6 @@ import org.springframework.test.context.TestConstructor
 
 @ImportAutoConfiguration(
     LiquibaseAutoConfiguration::class,
-    RootCombinedJdbcConfiguration::class,
-    RoomJdbcConfiguration::class,
-    TemplateJdbcConfiguration::class,
 )
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)

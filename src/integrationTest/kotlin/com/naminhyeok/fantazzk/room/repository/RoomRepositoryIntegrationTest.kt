@@ -1,6 +1,5 @@
 package com.naminhyeok.fantazzk.room.repository
 
-import com.naminhyeok.fantazzk.RootCombinedJdbcConfiguration
 import com.naminhyeok.fantazzk.room.DraftOrderStrategy
 import com.naminhyeok.fantazzk.room.Room
 import com.naminhyeok.fantazzk.room.RoomBid
@@ -10,8 +9,6 @@ import com.naminhyeok.fantazzk.room.RoomStatus
 import com.naminhyeok.fantazzk.room.RoomTeamLeader
 import com.naminhyeok.fantazzk.room.RoomTeamMember
 import com.naminhyeok.fantazzk.room.TeamBuildingMode
-import com.naminhyeok.fantazzk.room.config.RoomJdbcConfiguration
-import com.naminhyeok.fantazzk.template.config.TemplateJdbcConfiguration
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
@@ -26,9 +23,6 @@ import org.springframework.test.context.TestConstructor
 
 @ImportAutoConfiguration(
     LiquibaseAutoConfiguration::class,
-    RootCombinedJdbcConfiguration::class,
-    RoomJdbcConfiguration::class,
-    TemplateJdbcConfiguration::class,
 )
 @Import(RoomRepositoryAdapter::class)
 @DataJpaTest
