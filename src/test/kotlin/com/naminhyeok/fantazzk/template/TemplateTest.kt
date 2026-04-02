@@ -11,6 +11,21 @@ class TemplateTest {
     @Nested
     inner class `템플릿 생성` {
         @Test
+        fun `Template createAuction은 선수 컬렉션을 displayOrder 순서로 보관한다`() {
+            val template =
+                com.naminhyeok.fantazzk.template.domain.Template.createAuction(
+                    name = "통합 템플릿",
+                    teamCount = 2,
+                    teamSize = 2,
+                    budget = 300,
+                    playerNames = listOf("선수2", "선수1"),
+                )
+
+            assertThat(template.players().map { it.name }).containsExactly("선수1", "선수2")
+            assertThat(template.players().map { it.displayOrder }).containsExactly(0, 1)
+        }
+
+        @Test
         fun `Template create는 강타입 설정을 flat 필드로 노출한다`() {
             val template =
                 Template.create(

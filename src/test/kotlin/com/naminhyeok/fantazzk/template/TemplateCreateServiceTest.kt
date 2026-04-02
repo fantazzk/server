@@ -3,8 +3,9 @@ package com.naminhyeok.fantazzk.template
 import com.naminhyeok.fantazzk.template.application.CreateTemplateCommand
 import com.naminhyeok.fantazzk.template.application.TemplateCreateService
 import com.naminhyeok.fantazzk.template.application.TemplateCreateServiceImpl
-import com.naminhyeok.fantazzk.template.support.InMemoryTemplatePlayerRepository
-import com.naminhyeok.fantazzk.template.support.InMemoryTemplateRepository
+import com.naminhyeok.fantazzk.template.domain.Template
+import com.naminhyeok.fantazzk.template.repository.TemplateRepository
+import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -13,17 +14,18 @@ import org.junit.jupiter.api.Test
 import org.springframework.context.ApplicationEventPublisher
 
 class TemplateCreateServiceTest {
-    private lateinit var templateRepo: InMemoryTemplateRepository
-    private lateinit var playerRepo: InMemoryTemplatePlayerRepository
+    private lateinit var templateRepo: TemplateRepository
     private lateinit var events: ApplicationEventPublisher
     private lateinit var cut: TemplateCreateService
 
     @BeforeEach
     fun setUp() {
-        templateRepo = InMemoryTemplateRepository()
-        playerRepo = InMemoryTemplatePlayerRepository()
+        templateRepo = mockk()
         events = mockk(relaxed = true)
-        cut = TemplateCreateServiceImpl(templateRepo, playerRepo, events)
+        every { templateRepo.save(any<Template>()) } answers {
+            firstArg<Template>().takeUnless { it.templateId == 0L } ?: firstArg<Template>().assignId(TemplateId(1L))
+        }
+        cut = TemplateCreateServiceImpl(templateRepo, events)
     }
 
     @Test
@@ -43,7 +45,7 @@ class TemplateCreateServiceTest {
         assertThat(template.configuration)
             .isEqualTo(TemplateConfiguration.Auction(teamCount = 2, teamSize = 2, budgetValue = 500))
 
-        val players = playerRepo.findByTemplateId(template.templateId)
+        val players = template.players()
         assertThat(players.map { it.name }).containsExactly("선수A", "선수B")
         assertThat(players.map { it.displayOrder }).containsExactly(0, 1)
     }

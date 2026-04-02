@@ -3,8 +3,8 @@ package com.naminhyeok.fantazzk.template
 import com.naminhyeok.fantazzk.template.application.CreateTemplateCommand
 import com.naminhyeok.fantazzk.template.application.TemplateCreateService
 import com.naminhyeok.fantazzk.template.application.TemplateFinder
+import com.naminhyeok.fantazzk.template.domain.Template
 import com.naminhyeok.fantazzk.template.exception.TemplateException
-import com.naminhyeok.fantazzk.template.repository.TemplatePlayerRepository
 import com.naminhyeok.fantazzk.template.repository.TemplateRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -31,9 +31,6 @@ class TemplateModuleIntegrationTest {
 
     @Autowired
     lateinit var templateRepository: TemplateRepository
-
-    @Autowired
-    lateinit var templatePlayerRepository: TemplatePlayerRepository
 
     @Autowired
     lateinit var jdbcTemplate: JdbcTemplate
@@ -88,11 +85,29 @@ class TemplateModuleIntegrationTest {
     }
 
     @Test
+    fun `template finder 는 별도 선수 리포지토리 없이 aggregate 에서 선수 목록을 읽는다`() {
+        val created =
+            templateCreateService.create(
+                CreateTemplateCommand.Auction(
+                    name = "집약 루트",
+                    teamCount = 2,
+                    teamSize = 2,
+                    budget = 300,
+                    playerNames = listOf("선수1", "선수2"),
+                ),
+            )
+
+        val detail = templateFinder.getDetail(created.getId())
+
+        assertThat(detail.players.map { it.name }).containsExactly("선수1", "선수2")
+    }
+
+    @Test
     fun `템플릿 조회 서비스 목록 조회는 유효하지 않은 행을 템플릿 유효성 예외로 변환한다`() {
         templateRepository.save(
-            Template.create(
+            Template(
                 name = "정상 템플릿",
-                configuration = TemplateConfiguration.Auction(teamCount = 2, teamSize = 2, budgetValue = 300),
+                templateConfiguration = TemplateConfiguration.Auction(teamCount = 2, teamSize = 2, budgetValue = 300),
             ),
         )
         val invalidTemplateId =
@@ -123,19 +138,14 @@ class TemplateModuleIntegrationTest {
     fun `템플릿 조회 서비스 상세 조회는 표시 순서대로 선수 목록을 반환한다`() {
         val template =
             templateRepository.save(
-                Template.create(
+                Template.createDraft(
                     name = "순서 검증",
-                    configuration = TemplateConfiguration.Draft(teamCount = 2, teamSize = 3, strategy = DraftOrderStrategy.SNAKE),
+                    teamCount = 2,
+                    teamSize = 3,
+                    strategy = DraftOrderStrategy.SNAKE,
+                    playerNames = listOf("선수3", "선수1", "선수2", "선수4"),
                 ),
             )
-        templatePlayerRepository.saveAll(
-            listOf(
-                TemplatePlayer(templateId = template.templateId, name = "선수3", displayOrder = 2),
-                TemplatePlayer(templateId = template.templateId, name = "선수1", displayOrder = 0),
-                TemplatePlayer(templateId = template.templateId, name = "선수2", displayOrder = 1),
-                TemplatePlayer(templateId = template.templateId, name = "선수4", displayOrder = 3),
-            ),
-        )
 
         val detail = templateFinder.getDetail(TemplateId(template.templateId))
 
@@ -146,19 +156,14 @@ class TemplateModuleIntegrationTest {
     fun `템플릿 목록 계약은 애그리거트 기반 상세 조회를 설계 정보로 변환한다`() {
         val template =
             templateRepository.save(
-                Template.create(
+                Template.createDraft(
                     name = "snapshot 검증",
-                    configuration = TemplateConfiguration.Draft(teamCount = 2, teamSize = 3, strategy = DraftOrderStrategy.FIXED),
+                    teamCount = 2,
+                    teamSize = 3,
+                    strategy = DraftOrderStrategy.FIXED,
+                    playerNames = listOf("선수4", "선수1", "선수3", "선수2"),
                 ),
             )
-        templatePlayerRepository.saveAll(
-            listOf(
-                TemplatePlayer(templateId = template.templateId, name = "선수4", displayOrder = 3),
-                TemplatePlayer(templateId = template.templateId, name = "선수1", displayOrder = 0),
-                TemplatePlayer(templateId = template.templateId, name = "선수3", displayOrder = 2),
-                TemplatePlayer(templateId = template.templateId, name = "선수2", displayOrder = 1),
-            ),
-        )
 
         val blueprint = templateCatalog.getTemplateBlueprint(template.templateId)
 
@@ -193,10 +198,14 @@ class TemplateModuleIntegrationTest {
                 null,
             )!!
 
-        templatePlayerRepository.saveAll(
-            listOf(
-                TemplatePlayer(templateId = templateId, name = "선수1", displayOrder = 0),
-            ),
+        jdbcTemplate.update(
+            """
+            insert into template_player (template_id, name, display_order)
+            values (?, ?, ?)
+            """.trimIndent(),
+            templateId,
+            "선수1",
+            0,
         )
 
         assertThatThrownBy { templateCatalog.getTemplateBlueprint(templateId) }

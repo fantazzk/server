@@ -6,6 +6,8 @@ import com.naminhyeok.fantazzk.template.application.CreateTemplateCommand
 import com.naminhyeok.fantazzk.template.application.TemplateCreateService
 import com.naminhyeok.fantazzk.template.application.TemplateDetail
 import com.naminhyeok.fantazzk.template.application.TemplateFinder
+import com.naminhyeok.fantazzk.template.domain.Template
+import com.naminhyeok.fantazzk.template.domain.TemplatePlayer
 import com.naminhyeok.fantazzk.template.exception.TemplateException
 import io.mockk.every
 import io.mockk.mockk
@@ -197,11 +199,11 @@ class TemplateApiControllerTest {
     }
 
     private fun template() =
-        Template(
-            templateId = 1L,
+        Template.createAuction(
             name = "경매전",
-            templateConfiguration = TemplateConfiguration.Auction(teamCount = 2, teamSize = 2, budgetValue = 300),
-            createdAt = now,
-            updatedAt = now,
-        )
+            teamCount = 2,
+            teamSize = 2,
+            budget = 300,
+            playerNames = listOf("선수1", "선수2"),
+        ).assignId(TemplateId(1L))
 }

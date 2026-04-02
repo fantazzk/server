@@ -11,6 +11,7 @@ plugins {
     alias(libs.plugins.ktlint)
     alias(libs.plugins.detekt)
     alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlin.jpa)
     alias(libs.plugins.kotlin.spring)
 }
 
@@ -69,9 +70,10 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-data-jdbc")
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework:spring-tx")
     implementation("org.jmolecules:jmolecules-ddd:2.0.1")
-    implementation("org.springframework.modulith:spring-modulith-starter-jdbc")
+    implementation("org.springframework.modulith:spring-modulith-starter-jpa")
     implementation("org.springframework.modulith:spring-modulith-starter-insight")
     implementation("tools.jackson.module:jackson-module-kotlin")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.6")
@@ -94,6 +96,7 @@ dependencies {
     integrationTestImplementation(enforcedPlatform(SpringBootPlugin.BOM_COORDINATES))
     integrationTestImplementation("org.springframework.boot:spring-boot-starter-test")
     integrationTestImplementation("org.springframework.boot:spring-boot-data-jdbc-test")
+    integrationTestImplementation("org.springframework.boot:spring-boot-data-jpa-test")
     integrationTestImplementation("org.springframework.boot:spring-boot-jdbc-test")
     integrationTestImplementation("org.springframework.modulith:spring-modulith-starter-test")
     integrationTestImplementation("org.springframework.boot:spring-boot-restclient")

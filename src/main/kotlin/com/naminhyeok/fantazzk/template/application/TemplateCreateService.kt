@@ -1,10 +1,8 @@
 package com.naminhyeok.fantazzk.template.application
 
 import com.naminhyeok.fantazzk.template.DraftOrderStrategy
-import com.naminhyeok.fantazzk.template.Template
-import com.naminhyeok.fantazzk.template.TemplateConfiguration
 import com.naminhyeok.fantazzk.template.TemplateRoster
-import com.naminhyeok.fantazzk.template.repository.TemplatePlayerRepository
+import com.naminhyeok.fantazzk.template.domain.Template
 import com.naminhyeok.fantazzk.template.repository.TemplateRepository
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
@@ -41,39 +39,37 @@ interface TemplateCreateService {
 @Service
 internal class TemplateCreateServiceImpl(
     private val templateRepository: TemplateRepository,
-    private val templatePlayerRepository: TemplatePlayerRepository,
     private val events: ApplicationEventPublisher,
 ) : TemplateCreateService {
     @Transactional
     override fun create(command: CreateTemplateCommand): Template {
-        val configuration =
+        val sortedPlayers = command.playerNames.sorted()
+        val requiredPlayerCount = command.teamCount * (command.teamSize - 1)
+        TemplateRoster.exactlyRequired(sortedPlayers, requiredPlayerCount)
+
+        val template =
             when (command) {
                 is CreateTemplateCommand.Auction ->
-                    TemplateConfiguration.Auction(
+                    Template.createAuction(
+                        name = command.name,
                         teamCount = command.teamCount,
                         teamSize = command.teamSize,
-                        budgetValue = command.budget,
+                        budget = command.budget,
+                        playerNames = sortedPlayers,
                     )
 
                 is CreateTemplateCommand.Draft ->
-                    TemplateConfiguration.Draft(
+                    Template.createDraft(
+                        name = command.name,
                         teamCount = command.teamCount,
                         teamSize = command.teamSize,
                         strategy = command.strategy,
+                        playerNames = sortedPlayers,
                     )
             }
-        val roster = TemplateRoster.exactlyRequired(command.playerNames, configuration.requiredPlayerCount)
-        val template =
-            templateRepository.save(
-                Template.create(
-                    name = command.name,
-                    configuration = configuration,
-                ),
-            )
+        val saved = templateRepository.save(template)
+        saved.recordCreated().drainEvents().forEach(events::publishEvent)
 
-        val players = templatePlayerRepository.saveAll(roster.toPlayers(template.templateId))
-        template.recordCreated(players).drainEvents().forEach(events::publishEvent)
-
-        return template
+        return saved
     }
 }
