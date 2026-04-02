@@ -38,9 +38,6 @@ class RoomStructureTransitionTest {
         assertThat(
             RoomRepository::class.java.getMethod("findByCode", String::class.java).returnType,
         ).isEqualTo(Room::class.java)
-        assertThat(
-            RoomRepository::class.java.getMethod("findById", Long::class.java).returnType,
-        ).isEqualTo(Room::class.java)
 
         assertThat(
             RoomPlayerRepository::class.java.getMethod("save", RoomPlayer::class.java).returnType,

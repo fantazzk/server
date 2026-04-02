@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test
 
 class TemplateStructureTransitionTest {
     @Test
-    fun `template 리포지토리와 조회 서비스는 concrete domain type 과 TemplateId 를 사용한다`() {
+    fun `template 리포지토리는 TemplateId 를 기준으로 동작한다`() {
         assertThat(
             TemplateRepository::class.java.getMethod("findById", TemplateId::class.java).returnType,
         ).isEqualTo(Template::class.java)
