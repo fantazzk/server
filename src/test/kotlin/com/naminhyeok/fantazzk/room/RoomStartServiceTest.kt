@@ -3,8 +3,6 @@ package com.naminhyeok.fantazzk.room
 import com.naminhyeok.fantazzk.room.application.RoomStartService
 import com.naminhyeok.fantazzk.room.application.RoomStartServiceImpl
 import com.naminhyeok.fantazzk.room.exception.RoomException
-import com.naminhyeok.fantazzk.room.repository.RoomAggregateRepositoryImpl
-import com.naminhyeok.fantazzk.room.repository.RoomRepository
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomBidRepository
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomPlayerRepository
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomRepository
@@ -33,13 +31,13 @@ class RoomStartServiceTest {
 
     @BeforeEach
     fun setUp() {
-        roomRepo = InMemoryRoomRepository()
         playerRepo = InMemoryRoomPlayerRepository()
         leaderRepo = InMemoryRoomTeamLeaderRepository()
         memberRepo = InMemoryRoomTeamMemberRepository()
         bidRepo = InMemoryRoomBidRepository()
+        roomRepo = InMemoryRoomRepository(playerRepo, leaderRepo, memberRepo, bidRepo)
         events = mockk(relaxed = true)
-        cut = RoomStartServiceImpl(RoomAggregateRepositoryImpl(roomRepo, playerRepo, leaderRepo, memberRepo, bidRepo), events)
+        cut = RoomStartServiceImpl(roomRepo, events)
     }
 
     @Nested
@@ -153,52 +151,6 @@ class RoomStartServiceTest {
             assertThat(started.currentAuctionRound).isNull()
             assertThat(started.progress).isEqualTo(RoomProgress.Draft(currentTurnIndex = 0))
         }
-
-        @Test
-        fun `legacy 경매 방의 stale draft strategy는 무시하고 시작한다`() {
-            val legacyRoomRepo = LegacyRoomRepository(legacyAuctionRoom())
-            cut = RoomStartServiceImpl(RoomAggregateRepositoryImpl(legacyRoomRepo, playerRepo, leaderRepo, memberRepo, bidRepo), events)
-            val room = legacyRoomRepo.findByCode("START2")!!
-            saveLeaders(room, room.teamCount)
-
-            cut.start(room.code)
-
-            val started = legacyRoomRepo.findByCode(room.code)!!
-            assertThat(started.status).isEqualTo(RoomStatus.IN_PROGRESS)
-            assertThat(started.currentAuctionRound).isEqualTo(1)
-        }
-    }
-
-    private fun legacyAuctionRoom(): Room =
-        Room.from(
-            object : RoomModel {
-                override val roomId = 99L
-                override val code = "START2"
-                override val hostId = "host"
-                override val status = RoomStatus.WAITING
-                override val mode = TeamBuildingMode.AUCTION
-                override val teamCount = 2
-                override val teamSize = 2
-                override val budget = 300
-                override val draftOrderStrategy = DraftOrderStrategy.SNAKE
-                override val currentTurnIndex: Int? = null
-                override val currentAuctionRound: Int? = null
-                override val createdAt = java.time.Instant.parse("2025-01-01T00:00:00Z")
-                override val updatedAt = java.time.Instant.parse("2025-01-01T00:00:00Z")
-            },
-        )
-
-    private class LegacyRoomRepository(
-        private var room: Room,
-    ) : RoomRepository {
-        override fun save(room: Room): Room {
-            this.room = room
-            return room
-        }
-
-        override fun findByCode(code: String): Room? = room.takeIf { it.code == code }
-
-        override fun findById(roomId: Long): Room? = room.takeIf { it.roomId == roomId }
     }
 
     private fun createWaitingRoom(

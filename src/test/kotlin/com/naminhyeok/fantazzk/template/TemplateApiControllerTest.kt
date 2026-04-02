@@ -4,12 +4,12 @@ import com.naminhyeok.fantazzk.template.api.TemplateApiController
 import com.naminhyeok.fantazzk.template.api.TemplateExceptionHandler
 import com.naminhyeok.fantazzk.template.application.CreateTemplateCommand
 import com.naminhyeok.fantazzk.template.application.TemplateCreateService
+import com.naminhyeok.fantazzk.template.application.TemplateDetail
+import com.naminhyeok.fantazzk.template.application.TemplateFinder
 import com.naminhyeok.fantazzk.template.exception.TemplateException
-import com.naminhyeok.fantazzk.template.query.TemplatePlayerView
-import com.naminhyeok.fantazzk.template.query.TemplateQueryService
-import com.naminhyeok.fantazzk.template.query.TemplateView
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
@@ -21,13 +21,13 @@ import java.time.Instant
 
 class TemplateApiControllerTest {
     private val templateCreateService: TemplateCreateService = mockk()
-    private val templateQueryService: TemplateQueryService = mockk()
+    private val templateFinder: TemplateFinder = mockk()
 
     private val now = Instant.now()
 
     private val mockMvc: MockMvc =
         MockMvcBuilders
-            .standaloneSetup(TemplateApiController(templateCreateService, templateQueryService))
+            .standaloneSetup(TemplateApiController(templateCreateService, templateFinder))
             .setControllerAdvice(TemplateExceptionHandler())
             .build()
 
@@ -154,7 +154,7 @@ class TemplateApiControllerTest {
                         updatedAt = now,
                     ),
                 )
-            every { templateQueryService.getTemplate(any()) } returns templateView(template, players)
+            every { templateFinder.getDetail(TemplateId(1L)) } returns TemplateDetail(template, players)
 
             mockMvc.get("/api/v1/templates/1")
                 .andExpect {
@@ -163,11 +163,13 @@ class TemplateApiControllerTest {
                     jsonPath("$.success.name") { value("경매전") }
                     jsonPath("$.success.players[0].name") { value("선수1") }
                 }
+
+            verify(exactly = 1) { templateFinder.getDetail(TemplateId(1L)) }
         }
 
         @Test
         fun `존재하지 않는 ID로 조회하면 404를 반환한다`() {
-            every { templateQueryService.getTemplate(any()) } throws TemplateException.TemplateNotFoundException()
+            every { templateFinder.getDetail(TemplateId(999L)) } throws TemplateException.TemplateNotFoundException()
 
             mockMvc.get("/api/v1/templates/999")
                 .andExpect {
@@ -177,11 +179,13 @@ class TemplateApiControllerTest {
                     jsonPath("$.error.errorCode") { value("TEMPLATE_NOT_FOUND") }
                     jsonPath("$.error.reason") { value("템플릿을 찾을 수 없습니다") }
                 }
+
+            verify(exactly = 1) { templateFinder.getDetail(TemplateId(999L)) }
         }
 
         @Test
         fun `전체 목록을 조회하면 200을 반환한다`() {
-            every { templateQueryService.listTemplates() } returns listOf(templateView(template()))
+            every { templateFinder.list() } returns listOf(template())
 
             mockMvc.get("/api/v1/templates")
                 .andExpect {
@@ -199,20 +203,5 @@ class TemplateApiControllerTest {
             templateConfiguration = TemplateConfiguration.Auction(teamCount = 2, teamSize = 2, budgetValue = 300),
             createdAt = now,
             updatedAt = now,
-        )
-
-    private fun templateView(
-        template: Template,
-        players: List<TemplatePlayer>? = null,
-    ): TemplateView =
-        TemplateView(
-            id = template.templateId,
-            name = template.name,
-            mode = template.mode,
-            teamCount = template.teamCount,
-            teamSize = template.teamSize,
-            budget = template.budget,
-            draftOrderStrategy = template.draftOrderStrategy,
-            players = players?.map { TemplatePlayerView(it.name, it.displayOrder) },
         )
 }

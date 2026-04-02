@@ -1,14 +1,13 @@
 package com.naminhyeok.fantazzk.template.api
 
 import com.naminhyeok.fantazzk.template.TeamBuildingMode
-import com.naminhyeok.fantazzk.template.TemplateIdentity
+import com.naminhyeok.fantazzk.template.TemplateId
 import com.naminhyeok.fantazzk.template.application.CreateTemplateCommand
 import com.naminhyeok.fantazzk.template.application.TemplateCreateService
+import com.naminhyeok.fantazzk.template.application.TemplateFinder
 import com.naminhyeok.fantazzk.template.dto.ApiResponse
 import com.naminhyeok.fantazzk.template.dto.CreateTemplateRequest
 import com.naminhyeok.fantazzk.template.dto.TemplateResponse
-import com.naminhyeok.fantazzk.template.of
-import com.naminhyeok.fantazzk.template.query.TemplateQueryService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
@@ -32,7 +31,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse as SwaggerApiResponse
 @RequestMapping("/api/v1/templates")
 class TemplateApiController(
     private val templateCreateService: TemplateCreateService,
-    private val templateQueryService: TemplateQueryService,
+    private val templateFinder: TemplateFinder,
 ) {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -130,7 +129,7 @@ class TemplateApiController(
         @Parameter(description = TemplateOpenApiDocs.TEMPLATE_ID_PARAMETER, example = "1")
         @PathVariable id: Long,
     ): ApiResponse<TemplateResponse> {
-        return ApiResponse.success(TemplateResponse.from(templateQueryService.getTemplate(TemplateIdentity.of(id))))
+        return ApiResponse.success(TemplateResponse.from(templateFinder.getDetail(TemplateId(id))))
     }
 
     @GetMapping
@@ -149,7 +148,7 @@ class TemplateApiController(
             ),
         ],
     )
-    fun list(): ApiResponse<List<TemplateResponse>> = ApiResponse.success(templateQueryService.listTemplates().map(TemplateResponse::from))
+    fun list(): ApiResponse<List<TemplateResponse>> = ApiResponse.success(templateFinder.list().map(TemplateResponse::from))
 
     private fun CreateTemplateRequest.toCommand(): CreateTemplateCommand =
         when (mode) {

@@ -1,7 +1,5 @@
 package com.naminhyeok.fantazzk.template.repository
 
-import com.naminhyeok.fantazzk.template.query.TemplatePlayerViewCrudRepository
-import com.naminhyeok.fantazzk.template.query.TemplateViewCrudRepository
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories
@@ -10,8 +8,6 @@ import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories
 @EnableJdbcRepositories(
     basePackageClasses = [
         TemplateRepositoryConfiguration::class,
-        TemplateViewCrudRepository::class,
-        TemplatePlayerViewCrudRepository::class,
     ],
 )
 class TemplateRepositoryConfiguration {

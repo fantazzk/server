@@ -4,7 +4,7 @@ import com.naminhyeok.fantazzk.room.AuctionOutcome
 import com.naminhyeok.fantazzk.room.AuctionSettled
 import com.naminhyeok.fantazzk.room.RoomBid
 import com.naminhyeok.fantazzk.room.exception.RoomException
-import com.naminhyeok.fantazzk.room.repository.RoomAggregateRepository
+import com.naminhyeok.fantazzk.room.repository.RoomRepository
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -27,7 +27,7 @@ interface AuctionService {
 @org.jmolecules.ddd.annotation.Service
 @Service
 internal open class AuctionServiceImpl(
-    private val roomAggregateRepository: RoomAggregateRepository,
+    private val roomRepository: RoomRepository,
     private val events: ApplicationEventPublisher,
 ) : AuctionService {
     @Transactional
@@ -36,15 +36,15 @@ internal open class AuctionServiceImpl(
         teamLeaderId: String,
         amount: Int,
     ): RoomBid {
-        val room = roomAggregateRepository.findByCode(code) ?: throw RoomException.RoomNotFoundException()
-        val savedRoom = roomAggregateRepository.save(room.placeBid(teamLeaderId, amount))
+        val room = roomRepository.findByCode(code) ?: throw RoomException.RoomNotFoundException()
+        val savedRoom = roomRepository.save(room.placeBid(teamLeaderId, amount))
         return savedRoom.bids.last()
     }
 
     @Transactional
     override fun settle(code: String): AuctionSettleResult {
-        val room = roomAggregateRepository.findByCode(code) ?: throw RoomException.RoomNotFoundException()
-        val savedRoom = roomAggregateRepository.save(room.settleAuction())
+        val room = roomRepository.findByCode(code) ?: throw RoomException.RoomNotFoundException()
+        val savedRoom = roomRepository.save(room.settleAuction())
         val domainEvents = savedRoom.drainEvents()
         domainEvents.forEach(events::publishEvent)
         val settled =

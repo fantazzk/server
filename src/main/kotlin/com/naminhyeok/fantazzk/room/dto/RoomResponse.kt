@@ -2,8 +2,6 @@ package com.naminhyeok.fantazzk.room.dto
 
 import com.naminhyeok.fantazzk.room.Room
 import com.naminhyeok.fantazzk.room.RoomStatus
-import com.naminhyeok.fantazzk.room.RoomTeamLeader
-import com.naminhyeok.fantazzk.room.query.RoomView
 import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.Schema
 
@@ -20,21 +18,11 @@ data class RoomResponse(
     val teamLeaders: List<TeamLeaderResponse>,
 ) {
     companion object {
-        fun from(
-            room: Room,
-            leaders: List<RoomTeamLeader>,
-        ): RoomResponse =
+        fun from(room: Room): RoomResponse =
             RoomResponse(
                 code = room.code,
                 status = room.status,
-                teamLeaders = leaders.map { TeamLeaderResponse(it.teamLeaderId, it.nickname, it.remainingBudget) },
-            )
-
-        fun from(view: RoomView): RoomResponse =
-            RoomResponse(
-                code = view.code,
-                status = view.status,
-                teamLeaders = view.teamLeaders.map { TeamLeaderResponse(it.id, it.nickname, it.remainingBudget) },
+                teamLeaders = room.leaders.map { TeamLeaderResponse(it.teamLeaderId, it.nickname, it.remainingBudget) },
             )
     }
 }

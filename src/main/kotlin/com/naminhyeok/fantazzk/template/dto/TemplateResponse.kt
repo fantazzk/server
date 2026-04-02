@@ -4,7 +4,7 @@ import com.naminhyeok.fantazzk.template.DraftOrderStrategy
 import com.naminhyeok.fantazzk.template.TeamBuildingMode
 import com.naminhyeok.fantazzk.template.Template
 import com.naminhyeok.fantazzk.template.TemplatePlayer
-import com.naminhyeok.fantazzk.template.query.TemplateView
+import com.naminhyeok.fantazzk.template.application.TemplateDetail
 import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.Schema
 
@@ -46,16 +46,6 @@ data class TemplateResponse(
                 players = players?.map { TemplatePlayerResponse(name = it.name, displayOrder = it.displayOrder) },
             )
 
-        fun from(view: TemplateView): TemplateResponse =
-            TemplateResponse(
-                id = view.id,
-                name = view.name,
-                mode = view.mode,
-                teamCount = view.teamCount,
-                teamSize = view.teamSize,
-                budget = view.budget,
-                draftOrderStrategy = view.draftOrderStrategy,
-                players = view.players?.map { TemplatePlayerResponse(name = it.name, displayOrder = it.displayOrder) },
-            )
+        fun from(detail: TemplateDetail): TemplateResponse = from(detail.template, detail.players)
     }
 }

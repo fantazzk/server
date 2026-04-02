@@ -22,17 +22,6 @@ data class RoomPlayer(
         require(displayOrder > this.displayOrder) { "현재 순서보다 뒤로만 이동할 수 있습니다" }
         return copy(displayOrder = displayOrder)
     }
-
-    companion object {
-        fun from(model: RoomPlayerModel): RoomPlayer =
-            RoomPlayer(
-                roomPlayerId = model.roomPlayerId,
-                roomId = model.roomId,
-                name = model.name,
-                status = model.status,
-                displayOrder = model.displayOrder,
-                createdAt = model.createdAt,
-                updatedAt = model.updatedAt,
-            )
-    }
 }
+
+fun RoomPlayer.isAvailable(): Boolean = status == PlayerStatus.AVAILABLE

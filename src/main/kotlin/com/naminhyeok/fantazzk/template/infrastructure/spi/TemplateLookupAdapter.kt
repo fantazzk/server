@@ -1,9 +1,8 @@
 package com.naminhyeok.fantazzk.template.infrastructure.spi
 
-import com.naminhyeok.fantazzk.template.TemplateIdentity
-import com.naminhyeok.fantazzk.template.application.TemplateLookupService
-import com.naminhyeok.fantazzk.template.of
-import com.naminhyeok.fantazzk.template.requireValidRoster
+import com.naminhyeok.fantazzk.template.TemplateId
+import com.naminhyeok.fantazzk.template.application.TemplateFinder
+import com.naminhyeok.fantazzk.template.exception.TemplateException
 import com.naminhyeok.fantazzk.template.spi.TemplateDraftOrderStrategy
 import com.naminhyeok.fantazzk.template.spi.TemplateLookup
 import com.naminhyeok.fantazzk.template.spi.TemplateLookupException
@@ -12,15 +11,13 @@ import com.naminhyeok.fantazzk.template.spi.TemplatePlayerSnapshot
 import com.naminhyeok.fantazzk.template.spi.TemplateSnapshot
 
 internal class TemplateLookupAdapter(
-    private val templateLookupService: TemplateLookupService,
+    private val templateFinder: TemplateFinder,
 ) : TemplateLookup {
     override fun getTemplate(templateId: Long): TemplateSnapshot {
         try {
-            val template =
-                templateLookupService.find(TemplateIdentity.of(templateId))
-                    ?: throw TemplateLookupException.NotFound(templateId)
-            val players = templateLookupService.getPlayers(template.templateId).sortedBy { it.displayOrder }
-            template.requireValidRoster(players)
+            val detail = templateFinder.getDetail(TemplateId(templateId))
+            val template = detail.template
+            val players = detail.players
 
             return TemplateSnapshot(
                 mode = TemplateMode.valueOf(template.mode.name),
@@ -30,7 +27,9 @@ internal class TemplateLookupAdapter(
                 draftOrderStrategy = template.draftOrderStrategy?.let { TemplateDraftOrderStrategy.valueOf(it.name) },
                 players = players.map { TemplatePlayerSnapshot(name = it.name, displayOrder = it.displayOrder) },
             )
-        } catch (_: IllegalArgumentException) {
+        } catch (_: TemplateException.TemplateNotFoundException) {
+            throw TemplateLookupException.NotFound(templateId)
+        } catch (_: TemplateException.TemplateInvalidException) {
             throw TemplateLookupException.Invalid(templateId)
         }
     }

@@ -110,7 +110,11 @@ class RoomAcceptanceTest(
         assertThat(startedLeadersByNickname.keys).containsExactlyInAnyOrder(hostNickname, participantNickname)
 
         val getRoomResponse =
-            eventuallyGetRoom(roomCode)
+            restTemplate.getForEntity(
+                "/api/v1/rooms/{code}",
+                String::class.java,
+                roomCode,
+            )
 
         assertThat(getRoomResponse.statusCode).isEqualTo(HttpStatus.OK)
         val foundRoom = successBodyOf(getRoomResponse)
@@ -146,30 +150,4 @@ class RoomAcceptanceTest(
 
     private fun teamLeadersByNickname(room: JsonNode): Map<String, JsonNode> =
         teamLeaders(room).associateBy { it.path("nickname").asText() }
-
-    private fun eventuallyGetRoom(code: String): ResponseEntity<String> {
-        repeat(30) {
-            val response =
-                restTemplate.getForEntity(
-                    "/api/v1/rooms/{code}",
-                    String::class.java,
-                    code,
-                )
-
-            if (response.statusCode == HttpStatus.OK) {
-                val body = successBodyOf(response)
-                if (body.path("status").asText() == "IN_PROGRESS" && teamLeaders(body).size == 2) {
-                    return response
-                }
-            }
-
-            Thread.sleep(100)
-        }
-
-        return restTemplate.getForEntity(
-            "/api/v1/rooms/{code}",
-            String::class.java,
-            code,
-        )
-    }
 }

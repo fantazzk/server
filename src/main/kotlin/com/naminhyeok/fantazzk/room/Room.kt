@@ -312,27 +312,6 @@ data class Room(
                 draftOrderStrategy = draftOrderStrategy,
             )
 
-        fun from(model: RoomModel): Room =
-            Room(
-                roomId = model.roomId,
-                code = model.code,
-                hostId = model.hostId,
-                status = model.status,
-                mode = model.mode,
-                teamCount = model.teamCount,
-                teamSize = model.teamSize,
-                budget = if (model.mode == TeamBuildingMode.AUCTION) model.budget else null,
-                draftOrderStrategy = if (model.mode == TeamBuildingMode.DRAFT) model.draftOrderStrategy else null,
-                currentTurnIndex = model.currentTurnIndex,
-                currentAuctionRound = model.currentAuctionRound,
-                players = emptyList(),
-                leaders = emptyList(),
-                members = emptyList(),
-                bids = emptyList(),
-                createdAt = model.createdAt,
-                updatedAt = model.updatedAt,
-            )
-
         internal fun createFromTemplate(
             code: String,
             hostId: String,
@@ -514,6 +493,23 @@ data class Room(
 
     internal fun restorePendingEvents(events: Collection<Any>): Room = apply { pendingEvents.addAll(events) }
 }
+
+fun Room.isWaiting(): Boolean = status == RoomStatus.WAITING
+
+fun Room.isInProgress(): Boolean = status == RoomStatus.IN_PROGRESS
+
+fun Room.isAuction(): Boolean = mode == TeamBuildingMode.AUCTION
+
+fun Room.isDraft(): Boolean = mode == TeamBuildingMode.DRAFT
+
+val Room.configuration: TeamBuildingConfiguration
+    get() = TeamBuildingConfiguration.from(this)
+
+val Room.progress: RoomProgress
+    get() = RoomProgress.from(this)
+
+val Room.picksPerTeam: Int
+    get() = teamSize - 1
 
 private fun List<RoomPlayer>.replacePlayerById(
     roomPlayerId: Long,

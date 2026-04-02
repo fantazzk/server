@@ -3,7 +3,6 @@ package com.naminhyeok.fantazzk.room
 import com.naminhyeok.fantazzk.room.application.AuctionService
 import com.naminhyeok.fantazzk.room.application.AuctionServiceImpl
 import com.naminhyeok.fantazzk.room.exception.RoomException
-import com.naminhyeok.fantazzk.room.repository.RoomAggregateRepositoryImpl
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomBidRepository
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomPlayerRepository
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomRepository
@@ -32,13 +31,13 @@ class AuctionServiceTest {
 
     @BeforeEach
     fun setUp() {
-        roomRepo = InMemoryRoomRepository()
         playerRepo = InMemoryRoomPlayerRepository()
         leaderRepo = InMemoryRoomTeamLeaderRepository()
         memberRepo = InMemoryRoomTeamMemberRepository()
         bidRepo = InMemoryRoomBidRepository()
+        roomRepo = InMemoryRoomRepository(playerRepo, leaderRepo, memberRepo, bidRepo)
         events = mockk(relaxed = true)
-        cut = AuctionServiceImpl(RoomAggregateRepositoryImpl(roomRepo, playerRepo, leaderRepo, memberRepo, bidRepo), events)
+        cut = AuctionServiceImpl(roomRepo, events)
 
         val room =
             roomRepo.save(

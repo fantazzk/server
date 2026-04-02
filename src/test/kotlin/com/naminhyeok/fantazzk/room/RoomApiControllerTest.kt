@@ -6,14 +6,11 @@ import com.naminhyeok.fantazzk.room.application.AuctionService
 import com.naminhyeok.fantazzk.room.application.AuctionSettleResult
 import com.naminhyeok.fantazzk.room.application.DraftService
 import com.naminhyeok.fantazzk.room.application.RoomCreateService
+import com.naminhyeok.fantazzk.room.application.RoomFinder
 import com.naminhyeok.fantazzk.room.application.RoomJoinService
-import com.naminhyeok.fantazzk.room.application.RoomLookupService
 import com.naminhyeok.fantazzk.room.application.RoomStartService
 import com.naminhyeok.fantazzk.room.exception.RoomException
 import com.naminhyeok.fantazzk.room.exception.RoomTemplateNotFoundException
-import com.naminhyeok.fantazzk.room.query.RoomQueryService
-import com.naminhyeok.fantazzk.room.query.RoomView
-import com.naminhyeok.fantazzk.room.query.TeamLeaderView
 import io.mockk.every
 import io.mockk.justRun
 import io.mockk.mockk
@@ -28,8 +25,7 @@ import java.time.Instant
 
 class RoomApiControllerTest {
     private val roomCreateService: RoomCreateService = mockk()
-    private val roomLookupService: RoomLookupService = mockk()
-    private val roomQueryService: RoomQueryService = mockk()
+    private val roomFinder: RoomFinder = mockk()
     private val roomJoinService: RoomJoinService = mockk()
     private val roomStartService: RoomStartService = mockk()
     private val auctionService: AuctionService = mockk()
@@ -42,8 +38,7 @@ class RoomApiControllerTest {
             .standaloneSetup(
                 RoomApiController(
                     roomCreateService,
-                    roomLookupService,
-                    roomQueryService,
+                    roomFinder,
                     roomJoinService,
                     roomStartService,
                     auctionService,
@@ -58,7 +53,7 @@ class RoomApiControllerTest {
         @Test
         fun `존재하는 방을 조회하면 200과 방 정보를 반환한다`() {
             val room = room("ABC123")
-            every { roomQueryService.getRoom("ABC123") } returns roomView(room)
+            every { roomFinder.get("ABC123") } returns room
 
             mockMvc.get("/api/v1/rooms/ABC123")
                 .andExpect {
@@ -75,7 +70,7 @@ class RoomApiControllerTest {
 
         @Test
         fun `존재하지 않는 방을 조회하면 404를 반환한다`() {
-            every { roomQueryService.getRoom("NOCODE") } throws RoomException.RoomNotFoundException()
+            every { roomFinder.get("NOCODE") } throws RoomException.RoomNotFoundException()
 
             mockMvc.get("/api/v1/rooms/NOCODE")
                 .andExpect {
@@ -94,9 +89,7 @@ class RoomApiControllerTest {
         @Test
         fun `유효한 요청으로 방을 생성하면 요청 본문을 서비스 인자로 매핑하고 201을 반환한다`() {
             val room = room("NEW001")
-            val leaders = listOf(leader(room.roomId))
             every { roomCreateService.create(1L, "호스트") } returns room
-            every { roomLookupService.getTeamLeaders(room.roomId) } returns leaders
 
             mockMvc.post("/api/v1/rooms") {
                 contentType = MediaType.APPLICATION_JSON
@@ -146,8 +139,7 @@ class RoomApiControllerTest {
             val room = room("JOIN01")
             val leader = leader(room.roomId)
             every { roomJoinService.join("JOIN01", "참가자") } returns leader
-            every { roomLookupService.get("JOIN01") } returns room
-            every { roomLookupService.getTeamLeaders(room.roomId) } returns listOf(leader)
+            every { roomFinder.get("JOIN01") } returns room
 
             mockMvc.post("/api/v1/rooms/JOIN01/join") {
                 contentType = MediaType.APPLICATION_JSON
@@ -207,8 +199,7 @@ class RoomApiControllerTest {
         fun `성공적으로 시작하면 경로 값을 서비스 인자로 매핑하고 200을 반환한다`() {
             val room = room("START1", status = RoomStatus.IN_PROGRESS)
             justRun { roomStartService.start("START1") }
-            every { roomLookupService.get("START1") } returns room
-            every { roomLookupService.getTeamLeaders(room.roomId) } returns emptyList()
+            every { roomFinder.get("START1") } returns room.copy(leaders = emptyList())
 
             mockMvc.post("/api/v1/rooms/START1/start")
                 .andExpect {
@@ -247,8 +238,7 @@ class RoomApiControllerTest {
                     updatedAt = now,
                 )
             every { auctionService.placeBid("BID001", "leader-A", 100) } returns bid
-            every { roomLookupService.get("BID001") } returns room
-            every { roomLookupService.getTeamLeaders(room.roomId) } returns emptyList()
+            every { roomFinder.get("BID001") } returns room.copy(leaders = emptyList())
 
             mockMvc.post("/api/v1/rooms/BID001/bid") {
                 contentType = MediaType.APPLICATION_JSON
@@ -282,8 +272,7 @@ class RoomApiControllerTest {
         fun `성공적으로 정산하면 200과 방 정보를 반환한다`() {
             val room = room("SET001")
             every { auctionService.settle("SET001") } returns AuctionSettleResult("선수1", AuctionOutcome.SOLD)
-            every { roomLookupService.get("SET001") } returns room
-            every { roomLookupService.getTeamLeaders(room.roomId) } returns emptyList()
+            every { roomFinder.get("SET001") } returns room.copy(leaders = emptyList())
 
             mockMvc.post("/api/v1/rooms/SET001/settle")
                 .andExpect {
@@ -322,8 +311,7 @@ class RoomApiControllerTest {
                     updatedAt = now,
                 )
             every { draftService.pick("PICK01", "leader-A", "선수1") } returns member
-            every { roomLookupService.get("PICK01") } returns room
-            every { roomLookupService.getTeamLeaders(room.roomId) } returns emptyList()
+            every { roomFinder.get("PICK01") } returns room.copy(leaders = emptyList())
 
             mockMvc.post("/api/v1/rooms/PICK01/pick") {
                 contentType = MediaType.APPLICATION_JSON
@@ -362,6 +350,7 @@ class RoomApiControllerTest {
         teamCount = 2,
         teamSize = 2,
         budget = 300,
+        leaders = listOf(leader(roomId = 1L)),
         createdAt = now,
         updatedAt = now,
     )
@@ -375,16 +364,5 @@ class RoomApiControllerTest {
             remainingBudget = 300,
             createdAt = now,
             updatedAt = now,
-        )
-
-    private fun roomView(
-        room: Room,
-        leaders: List<RoomTeamLeader> = listOf(leader(room.roomId)),
-    ): RoomView =
-        RoomView(
-            roomId = room.roomId,
-            code = room.code,
-            status = room.status,
-            teamLeaders = leaders.map { TeamLeaderView(it.teamLeaderId, it.nickname, it.remainingBudget) },
         )
 }

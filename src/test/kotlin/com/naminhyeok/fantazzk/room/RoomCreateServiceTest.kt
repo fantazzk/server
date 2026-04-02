@@ -3,8 +3,6 @@ package com.naminhyeok.fantazzk.room
 import com.naminhyeok.fantazzk.room.application.RoomCreateService
 import com.naminhyeok.fantazzk.room.application.RoomCreateServiceImpl
 import com.naminhyeok.fantazzk.room.exception.RoomTemplateNotFoundException
-import com.naminhyeok.fantazzk.room.repository.RoomAggregateRepository
-import com.naminhyeok.fantazzk.room.repository.RoomAggregateRepositoryImpl
 import com.naminhyeok.fantazzk.room.repository.RoomRepository
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomBidRepository
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomPlayerRepository
@@ -34,22 +32,20 @@ class RoomCreateServiceTest {
     private lateinit var leaderRepo: InMemoryRoomTeamLeaderRepository
     private lateinit var memberRepo: InMemoryRoomTeamMemberRepository
     private lateinit var bidRepo: InMemoryRoomBidRepository
-    private lateinit var aggregateRepo: RoomAggregateRepository
     private lateinit var templateLookupPort: InMemoryTemplateLookup
     private lateinit var events: ApplicationEventPublisher
     private lateinit var cut: RoomCreateService
 
     @BeforeEach
     fun setUp() {
-        roomRepo = InMemoryRoomRepository()
         playerRepo = InMemoryRoomPlayerRepository()
         leaderRepo = InMemoryRoomTeamLeaderRepository()
         memberRepo = InMemoryRoomTeamMemberRepository()
         bidRepo = InMemoryRoomBidRepository()
-        aggregateRepo = RoomAggregateRepositoryImpl(roomRepo, playerRepo, leaderRepo, memberRepo, bidRepo)
+        roomRepo = InMemoryRoomRepository(playerRepo, leaderRepo, memberRepo, bidRepo)
         templateLookupPort = InMemoryTemplateLookup()
         events = mockk(relaxed = true)
-        cut = RoomCreateServiceImpl(aggregateRepo, templateLookupPort, events)
+        cut = RoomCreateServiceImpl(roomRepo, templateLookupPort, events)
     }
 
     @Nested
@@ -187,7 +183,7 @@ class RoomCreateServiceTest {
         fun `포트에서 템플릿 없음 예외가 오면 방 도메인 예외로 번역한다`() {
             cut =
                 RoomCreateServiceImpl(
-                    aggregateRepo,
+                    roomRepo,
                     object : TemplateLookup {
                         override fun getTemplate(templateId: Long): TemplateSnapshot {
                             throw TemplateLookupException.NotFound(templateId)
@@ -205,7 +201,7 @@ class RoomCreateServiceTest {
         fun `포트에서 invalid 템플릿 예외가 오면 생성 불가 상태로 번역한다`() {
             cut =
                 RoomCreateServiceImpl(
-                    aggregateRepo,
+                    roomRepo,
                     object : TemplateLookup {
                         override fun getTemplate(templateId: Long): TemplateSnapshot {
                             throw TemplateLookupException.Invalid(templateId)
@@ -228,7 +224,7 @@ class RoomCreateServiceTest {
             addAuctionTemplate(templateId = 1L)
             cut =
                 RoomCreateServiceImpl(
-                    RoomAggregateRepositoryImpl(retryingRoomRepo, playerRepo, leaderRepo, memberRepo, bidRepo),
+                    retryingRoomRepo,
                     templateLookupPort,
                     events,
                 )
@@ -248,7 +244,7 @@ class RoomCreateServiceTest {
             addAuctionTemplate(templateId = 1L)
             cut =
                 RoomCreateServiceImpl(
-                    RoomAggregateRepositoryImpl(alwaysExistingCodeRoomRepository, playerRepo, leaderRepo, memberRepo, bidRepo),
+                    alwaysExistingCodeRoomRepository,
                     templateLookupPort,
                     events,
                 )
@@ -266,7 +262,7 @@ class RoomCreateServiceTest {
             addAuctionTemplate(templateId = 1L)
             cut =
                 RoomCreateServiceImpl(
-                    RoomAggregateRepositoryImpl(alwaysDuplicateRoomRepo, playerRepo, leaderRepo, memberRepo, bidRepo),
+                    alwaysDuplicateRoomRepo,
                     templateLookupPort,
                     events,
                 )
@@ -311,7 +307,7 @@ class RoomCreateServiceTest {
 
         override fun findByCode(code: String): Room? = delegate.findByCode(code)
 
-        override fun findById(roomId: Long): Room? = delegate.findById(roomId)
+        override fun findById(roomId: RoomId): Room? = delegate.findById(roomId)
     }
 
     private class AlwaysDuplicateRoomRepository : RoomRepository {
@@ -324,7 +320,7 @@ class RoomCreateServiceTest {
 
         override fun findByCode(code: String): Room? = null
 
-        override fun findById(roomId: Long): Room? = null
+        override fun findById(roomId: RoomId): Room? = null
     }
 
     private class AlwaysExistingCodeRoomRepository : RoomRepository {
@@ -350,6 +346,6 @@ class RoomCreateServiceTest {
             )
         }
 
-        override fun findById(roomId: Long): Room? = null
+        override fun findById(roomId: RoomId): Room? = null
     }
 }

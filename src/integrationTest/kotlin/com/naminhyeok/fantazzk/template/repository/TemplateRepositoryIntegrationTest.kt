@@ -6,11 +6,10 @@ import com.naminhyeok.fantazzk.template.DraftOrderStrategy
 import com.naminhyeok.fantazzk.template.TeamBuildingMode
 import com.naminhyeok.fantazzk.template.Template
 import com.naminhyeok.fantazzk.template.TemplateConfiguration
-import com.naminhyeok.fantazzk.template.TemplateIdentity
+import com.naminhyeok.fantazzk.template.TemplateId
 import com.naminhyeok.fantazzk.template.TemplatePlayer
 import com.naminhyeok.fantazzk.template.config.TemplateJdbcConfiguration
 import com.naminhyeok.fantazzk.template.configuration
-import com.naminhyeok.fantazzk.template.of
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
@@ -48,7 +47,7 @@ class TemplateRepositoryIntegrationTest(
 
         assertThat(saved.templateId).isGreaterThan(0)
 
-        val found = cut.findById(TemplateIdentity.of(saved.templateId))
+        val found = cut.findById(TemplateId(saved.templateId))
         assertThat(found).isNotNull
         assertThat(found!!.mode).isEqualTo(TeamBuildingMode.AUCTION)
         assertThat(found.budget).isEqualTo(300)
@@ -64,7 +63,7 @@ class TemplateRepositoryIntegrationTest(
                 ),
             )
 
-        val found = cut.findById(TemplateIdentity.of(saved.templateId))
+        val found = cut.findById(TemplateId(saved.templateId))
 
         assertThat(found).isNotNull
         assertThat(found!!.configuration)
@@ -89,6 +88,39 @@ class TemplateRepositoryIntegrationTest(
         val all = cut.findAll()
         assertThat(all).hasSizeGreaterThanOrEqualTo(2)
         assertThat(all.map { it.name }).contains("첫째", "둘째")
+    }
+
+    @Test
+    fun `전체 템플릿 목록 조회는 유효하지 않은 row를 만나면 즉시 실패한다`() {
+        cut.save(
+            Template.create(
+                name = "정상 템플릿",
+                configuration = TemplateConfiguration.Auction(teamCount = 2, teamSize = 2, budgetValue = 300),
+            ),
+        )
+        val invalidTemplateId =
+            jdbcTemplate.queryForObject(
+                """
+                insert into template (name, mode, team_count, team_size, budget, draft_order_strategy)
+                values (?, ?, ?, ?, ?, ?)
+                returning id
+                """.trimIndent(),
+                Long::class.java,
+                "유효하지 않은 템플릿",
+                "AUCTION",
+                2,
+                2,
+                null,
+                null,
+            )!!
+
+        try {
+            assertThatThrownBy { cut.findAll() }
+                .isInstanceOf(IllegalArgumentException::class.java)
+                .hasMessage("경매 템플릿에는 예산이 필요합니다")
+        } finally {
+            jdbcTemplate.update("delete from template where id = ?", invalidTemplateId)
+        }
     }
 
     @Test
@@ -131,8 +163,12 @@ class TemplateRepositoryIntegrationTest(
                 null,
             )!!
 
-        assertThatThrownBy { cut.findById(TemplateIdentity.of(templateId)) }
-            .isInstanceOf(IllegalArgumentException::class.java)
-            .hasMessage("경매 템플릿에는 예산이 필요합니다")
+        try {
+            assertThatThrownBy { cut.findById(TemplateId(templateId)) }
+                .isInstanceOf(IllegalArgumentException::class.java)
+                .hasMessage("경매 템플릿에는 예산이 필요합니다")
+        } finally {
+            jdbcTemplate.update("delete from template where id = ?", templateId)
+        }
     }
 }

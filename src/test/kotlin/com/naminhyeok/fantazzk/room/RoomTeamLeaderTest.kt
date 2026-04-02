@@ -118,44 +118,11 @@ class RoomTeamLeaderTest {
     }
 
     @Nested
-    inner class `모델 변환` {
+    inner class `aggregate 규칙 위임` {
         @Test
-        fun `RoomTeamLeaderModel에서 RoomTeamLeader를 복원할 수 있다`() {
-            val createdAt = Instant.parse("2025-02-01T00:00:00Z")
-            val updatedAt = Instant.parse("2025-02-02T00:00:00Z")
-            val model =
-                leaderModel(
-                    roomTeamLeaderId = 8L,
-                    roomId = 2L,
-                    teamLeaderId = "leader-8",
-                    nickname = "주장",
-                    remainingBudget = 90,
-                    createdAt = createdAt,
-                    updatedAt = updatedAt,
-                )
-
-            val leader = RoomTeamLeader.from(model)
-
-            assertThat(leader).isEqualTo(
+        fun `팀장은 aggregate에서 예산 규칙을 그대로 따른다`() {
+            val leader =
                 RoomTeamLeader(
-                    roomTeamLeaderId = 8L,
-                    roomId = 2L,
-                    teamLeaderId = "leader-8",
-                    nickname = "주장",
-                    remainingBudget = 90,
-                    createdAt = createdAt,
-                    updatedAt = updatedAt,
-                ),
-            )
-        }
-    }
-
-    @Nested
-    inner class `모델 확장` {
-        @Test
-        fun `RoomTeamLeaderModel 확장은 aggregate의 예산 규칙을 그대로 따른다`() {
-            val model =
-                leaderModel(
                     roomTeamLeaderId = 12L,
                     roomId = 2L,
                     teamLeaderId = "leader-12",
@@ -165,10 +132,10 @@ class RoomTeamLeaderTest {
                     updatedAt = Instant.parse("2025-02-04T00:00:00Z"),
                 )
 
-            assertThatCode { model.requireCanBid(60) }.doesNotThrowAnyException()
-            assertThatCode { model.validateBudget(100) }.doesNotThrowAnyException()
+            assertThatCode { leader.requireCanBid(60) }.doesNotThrowAnyException()
+            assertThatCode { leader.validateBudget(100) }.doesNotThrowAnyException()
 
-            val spent = model.spend(30)
+            val spent = leader.spend(30)
 
             assertThat(spent.remainingBudget).isEqualTo(70)
             assertThat(spent.teamLeaderId).isEqualTo("leader-12")
@@ -177,23 +144,4 @@ class RoomTeamLeaderTest {
 
     private fun leader(remainingBudget: Int?) =
         RoomTeamLeader(roomId = 1L, teamLeaderId = "leader-1", nickname = "팀장", remainingBudget = remainingBudget)
-
-    private fun leaderModel(
-        roomTeamLeaderId: Long,
-        roomId: Long,
-        teamLeaderId: String,
-        nickname: String,
-        remainingBudget: Int?,
-        createdAt: Instant,
-        updatedAt: Instant,
-    ): RoomTeamLeaderModel =
-        object : RoomTeamLeaderModel {
-            override val roomTeamLeaderId = roomTeamLeaderId
-            override val roomId = roomId
-            override val teamLeaderId = teamLeaderId
-            override val nickname = nickname
-            override val remainingBudget = remainingBudget
-            override val createdAt = createdAt
-            override val updatedAt = updatedAt
-        }
 }

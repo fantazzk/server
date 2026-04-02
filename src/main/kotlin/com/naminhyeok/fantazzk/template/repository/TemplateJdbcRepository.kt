@@ -2,7 +2,7 @@ package com.naminhyeok.fantazzk.template.repository
 
 import com.naminhyeok.fantazzk.template.Template
 import com.naminhyeok.fantazzk.template.TemplateConfiguration
-import com.naminhyeok.fantazzk.template.TemplateIdentity
+import com.naminhyeok.fantazzk.template.TemplateId
 import org.springframework.data.repository.CrudRepository
 
 interface TemplateJdbcCrudRepository : CrudRepository<TemplateEntity, Long>
@@ -27,10 +27,14 @@ class TemplateRepositoryImpl(
         return templateJdbcCrudRepository.save(entity).toDomain().restorePendingEvents(pendingEvents)
     }
 
-    override fun findById(identity: TemplateIdentity): Template? =
-        templateJdbcCrudRepository.findById(identity.templateId).orElse(null)?.toDomain()
+    override fun findById(templateId: TemplateId): Template? =
+        templateJdbcCrudRepository.findById(templateId.value).orElse(null)?.toDomain()
 
-    override fun findAll(): List<Template> = templateJdbcCrudRepository.findAll().map { it.toDomain() }
+    override fun findAll(): List<Template> =
+        templateJdbcCrudRepository
+            .findAll()
+            .sortedBy { it.id }
+            .map { it.toDomain() }
 
     private fun TemplateEntity.toDomain() =
         Template(

@@ -3,6 +3,7 @@ package com.naminhyeok.fantazzk.room.support
 import com.naminhyeok.fantazzk.room.PlayerStatus
 import com.naminhyeok.fantazzk.room.Room
 import com.naminhyeok.fantazzk.room.RoomBid
+import com.naminhyeok.fantazzk.room.RoomId
 import com.naminhyeok.fantazzk.room.RoomPlayer
 import com.naminhyeok.fantazzk.room.RoomTeamLeader
 import com.naminhyeok.fantazzk.room.RoomTeamMember
@@ -14,19 +15,56 @@ import com.naminhyeok.fantazzk.room.repository.RoomTeamMemberRepository
 import com.naminhyeok.fantazzk.template.spi.TemplateLookup
 import com.naminhyeok.fantazzk.template.spi.TemplateSnapshot
 
-class InMemoryRoomRepository : RoomRepository {
+class InMemoryRoomRepository(
+    private val roomPlayerRepository: RoomPlayerRepository? = null,
+    private val roomTeamLeaderRepository: RoomTeamLeaderRepository? = null,
+    private val roomTeamMemberRepository: RoomTeamMemberRepository? = null,
+    private val roomBidRepository: RoomBidRepository? = null,
+) : RoomRepository {
     private val store = mutableMapOf<Long, Room>()
     private var seq = 1L
 
     override fun save(room: Room): Room {
-        val saved = if (room.roomId == 0L) room.copy(roomId = seq++) else room
-        store[saved.roomId] = saved
-        return saved
+        val pendingEvents = room.pendingEvents()
+        val savedRoom = if (room.roomId == 0L) room.copy(roomId = seq++) else room
+        store[savedRoom.roomId] = savedRoom.copy(players = emptyList(), leaders = emptyList(), members = emptyList(), bids = emptyList())
+
+        val roomToPersist =
+            if (room.roomId == 0L && savedRoom.roomId != 0L) {
+                savedRoom.copy(
+                    players = room.players.map { it.copy(roomId = savedRoom.roomId) },
+                    leaders = room.leaders.map { it.copy(roomId = savedRoom.roomId) },
+                    members = room.members.map { it.copy(roomId = savedRoom.roomId) },
+                    bids = room.bids.map { it.copy(roomId = savedRoom.roomId) },
+                )
+            } else {
+                savedRoom
+            }
+
+        val savedPlayers = roomPlayerRepository?.saveAll(roomToPersist.players) ?: roomToPersist.players
+        val savedLeaders = roomToPersist.leaders.map { roomTeamLeaderRepository?.save(it) ?: it }
+        val savedMembers = roomToPersist.members.map { roomTeamMemberRepository?.save(it) ?: it }
+        val savedBids = roomToPersist.bids.map { roomBidRepository?.save(it) ?: it }
+
+        return roomToPersist.copy(
+            players = savedPlayers,
+            leaders = savedLeaders,
+            members = savedMembers,
+            bids = savedBids,
+        ).restorePendingEvents(pendingEvents)
     }
 
-    override fun findByCode(code: String): Room? = store.values.firstOrNull { it.code == code }
+    override fun findByCode(code: String): Room? = store.values.firstOrNull { it.code == code }?.toAggregate()
 
-    override fun findById(roomId: Long): Room? = store[roomId]
+    override fun findById(roomId: RoomId): Room? = store[roomId.value]?.toAggregate()
+
+    private fun Room.toAggregate(): Room =
+        copy(
+            players = roomPlayerRepository?.findByRoomId(roomId).orEmpty(),
+            leaders = roomTeamLeaderRepository?.findByRoomId(roomId).orEmpty(),
+            members = roomTeamMemberRepository?.findByRoomId(roomId).orEmpty(),
+            bids = currentAuctionRound?.let { round -> roomBidRepository?.findByRoomIdAndRound(roomId, round) }.orEmpty(),
+        )
 }
 
 class InMemoryRoomPlayerRepository : RoomPlayerRepository {
@@ -42,7 +80,10 @@ class InMemoryRoomPlayerRepository : RoomPlayerRepository {
 
     override fun saveAll(players: List<RoomPlayer>): List<RoomPlayer> {
         val saved = players.map { if (it.roomPlayerId == 0L) it.copy(roomPlayerId = seq++) else it }
-        store.addAll(saved)
+        saved.forEach { player ->
+            val idx = store.indexOfFirst { it.roomPlayerId == player.roomPlayerId }
+            if (idx >= 0) store[idx] = player else store.add(player)
+        }
         return saved
     }
 
