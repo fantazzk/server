@@ -435,5 +435,4 @@ class RoomTest {
         createdAt = createdAt,
         updatedAt = updatedAt,
     )
-
 }

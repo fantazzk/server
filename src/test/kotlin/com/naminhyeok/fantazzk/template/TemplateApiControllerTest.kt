@@ -3,8 +3,8 @@ package com.naminhyeok.fantazzk.template
 import com.naminhyeok.fantazzk.template.api.TemplateApiController
 import com.naminhyeok.fantazzk.template.api.TemplateExceptionHandler
 import com.naminhyeok.fantazzk.template.application.CreateTemplateCommand
-import com.naminhyeok.fantazzk.template.application.TemplateDetail
 import com.naminhyeok.fantazzk.template.application.TemplateCreateService
+import com.naminhyeok.fantazzk.template.application.TemplateDetail
 import com.naminhyeok.fantazzk.template.application.TemplateFinder
 import com.naminhyeok.fantazzk.template.exception.TemplateException
 import io.mockk.every
@@ -204,5 +204,4 @@ class TemplateApiControllerTest {
             createdAt = now,
             updatedAt = now,
         )
-
 }

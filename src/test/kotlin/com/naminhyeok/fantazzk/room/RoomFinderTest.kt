@@ -24,16 +24,16 @@ class RoomFinderTest {
 
         roomId =
             roomRepo.save(
-            Room(
-                code = "LOOK01",
-                hostId = "host",
-                status = RoomStatus.WAITING,
-                mode = TeamBuildingMode.AUCTION,
-                teamCount = 2,
-                teamSize = 2,
-                budget = 300,
-            ),
-        ).roomId
+                Room(
+                    code = "LOOK01",
+                    hostId = "host",
+                    status = RoomStatus.WAITING,
+                    mode = TeamBuildingMode.AUCTION,
+                    teamCount = 2,
+                    teamSize = 2,
+                    budget = 300,
+                ),
+            ).roomId
     }
 
     @Test

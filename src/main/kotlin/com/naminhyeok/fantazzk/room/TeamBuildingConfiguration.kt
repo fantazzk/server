@@ -39,6 +39,5 @@ sealed interface TeamBuildingConfiguration {
                             requireNotNull(room.draftOrderStrategy) { "드래프트 모드에서는 순서 전략이 존재해야 합니다" },
                     )
             }
-
     }
 }

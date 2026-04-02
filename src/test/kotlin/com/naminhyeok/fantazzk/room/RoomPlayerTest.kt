@@ -95,5 +95,4 @@ class RoomPlayerTest {
                 .hasMessageContaining("선수를 뒤로 보낼 수 없습니다")
         }
     }
-
 }

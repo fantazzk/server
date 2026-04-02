@@ -150,5 +150,4 @@ class RoomAcceptanceTest(
 
     private fun teamLeadersByNickname(room: JsonNode): Map<String, JsonNode> =
         teamLeaders(room).associateBy { it.path("nickname").asText() }
-
 }

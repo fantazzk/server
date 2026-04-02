@@ -5,8 +5,8 @@ import com.naminhyeok.fantazzk.template.application.TemplateCreateService
 import com.naminhyeok.fantazzk.template.application.TemplateFinder
 import com.naminhyeok.fantazzk.template.repository.TemplatePlayerRepository
 import com.naminhyeok.fantazzk.template.repository.TemplateRepository
-import com.naminhyeok.fantazzk.template.spi.TemplateLookupException
 import com.naminhyeok.fantazzk.template.spi.TemplateLookup
+import com.naminhyeok.fantazzk.template.spi.TemplateLookupException
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test

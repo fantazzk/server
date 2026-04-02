@@ -47,6 +47,5 @@ sealed interface RoomProgress {
                             )
                     }
             }
-
     }
 }
