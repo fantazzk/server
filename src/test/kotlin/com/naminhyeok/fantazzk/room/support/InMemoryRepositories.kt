@@ -161,7 +161,7 @@ class InMemoryRoomBidRepository : RoomBidRepository {
     ): RoomBid? = store.filter { it.roomId == roomId && it.round == round }.maxByOrNull { it.amount }
 }
 
-class InMemoryTemplateLookup : TemplateCatalog {
+class InMemoryTemplateCatalog : TemplateCatalog {
     private val templates = mutableMapOf<Long, TemplateBlueprint>()
 
     fun addTemplate(

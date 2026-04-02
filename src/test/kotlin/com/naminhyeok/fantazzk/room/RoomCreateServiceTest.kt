@@ -9,7 +9,7 @@ import com.naminhyeok.fantazzk.room.support.InMemoryRoomPlayerRepository
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomRepository
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomTeamLeaderRepository
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomTeamMemberRepository
-import com.naminhyeok.fantazzk.room.support.InMemoryTemplateLookup
+import com.naminhyeok.fantazzk.room.support.InMemoryTemplateCatalog
 import com.naminhyeok.fantazzk.template.TemplateBlueprint
 import com.naminhyeok.fantazzk.template.TemplateCatalog
 import com.naminhyeok.fantazzk.template.TemplateCatalogException
@@ -32,7 +32,7 @@ class RoomCreateServiceTest {
     private lateinit var leaderRepo: InMemoryRoomTeamLeaderRepository
     private lateinit var memberRepo: InMemoryRoomTeamMemberRepository
     private lateinit var bidRepo: InMemoryRoomBidRepository
-    private lateinit var templateLookupPort: InMemoryTemplateLookup
+    private lateinit var templateCatalog: InMemoryTemplateCatalog
     private lateinit var events: ApplicationEventPublisher
     private lateinit var cut: RoomCreateService
 
@@ -43,16 +43,16 @@ class RoomCreateServiceTest {
         memberRepo = InMemoryRoomTeamMemberRepository()
         bidRepo = InMemoryRoomBidRepository()
         roomRepo = InMemoryRoomRepository(playerRepo, leaderRepo, memberRepo, bidRepo)
-        templateLookupPort = InMemoryTemplateLookup()
+        templateCatalog = InMemoryTemplateCatalog()
         events = mockk(relaxed = true)
-        cut = RoomCreateServiceImpl(roomRepo, templateLookupPort, events)
+        cut = RoomCreateServiceImpl(roomRepo, templateCatalog, events)
     }
 
     @Nested
     inner class `모드별 필드 전파` {
         @Test
         fun `경매 템플릿으로 방을 생성하면 경매 필드만 채워진다`() {
-            templateLookupPort.addTemplate(
+            templateCatalog.addTemplate(
                 1L,
                 TemplateBlueprint(
                     templateId = 1L,
@@ -90,7 +90,7 @@ class RoomCreateServiceTest {
 
         @Test
         fun `드래프트 템플릿으로 방을 생성하면 드래프트 필드만 채워진다`() {
-            templateLookupPort.addTemplate(
+            templateCatalog.addTemplate(
                 2L,
                 TemplateBlueprint(
                     templateId = 2L,
@@ -149,7 +149,7 @@ class RoomCreateServiceTest {
 
         @Test
         fun `방 생성 시 템플릿 선수 목록이 표시 순서와 상태를 유지한 채 복사된다`() {
-            templateLookupPort.addTemplate(
+            templateCatalog.addTemplate(
                 1L,
                 TemplateBlueprint(
                     templateId = 1L,
@@ -228,7 +228,7 @@ class RoomCreateServiceTest {
             cut =
                 RoomCreateServiceImpl(
                     retryingRoomRepo,
-                    templateLookupPort,
+                    templateCatalog,
                     events,
                 )
 
@@ -248,7 +248,7 @@ class RoomCreateServiceTest {
             cut =
                 RoomCreateServiceImpl(
                     alwaysExistingCodeRoomRepository,
-                    templateLookupPort,
+                    templateCatalog,
                     events,
                 )
 
@@ -266,7 +266,7 @@ class RoomCreateServiceTest {
             cut =
                 RoomCreateServiceImpl(
                     alwaysDuplicateRoomRepo,
-                    templateLookupPort,
+                    templateCatalog,
                     events,
                 )
 
@@ -278,7 +278,7 @@ class RoomCreateServiceTest {
     }
 
     private fun addAuctionTemplate(templateId: Long) {
-        templateLookupPort.addTemplate(
+        templateCatalog.addTemplate(
             templateId,
             TemplateBlueprint(
                 templateId = templateId,

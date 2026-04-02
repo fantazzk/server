@@ -53,6 +53,18 @@ class SpringModulithMigrationTest {
             Class.forName("com.naminhyeok.fantazzk.template.spi.TemplateLookup")
         }.isInstanceOf(ClassNotFoundException::class.java)
 
+        assertThatThrownBy {
+            Class.forName("com.naminhyeok.fantazzk.template.spi.TemplateSpiPackageInfo")
+        }.isInstanceOf(ClassNotFoundException::class.java)
+
+        assertThatThrownBy {
+            Class.forName("com.naminhyeok.fantazzk.template.infrastructure.spi.TemplateLookupAdapter")
+        }.isInstanceOf(ClassNotFoundException::class.java)
+
+        assertThatThrownBy {
+            Class.forName("com.naminhyeok.fantazzk.template.infrastructure.spi.TemplateSpiConfiguration")
+        }.isInstanceOf(ClassNotFoundException::class.java)
+
         assertThatCode {
             Class.forName("com.naminhyeok.fantazzk.template.TemplateCatalog")
         }.doesNotThrowAnyException()

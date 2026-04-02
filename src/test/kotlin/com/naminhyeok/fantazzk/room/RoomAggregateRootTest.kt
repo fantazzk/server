@@ -1,32 +1,27 @@
 package com.naminhyeok.fantazzk.room
 
-import com.naminhyeok.fantazzk.template.TemplateBlueprint
-import com.naminhyeok.fantazzk.template.TemplateDraftOrderStrategy
-import com.naminhyeok.fantazzk.template.TemplateMode
-import com.naminhyeok.fantazzk.template.TemplatePlayerBlueprint
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class RoomAggregateRootTest {
     @Test
-    fun `템플릿 설계 정보로 방 애그리거트 루트를 만들면 방 선수 호스트를 함께 초기화한다`() {
+    fun `방 생성 시드 정보로 방 애그리거트 루트를 만들면 방 선수 호스트를 함께 초기화한다`() {
         val room =
             Room.createFromTemplate(
                 code = "ROOM01",
                 hostId = "host-1",
                 hostNickname = "호스트",
                 template =
-                    TemplateBlueprint(
-                        templateId = 1L,
-                        mode = TemplateMode.AUCTION,
+                    RoomTemplateSeed(
+                        mode = RoomTemplateSeed.Mode.AUCTION,
                         teamCount = 2,
                         teamSize = 3,
                         budget = 300,
                         draftOrderStrategy = null,
                         players =
                             listOf(
-                                TemplatePlayerBlueprint(name = "선수B", displayOrder = 1),
-                                TemplatePlayerBlueprint(name = "선수A", displayOrder = 0),
+                                RoomTemplatePlayerSeed(name = "선수B", displayOrder = 1),
+                                RoomTemplatePlayerSeed(name = "선수A", displayOrder = 0),
                             ),
                     ),
             )
@@ -182,21 +177,20 @@ class RoomAggregateRootTest {
     }
 
     @Test
-    fun `드래프트 템플릿 설계 정보는 방 전략 열거형으로 변환된다`() {
+    fun `드래프트 방 생성 시드 정보는 방 전략 열거형으로 변환된다`() {
         val room =
             Room.createFromTemplate(
                 code = "ROOM02",
                 hostId = "host-1",
                 hostNickname = "호스트",
                 template =
-                    TemplateBlueprint(
-                        templateId = 2L,
-                        mode = TemplateMode.DRAFT,
+                    RoomTemplateSeed(
+                        mode = RoomTemplateSeed.Mode.DRAFT,
                         teamCount = 2,
                         teamSize = 2,
                         budget = null,
-                        draftOrderStrategy = TemplateDraftOrderStrategy.SNAKE,
-                        players = listOf(TemplatePlayerBlueprint(name = "선수A", displayOrder = 0)),
+                        draftOrderStrategy = RoomTemplateSeed.DraftOrderStrategy.SNAKE,
+                        players = listOf(RoomTemplatePlayerSeed(name = "선수A", displayOrder = 0)),
                     ),
             )
 

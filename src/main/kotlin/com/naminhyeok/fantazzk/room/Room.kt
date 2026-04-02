@@ -1,8 +1,6 @@
 package com.naminhyeok.fantazzk.room
 
 import com.naminhyeok.fantazzk.room.exception.RoomException
-import com.naminhyeok.fantazzk.template.TemplateBlueprint
-import com.naminhyeok.fantazzk.template.TemplateMode
 import org.jmolecules.ddd.types.AggregateRoot
 import org.springframework.data.annotation.Transient
 import java.time.Instant
@@ -316,11 +314,11 @@ data class Room(
             code: String,
             hostId: String,
             hostNickname: String,
-            template: TemplateBlueprint,
+            template: RoomTemplateSeed,
         ): Room {
             val room =
                 when (template.mode) {
-                    TemplateMode.AUCTION ->
+                    RoomTemplateSeed.Mode.AUCTION ->
                         createAuction(
                             code = code,
                             hostId = hostId,
@@ -329,7 +327,7 @@ data class Room(
                             budget = requireNotNull(template.budget) { "경매 템플릿에는 예산이 필요합니다" },
                         )
 
-                    TemplateMode.DRAFT ->
+                    RoomTemplateSeed.Mode.DRAFT ->
                         createDraft(
                             code = code,
                             hostId = hostId,

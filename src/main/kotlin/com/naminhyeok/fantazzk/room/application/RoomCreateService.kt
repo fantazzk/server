@@ -1,10 +1,15 @@
 package com.naminhyeok.fantazzk.room.application
 
 import com.naminhyeok.fantazzk.room.Room
+import com.naminhyeok.fantazzk.room.RoomTemplatePlayerSeed
+import com.naminhyeok.fantazzk.room.RoomTemplateSeed
 import com.naminhyeok.fantazzk.room.exception.RoomTemplateNotFoundException
 import com.naminhyeok.fantazzk.room.repository.RoomRepository
+import com.naminhyeok.fantazzk.template.TemplateBlueprint
 import com.naminhyeok.fantazzk.template.TemplateCatalog
 import com.naminhyeok.fantazzk.template.TemplateCatalogException
+import com.naminhyeok.fantazzk.template.TemplateDraftOrderStrategy
+import com.naminhyeok.fantazzk.template.TemplateMode
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.stereotype.Service
@@ -32,7 +37,7 @@ internal class RoomCreateServiceImpl(
     ): Room {
         val template =
             try {
-                templateCatalog.getTemplateBlueprint(templateId)
+                templateCatalog.getTemplateBlueprint(templateId).toRoomTemplateSeed()
             } catch (_: TemplateCatalogException.NotFound) {
                 throw RoomTemplateNotFoundException()
             } catch (_: TemplateCatalogException.Invalid) {
@@ -72,3 +77,28 @@ internal class RoomCreateServiceImpl(
         private const val MAX_CODE_GENERATION_ATTEMPTS = 5
     }
 }
+
+private fun TemplateBlueprint.toRoomTemplateSeed(): RoomTemplateSeed =
+    RoomTemplateSeed(
+        mode =
+            when (mode) {
+                TemplateMode.AUCTION -> RoomTemplateSeed.Mode.AUCTION
+                TemplateMode.DRAFT -> RoomTemplateSeed.Mode.DRAFT
+            },
+        teamCount = teamCount,
+        teamSize = teamSize,
+        budget = budget,
+        draftOrderStrategy =
+            when (draftOrderStrategy) {
+                null -> null
+                TemplateDraftOrderStrategy.FIXED -> RoomTemplateSeed.DraftOrderStrategy.FIXED
+                TemplateDraftOrderStrategy.SNAKE -> RoomTemplateSeed.DraftOrderStrategy.SNAKE
+            },
+        players =
+            players.map {
+                RoomTemplatePlayerSeed(
+                    name = it.name,
+                    displayOrder = it.displayOrder,
+                )
+            },
+    )
