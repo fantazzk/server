@@ -2,7 +2,7 @@ package com.naminhyeok.fantazzk.template.query
 
 import com.naminhyeok.fantazzk.template.DraftOrderStrategy
 import com.naminhyeok.fantazzk.template.TeamBuildingMode
-import com.naminhyeok.fantazzk.template.TemplateIdentity
+import com.naminhyeok.fantazzk.template.TemplateId
 import com.naminhyeok.fantazzk.template.exception.TemplateException
 import org.springframework.stereotype.Service
 
@@ -23,7 +23,7 @@ data class TemplatePlayerView(
 )
 
 interface TemplateQueryService {
-    fun getTemplate(identity: TemplateIdentity): TemplateView
+    fun getTemplate(templateId: TemplateId): TemplateView
 
     fun listTemplates(): List<TemplateView>
 }
@@ -34,9 +34,9 @@ internal class TemplateQueryServiceImpl(
     private val templateViewProjectionRepository: TemplateViewProjectionRepository,
     private val templatePlayerViewProjectionRepository: TemplatePlayerViewProjectionRepository,
 ) : TemplateQueryService {
-    override fun getTemplate(identity: TemplateIdentity): TemplateView {
-        val template = templateViewProjectionRepository.findById(identity.templateId) ?: throw TemplateException.TemplateNotFoundException()
-        val players = templatePlayerViewProjectionRepository.findByTemplateIdOrderByDisplayOrder(identity.templateId)
+    override fun getTemplate(templateId: TemplateId): TemplateView {
+        val template = templateViewProjectionRepository.findById(templateId.value) ?: throw TemplateException.TemplateNotFoundException()
+        val players = templatePlayerViewProjectionRepository.findByTemplateIdOrderByDisplayOrder(templateId.value)
 
         return TemplateView(
             id = template.templateId,

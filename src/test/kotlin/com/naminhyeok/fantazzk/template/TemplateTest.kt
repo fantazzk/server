@@ -91,7 +91,7 @@ class TemplateTest {
     @Nested
     inner class `파생 값` {
         @Test
-        fun `TemplateModel configuration은 경매 템플릿을 강타입 설정으로 복원한다`() {
+        fun `경매 템플릿 configuration은 강타입 설정을 복원한다`() {
             val template =
                 Template.create(
                     name = "경매전",
@@ -103,19 +103,20 @@ class TemplateTest {
         }
 
         @Test
-        fun `TemplateModel configuration은 드래프트 템플릿을 강타입 설정으로 복원한다`() {
+        fun `드래프트 템플릿 configuration은 강타입 설정을 복원한다`() {
             val template =
-                object : TemplateModel {
-                    override val templateId = 5L
-                    override val name = "드래프트전"
-                    override val mode = TeamBuildingMode.DRAFT
-                    override val teamCount = 2
-                    override val teamSize = 2
-                    override val budget: Int? = null
-                    override val draftOrderStrategy = DraftOrderStrategy.SNAKE
-                    override val createdAt = Instant.parse("2025-01-01T00:00:00Z")
-                    override val updatedAt = Instant.parse("2025-01-02T00:00:00Z")
-                }
+                Template(
+                    templateId = 5L,
+                    name = "드래프트전",
+                    templateConfiguration =
+                        TemplateConfiguration.Draft(
+                            teamCount = 2,
+                            teamSize = 2,
+                            strategy = DraftOrderStrategy.SNAKE,
+                        ),
+                    createdAt = Instant.parse("2025-01-01T00:00:00Z"),
+                    updatedAt = Instant.parse("2025-01-02T00:00:00Z"),
+                )
 
             assertThat(template.configuration)
                 .isEqualTo(TemplateConfiguration.Draft(teamCount = 2, teamSize = 2, strategy = DraftOrderStrategy.SNAKE))
@@ -168,10 +169,15 @@ class TemplateTest {
     @Nested
     inner class Identity {
         @Test
-        fun `TemplateIdentity를 생성할 수 있다`() {
-            val identity = TemplateIdentity.of(42L)
+        fun `Template getId는 TemplateId를 반환한다`() {
+            val template =
+                Template(
+                    templateId = 42L,
+                    name = "테스트",
+                    templateConfiguration = TemplateConfiguration.Auction(teamCount = 2, teamSize = 2, budgetValue = 300),
+                )
 
-            assertThat(identity.templateId).isEqualTo(42L)
+            assertThat(template.getId()).isEqualTo(TemplateId(42L))
         }
     }
 }

@@ -56,23 +56,18 @@ data class Template(
             name: String,
             configuration: TemplateConfiguration,
         ): Template = Template(name = name, templateConfiguration = configuration)
-
-        fun from(model: TemplateModel): Template =
-            Template(
-                templateId = model.templateId,
-                name = model.name,
-                templateConfiguration =
-                    TemplateConfiguration.from(
-                        model.mode,
-                        model.teamCount,
-                        model.teamSize,
-                        model.budget,
-                        model.draftOrderStrategy,
-                    ),
-                createdAt = model.createdAt,
-                updatedAt = model.updatedAt,
-            )
     }
 
     private fun registerEvent(event: Any): Template = apply { pendingEvents += event }
 }
+
+val Template.configuration: TemplateConfiguration
+    get() = TemplateConfiguration.from(mode, teamCount, teamSize, budget, draftOrderStrategy)
+
+fun Template.requireValidRoster(players: List<TemplatePlayer>) {
+    val orderedPlayerNames = players.sortedBy { it.displayOrder }.map { it.name }
+    TemplateRoster.exactlyRequired(orderedPlayerNames, configuration.requiredPlayerCount)
+}
+
+val Template.picksPerTeam: Int
+    get() = teamSize - 1

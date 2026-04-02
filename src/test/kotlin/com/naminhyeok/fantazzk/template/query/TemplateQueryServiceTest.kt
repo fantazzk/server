@@ -1,9 +1,8 @@
 package com.naminhyeok.fantazzk.template.query
 
 import com.naminhyeok.fantazzk.template.TeamBuildingMode
-import com.naminhyeok.fantazzk.template.TemplateIdentity
+import com.naminhyeok.fantazzk.template.TemplateId
 import com.naminhyeok.fantazzk.template.exception.TemplateException
-import com.naminhyeok.fantazzk.template.of
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
@@ -37,7 +36,7 @@ class TemplateQueryServiceTest {
         templatePlayerViewRepo.save(TemplatePlayerViewEntity(templateId = 1L, name = "선수1", displayOrder = 0))
         templatePlayerViewRepo.save(TemplatePlayerViewEntity(templateId = 1L, name = "선수2", displayOrder = 1))
 
-        val view = cut.getTemplate(TemplateIdentity.of(1L))
+        val view = cut.getTemplate(TemplateId(1L))
 
         assertThat(view.id).isEqualTo(1L)
         assertThat(view.name).isEqualTo("테스트")
@@ -67,7 +66,7 @@ class TemplateQueryServiceTest {
 
     @Test
     fun `존재하지 않는 템플릿은 예외를 던진다`() {
-        assertThatThrownBy { cut.getTemplate(TemplateIdentity.of(999L)) }
+        assertThatThrownBy { cut.getTemplate(TemplateId(999L)) }
             .isInstanceOf(TemplateException.TemplateNotFoundException::class.java)
     }
 

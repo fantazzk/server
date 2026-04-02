@@ -6,11 +6,10 @@ import com.naminhyeok.fantazzk.template.DraftOrderStrategy
 import com.naminhyeok.fantazzk.template.TeamBuildingMode
 import com.naminhyeok.fantazzk.template.Template
 import com.naminhyeok.fantazzk.template.TemplateConfiguration
-import com.naminhyeok.fantazzk.template.TemplateIdentity
+import com.naminhyeok.fantazzk.template.TemplateId
 import com.naminhyeok.fantazzk.template.TemplatePlayer
 import com.naminhyeok.fantazzk.template.config.TemplateJdbcConfiguration
 import com.naminhyeok.fantazzk.template.configuration
-import com.naminhyeok.fantazzk.template.of
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
@@ -48,7 +47,7 @@ class TemplateRepositoryIntegrationTest(
 
         assertThat(saved.templateId).isGreaterThan(0)
 
-        val found = cut.findById(TemplateIdentity.of(saved.templateId))
+        val found = cut.findById(TemplateId(saved.templateId))
         assertThat(found).isNotNull
         assertThat(found!!.mode).isEqualTo(TeamBuildingMode.AUCTION)
         assertThat(found.budget).isEqualTo(300)
@@ -64,7 +63,7 @@ class TemplateRepositoryIntegrationTest(
                 ),
             )
 
-        val found = cut.findById(TemplateIdentity.of(saved.templateId))
+        val found = cut.findById(TemplateId(saved.templateId))
 
         assertThat(found).isNotNull
         assertThat(found!!.configuration)
@@ -131,7 +130,7 @@ class TemplateRepositoryIntegrationTest(
                 null,
             )!!
 
-        assertThatThrownBy { cut.findById(TemplateIdentity.of(templateId)) }
+        assertThatThrownBy { cut.findById(TemplateId(templateId)) }
             .isInstanceOf(IllegalArgumentException::class.java)
             .hasMessage("경매 템플릿에는 예산이 필요합니다")
     }

@@ -32,19 +32,19 @@ class TemplateLookupServiceTest {
                 ),
             )
 
-        val found = cut.get(TemplateIdentity.of(saved.templateId))
+        val found = cut.get(TemplateId(saved.templateId))
         assertThat(found.name).isEqualTo("테스트")
     }
 
     @Test
     fun `존재하지 않는 ID로 조회하면 예외가 발생한다`() {
-        assertThatThrownBy { cut.get(TemplateIdentity.of(999L)) }
+        assertThatThrownBy { cut.get(TemplateId(999L)) }
             .isInstanceOf(TemplateException.TemplateNotFoundException::class.java)
     }
 
     @Test
     fun `존재하지 않는 ID를 find로 조회하면 null을 반환한다`() {
-        val found = cut.find(TemplateIdentity.of(999L))
+        val found = cut.find(TemplateId(999L))
 
         assertThat(found).isNull()
     }
@@ -59,7 +59,7 @@ class TemplateLookupServiceTest {
                 ),
             )
 
-        val found = cut.find(TemplateIdentity.of(saved.templateId))
+        val found = cut.find(TemplateId(saved.templateId))
 
         assertThat(found).isNotNull
         assertThat(found!!.templateId).isEqualTo(saved.templateId)
@@ -121,7 +121,7 @@ class TemplateLookupServiceTest {
             ),
         )
 
-        val detail = cut.getDetail(TemplateIdentity.of(template.templateId))
+        val detail = cut.getDetail(TemplateId(template.templateId))
 
         assertThat(detail.template.templateId).isEqualTo(template.templateId)
         assertThat(detail.players.map { it.name }).containsExactly("선수1", "선수2")
@@ -142,7 +142,7 @@ class TemplateLookupServiceTest {
             ),
         )
 
-        assertThatThrownBy { cut.getDetail(TemplateIdentity.of(template.templateId)) }
+        assertThatThrownBy { cut.getDetail(TemplateId(template.templateId)) }
             .isInstanceOf(TemplateException.TemplateInvalidException::class.java)
     }
 }

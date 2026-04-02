@@ -1,7 +1,7 @@
 package com.naminhyeok.fantazzk.template.application
 
 import com.naminhyeok.fantazzk.template.Template
-import com.naminhyeok.fantazzk.template.TemplateIdentity
+import com.naminhyeok.fantazzk.template.TemplateId
 import com.naminhyeok.fantazzk.template.TemplatePlayer
 import com.naminhyeok.fantazzk.template.exception.TemplateException
 import com.naminhyeok.fantazzk.template.repository.TemplatePlayerRepository
@@ -15,15 +15,15 @@ data class TemplateDetail(
 )
 
 interface TemplateLookupService {
-    fun get(identity: TemplateIdentity): Template
+    fun get(templateId: TemplateId): Template
 
-    fun find(identity: TemplateIdentity): Template?
+    fun find(templateId: TemplateId): Template?
 
     fun getAll(): List<Template>
 
     fun getPlayers(templateId: Long): List<TemplatePlayer>
 
-    fun getDetail(identity: TemplateIdentity): TemplateDetail
+    fun getDetail(templateId: TemplateId): TemplateDetail
 }
 
 @org.jmolecules.ddd.annotation.Service
@@ -32,21 +32,21 @@ internal class TemplateLookupServiceImpl(
     private val templateRepository: TemplateRepository,
     private val templatePlayerRepository: TemplatePlayerRepository,
 ) : TemplateLookupService {
-    override fun get(identity: TemplateIdentity): Template =
+    override fun get(templateId: TemplateId): Template =
         try {
-            find(identity) ?: throw TemplateException.TemplateNotFoundException()
+            find(templateId) ?: throw TemplateException.TemplateNotFoundException()
         } catch (_: IllegalArgumentException) {
             throw TemplateException.TemplateInvalidException()
         }
 
-    override fun find(identity: TemplateIdentity): Template? = templateRepository.findById(identity)
+    override fun find(templateId: TemplateId): Template? = templateRepository.findById(templateId)
 
     override fun getAll(): List<Template> = templateRepository.findAll()
 
     override fun getPlayers(templateId: Long): List<TemplatePlayer> = templatePlayerRepository.findByTemplateId(templateId)
 
-    override fun getDetail(identity: TemplateIdentity): TemplateDetail {
-        val template = get(identity)
+    override fun getDetail(templateId: TemplateId): TemplateDetail {
+        val template = get(templateId)
         val players = getPlayers(template.templateId)
         try {
             template.requireValidRoster(players)

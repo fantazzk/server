@@ -1,7 +1,7 @@
 package com.naminhyeok.fantazzk.template.support
 
 import com.naminhyeok.fantazzk.template.Template
-import com.naminhyeok.fantazzk.template.TemplateIdentity
+import com.naminhyeok.fantazzk.template.TemplateId
 import com.naminhyeok.fantazzk.template.TemplatePlayer
 import com.naminhyeok.fantazzk.template.repository.TemplatePlayerRepository
 import com.naminhyeok.fantazzk.template.repository.TemplateRepository
@@ -16,7 +16,7 @@ class InMemoryTemplateRepository : TemplateRepository {
         return saved
     }
 
-    override fun findById(identity: TemplateIdentity): Template? = store[identity.templateId]
+    override fun findById(templateId: TemplateId): Template? = store[templateId.value]
 
     override fun findAll(): List<Template> = store.values.toList()
 }

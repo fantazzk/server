@@ -10,6 +10,7 @@ import com.naminhyeok.fantazzk.template.query.TemplateQueryService
 import com.naminhyeok.fantazzk.template.query.TemplateView
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
@@ -154,7 +155,7 @@ class TemplateApiControllerTest {
                         updatedAt = now,
                     ),
                 )
-            every { templateQueryService.getTemplate(any()) } returns templateView(template, players)
+            every { templateQueryService.getTemplate(TemplateId(1L)) } returns templateView(template, players)
 
             mockMvc.get("/api/v1/templates/1")
                 .andExpect {
@@ -163,11 +164,13 @@ class TemplateApiControllerTest {
                     jsonPath("$.success.name") { value("경매전") }
                     jsonPath("$.success.players[0].name") { value("선수1") }
                 }
+
+            verify(exactly = 1) { templateQueryService.getTemplate(TemplateId(1L)) }
         }
 
         @Test
         fun `존재하지 않는 ID로 조회하면 404를 반환한다`() {
-            every { templateQueryService.getTemplate(any()) } throws TemplateException.TemplateNotFoundException()
+            every { templateQueryService.getTemplate(TemplateId(999L)) } throws TemplateException.TemplateNotFoundException()
 
             mockMvc.get("/api/v1/templates/999")
                 .andExpect {
@@ -177,6 +180,8 @@ class TemplateApiControllerTest {
                     jsonPath("$.error.errorCode") { value("TEMPLATE_NOT_FOUND") }
                     jsonPath("$.error.reason") { value("템플릿을 찾을 수 없습니다") }
                 }
+
+            verify(exactly = 1) { templateQueryService.getTemplate(TemplateId(999L)) }
         }
 
         @Test

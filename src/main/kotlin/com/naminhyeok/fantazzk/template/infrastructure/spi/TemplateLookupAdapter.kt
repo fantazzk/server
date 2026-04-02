@@ -1,8 +1,7 @@
 package com.naminhyeok.fantazzk.template.infrastructure.spi
 
-import com.naminhyeok.fantazzk.template.TemplateIdentity
+import com.naminhyeok.fantazzk.template.TemplateId
 import com.naminhyeok.fantazzk.template.application.TemplateLookupService
-import com.naminhyeok.fantazzk.template.of
 import com.naminhyeok.fantazzk.template.requireValidRoster
 import com.naminhyeok.fantazzk.template.spi.TemplateDraftOrderStrategy
 import com.naminhyeok.fantazzk.template.spi.TemplateLookup
@@ -17,7 +16,7 @@ internal class TemplateLookupAdapter(
     override fun getTemplate(templateId: Long): TemplateSnapshot {
         try {
             val template =
-                templateLookupService.find(TemplateIdentity.of(templateId))
+                templateLookupService.find(TemplateId(templateId))
                     ?: throw TemplateLookupException.NotFound(templateId)
             val players = templateLookupService.getPlayers(template.templateId).sortedBy { it.displayOrder }
             template.requireValidRoster(players)
