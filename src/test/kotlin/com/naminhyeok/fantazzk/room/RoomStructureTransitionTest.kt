@@ -1,5 +1,6 @@
 package com.naminhyeok.fantazzk.room
 
+import com.naminhyeok.fantazzk.room.api.RoomApiController
 import com.naminhyeok.fantazzk.room.application.RoomLookupService
 import com.naminhyeok.fantazzk.room.repository.RoomBidEntity
 import com.naminhyeok.fantazzk.room.repository.RoomBidRepository
@@ -11,10 +12,24 @@ import com.naminhyeok.fantazzk.room.repository.RoomTeamLeaderEntity
 import com.naminhyeok.fantazzk.room.repository.RoomTeamLeaderRepository
 import com.naminhyeok.fantazzk.room.repository.RoomTeamMemberEntity
 import com.naminhyeok.fantazzk.room.repository.RoomTeamMemberRepository
+import com.naminhyeok.fantazzk.room.query.RoomQueryService
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class RoomStructureTransitionTest {
+    @Test
+    fun `room 리포지토리는 aggregate 와 RoomId 를 기준으로 동작한다`() {
+        assertThat(
+            RoomRepository::class.java.getMethod("findById", RoomId::class.java).returnType,
+        ).isEqualTo(Room::class.java)
+    }
+
+    @Test
+    fun `room API 는 더 이상 query service 에 의존하지 않는다`() {
+        val parameterTypes = RoomApiController::class.java.declaredConstructors.single().parameterTypes.toList()
+        assertThat(parameterTypes).doesNotContain(RoomQueryService::class.java)
+    }
+
     @Test
     fun `room 리포지토리와 조회 서비스는 concrete domain 타입을 사용한다`() {
         assertThat(
