@@ -3,8 +3,8 @@ package com.naminhyeok.fantazzk.room.application
 import com.naminhyeok.fantazzk.room.Room
 import com.naminhyeok.fantazzk.room.exception.RoomTemplateNotFoundException
 import com.naminhyeok.fantazzk.room.repository.RoomRepository
-import com.naminhyeok.fantazzk.template.spi.TemplateLookup
-import com.naminhyeok.fantazzk.template.spi.TemplateLookupException
+import com.naminhyeok.fantazzk.template.TemplateCatalog
+import com.naminhyeok.fantazzk.template.TemplateCatalogException
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.stereotype.Service
@@ -22,7 +22,7 @@ interface RoomCreateService {
 @Service
 internal class RoomCreateServiceImpl(
     private val roomRepository: RoomRepository,
-    private val templateLookup: TemplateLookup,
+    private val templateCatalog: TemplateCatalog,
     private val events: ApplicationEventPublisher,
 ) : RoomCreateService {
     @Transactional
@@ -32,10 +32,10 @@ internal class RoomCreateServiceImpl(
     ): Room {
         val template =
             try {
-                templateLookup.getTemplate(templateId)
-            } catch (_: TemplateLookupException.NotFound) {
+                templateCatalog.getTemplateBlueprint(templateId)
+            } catch (_: TemplateCatalogException.NotFound) {
                 throw RoomTemplateNotFoundException()
-            } catch (_: TemplateLookupException.Invalid) {
+            } catch (_: TemplateCatalogException.Invalid) {
                 throw IllegalStateException("유효하지 않은 템플릿입니다")
             }
         repeat(MAX_CODE_GENERATION_ATTEMPTS) {

@@ -3,10 +3,10 @@ package com.naminhyeok.fantazzk.room
 import com.naminhyeok.fantazzk.room.application.RoomCreateService
 import com.naminhyeok.fantazzk.room.application.RoomFinder
 import com.naminhyeok.fantazzk.room.application.RoomStartService
-import com.naminhyeok.fantazzk.template.spi.TemplateLookup
-import com.naminhyeok.fantazzk.template.spi.TemplateMode
-import com.naminhyeok.fantazzk.template.spi.TemplatePlayerSnapshot
-import com.naminhyeok.fantazzk.template.spi.TemplateSnapshot
+import com.naminhyeok.fantazzk.template.TemplateBlueprint
+import com.naminhyeok.fantazzk.template.TemplateCatalog
+import com.naminhyeok.fantazzk.template.TemplateMode
+import com.naminhyeok.fantazzk.template.TemplatePlayerBlueprint
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
 import org.assertj.core.api.Assertions.assertThat
@@ -21,7 +21,7 @@ import org.springframework.modulith.test.PublishedEvents
 )
 class RoomModuleIntegrationTest {
     @MockkBean(relaxed = true)
-    lateinit var templateLookup: TemplateLookup
+    lateinit var templateCatalog: TemplateCatalog
 
     @Autowired
     lateinit var roomCreateService: RoomCreateService
@@ -32,16 +32,21 @@ class RoomModuleIntegrationTest {
     @Autowired
     lateinit var roomFinder: RoomFinder
 
+    @Autowired
+    lateinit var templateCatalogBean: TemplateCatalog
+
     @Test
-    fun `room module boots with direct dependencies`() {
+    fun `room module boots with template root contract`() {
+        assertThat(templateCatalogBean).isNotNull()
         assertThat(roomCreateService).isNotNull()
         assertThat(roomStartService).isNotNull()
     }
 
     @Test
     fun `room create publishes RoomCreated`(publishedEvents: PublishedEvents) {
-        every { templateLookup.getTemplate(1L) } returns
-            TemplateSnapshot(
+        every { templateCatalog.getTemplateBlueprint(1L) } returns
+            TemplateBlueprint(
+                templateId = 1L,
                 mode = TemplateMode.AUCTION,
                 teamCount = 2,
                 teamSize = 2,
@@ -49,8 +54,8 @@ class RoomModuleIntegrationTest {
                 draftOrderStrategy = null,
                 players =
                     listOf(
-                        TemplatePlayerSnapshot(name = "선수1", displayOrder = 0),
-                        TemplatePlayerSnapshot(name = "선수2", displayOrder = 1),
+                        TemplatePlayerBlueprint(name = "선수1", displayOrder = 0),
+                        TemplatePlayerBlueprint(name = "선수2", displayOrder = 1),
                     ),
             )
 
@@ -62,8 +67,9 @@ class RoomModuleIntegrationTest {
 
     @Test
     fun `room create 후 aggregate finder 로 즉시 조회할 수 있다`() {
-        every { templateLookup.getTemplate(1L) } returns
-            TemplateSnapshot(
+        every { templateCatalog.getTemplateBlueprint(1L) } returns
+            TemplateBlueprint(
+                templateId = 1L,
                 mode = TemplateMode.AUCTION,
                 teamCount = 2,
                 teamSize = 2,
@@ -71,8 +77,8 @@ class RoomModuleIntegrationTest {
                 draftOrderStrategy = null,
                 players =
                     listOf(
-                        TemplatePlayerSnapshot(name = "선수1", displayOrder = 0),
-                        TemplatePlayerSnapshot(name = "선수2", displayOrder = 1),
+                        TemplatePlayerBlueprint(name = "선수1", displayOrder = 0),
+                        TemplatePlayerBlueprint(name = "선수2", displayOrder = 1),
                     ),
             )
 

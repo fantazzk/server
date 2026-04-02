@@ -6,8 +6,6 @@ import com.naminhyeok.fantazzk.template.application.TemplateFinder
 import com.naminhyeok.fantazzk.template.exception.TemplateException
 import com.naminhyeok.fantazzk.template.repository.TemplatePlayerRepository
 import com.naminhyeok.fantazzk.template.repository.TemplateRepository
-import com.naminhyeok.fantazzk.template.spi.TemplateLookup
-import com.naminhyeok.fantazzk.template.spi.TemplateLookupException
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
@@ -26,7 +24,7 @@ class TemplateModuleIntegrationTest {
     lateinit var templateCreateService: TemplateCreateService
 
     @Autowired
-    lateinit var templateLookup: TemplateLookup
+    lateinit var templateCatalog: TemplateCatalog
 
     @Autowired
     lateinit var templateFinder: TemplateFinder
@@ -43,7 +41,7 @@ class TemplateModuleIntegrationTest {
     @Test
     fun `template module boots in standalone mode`() {
         assertThat(templateCreateService).isNotNull()
-        assertThat(templateLookup).isNotNull()
+        assertThat(templateCatalog).isNotNull()
     }
 
     @Test
@@ -145,7 +143,7 @@ class TemplateModuleIntegrationTest {
     }
 
     @Test
-    fun `template lookup 은 aggregate 기반 상세 조회를 snapshot 으로 변환한다`() {
+    fun `template catalog 는 aggregate 기반 상세 조회를 blueprint 로 변환한다`() {
         val template =
             templateRepository.save(
                 Template.create(
@@ -162,23 +160,23 @@ class TemplateModuleIntegrationTest {
             ),
         )
 
-        val snapshot = templateLookup.getTemplate(template.templateId)
+        val blueprint = templateCatalog.getTemplateBlueprint(template.templateId)
 
-        assertThat(snapshot.mode.name).isEqualTo("DRAFT")
-        assertThat(snapshot.teamCount).isEqualTo(2)
-        assertThat(snapshot.teamSize).isEqualTo(3)
-        assertThat(snapshot.draftOrderStrategy?.name).isEqualTo("FIXED")
-        assertThat(snapshot.players.map { it.name }).containsExactly("선수1", "선수2", "선수3", "선수4")
+        assertThat(blueprint.mode).isEqualTo(TemplateMode.DRAFT)
+        assertThat(blueprint.teamCount).isEqualTo(2)
+        assertThat(blueprint.teamSize).isEqualTo(3)
+        assertThat(blueprint.draftOrderStrategy).isEqualTo(TemplateDraftOrderStrategy.FIXED)
+        assertThat(blueprint.players.map { it.name }).containsExactly("선수1", "선수2", "선수3", "선수4")
     }
 
     @Test
-    fun `template lookup 은 존재하지 않는 템플릿을 not found 로 변환한다`() {
-        assertThatThrownBy { templateLookup.getTemplate(999_999L) }
-            .isInstanceOf(TemplateLookupException.NotFound::class.java)
+    fun `template catalog 는 존재하지 않는 템플릿을 not found 로 변환한다`() {
+        assertThatThrownBy { templateCatalog.getTemplateBlueprint(999_999L) }
+            .isInstanceOf(TemplateCatalogException.NotFound::class.java)
     }
 
     @Test
-    fun `template lookup 은 유효하지 않은 roster 를 invalid 로 변환한다`() {
+    fun `template catalog 는 유효하지 않은 roster 를 invalid 로 변환한다`() {
         val templateId =
             jdbcTemplate.queryForObject(
                 """
@@ -201,7 +199,7 @@ class TemplateModuleIntegrationTest {
             ),
         )
 
-        assertThatThrownBy { templateLookup.getTemplate(templateId) }
-            .isInstanceOf(TemplateLookupException.Invalid::class.java)
+        assertThatThrownBy { templateCatalog.getTemplateBlueprint(templateId) }
+            .isInstanceOf(TemplateCatalogException.Invalid::class.java)
     }
 }

@@ -48,9 +48,13 @@ class SpringModulithMigrationTest {
     }
 
     @Test
-    fun `template 모듈은 명시적인 spi named interface 를 유지한다`() {
+    fun `template SPI 패키지는 제거되고 루트 계약만 남는다`() {
+        assertThatThrownBy {
+            Class.forName("com.naminhyeok.fantazzk.template.spi.TemplateLookup")
+        }.isInstanceOf(ClassNotFoundException::class.java)
+
         assertThatCode {
-            Class.forName("com.naminhyeok.fantazzk.template.spi.TemplateSpiPackageInfo")
+            Class.forName("com.naminhyeok.fantazzk.template.TemplateCatalog")
         }.doesNotThrowAnyException()
     }
 

@@ -10,12 +10,12 @@ import com.naminhyeok.fantazzk.room.support.InMemoryRoomRepository
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomTeamLeaderRepository
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomTeamMemberRepository
 import com.naminhyeok.fantazzk.room.support.InMemoryTemplateLookup
-import com.naminhyeok.fantazzk.template.spi.TemplateDraftOrderStrategy
-import com.naminhyeok.fantazzk.template.spi.TemplateLookup
-import com.naminhyeok.fantazzk.template.spi.TemplateLookupException
-import com.naminhyeok.fantazzk.template.spi.TemplateMode
-import com.naminhyeok.fantazzk.template.spi.TemplatePlayerSnapshot
-import com.naminhyeok.fantazzk.template.spi.TemplateSnapshot
+import com.naminhyeok.fantazzk.template.TemplateBlueprint
+import com.naminhyeok.fantazzk.template.TemplateCatalog
+import com.naminhyeok.fantazzk.template.TemplateCatalogException
+import com.naminhyeok.fantazzk.template.TemplateDraftOrderStrategy
+import com.naminhyeok.fantazzk.template.TemplateMode
+import com.naminhyeok.fantazzk.template.TemplatePlayerBlueprint
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -54,13 +54,14 @@ class RoomCreateServiceTest {
         fun `경매 템플릿으로 방을 생성하면 경매 필드만 채워진다`() {
             templateLookupPort.addTemplate(
                 1L,
-                TemplateSnapshot(
+                TemplateBlueprint(
+                    templateId = 1L,
                     mode = TemplateMode.AUCTION,
                     teamCount = 2,
                     teamSize = 2,
                     budget = 300,
                     draftOrderStrategy = null,
-                    players = listOf(TemplatePlayerSnapshot("선수1", 0), TemplatePlayerSnapshot("선수2", 1)),
+                    players = listOf(TemplatePlayerBlueprint("선수1", 0), TemplatePlayerBlueprint("선수2", 1)),
                 ),
             )
 
@@ -91,13 +92,14 @@ class RoomCreateServiceTest {
         fun `드래프트 템플릿으로 방을 생성하면 드래프트 필드만 채워진다`() {
             templateLookupPort.addTemplate(
                 2L,
-                TemplateSnapshot(
+                TemplateBlueprint(
+                    templateId = 2L,
                     mode = TemplateMode.DRAFT,
                     teamCount = 2,
                     teamSize = 2,
                     budget = null,
                     draftOrderStrategy = TemplateDraftOrderStrategy.SNAKE,
-                    players = listOf(TemplatePlayerSnapshot("선수1", 0), TemplatePlayerSnapshot("선수2", 1)),
+                    players = listOf(TemplatePlayerBlueprint("선수1", 0), TemplatePlayerBlueprint("선수2", 1)),
                 ),
             )
 
@@ -149,7 +151,8 @@ class RoomCreateServiceTest {
         fun `방 생성 시 템플릿 선수 목록이 표시 순서와 상태를 유지한 채 복사된다`() {
             templateLookupPort.addTemplate(
                 1L,
-                TemplateSnapshot(
+                TemplateBlueprint(
+                    templateId = 1L,
                     mode = TemplateMode.AUCTION,
                     teamCount = 2,
                     teamSize = 2,
@@ -157,9 +160,9 @@ class RoomCreateServiceTest {
                     draftOrderStrategy = null,
                     players =
                         listOf(
-                            TemplatePlayerSnapshot("선수A", 2),
-                            TemplatePlayerSnapshot("선수B", 0),
-                            TemplatePlayerSnapshot("선수C", 1),
+                            TemplatePlayerBlueprint("선수A", 2),
+                            TemplatePlayerBlueprint("선수B", 0),
+                            TemplatePlayerBlueprint("선수C", 1),
                         ),
                 ),
             )
@@ -184,9 +187,9 @@ class RoomCreateServiceTest {
             cut =
                 RoomCreateServiceImpl(
                     roomRepo,
-                    object : TemplateLookup {
-                        override fun getTemplate(templateId: Long): TemplateSnapshot {
-                            throw TemplateLookupException.NotFound(templateId)
+                    object : TemplateCatalog {
+                        override fun getTemplateBlueprint(templateId: Long): TemplateBlueprint {
+                            throw TemplateCatalogException.NotFound(templateId)
                         }
                     },
                     events,
@@ -202,9 +205,9 @@ class RoomCreateServiceTest {
             cut =
                 RoomCreateServiceImpl(
                     roomRepo,
-                    object : TemplateLookup {
-                        override fun getTemplate(templateId: Long): TemplateSnapshot {
-                            throw TemplateLookupException.Invalid(templateId)
+                    object : TemplateCatalog {
+                        override fun getTemplateBlueprint(templateId: Long): TemplateBlueprint {
+                            throw TemplateCatalogException.Invalid(templateId)
                         }
                     },
                     events,
@@ -277,7 +280,8 @@ class RoomCreateServiceTest {
     private fun addAuctionTemplate(templateId: Long) {
         templateLookupPort.addTemplate(
             templateId,
-            TemplateSnapshot(
+            TemplateBlueprint(
+                templateId = templateId,
                 mode = TemplateMode.AUCTION,
                 teamCount = 2,
                 teamSize = 2,

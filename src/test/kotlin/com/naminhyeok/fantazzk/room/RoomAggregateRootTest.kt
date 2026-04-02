@@ -1,9 +1,9 @@
 package com.naminhyeok.fantazzk.room
 
-import com.naminhyeok.fantazzk.template.spi.TemplateDraftOrderStrategy
-import com.naminhyeok.fantazzk.template.spi.TemplateMode
-import com.naminhyeok.fantazzk.template.spi.TemplatePlayerSnapshot
-import com.naminhyeok.fantazzk.template.spi.TemplateSnapshot
+import com.naminhyeok.fantazzk.template.TemplateBlueprint
+import com.naminhyeok.fantazzk.template.TemplateDraftOrderStrategy
+import com.naminhyeok.fantazzk.template.TemplateMode
+import com.naminhyeok.fantazzk.template.TemplatePlayerBlueprint
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -16,7 +16,8 @@ class RoomAggregateRootTest {
                 hostId = "host-1",
                 hostNickname = "호스트",
                 template =
-                    TemplateSnapshot(
+                    TemplateBlueprint(
+                        templateId = 1L,
                         mode = TemplateMode.AUCTION,
                         teamCount = 2,
                         teamSize = 3,
@@ -24,8 +25,8 @@ class RoomAggregateRootTest {
                         draftOrderStrategy = null,
                         players =
                             listOf(
-                                TemplatePlayerSnapshot(name = "선수B", displayOrder = 1),
-                                TemplatePlayerSnapshot(name = "선수A", displayOrder = 0),
+                                TemplatePlayerBlueprint(name = "선수B", displayOrder = 1),
+                                TemplatePlayerBlueprint(name = "선수A", displayOrder = 0),
                             ),
                     ),
             )
@@ -188,13 +189,14 @@ class RoomAggregateRootTest {
                 hostId = "host-1",
                 hostNickname = "호스트",
                 template =
-                    TemplateSnapshot(
+                    TemplateBlueprint(
+                        templateId = 2L,
                         mode = TemplateMode.DRAFT,
                         teamCount = 2,
                         teamSize = 2,
                         budget = null,
                         draftOrderStrategy = TemplateDraftOrderStrategy.SNAKE,
-                        players = listOf(TemplatePlayerSnapshot(name = "선수A", displayOrder = 0)),
+                        players = listOf(TemplatePlayerBlueprint(name = "선수A", displayOrder = 0)),
                     ),
             )
 

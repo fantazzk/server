@@ -1,8 +1,8 @@
 package com.naminhyeok.fantazzk.room
 
 import com.naminhyeok.fantazzk.room.exception.RoomException
-import com.naminhyeok.fantazzk.template.spi.TemplateMode
-import com.naminhyeok.fantazzk.template.spi.TemplateSnapshot
+import com.naminhyeok.fantazzk.template.TemplateBlueprint
+import com.naminhyeok.fantazzk.template.TemplateMode
 import org.jmolecules.ddd.types.AggregateRoot
 import org.springframework.data.annotation.Transient
 import java.time.Instant
@@ -316,7 +316,7 @@ data class Room(
             code: String,
             hostId: String,
             hostNickname: String,
-            template: TemplateSnapshot,
+            template: TemplateBlueprint,
         ): Room {
             val room =
                 when (template.mode) {

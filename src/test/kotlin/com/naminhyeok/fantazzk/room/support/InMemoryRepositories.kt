@@ -12,8 +12,9 @@ import com.naminhyeok.fantazzk.room.repository.RoomPlayerRepository
 import com.naminhyeok.fantazzk.room.repository.RoomRepository
 import com.naminhyeok.fantazzk.room.repository.RoomTeamLeaderRepository
 import com.naminhyeok.fantazzk.room.repository.RoomTeamMemberRepository
-import com.naminhyeok.fantazzk.template.spi.TemplateLookup
-import com.naminhyeok.fantazzk.template.spi.TemplateSnapshot
+import com.naminhyeok.fantazzk.template.TemplateBlueprint
+import com.naminhyeok.fantazzk.template.TemplateCatalog
+import com.naminhyeok.fantazzk.template.TemplateCatalogException
 
 class InMemoryRoomRepository(
     private val roomPlayerRepository: RoomPlayerRepository? = null,
@@ -160,16 +161,16 @@ class InMemoryRoomBidRepository : RoomBidRepository {
     ): RoomBid? = store.filter { it.roomId == roomId && it.round == round }.maxByOrNull { it.amount }
 }
 
-class InMemoryTemplateLookup : TemplateLookup {
-    private val templates = mutableMapOf<Long, TemplateSnapshot>()
+class InMemoryTemplateLookup : TemplateCatalog {
+    private val templates = mutableMapOf<Long, TemplateBlueprint>()
 
     fun addTemplate(
         templateId: Long,
-        snapshot: TemplateSnapshot,
+        snapshot: TemplateBlueprint,
     ) {
         templates[templateId] = snapshot
     }
 
-    override fun getTemplate(templateId: Long): TemplateSnapshot =
-        templates[templateId] ?: throw com.naminhyeok.fantazzk.template.spi.TemplateLookupException.NotFound(templateId)
+    override fun getTemplateBlueprint(templateId: Long): TemplateBlueprint =
+        templates[templateId] ?: throw TemplateCatalogException.NotFound(templateId)
 }
