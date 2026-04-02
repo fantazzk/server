@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test
 
 class RoomAggregateRootTest {
     @Test
-    fun `템플릿 스냅샷으로 Room aggregate root를 만들면 방 선수 호스트를 함께 초기화한다`() {
+    fun `템플릿 설계 정보로 방 애그리거트 루트를 만들면 방 선수 호스트를 함께 초기화한다`() {
         val room =
             Room.createFromTemplate(
                 code = "ROOM01",
@@ -42,7 +42,7 @@ class RoomAggregateRootTest {
     }
 
     @Test
-    fun `룸 애그리거트 루트가 방 시작을 처리하며 RoomStarted 이벤트를 만든다`() {
+    fun `방 애그리거트 루트가 방 시작을 처리하며 방 시작 이벤트를 만든다`() {
         val room =
             Room.createAuction(
                 code = "START1",
@@ -74,7 +74,7 @@ class RoomAggregateRootTest {
     }
 
     @Test
-    fun `룸 애그리거트 루트가 경매 정산을 처리하며 선수 배정과 AuctionSettled 이벤트를 만든다`() {
+    fun `방 애그리거트 루트가 경매 정산을 처리하며 선수 배정과 경매 정산 이벤트를 만든다`() {
         val room =
             Room.createAuction(
                 code = "AUC01",
@@ -142,7 +142,7 @@ class RoomAggregateRootTest {
     }
 
     @Test
-    fun `룸 애그리거트 루트가 마지막 드래프트 픽을 처리하면 RoomCompleted까지 만든다`() {
+    fun `방 애그리거트 루트가 마지막 드래프트 지명을 처리하면 방 완료 이벤트까지 만든다`() {
         val room =
             Room.createDraft(
                 code = "DRF01",
@@ -182,7 +182,7 @@ class RoomAggregateRootTest {
     }
 
     @Test
-    fun `드래프트 템플릿 스냅샷은 room 전략 enum으로 변환된다`() {
+    fun `드래프트 템플릿 설계 정보는 방 전략 열거형으로 변환된다`() {
         val room =
             Room.createFromTemplate(
                 code = "ROOM02",

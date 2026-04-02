@@ -39,7 +39,7 @@ class TemplateModuleIntegrationTest {
     lateinit var jdbcTemplate: JdbcTemplate
 
     @Test
-    fun `template 모듈은 루트 계약과 함께 단독 부팅된다`() {
+    fun `템플릿 모듈은 루트 계약과 함께 단독 부팅된다`() {
         assertThat(templateCreateService).isNotNull()
         assertThat(templateCatalog).isNotNull()
     }

@@ -11,14 +11,14 @@ import kotlin.io.path.readLines
 
 class SpringModulithMigrationTest {
     @Test
-    fun `루트 애플리케이션 엔트리포인트는 최상위 패키지에 위치한다`() {
+    fun `루트 애플리케이션 진입점은 최상위 패키지에 위치한다`() {
         val applicationClass = Class.forName("com.naminhyeok.fantazzk.FantazzkApplication")
 
         assertThat(applicationClass.isAnnotationPresent(SpringBootApplication::class.java)).isTrue()
     }
 
     @Test
-    fun `레거시 room 과 template 독립 애플리케이션은 제거되었다`() {
+    fun `레거시 방 과 템플릿 독립 애플리케이션은 제거되었다`() {
         assertThatThrownBy {
             Class.forName("com.naminhyeok.fantazzk.bootstrap.room.RoomApplication")
         }.isInstanceOf(ClassNotFoundException::class.java)
@@ -29,7 +29,7 @@ class SpringModulithMigrationTest {
     }
 
     @Test
-    fun `모듈 내부 구현은 더 이상 api 나 query named interface 를 노출하지 않는다`() {
+    fun `모듈 내부 구현은 더 이상 응용 프로그래밍 접점 이나 조회용 이름 있는 인터페이스 를 노출하지 않는다`() {
         assertThatThrownBy {
             Class.forName("com.naminhyeok.fantazzk.room.api.RoomApiPackageInfo")
         }.isInstanceOf(ClassNotFoundException::class.java)
@@ -48,7 +48,7 @@ class SpringModulithMigrationTest {
     }
 
     @Test
-    fun `template SPI 패키지는 제거되고 루트 계약만 남는다`() {
+    fun `템플릿 서비스 제공 인터페이스 패키지는 제거되고 루트 계약만 남는다`() {
         assertThatThrownBy {
             Class.forName("com.naminhyeok.fantazzk.template.spi.TemplateLookup")
         }.isInstanceOf(ClassNotFoundException::class.java)
@@ -59,7 +59,7 @@ class SpringModulithMigrationTest {
     }
 
     @Test
-    fun `dead room projection Liquibase 스키마와 cleanup 자산은 제거되었다`() {
+    fun `사용하지 않는 방 투영용 변경 이력 스키마와 정리 자산은 제거되었다`() {
         val changelogRoot = Path.of("src/main/resources/db/changelog/team-building")
         val masterChangelog = changelogRoot.resolve("db.changelog-master.yaml").readLines()
 
@@ -74,7 +74,7 @@ class SpringModulithMigrationTest {
     }
 
     @Test
-    fun `dead template projection Liquibase 스키마와 cleanup 자산은 제거되었다`() {
+    fun `사용하지 않는 템플릿 투영용 변경 이력 스키마와 정리 자산은 제거되었다`() {
         val changelogRoot = Path.of("src/main/resources/db/changelog/team-building")
         val masterChangelog = changelogRoot.resolve("db.changelog-master.yaml").readLines()
 

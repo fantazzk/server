@@ -201,7 +201,7 @@ class RoomCreateServiceTest {
         }
 
         @Test
-        fun `포트에서 invalid 템플릿 예외가 오면 생성 불가 상태로 번역한다`() {
+        fun `포트에서 유효하지 않은 템플릿 예외가 오면 생성 불가 상태로 번역한다`() {
             cut =
                 RoomCreateServiceImpl(
                     roomRepo,
