@@ -1,6 +1,6 @@
 package com.naminhyeok.fantazzk.room.application
 
-import com.naminhyeok.fantazzk.room.RoomTeamLeaderModel
+import com.naminhyeok.fantazzk.room.RoomTeamLeader
 import com.naminhyeok.fantazzk.room.exception.RoomException
 import com.naminhyeok.fantazzk.room.repository.RoomAggregateRepository
 import org.springframework.context.ApplicationEventPublisher
@@ -11,9 +11,10 @@ interface RoomJoinService {
     fun join(
         code: String,
         nickname: String,
-    ): RoomTeamLeaderModel
+    ): RoomTeamLeader
 }
 
+@org.jmolecules.ddd.annotation.Service
 @Service
 internal class RoomJoinServiceImpl(
     private val roomAggregateRepository: RoomAggregateRepository,
@@ -23,7 +24,7 @@ internal class RoomJoinServiceImpl(
     override fun join(
         code: String,
         nickname: String,
-    ): RoomTeamLeaderModel {
+    ): RoomTeamLeader {
         val room = roomAggregateRepository.findByCode(code) ?: throw RoomException.RoomNotFoundException()
         val savedRoom = roomAggregateRepository.save(room.join(nickname))
         val leader = savedRoom.leaders.last()

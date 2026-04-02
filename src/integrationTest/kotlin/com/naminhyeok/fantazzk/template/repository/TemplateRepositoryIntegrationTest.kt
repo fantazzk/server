@@ -26,7 +26,7 @@ import org.springframework.test.context.TestConstructor
     RootCombinedJdbcConfiguration::class,
     RoomJdbcConfiguration::class,
     TemplateJdbcConfiguration::class,
-    TemplateRepositoryAutoConfiguration::class,
+    TemplateRepositoryConfiguration::class,
 )
 @DataJdbcTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)

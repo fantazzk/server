@@ -77,14 +77,14 @@ class RoomCreateServiceTest {
             assertThat(room.draftOrderStrategy).isNull()
             assertThat(room.currentAuctionRound).isNull()
             assertThat(room.currentTurnIndex).isNull()
-            assertThat(Room.from(room).configuration).isEqualTo(
+            assertThat(room.configuration).isEqualTo(
                 TeamBuildingConfiguration.Auction(
                     teamCount = 2,
                     teamSize = 2,
                     budget = 300,
                 ),
             )
-            assertThat(Room.from(room).progress).isEqualTo(RoomProgress.Waiting)
+            assertThat(room.progress).isEqualTo(RoomProgress.Waiting)
             assertThat(room.teamCount).isEqualTo(2)
             assertThat(room.teamSize).isEqualTo(2)
             assertThat(leader.teamLeaderId).isEqualTo(room.hostId)
@@ -113,14 +113,14 @@ class RoomCreateServiceTest {
             assertThat(room.draftOrderStrategy).isEqualTo(DraftOrderStrategy.SNAKE)
             assertThat(room.currentAuctionRound).isNull()
             assertThat(room.currentTurnIndex).isNull()
-            assertThat(Room.from(room).configuration).isEqualTo(
+            assertThat(room.configuration).isEqualTo(
                 TeamBuildingConfiguration.Draft(
                     teamCount = 2,
                     teamSize = 2,
                     strategy = DraftOrderStrategy.SNAKE,
                 ),
             )
-            assertThat(Room.from(room).progress).isEqualTo(RoomProgress.Waiting)
+            assertThat(room.progress).isEqualTo(RoomProgress.Waiting)
             assertThat(leader.remainingBudget).isNull()
         }
     }
@@ -298,7 +298,7 @@ class RoomCreateServiceTest {
         val attemptedCodes = mutableListOf<String>()
         var collidingCode: String? = null
 
-        override fun save(room: Room): RoomModel {
+        override fun save(room: Room): Room {
             saveAttempts += 1
             attemptedCodes += room.code
             if (saveAttempts == 1) {
@@ -309,34 +309,34 @@ class RoomCreateServiceTest {
             return delegate.save(room)
         }
 
-        override fun findByCode(code: String): RoomModel? = delegate.findByCode(code)
+        override fun findByCode(code: String): Room? = delegate.findByCode(code)
 
-        override fun findById(roomId: Long): RoomModel? = delegate.findById(roomId)
+        override fun findById(roomId: Long): Room? = delegate.findById(roomId)
     }
 
     private class AlwaysDuplicateRoomRepository : RoomRepository {
         var saveAttempts: Int = 0
 
-        override fun save(room: Room): RoomModel {
+        override fun save(room: Room): Room {
             saveAttempts += 1
             throw DuplicateKeyException("duplicate room code")
         }
 
-        override fun findByCode(code: String): RoomModel? = null
+        override fun findByCode(code: String): Room? = null
 
-        override fun findById(roomId: Long): RoomModel? = null
+        override fun findById(roomId: Long): Room? = null
     }
 
     private class AlwaysExistingCodeRoomRepository : RoomRepository {
         var findByCodeAttempts: Int = 0
         var saveAttempts: Int = 0
 
-        override fun save(room: Room): RoomModel {
+        override fun save(room: Room): Room {
             saveAttempts += 1
             return room.copy(roomId = 1L)
         }
 
-        override fun findByCode(code: String): RoomModel {
+        override fun findByCode(code: String): Room {
             findByCodeAttempts += 1
             return Room(
                 roomId = 1L,
@@ -350,6 +350,6 @@ class RoomCreateServiceTest {
             )
         }
 
-        override fun findById(roomId: Long): RoomModel? = null
+        override fun findById(roomId: Long): Room? = null
     }
 }

@@ -1,7 +1,6 @@
 package com.naminhyeok.fantazzk.room.repository
 
 import com.naminhyeok.fantazzk.room.RoomBid
-import com.naminhyeok.fantazzk.room.RoomBidModel
 import org.springframework.data.repository.CrudRepository
 
 interface RoomBidJdbcCrudRepository : CrudRepository<RoomBidEntity, Long> {
@@ -19,7 +18,7 @@ interface RoomBidJdbcCrudRepository : CrudRepository<RoomBidEntity, Long> {
 class RoomBidRepositoryImpl(
     private val roomBidJdbcCrudRepository: RoomBidJdbcCrudRepository,
 ) : RoomBidRepository {
-    override fun save(bid: RoomBid): RoomBidModel {
+    override fun save(bid: RoomBid): RoomBid {
         val entity =
             RoomBidEntity(
                 roomId = bid.roomId,
@@ -30,20 +29,20 @@ class RoomBidRepositoryImpl(
                 updatedAt = bid.updatedAt,
             )
         if (bid.roomBidId != 0L) entity.id = bid.roomBidId
-        return roomBidJdbcCrudRepository.save(entity).toModel()
+        return roomBidJdbcCrudRepository.save(entity).toDomain()
     }
 
     override fun findByRoomIdAndRound(
         roomId: Long,
         round: Int,
-    ): List<RoomBidModel> = roomBidJdbcCrudRepository.findByRoomIdAndRound(roomId, round).map { it.toModel() }
+    ): List<RoomBid> = roomBidJdbcCrudRepository.findByRoomIdAndRound(roomId, round).map { it.toDomain() }
 
     override fun findHighestByRoomIdAndRound(
         roomId: Long,
         round: Int,
-    ): RoomBidModel? = roomBidJdbcCrudRepository.findFirstByRoomIdAndRoundOrderByAmountDesc(roomId, round)?.toModel()
+    ): RoomBid? = roomBidJdbcCrudRepository.findFirstByRoomIdAndRoundOrderByAmountDesc(roomId, round)?.toDomain()
 
-    private fun RoomBidEntity.toModel() =
+    private fun RoomBidEntity.toDomain() =
         RoomBid(
             roomBidId = id,
             roomId = roomId,

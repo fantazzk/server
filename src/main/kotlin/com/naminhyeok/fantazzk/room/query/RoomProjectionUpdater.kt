@@ -5,16 +5,12 @@ import com.naminhyeok.fantazzk.room.RoomCompleted
 import com.naminhyeok.fantazzk.room.RoomCreated
 import com.naminhyeok.fantazzk.room.RoomJoined
 import com.naminhyeok.fantazzk.room.RoomStarted
-import com.naminhyeok.fantazzk.room.repository.RoomRepository
-import com.naminhyeok.fantazzk.room.repository.RoomTeamLeaderRepository
 import org.springframework.modulith.events.ApplicationModuleListener
 import org.springframework.stereotype.Component
 
 @Component
 internal class RoomProjectionUpdater(
     private val roomProjectionWriter: RoomProjectionWriter,
-    private val roomRepository: RoomRepository,
-    private val roomTeamLeaderRepository: RoomTeamLeaderRepository,
 ) {
     @ApplicationModuleListener
     fun on(event: RoomCreated) {
@@ -42,22 +38,26 @@ internal class RoomProjectionUpdater(
     }
 
     @ApplicationModuleListener
-    fun on(
-        @Suppress("UNUSED_PARAMETER") event: RoomStarted,
-    ) {
-        refreshRoomStatus(event.roomId)
+    fun on(event: RoomStarted) {
+        roomProjectionWriter.upsertRoom(
+            roomId = event.roomId,
+            code = event.code,
+            status = event.status,
+        )
     }
 
     @ApplicationModuleListener
-    fun on(
-        @Suppress("UNUSED_PARAMETER") event: RoomCompleted,
-    ) {
-        refreshRoomStatus(event.roomId)
+    fun on(event: RoomCompleted) {
+        roomProjectionWriter.upsertRoom(
+            roomId = event.roomId,
+            code = event.code,
+            status = event.status,
+        )
     }
 
     @ApplicationModuleListener
     fun on(event: AuctionSettled) {
-        roomTeamLeaderRepository.findByRoomId(event.roomId).forEach { leader ->
+        event.leaders.forEach { leader ->
             roomProjectionWriter.upsertLeader(
                 roomId = event.roomId,
                 teamLeaderId = leader.teamLeaderId,
@@ -65,14 +65,5 @@ internal class RoomProjectionUpdater(
                 remainingBudget = leader.remainingBudget,
             )
         }
-    }
-
-    private fun refreshRoomStatus(roomId: Long) {
-        val room = roomRepository.findById(roomId) ?: return
-        roomProjectionWriter.upsertRoom(
-            roomId = room.roomId,
-            code = room.code,
-            status = room.status,
-        )
     }
 }

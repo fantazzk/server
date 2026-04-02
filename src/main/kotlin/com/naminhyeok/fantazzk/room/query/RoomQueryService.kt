@@ -21,6 +21,7 @@ interface RoomQueryService {
     fun getRoom(code: String): RoomView
 }
 
+@org.jmolecules.ddd.annotation.Service
 @Service
 internal class RoomQueryServiceImpl(
     private val roomViewProjectionRepository: RoomViewProjectionRepository,

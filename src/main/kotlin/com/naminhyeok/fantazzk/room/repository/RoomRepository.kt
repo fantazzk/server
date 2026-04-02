@@ -1,12 +1,13 @@
 package com.naminhyeok.fantazzk.room.repository
 
 import com.naminhyeok.fantazzk.room.Room
-import com.naminhyeok.fantazzk.room.RoomModel
+import org.jmolecules.ddd.annotation.Repository
 
+@Repository
 interface RoomRepository {
-    fun save(room: Room): RoomModel
+    fun save(room: Room): Room
 
-    fun findByCode(code: String): RoomModel?
+    fun findByCode(code: String): Room?
 
-    fun findById(roomId: Long): RoomModel?
+    fun findById(roomId: Long): Room?
 }

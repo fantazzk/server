@@ -1,18 +1,19 @@
 package com.naminhyeok.fantazzk.room.repository
 
 import com.naminhyeok.fantazzk.room.RoomBid
-import com.naminhyeok.fantazzk.room.RoomBidModel
+import org.jmolecules.ddd.annotation.Repository
 
+@Repository
 interface RoomBidRepository {
-    fun save(bid: RoomBid): RoomBidModel
+    fun save(bid: RoomBid): RoomBid
 
     fun findByRoomIdAndRound(
         roomId: Long,
         round: Int,
-    ): List<RoomBidModel>
+    ): List<RoomBid>
 
     fun findHighestByRoomIdAndRound(
         roomId: Long,
         round: Int,
-    ): RoomBidModel?
+    ): RoomBid?
 }

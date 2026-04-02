@@ -2,12 +2,13 @@ package com.naminhyeok.fantazzk.template.repository
 
 import com.naminhyeok.fantazzk.template.Template
 import com.naminhyeok.fantazzk.template.TemplateIdentity
-import com.naminhyeok.fantazzk.template.TemplateModel
+import org.jmolecules.ddd.annotation.Repository
 
+@Repository
 interface TemplateRepository {
-    fun save(template: Template): TemplateModel
+    fun save(template: Template): Template
 
-    fun findById(identity: TemplateIdentity): TemplateModel?
+    fun findById(identity: TemplateIdentity): Template?
 
-    fun findAll(): List<TemplateModel>
+    fun findAll(): List<Template>
 }

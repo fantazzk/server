@@ -11,8 +11,8 @@ import org.springframework.security.core.userdetails.User
 import org.springframework.security.provisioning.InMemoryUserDetailsManager
 import org.springframework.security.web.SecurityFilterChain
 
-@Configuration("com.naminhyeok.fantazzk.SwaggerSecurityAutoConfiguration")
-class SwaggerSecurityAutoConfiguration {
+@Configuration
+class SwaggerSecurityConfiguration {
     @Bean
     @ConditionalOnProperty("swagger.username")
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain =

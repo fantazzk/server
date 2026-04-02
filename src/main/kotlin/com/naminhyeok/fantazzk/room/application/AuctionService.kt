@@ -2,7 +2,7 @@ package com.naminhyeok.fantazzk.room.application
 
 import com.naminhyeok.fantazzk.room.AuctionOutcome
 import com.naminhyeok.fantazzk.room.AuctionSettled
-import com.naminhyeok.fantazzk.room.RoomBidModel
+import com.naminhyeok.fantazzk.room.RoomBid
 import com.naminhyeok.fantazzk.room.exception.RoomException
 import com.naminhyeok.fantazzk.room.repository.RoomAggregateRepository
 import org.springframework.context.ApplicationEventPublisher
@@ -19,11 +19,12 @@ interface AuctionService {
         code: String,
         teamLeaderId: String,
         amount: Int,
-    ): RoomBidModel
+    ): RoomBid
 
     fun settle(code: String): AuctionSettleResult
 }
 
+@org.jmolecules.ddd.annotation.Service
 @Service
 internal open class AuctionServiceImpl(
     private val roomAggregateRepository: RoomAggregateRepository,
@@ -34,7 +35,7 @@ internal open class AuctionServiceImpl(
         code: String,
         teamLeaderId: String,
         amount: Int,
-    ): RoomBidModel {
+    ): RoomBid {
         val room = roomAggregateRepository.findByCode(code) ?: throw RoomException.RoomNotFoundException()
         val savedRoom = roomAggregateRepository.save(room.placeBid(teamLeaderId, amount))
         return savedRoom.bids.last()

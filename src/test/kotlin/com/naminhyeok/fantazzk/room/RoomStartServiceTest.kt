@@ -132,7 +132,7 @@ class RoomStartServiceTest {
             val started = roomRepo.findByCode(room.code)!!
             assertThat(started.currentAuctionRound).isEqualTo(1)
             assertThat(started.currentTurnIndex).isNull()
-            assertThat(Room.from(started).progress).isEqualTo(RoomProgress.Auction(currentRound = 1))
+            assertThat(started.progress).isEqualTo(RoomProgress.Auction(currentRound = 1))
         }
 
         @Test
@@ -151,12 +151,12 @@ class RoomStartServiceTest {
             val started = roomRepo.findByCode(room.code)!!
             assertThat(started.currentTurnIndex).isEqualTo(0)
             assertThat(started.currentAuctionRound).isNull()
-            assertThat(Room.from(started).progress).isEqualTo(RoomProgress.Draft(currentTurnIndex = 0))
+            assertThat(started.progress).isEqualTo(RoomProgress.Draft(currentTurnIndex = 0))
         }
 
         @Test
         fun `legacy 경매 방의 stale draft strategy는 무시하고 시작한다`() {
-            val legacyRoomRepo = LegacyRoomRepository(legacyAuctionRoomModel())
+            val legacyRoomRepo = LegacyRoomRepository(legacyAuctionRoom())
             cut = RoomStartServiceImpl(RoomAggregateRepositoryImpl(legacyRoomRepo, playerRepo, leaderRepo, memberRepo, bidRepo), events)
             val room = legacyRoomRepo.findByCode("START2")!!
             saveLeaders(room, room.teamCount)
@@ -169,34 +169,36 @@ class RoomStartServiceTest {
         }
     }
 
-    private fun legacyAuctionRoomModel(): RoomModel =
-        object : RoomModel {
-            override val roomId = 99L
-            override val code = "START2"
-            override val hostId = "host"
-            override val status = RoomStatus.WAITING
-            override val mode = TeamBuildingMode.AUCTION
-            override val teamCount = 2
-            override val teamSize = 2
-            override val budget = 300
-            override val draftOrderStrategy = DraftOrderStrategy.SNAKE
-            override val currentTurnIndex: Int? = null
-            override val currentAuctionRound: Int? = null
-            override val createdAt = java.time.Instant.parse("2025-01-01T00:00:00Z")
-            override val updatedAt = java.time.Instant.parse("2025-01-01T00:00:00Z")
-        }
+    private fun legacyAuctionRoom(): Room =
+        Room.from(
+            object : RoomModel {
+                override val roomId = 99L
+                override val code = "START2"
+                override val hostId = "host"
+                override val status = RoomStatus.WAITING
+                override val mode = TeamBuildingMode.AUCTION
+                override val teamCount = 2
+                override val teamSize = 2
+                override val budget = 300
+                override val draftOrderStrategy = DraftOrderStrategy.SNAKE
+                override val currentTurnIndex: Int? = null
+                override val currentAuctionRound: Int? = null
+                override val createdAt = java.time.Instant.parse("2025-01-01T00:00:00Z")
+                override val updatedAt = java.time.Instant.parse("2025-01-01T00:00:00Z")
+            },
+        )
 
     private class LegacyRoomRepository(
-        private var room: RoomModel,
+        private var room: Room,
     ) : RoomRepository {
-        override fun save(room: Room): RoomModel {
+        override fun save(room: Room): Room {
             this.room = room
             return room
         }
 
-        override fun findByCode(code: String): RoomModel? = room.takeIf { it.code == code }
+        override fun findByCode(code: String): Room? = room.takeIf { it.code == code }
 
-        override fun findById(roomId: Long): RoomModel? = room.takeIf { it.roomId == roomId }
+        override fun findById(roomId: Long): Room? = room.takeIf { it.roomId == roomId }
     }
 
     private fun createWaitingRoom(
@@ -206,7 +208,7 @@ class RoomStartServiceTest {
         teamCount: Int = 2,
         currentTurnIndex: Int? = null,
         currentAuctionRound: Int? = null,
-    ): RoomModel =
+    ): Room =
         roomRepo.save(
             when (mode) {
                 TeamBuildingMode.AUCTION ->
@@ -232,12 +234,12 @@ class RoomStartServiceTest {
             ),
         )
 
-    private fun fillLeaders(room: RoomModel) {
+    private fun fillLeaders(room: Room) {
         saveLeaders(room, room.teamCount)
     }
 
     private fun saveLeaders(
-        room: RoomModel,
+        room: Room,
         count: Int,
     ) {
         repeat(count) { index ->

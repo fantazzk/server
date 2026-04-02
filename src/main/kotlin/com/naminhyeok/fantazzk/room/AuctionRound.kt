@@ -2,7 +2,7 @@ package com.naminhyeok.fantazzk.room
 
 data class AuctionRound(
     val round: Int,
-    val highestBid: RoomBidModel? = null,
+    val highestBid: RoomBid? = null,
 ) {
     init {
         require(round > 0) { "경매 라운드는 1 이상이어야 합니다" }
@@ -52,5 +52,5 @@ data class AuctionRoundSettlement(
     val outcome: AuctionOutcome,
     val nextRound: Int,
     val completed: Boolean,
-    val winningBid: RoomBidModel?,
+    val winningBid: RoomBid?,
 )

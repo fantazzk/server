@@ -3,14 +3,14 @@ package com.naminhyeok.fantazzk.room
 import java.time.Instant
 
 data class RoomTeamLeader(
-    override val roomTeamLeaderId: Long = 0L,
-    override val roomId: Long,
-    override val teamLeaderId: String,
-    override val nickname: String,
-    override val remainingBudget: Int? = null,
-    override val createdAt: Instant = Instant.now(),
-    override val updatedAt: Instant = Instant.now(),
-) : RoomTeamLeaderModel {
+    val roomTeamLeaderId: Long = 0L,
+    val roomId: Long,
+    val teamLeaderId: String,
+    val nickname: String,
+    val remainingBudget: Int? = null,
+    val createdAt: Instant = Instant.now(),
+    val updatedAt: Instant = Instant.now(),
+) {
     fun requireCanBid(amount: Int) {
         budgetState().requireCanBid(amount)
     }

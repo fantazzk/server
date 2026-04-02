@@ -1,7 +1,6 @@
 package com.naminhyeok.fantazzk.room.repository
 
 import com.naminhyeok.fantazzk.room.RoomTeamMember
-import com.naminhyeok.fantazzk.room.RoomTeamMemberModel
 import org.springframework.data.repository.CrudRepository
 
 interface RoomTeamMemberJdbcCrudRepository : CrudRepository<RoomTeamMemberEntity, Long> {
@@ -23,7 +22,7 @@ interface RoomTeamMemberJdbcCrudRepository : CrudRepository<RoomTeamMemberEntity
 class RoomTeamMemberRepositoryImpl(
     private val roomTeamMemberJdbcCrudRepository: RoomTeamMemberJdbcCrudRepository,
 ) : RoomTeamMemberRepository {
-    override fun save(member: RoomTeamMember): RoomTeamMemberModel {
+    override fun save(member: RoomTeamMember): RoomTeamMember {
         val entity =
             RoomTeamMemberEntity(
                 roomId = member.roomId,
@@ -34,19 +33,19 @@ class RoomTeamMemberRepositoryImpl(
                 updatedAt = member.updatedAt,
             )
         if (member.roomTeamMemberId != 0L) entity.id = member.roomTeamMemberId
-        return roomTeamMemberJdbcCrudRepository.save(entity).toModel()
+        return roomTeamMemberJdbcCrudRepository.save(entity).toDomain()
     }
 
-    override fun findByRoomId(roomId: Long): List<RoomTeamMemberModel> =
-        roomTeamMemberJdbcCrudRepository.findByRoomIdOrderByAssignOrder(roomId).map { it.toModel() }
+    override fun findByRoomId(roomId: Long): List<RoomTeamMember> =
+        roomTeamMemberJdbcCrudRepository.findByRoomIdOrderByAssignOrder(roomId).map { it.toDomain() }
 
     override fun findByRoomIdAndTeamLeaderId(
         roomId: Long,
         teamLeaderId: String,
-    ): List<RoomTeamMemberModel> =
+    ): List<RoomTeamMember> =
         roomTeamMemberJdbcCrudRepository
             .findByRoomIdAndTeamLeaderIdOrderByAssignOrder(roomId, teamLeaderId)
-            .map { it.toModel() }
+            .map { it.toDomain() }
 
     override fun countByRoomId(roomId: Long): Int = roomTeamMemberJdbcCrudRepository.countByRoomId(roomId)
 
@@ -55,7 +54,7 @@ class RoomTeamMemberRepositoryImpl(
         teamLeaderId: String,
     ): Int = roomTeamMemberJdbcCrudRepository.countByRoomIdAndTeamLeaderId(roomId, teamLeaderId)
 
-    private fun RoomTeamMemberEntity.toModel() =
+    private fun RoomTeamMemberEntity.toDomain() =
         RoomTeamMember(
             roomTeamMemberId = id,
             roomId = roomId,

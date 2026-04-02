@@ -10,9 +10,9 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 import java.time.Clock
 
-@Configuration("com.naminhyeok.fantazzk.FantazzkApplicationAutoConfiguration")
+@Configuration
 @EnableConfigurationProperties(CorsProperties::class)
-class FantazzkApplicationAutoConfiguration {
+class FantazzkApplicationConfiguration {
     @Bean
     fun clock(): Clock = Clock.systemUTC()
 

@@ -1,6 +1,5 @@
 package com.naminhyeok.fantazzk.room.repository
 
-import com.naminhyeok.fantazzk.room.RoomTeamMemberModel
 import org.springframework.data.annotation.Id
 import org.springframework.data.relational.core.mapping.Column
 import org.springframework.data.relational.core.mapping.Table
@@ -8,15 +7,13 @@ import java.time.Instant
 
 @Table("room_team_member")
 class RoomTeamMemberEntity(
-    @Column override val roomId: Long,
-    @Column override val teamLeaderId: String,
-    @Column override val playerName: String,
-    @Column override val assignOrder: Int,
-    @Column override val createdAt: Instant = Instant.now(),
-    @Column override val updatedAt: Instant = Instant.now(),
-) : RoomTeamMemberModel {
+    @Column val roomId: Long,
+    @Column val teamLeaderId: String,
+    @Column val playerName: String,
+    @Column val assignOrder: Int,
+    @Column val createdAt: Instant = Instant.now(),
+    @Column val updatedAt: Instant = Instant.now(),
+) {
     @Id
     var id: Long = 0L
-
-    override val roomTeamMemberId: Long get() = id
 }

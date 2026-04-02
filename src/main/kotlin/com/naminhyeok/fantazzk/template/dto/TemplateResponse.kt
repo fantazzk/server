@@ -2,8 +2,8 @@ package com.naminhyeok.fantazzk.template.dto
 
 import com.naminhyeok.fantazzk.template.DraftOrderStrategy
 import com.naminhyeok.fantazzk.template.TeamBuildingMode
-import com.naminhyeok.fantazzk.template.TemplateModel
-import com.naminhyeok.fantazzk.template.TemplatePlayerModel
+import com.naminhyeok.fantazzk.template.Template
+import com.naminhyeok.fantazzk.template.TemplatePlayer
 import com.naminhyeok.fantazzk.template.query.TemplateView
 import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.Schema
@@ -32,8 +32,8 @@ data class TemplateResponse(
 ) {
     companion object {
         fun from(
-            template: TemplateModel,
-            players: List<TemplatePlayerModel>? = null,
+            template: Template,
+            players: List<TemplatePlayer>? = null,
         ): TemplateResponse =
             TemplateResponse(
                 id = template.templateId,

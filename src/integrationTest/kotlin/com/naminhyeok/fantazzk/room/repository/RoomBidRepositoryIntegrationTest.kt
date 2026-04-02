@@ -3,7 +3,6 @@ package com.naminhyeok.fantazzk.room.repository
 import com.naminhyeok.fantazzk.RootCombinedJdbcConfiguration
 import com.naminhyeok.fantazzk.room.Room
 import com.naminhyeok.fantazzk.room.RoomBid
-import com.naminhyeok.fantazzk.room.RoomModel
 import com.naminhyeok.fantazzk.room.RoomStatus
 import com.naminhyeok.fantazzk.room.TeamBuildingMode
 import com.naminhyeok.fantazzk.room.config.RoomJdbcConfiguration
@@ -22,7 +21,7 @@ import org.springframework.test.context.TestConstructor
     RootCombinedJdbcConfiguration::class,
     RoomJdbcConfiguration::class,
     TemplateJdbcConfiguration::class,
-    RoomRepositoryAutoConfiguration::class,
+    RoomRepositoryConfiguration::class,
 )
 @DataJdbcTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
@@ -31,7 +30,7 @@ class RoomBidRepositoryIntegrationTest(
     private val roomRepository: RoomRepository,
     private val cut: RoomBidRepository,
 ) {
-    private lateinit var room: RoomModel
+    private lateinit var room: Room
 
     @BeforeEach
     fun setUp() {

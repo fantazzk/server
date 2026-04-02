@@ -9,12 +9,12 @@ import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories
 @Configuration
 @EnableJdbcRepositories(
     basePackageClasses = [
-        TemplateRepositoryAutoConfiguration::class,
+        TemplateRepositoryConfiguration::class,
         TemplateViewCrudRepository::class,
         TemplatePlayerViewCrudRepository::class,
     ],
 )
-class TemplateRepositoryAutoConfiguration {
+class TemplateRepositoryConfiguration {
     @Bean
     fun templateRepository(templateJdbcCrudRepository: TemplateJdbcCrudRepository): TemplateRepository =
         TemplateRepositoryImpl(templateJdbcCrudRepository)

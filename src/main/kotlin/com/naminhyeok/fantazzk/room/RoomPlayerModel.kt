@@ -2,6 +2,8 @@ package com.naminhyeok.fantazzk.room
 
 interface RoomPlayerModel : RoomPlayerIdentity, RoomPlayerProps, AuditProps
 
+fun RoomPlayer.isAvailable(): Boolean = status == PlayerStatus.AVAILABLE
+
 fun RoomPlayerModel.isAvailable(): Boolean = status == PlayerStatus.AVAILABLE
 
 fun RoomPlayerModel.assign(): RoomPlayer = RoomPlayer.from(this).assign()

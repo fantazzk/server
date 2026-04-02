@@ -1,7 +1,6 @@
 package com.naminhyeok.fantazzk.room.repository
 
 import com.naminhyeok.fantazzk.room.RoomTeamLeader
-import com.naminhyeok.fantazzk.room.RoomTeamLeaderModel
 import org.springframework.data.repository.CrudRepository
 
 interface RoomTeamLeaderJdbcCrudRepository : CrudRepository<RoomTeamLeaderEntity, Long> {
@@ -16,7 +15,7 @@ interface RoomTeamLeaderJdbcCrudRepository : CrudRepository<RoomTeamLeaderEntity
 class RoomTeamLeaderRepositoryImpl(
     private val roomTeamLeaderJdbcCrudRepository: RoomTeamLeaderJdbcCrudRepository,
 ) : RoomTeamLeaderRepository {
-    override fun save(leader: RoomTeamLeader): RoomTeamLeaderModel {
+    override fun save(leader: RoomTeamLeader): RoomTeamLeader {
         val entity =
             RoomTeamLeaderEntity(
                 roomId = leader.roomId,
@@ -27,18 +26,18 @@ class RoomTeamLeaderRepositoryImpl(
                 updatedAt = leader.updatedAt,
             )
         if (leader.roomTeamLeaderId != 0L) entity.id = leader.roomTeamLeaderId
-        return roomTeamLeaderJdbcCrudRepository.save(entity).toModel()
+        return roomTeamLeaderJdbcCrudRepository.save(entity).toDomain()
     }
 
-    override fun findByRoomId(roomId: Long): List<RoomTeamLeaderModel> =
-        roomTeamLeaderJdbcCrudRepository.findByRoomIdOrderById(roomId).map { it.toModel() }
+    override fun findByRoomId(roomId: Long): List<RoomTeamLeader> =
+        roomTeamLeaderJdbcCrudRepository.findByRoomIdOrderById(roomId).map { it.toDomain() }
 
     override fun findByRoomIdAndTeamLeaderId(
         roomId: Long,
         teamLeaderId: String,
-    ): RoomTeamLeaderModel? = roomTeamLeaderJdbcCrudRepository.findByRoomIdAndTeamLeaderId(roomId, teamLeaderId)?.toModel()
+    ): RoomTeamLeader? = roomTeamLeaderJdbcCrudRepository.findByRoomIdAndTeamLeaderId(roomId, teamLeaderId)?.toDomain()
 
-    private fun RoomTeamLeaderEntity.toModel() =
+    private fun RoomTeamLeaderEntity.toDomain() =
         RoomTeamLeader(
             roomTeamLeaderId = id,
             roomId = roomId,

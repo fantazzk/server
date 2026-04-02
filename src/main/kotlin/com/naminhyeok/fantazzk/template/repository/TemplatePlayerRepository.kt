@@ -1,10 +1,11 @@
 package com.naminhyeok.fantazzk.template.repository
 
 import com.naminhyeok.fantazzk.template.TemplatePlayer
-import com.naminhyeok.fantazzk.template.TemplatePlayerModel
+import org.jmolecules.ddd.annotation.Repository
 
+@Repository
 interface TemplatePlayerRepository {
-    fun saveAll(players: List<TemplatePlayer>): List<TemplatePlayerModel>
+    fun saveAll(players: List<TemplatePlayer>): List<TemplatePlayer>
 
-    fun findByTemplateId(templateId: Long): List<TemplatePlayerModel>
+    fun findByTemplateId(templateId: Long): List<TemplatePlayer>
 }

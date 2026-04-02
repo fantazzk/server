@@ -21,7 +21,7 @@ import org.springframework.test.context.TestConstructor
     RootCombinedJdbcConfiguration::class,
     RoomJdbcConfiguration::class,
     TemplateJdbcConfiguration::class,
-    RoomRepositoryAutoConfiguration::class,
+    RoomRepositoryConfiguration::class,
 )
 @DataJdbcTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
@@ -190,14 +190,12 @@ class RoomRepositoryIntegrationTest(
             )
 
         val updated =
-            Room
-                .from(saved)
-                .copy(
-                    status = RoomStatus.IN_PROGRESS,
-                    draftOrderStrategy = DraftOrderStrategy.FIXED,
-                    currentTurnIndex = 3,
-                    currentAuctionRound = null,
-                )
+            saved.copy(
+                status = RoomStatus.IN_PROGRESS,
+                draftOrderStrategy = DraftOrderStrategy.FIXED,
+                currentTurnIndex = 3,
+                currentAuctionRound = null,
+            )
         cut.save(updated)
 
         val found = cut.findByCode("RM0004")

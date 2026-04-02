@@ -3,7 +3,6 @@ package com.naminhyeok.fantazzk.template.application
 import com.naminhyeok.fantazzk.template.DraftOrderStrategy
 import com.naminhyeok.fantazzk.template.Template
 import com.naminhyeok.fantazzk.template.TemplateConfiguration
-import com.naminhyeok.fantazzk.template.TemplateModel
 import com.naminhyeok.fantazzk.template.TemplateRoster
 import com.naminhyeok.fantazzk.template.repository.TemplatePlayerRepository
 import com.naminhyeok.fantazzk.template.repository.TemplateRepository
@@ -35,9 +34,10 @@ sealed interface CreateTemplateCommand {
 }
 
 interface TemplateCreateService {
-    fun create(command: CreateTemplateCommand): TemplateModel
+    fun create(command: CreateTemplateCommand): Template
 }
 
+@org.jmolecules.ddd.annotation.Service
 @Service
 internal class TemplateCreateServiceImpl(
     private val templateRepository: TemplateRepository,
@@ -45,7 +45,7 @@ internal class TemplateCreateServiceImpl(
     private val events: ApplicationEventPublisher,
 ) : TemplateCreateService {
     @Transactional
-    override fun create(command: CreateTemplateCommand): TemplateModel {
+    override fun create(command: CreateTemplateCommand): Template {
         val configuration =
             when (command) {
                 is CreateTemplateCommand.Auction ->
@@ -64,12 +64,10 @@ internal class TemplateCreateServiceImpl(
             }
         val roster = TemplateRoster.exactlyRequired(command.playerNames, configuration.requiredPlayerCount)
         val template =
-            Template.from(
-                templateRepository.save(
-                    Template.create(
-                        name = command.name,
-                        configuration = configuration,
-                    ),
+            templateRepository.save(
+                Template.create(
+                    name = command.name,
+                    configuration = configuration,
                 ),
             )
 

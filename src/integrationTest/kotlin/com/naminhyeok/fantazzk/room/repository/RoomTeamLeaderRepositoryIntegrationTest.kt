@@ -2,7 +2,6 @@ package com.naminhyeok.fantazzk.room.repository
 
 import com.naminhyeok.fantazzk.RootCombinedJdbcConfiguration
 import com.naminhyeok.fantazzk.room.Room
-import com.naminhyeok.fantazzk.room.RoomModel
 import com.naminhyeok.fantazzk.room.RoomStatus
 import com.naminhyeok.fantazzk.room.RoomTeamLeader
 import com.naminhyeok.fantazzk.room.TeamBuildingMode
@@ -22,7 +21,7 @@ import org.springframework.test.context.TestConstructor
     RootCombinedJdbcConfiguration::class,
     RoomJdbcConfiguration::class,
     TemplateJdbcConfiguration::class,
-    RoomRepositoryAutoConfiguration::class,
+    RoomRepositoryConfiguration::class,
 )
 @DataJdbcTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
@@ -31,7 +30,7 @@ class RoomTeamLeaderRepositoryIntegrationTest(
     private val roomRepository: RoomRepository,
     private val cut: RoomTeamLeaderRepository,
 ) {
-    private lateinit var room: RoomModel
+    private lateinit var room: Room
 
     @BeforeEach
     fun setUp() {
@@ -153,7 +152,7 @@ class RoomTeamLeaderRepositoryIntegrationTest(
                 RoomTeamLeader(roomId = room.roomId, teamLeaderId = "leader-1", nickname = "팀장1"),
             )
 
-        cut.save(RoomTeamLeader.from(saved).copy(nickname = "수정팀장", remainingBudget = 150))
+        cut.save(saved.copy(nickname = "수정팀장", remainingBudget = 150))
 
         val found = cut.findByRoomIdAndTeamLeaderId(room.roomId, "leader-1")
         assertThat(found).isNotNull

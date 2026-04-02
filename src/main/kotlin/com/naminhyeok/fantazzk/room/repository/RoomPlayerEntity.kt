@@ -1,7 +1,6 @@
 package com.naminhyeok.fantazzk.room.repository
 
 import com.naminhyeok.fantazzk.room.PlayerStatus
-import com.naminhyeok.fantazzk.room.RoomPlayerModel
 import org.springframework.data.annotation.Id
 import org.springframework.data.relational.core.mapping.Column
 import org.springframework.data.relational.core.mapping.Table
@@ -9,15 +8,13 @@ import java.time.Instant
 
 @Table("room_player")
 class RoomPlayerEntity(
-    @Column override val roomId: Long,
-    @Column override val name: String,
-    @Column override val status: PlayerStatus,
-    @Column override val displayOrder: Int,
-    @Column override val createdAt: Instant = Instant.now(),
-    @Column override val updatedAt: Instant = Instant.now(),
-) : RoomPlayerModel {
+    @Column val roomId: Long,
+    @Column val name: String,
+    @Column val status: PlayerStatus,
+    @Column val displayOrder: Int,
+    @Column val createdAt: Instant = Instant.now(),
+    @Column val updatedAt: Instant = Instant.now(),
+) {
     @Id
     var id: Long = 0L
-
-    override val roomPlayerId: Long get() = id
 }

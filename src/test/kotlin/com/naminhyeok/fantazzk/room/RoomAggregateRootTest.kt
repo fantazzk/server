@@ -41,7 +41,7 @@ class RoomAggregateRootTest {
     }
 
     @Test
-    fun `Room aggregate root가 방 시작을 처리하며 RoomStarted 이벤트를 만든다`() {
+    fun `룸 애그리거트 루트가 방 시작을 처리하며 RoomStarted 이벤트를 만든다`() {
         val room =
             Room.createAuction(
                 code = "START1",
@@ -66,13 +66,14 @@ class RoomAggregateRootTest {
             RoomStarted(
                 roomId = 10L,
                 code = "START1",
+                status = RoomStatus.IN_PROGRESS,
                 mode = RoomStarted.Mode.AUCTION,
             ),
         )
     }
 
     @Test
-    fun `Room aggregate root가 경매 정산을 처리하며 선수 배정과 AuctionSettled 이벤트를 만든다`() {
+    fun `룸 애그리거트 루트가 경매 정산을 처리하며 선수 배정과 AuctionSettled 이벤트를 만든다`() {
         val room =
             Room.createAuction(
                 code = "AUC01",
@@ -130,12 +131,17 @@ class RoomAggregateRootTest {
                 code = "AUC01",
                 playerName = "선수1",
                 outcome = AuctionOutcome.SOLD,
+                leaders =
+                    listOf(
+                        LeaderSnapshot(teamLeaderId = "leader-A", nickname = "A", remainingBudget = 300),
+                        LeaderSnapshot(teamLeaderId = "leader-B", nickname = "B", remainingBudget = 150),
+                    ),
             ),
         )
     }
 
     @Test
-    fun `Room aggregate root가 마지막 드래프트 픽을 처리하면 RoomCompleted까지 만든다`() {
+    fun `룸 애그리거트 루트가 마지막 드래프트 픽을 처리하면 RoomCompleted까지 만든다`() {
         val room =
             Room.createDraft(
                 code = "DRF01",
@@ -170,7 +176,7 @@ class RoomAggregateRootTest {
                 playerName = "선수2",
                 teamLeaderId = "leader-B",
             ),
-            RoomCompleted(roomId = 11L, code = "DRF01", mode = RoomStarted.Mode.DRAFT),
+            RoomCompleted(roomId = 11L, code = "DRF01", status = RoomStatus.COMPLETED, mode = RoomStarted.Mode.DRAFT),
         )
     }
 

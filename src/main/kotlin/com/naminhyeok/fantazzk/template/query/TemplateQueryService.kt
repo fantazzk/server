@@ -28,6 +28,7 @@ interface TemplateQueryService {
     fun listTemplates(): List<TemplateView>
 }
 
+@org.jmolecules.ddd.annotation.Service
 @Service
 internal class TemplateQueryServiceImpl(
     private val templateViewProjectionRepository: TemplateViewProjectionRepository,

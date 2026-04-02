@@ -1,15 +1,16 @@
 package com.naminhyeok.fantazzk.room.repository
 
 import com.naminhyeok.fantazzk.room.RoomTeamLeader
-import com.naminhyeok.fantazzk.room.RoomTeamLeaderModel
+import org.jmolecules.ddd.annotation.Repository
 
+@Repository
 interface RoomTeamLeaderRepository {
-    fun save(leader: RoomTeamLeader): RoomTeamLeaderModel
+    fun save(leader: RoomTeamLeader): RoomTeamLeader
 
-    fun findByRoomId(roomId: Long): List<RoomTeamLeaderModel>
+    fun findByRoomId(roomId: Long): List<RoomTeamLeader>
 
     fun findByRoomIdAndTeamLeaderId(
         roomId: Long,
         teamLeaderId: String,
-    ): RoomTeamLeaderModel?
+    ): RoomTeamLeader?
 }

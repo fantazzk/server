@@ -9,12 +9,12 @@ import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories
 @Configuration
 @EnableJdbcRepositories(
     basePackageClasses = [
-        RoomRepositoryAutoConfiguration::class,
+        RoomRepositoryConfiguration::class,
         RoomViewCrudRepository::class,
         TeamLeaderViewCrudRepository::class,
     ],
 )
-class RoomRepositoryAutoConfiguration {
+class RoomRepositoryConfiguration {
     @Bean
     fun roomRepository(roomJdbcCrudRepository: RoomJdbcCrudRepository): RoomRepository = RoomRepositoryImpl(roomJdbcCrudRepository)
 

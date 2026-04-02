@@ -1,7 +1,6 @@
 package com.naminhyeok.fantazzk.template.repository
 
 import com.naminhyeok.fantazzk.template.TemplatePlayer
-import com.naminhyeok.fantazzk.template.TemplatePlayerModel
 import org.springframework.data.repository.CrudRepository
 
 interface TemplatePlayerJdbcCrudRepository : CrudRepository<TemplatePlayerEntity, Long> {
@@ -11,7 +10,7 @@ interface TemplatePlayerJdbcCrudRepository : CrudRepository<TemplatePlayerEntity
 class TemplatePlayerRepositoryImpl(
     private val templatePlayerJdbcCrudRepository: TemplatePlayerJdbcCrudRepository,
 ) : TemplatePlayerRepository {
-    override fun saveAll(players: List<TemplatePlayer>): List<TemplatePlayerModel> {
+    override fun saveAll(players: List<TemplatePlayer>): List<TemplatePlayer> {
         val entities =
             players.map { player ->
                 val entity =
@@ -25,13 +24,13 @@ class TemplatePlayerRepositoryImpl(
                 if (player.templatePlayerId != 0L) entity.id = player.templatePlayerId
                 entity
             }
-        return templatePlayerJdbcCrudRepository.saveAll(entities).map { it.toModel() }
+        return templatePlayerJdbcCrudRepository.saveAll(entities).map { it.toDomain() }
     }
 
-    override fun findByTemplateId(templateId: Long): List<TemplatePlayerModel> =
-        templatePlayerJdbcCrudRepository.findByTemplateIdOrderByDisplayOrderAsc(templateId).map { it.toModel() }
+    override fun findByTemplateId(templateId: Long): List<TemplatePlayer> =
+        templatePlayerJdbcCrudRepository.findByTemplateIdOrderByDisplayOrderAsc(templateId).map { it.toDomain() }
 
-    private fun TemplatePlayerEntity.toModel() =
+    private fun TemplatePlayerEntity.toDomain() =
         TemplatePlayer(
             templatePlayerId = id,
             templateId = templateId,

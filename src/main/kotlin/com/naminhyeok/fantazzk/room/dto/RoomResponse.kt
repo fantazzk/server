@@ -1,8 +1,8 @@
 package com.naminhyeok.fantazzk.room.dto
 
-import com.naminhyeok.fantazzk.room.RoomModel
+import com.naminhyeok.fantazzk.room.Room
 import com.naminhyeok.fantazzk.room.RoomStatus
-import com.naminhyeok.fantazzk.room.RoomTeamLeaderModel
+import com.naminhyeok.fantazzk.room.RoomTeamLeader
 import com.naminhyeok.fantazzk.room.query.RoomView
 import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.Schema
@@ -21,8 +21,8 @@ data class RoomResponse(
 ) {
     companion object {
         fun from(
-            room: RoomModel,
-            leaders: List<RoomTeamLeaderModel>,
+            room: Room,
+            leaders: List<RoomTeamLeader>,
         ): RoomResponse =
             RoomResponse(
                 code = room.code,

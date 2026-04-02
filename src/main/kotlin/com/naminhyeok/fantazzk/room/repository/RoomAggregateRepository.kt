@@ -1,11 +1,9 @@
 package com.naminhyeok.fantazzk.room.repository
 
 import com.naminhyeok.fantazzk.room.Room
-import com.naminhyeok.fantazzk.room.RoomBid
-import com.naminhyeok.fantazzk.room.RoomPlayer
-import com.naminhyeok.fantazzk.room.RoomTeamLeader
-import com.naminhyeok.fantazzk.room.RoomTeamMember
+import org.jmolecules.ddd.annotation.Repository
 
+@Repository
 internal interface RoomAggregateRepository {
     fun findByCode(code: String): Room?
 
@@ -20,22 +18,21 @@ internal class RoomAggregateRepositoryImpl(
     private val roomBidRepository: RoomBidRepository,
 ) : RoomAggregateRepository {
     override fun findByCode(code: String): Room? {
-        val roomModel = roomRepository.findByCode(code) ?: return null
-        val room = Room.from(roomModel)
+        val room = roomRepository.findByCode(code) ?: return null
         return room.copy(
-            players = roomPlayerRepository.findByRoomId(room.roomId).map(RoomPlayer::from),
-            leaders = roomTeamLeaderRepository.findByRoomId(room.roomId).map(RoomTeamLeader::from),
-            members = roomTeamMemberRepository.findByRoomId(room.roomId).map(RoomTeamMember::from),
+            players = roomPlayerRepository.findByRoomId(room.roomId),
+            leaders = roomTeamLeaderRepository.findByRoomId(room.roomId),
+            members = roomTeamMemberRepository.findByRoomId(room.roomId),
             bids =
                 room.currentAuctionRound
-                    ?.let { round -> roomBidRepository.findByRoomIdAndRound(room.roomId, round).map(RoomBid::from) }
+                    ?.let { round -> roomBidRepository.findByRoomIdAndRound(room.roomId, round) }
                     .orEmpty(),
         )
     }
 
     override fun save(room: Room): Room {
         val pendingEvents = room.pendingEvents()
-        val savedRoom = Room.from(roomRepository.save(room))
+        val savedRoom = roomRepository.save(room)
         val roomToPersist =
             if (room.roomId == 0L && savedRoom.roomId != 0L) {
                 room.copy(
@@ -49,10 +46,10 @@ internal class RoomAggregateRepositoryImpl(
                 room.copy(roomId = savedRoom.roomId)
             }
 
-        val savedPlayers = roomToPersist.players.map { RoomPlayer.from(roomPlayerRepository.save(it)) }
-        val savedLeaders = roomToPersist.leaders.map { RoomTeamLeader.from(roomTeamLeaderRepository.save(it)) }
-        val savedMembers = roomToPersist.members.map { RoomTeamMember.from(roomTeamMemberRepository.save(it)) }
-        val savedBids = roomToPersist.bids.map { RoomBid.from(roomBidRepository.save(it)) }
+        val savedPlayers = roomToPersist.players.map { roomPlayerRepository.save(it) }
+        val savedLeaders = roomToPersist.leaders.map { roomTeamLeaderRepository.save(it) }
+        val savedMembers = roomToPersist.members.map { roomTeamMemberRepository.save(it) }
+        val savedBids = roomToPersist.bids.map { roomBidRepository.save(it) }
 
         return roomToPersist.copy(
             players = savedPlayers,

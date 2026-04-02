@@ -214,7 +214,9 @@ class AuctionServiceTest {
                         it.roomId == roomId &&
                             it.code == roomCode &&
                             it.playerName == "선수1" &&
-                            it.outcome == AuctionOutcome.SOLD
+                            it.outcome == AuctionOutcome.SOLD &&
+                            it.leaders.any { leader -> leader.teamLeaderId == "leader-A" && leader.remainingBudget == 200 } &&
+                            it.leaders.any { leader -> leader.teamLeaderId == "leader-B" && leader.remainingBudget == 300 }
                     },
                 )
             }
@@ -236,6 +238,7 @@ class AuctionServiceTest {
                     match<RoomCompleted> {
                         it.roomId == roomId &&
                             it.code == roomCode &&
+                            it.status == RoomStatus.COMPLETED &&
                             it.mode == RoomStarted.Mode.AUCTION
                     },
                 )

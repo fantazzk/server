@@ -1,9 +1,14 @@
 package com.naminhyeok.fantazzk.architecture
 
 import com.naminhyeok.fantazzk.FantazzkApplication
+import com.tngtech.archunit.core.importer.ClassFileImporter
+import com.tngtech.archunit.core.importer.ImportOption
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatCode
+import org.jmolecules.ddd.annotation.Repository
+import org.jmolecules.ddd.annotation.Service
 import org.junit.jupiter.api.Test
+import org.springframework.context.annotation.Configuration
 import org.springframework.modulith.core.ApplicationModules
 import org.springframework.modulith.docs.Documenter
 import java.nio.file.Files
@@ -16,13 +21,63 @@ class SpringModulithArchitectureTest {
     private val modules = ApplicationModules.of(FantazzkApplication::class.java)
 
     @Test
-    fun `spring modulith verifies application module structure`() {
+    fun `스프링 모듈리스가 애플리케이션 모듈 구조를 검증한다`() {
         assertThatCode { modules.verify() }
             .doesNotThrowAnyException()
     }
 
     @Test
-    fun `spring modulith documenter writes module diagrams and canvases`() {
+    fun `일반 설정 클래스는 더 이상 auto configuration 네이밍을 쓰지 않는다`() {
+        val classes =
+            ClassFileImporter()
+                .withImportOption(ImportOption.DoNotIncludeTests())
+                .importPackages("com.naminhyeok.fantazzk")
+
+        val legacyNamedConfigurations =
+            classes
+                .filter { it.isAnnotatedWith(Configuration::class.java) }
+                .map { it.fullName }
+                .filter { it.endsWith("AutoConfiguration") }
+
+        assertThat(legacyNamedConfigurations).isEmpty()
+    }
+
+    @Test
+    fun `애플리케이션 과 쿼리 서비스 구현은 jmolecules service 역할을 선언한다`() {
+        val classes =
+            ClassFileImporter()
+                .withImportOption(ImportOption.DoNotIncludeTests())
+                .importPackages("com.naminhyeok.fantazzk")
+
+        val serviceImplementations =
+            classes
+                .filter { it.simpleName.endsWith("ServiceImpl") }
+                .map { it.reflect() }
+
+        assertThat(serviceImplementations).isNotEmpty()
+        assertThat(serviceImplementations).allMatch { it.isAnnotationPresent(Service::class.java) }
+    }
+
+    @Test
+    fun `리포지토리 추상화는 jmolecules repository 역할을 선언한다`() {
+        val classes =
+            ClassFileImporter()
+                .withImportOption(ImportOption.DoNotIncludeTests())
+                .importPackages("com.naminhyeok.fantazzk")
+
+        val repositories =
+            classes
+                .filter { it.packageName.contains(".repository") }
+                .filter { it.simpleName.endsWith("Repository") }
+                .filterNot { it.simpleName.endsWith("CrudRepository") }
+                .map { it.reflect() }
+
+        assertThat(repositories).isNotEmpty()
+        assertThat(repositories).allMatch { it.isAnnotationPresent(Repository::class.java) }
+    }
+
+    @Test
+    fun `스프링 모듈리스 문서기가 모듈 다이어그램과 캔버스를 생성한다`() {
         val outputDirectory = Path.of("build/spring-modulith")
         Files.createDirectories(outputDirectory)
 

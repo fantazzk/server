@@ -100,7 +100,7 @@ class RoomJoinServiceTest {
 
         @Test
         fun `legacy 드래프트 방의 stale budget은 무시하고 참가시킨다`() {
-            val legacyRoomRepo = LegacyRoomRepository(legacyDraftRoomModel())
+            val legacyRoomRepo = LegacyRoomRepository(legacyDraftRoom())
             cut = RoomJoinServiceImpl(RoomAggregateRepositoryImpl(legacyRoomRepo, playerRepo, leaderRepo, memberRepo, bidRepo), events)
 
             val leader = cut.join(roomCode, "드래프트참가자")
@@ -158,33 +158,35 @@ class RoomJoinServiceTest {
         }
     }
 
-    private fun legacyDraftRoomModel(): RoomModel =
-        object : RoomModel {
-            override val roomId = this@RoomJoinServiceTest.roomId
-            override val code = this@RoomJoinServiceTest.roomCode
-            override val hostId = "host"
-            override val status = RoomStatus.WAITING
-            override val mode = TeamBuildingMode.DRAFT
-            override val teamCount = 2
-            override val teamSize = 2
-            override val budget = 300
-            override val draftOrderStrategy = DraftOrderStrategy.SNAKE
-            override val currentTurnIndex: Int? = null
-            override val currentAuctionRound: Int? = null
-            override val createdAt = java.time.Instant.parse("2025-01-01T00:00:00Z")
-            override val updatedAt = java.time.Instant.parse("2025-01-01T00:00:00Z")
-        }
+    private fun legacyDraftRoom(): Room =
+        Room.from(
+            object : RoomModel {
+                override val roomId = this@RoomJoinServiceTest.roomId
+                override val code = this@RoomJoinServiceTest.roomCode
+                override val hostId = "host"
+                override val status = RoomStatus.WAITING
+                override val mode = TeamBuildingMode.DRAFT
+                override val teamCount = 2
+                override val teamSize = 2
+                override val budget = 300
+                override val draftOrderStrategy = DraftOrderStrategy.SNAKE
+                override val currentTurnIndex: Int? = null
+                override val currentAuctionRound: Int? = null
+                override val createdAt = java.time.Instant.parse("2025-01-01T00:00:00Z")
+                override val updatedAt = java.time.Instant.parse("2025-01-01T00:00:00Z")
+            },
+        )
 
     private class LegacyRoomRepository(
-        private var room: RoomModel,
+        private var room: Room,
     ) : RoomRepository {
-        override fun save(room: Room): RoomModel {
+        override fun save(room: Room): Room {
             this.room = room
             return room
         }
 
-        override fun findByCode(code: String): RoomModel? = room.takeIf { it.code == code }
+        override fun findByCode(code: String): Room? = room.takeIf { it.code == code }
 
-        override fun findById(roomId: Long): RoomModel? = room.takeIf { it.roomId == roomId }
+        override fun findById(roomId: Long): Room? = room.takeIf { it.roomId == roomId }
     }
 }

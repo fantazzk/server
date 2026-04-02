@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
 @Configuration
-class RoomAutoConfiguration {
+class RoomConfiguration {
     @Bean
     internal fun roomAggregateRepository(
         roomRepository: RoomRepository,

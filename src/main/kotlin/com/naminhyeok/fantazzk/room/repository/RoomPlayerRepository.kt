@@ -1,14 +1,15 @@
 package com.naminhyeok.fantazzk.room.repository
 
 import com.naminhyeok.fantazzk.room.RoomPlayer
-import com.naminhyeok.fantazzk.room.RoomPlayerModel
+import org.jmolecules.ddd.annotation.Repository
 
+@Repository
 interface RoomPlayerRepository {
-    fun save(player: RoomPlayer): RoomPlayerModel
+    fun save(player: RoomPlayer): RoomPlayer
 
-    fun saveAll(players: List<RoomPlayer>): List<RoomPlayerModel>
+    fun saveAll(players: List<RoomPlayer>): List<RoomPlayer>
 
-    fun findByRoomId(roomId: Long): List<RoomPlayerModel>
+    fun findByRoomId(roomId: Long): List<RoomPlayer>
 
-    fun findFirstAvailable(roomId: Long): RoomPlayerModel?
+    fun findFirstAvailable(roomId: Long): RoomPlayer?
 }

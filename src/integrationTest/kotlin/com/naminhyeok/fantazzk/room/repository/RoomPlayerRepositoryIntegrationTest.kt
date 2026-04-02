@@ -3,7 +3,6 @@ package com.naminhyeok.fantazzk.room.repository
 import com.naminhyeok.fantazzk.RootCombinedJdbcConfiguration
 import com.naminhyeok.fantazzk.room.PlayerStatus
 import com.naminhyeok.fantazzk.room.Room
-import com.naminhyeok.fantazzk.room.RoomModel
 import com.naminhyeok.fantazzk.room.RoomPlayer
 import com.naminhyeok.fantazzk.room.RoomStatus
 import com.naminhyeok.fantazzk.room.TeamBuildingMode
@@ -23,7 +22,7 @@ import org.springframework.test.context.TestConstructor
     RootCombinedJdbcConfiguration::class,
     RoomJdbcConfiguration::class,
     TemplateJdbcConfiguration::class,
-    RoomRepositoryAutoConfiguration::class,
+    RoomRepositoryConfiguration::class,
 )
 @DataJdbcTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
@@ -32,7 +31,7 @@ class RoomPlayerRepositoryIntegrationTest(
     private val roomRepository: RoomRepository,
     private val cut: RoomPlayerRepository,
 ) {
-    private lateinit var room: RoomModel
+    private lateinit var room: Room
 
     @BeforeEach
     fun setUp() {
@@ -144,7 +143,7 @@ class RoomPlayerRepositoryIntegrationTest(
                 listOf(RoomPlayer(roomId = room.roomId, name = "선수1", displayOrder = 0)),
             ).first()
 
-        cut.save(RoomPlayer.from(saved).copy(status = PlayerStatus.ASSIGNED))
+        cut.save(saved.copy(status = PlayerStatus.ASSIGNED))
 
         val found = cut.findByRoomId(room.roomId)
         assertThat(found.first().status).isEqualTo(PlayerStatus.ASSIGNED)

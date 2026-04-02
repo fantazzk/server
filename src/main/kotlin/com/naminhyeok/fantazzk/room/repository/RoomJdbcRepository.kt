@@ -1,7 +1,7 @@
 package com.naminhyeok.fantazzk.room.repository
 
 import com.naminhyeok.fantazzk.room.Room
-import com.naminhyeok.fantazzk.room.RoomModel
+import com.naminhyeok.fantazzk.room.TeamBuildingMode
 import org.springframework.data.repository.CrudRepository
 
 interface RoomJdbcCrudRepository : CrudRepository<RoomEntity, Long> {
@@ -11,7 +11,7 @@ interface RoomJdbcCrudRepository : CrudRepository<RoomEntity, Long> {
 class RoomRepositoryImpl(
     private val roomJdbcCrudRepository: RoomJdbcCrudRepository,
 ) : RoomRepository {
-    override fun save(room: Room): RoomModel {
+    override fun save(room: Room): Room {
         val entity =
             RoomEntity(
                 code = room.code,
@@ -28,12 +28,27 @@ class RoomRepositoryImpl(
                 updatedAt = room.updatedAt,
             )
         if (room.roomId != 0L) entity.id = room.roomId
-        return roomJdbcCrudRepository.save(entity).toModel()
+        return roomJdbcCrudRepository.save(entity).toDomain()
     }
 
-    override fun findByCode(code: String): RoomModel? = roomJdbcCrudRepository.findByCode(code)?.toModel()
+    override fun findByCode(code: String): Room? = roomJdbcCrudRepository.findByCode(code)?.toDomain()
 
-    override fun findById(roomId: Long): RoomModel? = roomJdbcCrudRepository.findById(roomId).orElse(null)?.toModel()
+    override fun findById(roomId: Long): Room? = roomJdbcCrudRepository.findById(roomId).orElse(null)?.toDomain()
 
-    private fun RoomEntity.toModel() = Room.from(this)
+    private fun RoomEntity.toDomain() =
+        Room(
+            roomId = id,
+            code = code,
+            hostId = hostId,
+            status = status,
+            mode = mode,
+            teamCount = teamCount,
+            teamSize = teamSize,
+            budget = if (mode == TeamBuildingMode.AUCTION) budget else null,
+            draftOrderStrategy = if (mode == TeamBuildingMode.DRAFT) draftOrderStrategy else null,
+            currentTurnIndex = currentTurnIndex,
+            currentAuctionRound = currentAuctionRound,
+            createdAt = createdAt,
+            updatedAt = updatedAt,
+        )
 }

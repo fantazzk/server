@@ -1,7 +1,6 @@
 package com.naminhyeok.fantazzk.room.application
 
 import com.naminhyeok.fantazzk.room.Room
-import com.naminhyeok.fantazzk.room.RoomModel
 import com.naminhyeok.fantazzk.room.exception.RoomTemplateNotFoundException
 import com.naminhyeok.fantazzk.room.repository.RoomAggregateRepository
 import com.naminhyeok.fantazzk.template.spi.TemplateLookup
@@ -16,9 +15,10 @@ interface RoomCreateService {
     fun create(
         templateId: Long,
         hostNickname: String,
-    ): RoomModel
+    ): Room
 }
 
+@org.jmolecules.ddd.annotation.Service
 @Service
 internal class RoomCreateServiceImpl(
     private val roomAggregateRepository: RoomAggregateRepository,
@@ -29,7 +29,7 @@ internal class RoomCreateServiceImpl(
     override fun create(
         templateId: Long,
         hostNickname: String,
-    ): RoomModel {
+    ): Room {
         val template =
             try {
                 templateLookup.getTemplate(templateId)

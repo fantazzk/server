@@ -2,7 +2,6 @@ package com.naminhyeok.fantazzk.room.repository
 
 import com.naminhyeok.fantazzk.room.PlayerStatus
 import com.naminhyeok.fantazzk.room.RoomPlayer
-import com.naminhyeok.fantazzk.room.RoomPlayerModel
 import org.springframework.data.repository.CrudRepository
 
 interface RoomPlayerJdbcCrudRepository : CrudRepository<RoomPlayerEntity, Long> {
@@ -17,7 +16,7 @@ interface RoomPlayerJdbcCrudRepository : CrudRepository<RoomPlayerEntity, Long> 
 class RoomPlayerRepositoryImpl(
     private val roomPlayerJdbcCrudRepository: RoomPlayerJdbcCrudRepository,
 ) : RoomPlayerRepository {
-    override fun save(player: RoomPlayer): RoomPlayerModel {
+    override fun save(player: RoomPlayer): RoomPlayer {
         val entity =
             RoomPlayerEntity(
                 roomId = player.roomId,
@@ -28,10 +27,10 @@ class RoomPlayerRepositoryImpl(
                 updatedAt = player.updatedAt,
             )
         if (player.roomPlayerId != 0L) entity.id = player.roomPlayerId
-        return roomPlayerJdbcCrudRepository.save(entity).toModel()
+        return roomPlayerJdbcCrudRepository.save(entity).toDomain()
     }
 
-    override fun saveAll(players: List<RoomPlayer>): List<RoomPlayerModel> {
+    override fun saveAll(players: List<RoomPlayer>): List<RoomPlayer> {
         val entities =
             players.map {
                 val entity =
@@ -46,18 +45,18 @@ class RoomPlayerRepositoryImpl(
                 if (it.roomPlayerId != 0L) entity.id = it.roomPlayerId
                 entity
             }
-        return roomPlayerJdbcCrudRepository.saveAll(entities).map { it.toModel() }
+        return roomPlayerJdbcCrudRepository.saveAll(entities).map { it.toDomain() }
     }
 
-    override fun findByRoomId(roomId: Long): List<RoomPlayerModel> =
-        roomPlayerJdbcCrudRepository.findByRoomIdOrderByDisplayOrder(roomId).map { it.toModel() }
+    override fun findByRoomId(roomId: Long): List<RoomPlayer> =
+        roomPlayerJdbcCrudRepository.findByRoomIdOrderByDisplayOrder(roomId).map { it.toDomain() }
 
-    override fun findFirstAvailable(roomId: Long): RoomPlayerModel? =
+    override fun findFirstAvailable(roomId: Long): RoomPlayer? =
         roomPlayerJdbcCrudRepository
             .findFirstByRoomIdAndStatusOrderByDisplayOrder(roomId, PlayerStatus.AVAILABLE)
-            ?.toModel()
+            ?.toDomain()
 
-    private fun RoomPlayerEntity.toModel() =
+    private fun RoomPlayerEntity.toDomain() =
         RoomPlayer(
             roomPlayerId = id,
             roomId = roomId,

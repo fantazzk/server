@@ -22,6 +22,7 @@ data class LeaderSnapshot(
 data class RoomStarted(
     val roomId: Long,
     val code: String,
+    val status: RoomStatus,
     val mode: Mode,
 ) {
     enum class Mode {
@@ -35,6 +36,7 @@ data class AuctionSettled(
     val code: String,
     val playerName: String,
     val outcome: AuctionOutcome,
+    val leaders: List<LeaderSnapshot>,
 )
 
 data class DraftPickCompleted(
@@ -47,5 +49,6 @@ data class DraftPickCompleted(
 data class RoomCompleted(
     val roomId: Long,
     val code: String,
+    val status: RoomStatus,
     val mode: RoomStarted.Mode,
 )

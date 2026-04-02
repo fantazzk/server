@@ -9,24 +9,24 @@ import java.time.Instant
 import java.util.UUID
 
 data class Room(
-    override val roomId: Long = 0L,
-    override val code: String,
-    override val hostId: String,
-    override val status: RoomStatus,
-    override val mode: TeamBuildingMode,
-    override val teamCount: Int,
-    override val teamSize: Int,
-    override val budget: Int? = null,
-    override val draftOrderStrategy: DraftOrderStrategy? = null,
-    override val currentTurnIndex: Int? = null,
-    override val currentAuctionRound: Int? = null,
+    val roomId: Long = 0L,
+    val code: String,
+    val hostId: String,
+    val status: RoomStatus,
+    val mode: TeamBuildingMode,
+    val teamCount: Int,
+    val teamSize: Int,
+    val budget: Int? = null,
+    val draftOrderStrategy: DraftOrderStrategy? = null,
+    val currentTurnIndex: Int? = null,
+    val currentAuctionRound: Int? = null,
     val players: List<RoomPlayer> = emptyList(),
     val leaders: List<RoomTeamLeader> = emptyList(),
     val members: List<RoomTeamMember> = emptyList(),
     val bids: List<RoomBid> = emptyList(),
-    override val createdAt: Instant = Instant.now(),
-    override val updatedAt: Instant = Instant.now(),
-) : RoomModel, AggregateRoot<Room, RoomId> {
+    val createdAt: Instant = Instant.now(),
+    val updatedAt: Instant = Instant.now(),
+) : AggregateRoot<Room, RoomId> {
     @Transient
     private val pendingEvents: MutableList<Any> = mutableListOf()
 
@@ -110,6 +110,7 @@ data class Room(
             RoomStarted(
                 roomId = startedRoom.roomId,
                 code = startedRoom.code,
+                status = startedRoom.status,
                 mode =
                     when (startedRoom.mode) {
                         TeamBuildingMode.AUCTION -> RoomStarted.Mode.AUCTION
@@ -262,7 +263,14 @@ data class Room(
                     ),
                 )
                 if (updatedRoom.status == RoomStatus.COMPLETED) {
-                    add(RoomCompleted(roomId = updatedRoom.roomId, code = updatedRoom.code, mode = RoomStarted.Mode.DRAFT))
+                    add(
+                        RoomCompleted(
+                            roomId = updatedRoom.roomId,
+                            code = updatedRoom.code,
+                            status = updatedRoom.status,
+                            mode = RoomStarted.Mode.DRAFT,
+                        ),
+                    )
                 }
             }
 
@@ -407,10 +415,18 @@ data class Room(
                         code = updatedRoom.code,
                         playerName = target.name,
                         outcome = AuctionOutcome.SOLD,
+                        leaders = updatedRoom.leaderSnapshots(),
                     ),
                 )
                 if (updatedRoom.status == RoomStatus.COMPLETED) {
-                    add(RoomCompleted(roomId = updatedRoom.roomId, code = updatedRoom.code, mode = RoomStarted.Mode.AUCTION))
+                    add(
+                        RoomCompleted(
+                            roomId = updatedRoom.roomId,
+                            code = updatedRoom.code,
+                            status = updatedRoom.status,
+                            mode = RoomStarted.Mode.AUCTION,
+                        ),
+                    )
                 }
             }
 
@@ -432,6 +448,7 @@ data class Room(
                 code = updatedRoom.code,
                 playerName = settlement.playerName,
                 outcome = settlement.outcome,
+                leaders = updatedRoom.leaderSnapshots(),
             ),
         )
     }
@@ -482,28 +499,21 @@ data class Room(
         require(nextTurnIndex > currentIndex) { "다음 드래프트 턴은 현재보다 커야 합니다" }
     }
 
+    private fun leaderSnapshots(): List<LeaderSnapshot> =
+        leaders.map { leader ->
+            LeaderSnapshot(
+                teamLeaderId = leader.teamLeaderId,
+                nickname = leader.nickname,
+                remainingBudget = leader.remainingBudget,
+            )
+        }
+
     private fun registerEvent(event: Any): Room = apply { pendingEvents += event }
 
     private fun registerEvents(events: Collection<Any>): Room = apply { pendingEvents.addAll(events) }
 
     internal fun restorePendingEvents(events: Collection<Any>): Room = apply { pendingEvents.addAll(events) }
 }
-
-fun RoomModel.requireCurrentAuctionRound(): Int = Room.from(this).requireCurrentAuctionRound()
-
-fun RoomModel.requireCurrentTurnIndex(): Int = Room.from(this).requireCurrentTurnIndex()
-
-fun RoomModel.advanceAuction(
-    nextRound: Int,
-    completed: Boolean,
-): Room = Room.from(this).advanceAuction(nextRound = nextRound, completed = completed)
-
-fun RoomModel.moveAuctionTargetToNextRound(nextRound: Int): Room = Room.from(this).moveAuctionTargetToNextRound(nextRound = nextRound)
-
-fun RoomModel.advanceDraftTurn(
-    nextTurnIndex: Int,
-    completed: Boolean,
-): Room = Room.from(this).advanceDraftTurn(nextTurnIndex = nextTurnIndex, completed = completed)
 
 private fun List<RoomPlayer>.replacePlayerById(
     roomPlayerId: Long,

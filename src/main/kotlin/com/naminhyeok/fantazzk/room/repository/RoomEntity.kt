@@ -1,7 +1,6 @@
 package com.naminhyeok.fantazzk.room.repository
 
 import com.naminhyeok.fantazzk.room.DraftOrderStrategy
-import com.naminhyeok.fantazzk.room.RoomModel
 import com.naminhyeok.fantazzk.room.RoomStatus
 import com.naminhyeok.fantazzk.room.TeamBuildingMode
 import org.springframework.data.annotation.Id
@@ -11,21 +10,19 @@ import java.time.Instant
 
 @Table("room")
 class RoomEntity(
-    @Column override val code: String,
-    @Column override val hostId: String,
-    @Column override val status: RoomStatus,
-    @Column override val mode: TeamBuildingMode,
-    @Column override val teamCount: Int,
-    @Column override val teamSize: Int,
-    @Column override val budget: Int?,
-    @Column override val draftOrderStrategy: DraftOrderStrategy?,
-    @Column override val currentTurnIndex: Int?,
-    @Column override val currentAuctionRound: Int?,
-    @Column override val createdAt: Instant = Instant.now(),
-    @Column override val updatedAt: Instant = Instant.now(),
-) : RoomModel {
+    @Column val code: String,
+    @Column val hostId: String,
+    @Column val status: RoomStatus,
+    @Column val mode: TeamBuildingMode,
+    @Column val teamCount: Int,
+    @Column val teamSize: Int,
+    @Column val budget: Int?,
+    @Column val draftOrderStrategy: DraftOrderStrategy?,
+    @Column val currentTurnIndex: Int?,
+    @Column val currentAuctionRound: Int?,
+    @Column val createdAt: Instant = Instant.now(),
+    @Column val updatedAt: Instant = Instant.now(),
+) {
     @Id
     var id: Long = 0L
-
-    override val roomId: Long get() = id
 }
