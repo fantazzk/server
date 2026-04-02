@@ -1,13 +1,21 @@
 package com.naminhyeok.fantazzk.room.repository
 
 import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.ComponentScan
 import org.springframework.context.annotation.Configuration
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories
+import org.springframework.context.annotation.FilterType
 
 @Configuration
 @EnableJdbcRepositories(
     basePackageClasses = [
         RoomRepositoryConfiguration::class,
+    ],
+    excludeFilters = [
+        ComponentScan.Filter(
+            type = FilterType.ASSIGNABLE_TYPE,
+            classes = [RoomJpaStore::class],
+        ),
     ],
 )
 class RoomRepositoryConfiguration {
@@ -26,20 +34,4 @@ class RoomRepositoryConfiguration {
     @Bean
     fun roomBidRepository(roomBidJdbcCrudRepository: RoomBidJdbcCrudRepository): RoomBidRepository =
         RoomBidRepositoryImpl(roomBidJdbcCrudRepository)
-
-    @Bean
-    fun roomRepository(
-        roomJdbcCrudRepository: RoomJdbcCrudRepository,
-        roomPlayerRepository: RoomPlayerRepository,
-        roomTeamLeaderRepository: RoomTeamLeaderRepository,
-        roomTeamMemberRepository: RoomTeamMemberRepository,
-        roomBidRepository: RoomBidRepository,
-    ): RoomRepository =
-        RoomRepositoryImpl(
-            roomJdbcCrudRepository,
-            roomPlayerRepository,
-            roomTeamLeaderRepository,
-            roomTeamMemberRepository,
-            roomBidRepository,
-        )
 }

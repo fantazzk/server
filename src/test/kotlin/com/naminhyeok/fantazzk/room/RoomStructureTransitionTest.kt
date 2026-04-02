@@ -1,27 +1,27 @@
 package com.naminhyeok.fantazzk.room
 
 import com.naminhyeok.fantazzk.room.api.RoomApiController
+import com.naminhyeok.fantazzk.room.application.AuctionServiceImpl
+import com.naminhyeok.fantazzk.room.application.DraftServiceImpl
 import com.naminhyeok.fantazzk.room.application.RoomFinder
-import com.naminhyeok.fantazzk.room.repository.RoomBidEntity
-import com.naminhyeok.fantazzk.room.repository.RoomBidRepository
-import com.naminhyeok.fantazzk.room.repository.RoomEntity
-import com.naminhyeok.fantazzk.room.repository.RoomPlayerEntity
-import com.naminhyeok.fantazzk.room.repository.RoomPlayerRepository
+import com.naminhyeok.fantazzk.room.application.RoomFinderImpl
+import com.naminhyeok.fantazzk.room.application.RoomJoinServiceImpl
+import com.naminhyeok.fantazzk.room.application.RoomStartServiceImpl
 import com.naminhyeok.fantazzk.room.repository.RoomRepository
-import com.naminhyeok.fantazzk.room.repository.RoomTeamLeaderEntity
-import com.naminhyeok.fantazzk.room.repository.RoomTeamLeaderRepository
-import com.naminhyeok.fantazzk.room.repository.RoomTeamMemberEntity
-import com.naminhyeok.fantazzk.room.repository.RoomTeamMemberRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 
 class RoomStructureTransitionTest {
     @Test
-    fun `room 리포지토리는 aggregate 와 RoomId 를 기준으로 동작한다`() {
-        assertThat(
-            RoomRepository::class.java.getMethod("findById", RoomId::class.java).returnType,
-        ).isEqualTo(Room::class.java)
+    fun `room 리포지토리 공개 surface 는 typed aggregate 계약만 노출한다`() {
+        val methods = RoomRepository::class.java.methods.filter { it.declaringClass == RoomRepository::class.java }
+
+        assertThat(RoomRepository::class.java.interfaces.map { it.simpleName }).doesNotContain("JpaRepository")
+        assertThat(methods.map { it.name to it.parameterTypes.toList() })
+            .contains("save" to listOf(Room::class.java))
+            .contains("findByCode" to listOf(String::class.java))
+            .contains("findById" to listOf(RoomId::class.java))
     }
 
     @Test
@@ -33,6 +33,25 @@ class RoomStructureTransitionTest {
     }
 
     @Test
+    fun `room finder 와 유스케이스 서비스는 단일 aggregate 리포지토리에만 의존한다`() {
+        val finderDependencies = RoomFinderImpl::class.java.declaredConstructors.single().parameterTypes.map { it.simpleName }
+        val joinDependencies = RoomJoinServiceImpl::class.java.declaredConstructors.single().parameterTypes.map { it.simpleName }
+        val startDependencies = RoomStartServiceImpl::class.java.declaredConstructors.single().parameterTypes.map { it.simpleName }
+        val draftDependencies = DraftServiceImpl::class.java.declaredConstructors.single().parameterTypes.map { it.simpleName }
+        val auctionDependencies = AuctionServiceImpl::class.java.declaredConstructors.single().parameterTypes.map { it.simpleName }
+
+        listOf(finderDependencies, joinDependencies, startDependencies, draftDependencies, auctionDependencies).forEach { dependencies ->
+            assertThat(dependencies).doesNotContain(
+                "RoomPlayerRepository",
+                "RoomTeamLeaderRepository",
+                "RoomTeamMemberRepository",
+                "RoomBidRepository",
+            )
+            assertThat(dependencies).contains("RoomRepository")
+        }
+    }
+
+    @Test
     fun `room 리포지토리와 조회 서비스는 concrete domain 타입을 사용한다`() {
         assertThat(
             RoomRepository::class.java.getMethod("save", Room::class.java).returnType,
@@ -40,19 +59,6 @@ class RoomStructureTransitionTest {
         assertThat(
             RoomRepository::class.java.getMethod("findByCode", String::class.java).returnType,
         ).isEqualTo(Room::class.java)
-
-        assertThat(
-            RoomPlayerRepository::class.java.getMethod("save", RoomPlayer::class.java).returnType,
-        ).isEqualTo(RoomPlayer::class.java)
-        assertThat(
-            RoomTeamLeaderRepository::class.java.getMethod("save", RoomTeamLeader::class.java).returnType,
-        ).isEqualTo(RoomTeamLeader::class.java)
-        assertThat(
-            RoomTeamMemberRepository::class.java.getMethod("save", RoomTeamMember::class.java).returnType,
-        ).isEqualTo(RoomTeamMember::class.java)
-        assertThat(
-            RoomBidRepository::class.java.getMethod("save", RoomBid::class.java).returnType,
-        ).isEqualTo(RoomBid::class.java)
 
         assertThat(
             RoomFinder::class.java.getMethod("get", String::class.java).returnType,
@@ -97,11 +103,5 @@ class RoomStructureTransitionTest {
             assertThatThrownBy { Class.forName(className) }
                 .isInstanceOf(ClassNotFoundException::class.java)
         }
-
-        assertThat(RoomEntity::class.java.interfaces).isEmpty()
-        assertThat(RoomPlayerEntity::class.java.interfaces).isEmpty()
-        assertThat(RoomTeamLeaderEntity::class.java.interfaces).isEmpty()
-        assertThat(RoomTeamMemberEntity::class.java.interfaces).isEmpty()
-        assertThat(RoomBidEntity::class.java.interfaces).isEmpty()
     }
 }

@@ -16,9 +16,10 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration
-import org.springframework.boot.data.jdbc.test.autoconfigure.DataJdbcTest
+import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest
 import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase
 import org.springframework.boot.liquibase.autoconfigure.LiquibaseAutoConfiguration
+import org.springframework.dao.InvalidDataAccessApiUsageException
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.test.context.TestConstructor
 
@@ -27,9 +28,8 @@ import org.springframework.test.context.TestConstructor
     RootCombinedJdbcConfiguration::class,
     RoomJdbcConfiguration::class,
     TemplateJdbcConfiguration::class,
-    RoomRepositoryConfiguration::class,
 )
-@DataJdbcTest
+@DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
 class RoomRepositoryIntegrationTest(
@@ -143,6 +143,7 @@ class RoomRepositoryIntegrationTest(
                         ),
                     bids =
                         listOf(
+                            RoomBid(roomId = 0L, round = 1, teamLeaderId = "leader-A", amount = 90),
                             RoomBid(roomId = 0L, round = 2, teamLeaderId = "leader-A", amount = 120),
                             RoomBid(roomId = 0L, round = 2, teamLeaderId = "leader-B", amount = 150),
                         ),
@@ -171,7 +172,16 @@ class RoomRepositoryIntegrationTest(
             assertThat(found.bids).hasSize(2)
             assertThat(found.bids.map { it.teamLeaderId to it.amount })
                 .containsExactlyInAnyOrder("leader-A" to 120, "leader-B" to 150)
+            assertThat(found.bids.map { it.round }).containsOnly(2)
         }
+
+        val totalBidRows =
+            jdbcTemplate.queryForObject(
+                "select count(*) from room_bid where room_id = ?",
+                Int::class.java,
+                saved.roomId,
+            )
+        assertThat(totalBidRows).isEqualTo(3)
     }
 
     @Test
@@ -199,7 +209,7 @@ class RoomRepositoryIntegrationTest(
         )
 
         assertThatThrownBy { cut.findByCode("RM0005") }
-            .isInstanceOf(IllegalArgumentException::class.java)
+            .isInstanceOf(InvalidDataAccessApiUsageException::class.java)
             .hasMessage("드래프트 방에는 예산이 있으면 안 됩니다")
     }
 
@@ -229,7 +239,7 @@ class RoomRepositoryIntegrationTest(
 
         val roomId = jdbcTemplate.queryForObject("SELECT id FROM room WHERE code = ?", Long::class.java, "RM0006")!!
         assertThatThrownBy { cut.findById(RoomId(roomId)) }
-            .isInstanceOf(IllegalArgumentException::class.java)
+            .isInstanceOf(InvalidDataAccessApiUsageException::class.java)
             .hasMessage("경매 방에는 드래프트 순서 전략이 있으면 안 됩니다")
     }
 
