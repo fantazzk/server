@@ -1,0 +1,12 @@
+databaseChangeLog:
+  - changeSet:
+      id: 6-team-building-drop-template-projection-tables
+      author: team-building
+      changes:
+        - sqlFile:
+            dbms: postgresql
+            encoding: UTF-8
+            endDelimiter: ';'
+            path: db/changelog/team-building/template_projection_cleanup.sql
+            splitStatements: true
+            stripComments: false

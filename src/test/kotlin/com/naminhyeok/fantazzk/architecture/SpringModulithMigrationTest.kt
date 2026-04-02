@@ -66,6 +66,21 @@ class SpringModulithMigrationTest {
     }
 
     @Test
+    fun `dead template projection Liquibase 스키마는 제거되고 cleanup changelog 만 남는다`() {
+        val changelogRoot = Path.of("src/main/resources/db/changelog/team-building")
+        val masterChangelog = changelogRoot.resolve("db.changelog-master.yaml").readLines()
+
+        assertThat(masterChangelog)
+            .noneMatch { it.contains("db.changelog-template-projection.yaml") }
+        assertThat(masterChangelog)
+            .anyMatch { it.contains("db.changelog-template-projection-cleanup.yaml") }
+        assertThat(changelogRoot.resolve("db.changelog-template-projection.yaml")).doesNotExist()
+        assertThat(changelogRoot.resolve("template_projection.sql")).doesNotExist()
+        assertThat(changelogRoot.resolve("db.changelog-template-projection-cleanup.yaml")).exists()
+        assertThat(changelogRoot.resolve("template_projection_cleanup.sql")).exists()
+    }
+
+    @Test
     fun `소스 파일 경로는 패키지 선언과 일치한다`() {
         val sourceRoot = Path.of("src/main/kotlin/com/naminhyeok/fantazzk")
 

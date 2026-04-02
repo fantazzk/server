@@ -30,7 +30,7 @@ class TemplateRepositoryImpl(
     override fun findById(templateId: TemplateId): Template? =
         templateJdbcCrudRepository.findById(templateId.value).orElse(null)?.toDomain()
 
-    override fun findAll(): List<Template> = templateJdbcCrudRepository.findAll().map { it.toDomain() }
+    override fun findAll(): List<Template> = templateJdbcCrudRepository.findAll().sortedBy { it.id }.map { it.toDomain() }
 
     private fun TemplateEntity.toDomain() =
         Template(

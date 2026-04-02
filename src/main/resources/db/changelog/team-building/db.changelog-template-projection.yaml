@@ -1,8 +1,0 @@
-databaseChangeLog:
-  - changeSet:
-      id: template-projection-v1
-      author: codex
-      changes:
-        - sqlFile:
-            path: db/changelog/team-building/template_projection.sql
-            relativeToChangelogFile: false

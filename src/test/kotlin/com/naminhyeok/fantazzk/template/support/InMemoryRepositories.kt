@@ -31,5 +31,5 @@ class InMemoryTemplatePlayerRepository : TemplatePlayerRepository {
         return saved
     }
 
-    override fun findByTemplateId(templateId: Long): List<TemplatePlayer> = store.filter { it.templateId == templateId }
+    override fun findByTemplateId(templateId: Long): List<TemplatePlayer> = store.filter { it.templateId == templateId }.sortedBy { it.displayOrder }
 }
