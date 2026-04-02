@@ -89,6 +89,33 @@ class TemplateModuleIntegrationTest {
     }
 
     @Test
+    fun `template finder 목록 조회는 유효하지 않은 legacy row가 있어도 정상 템플릿을 반환한다`() {
+        templateRepository.save(
+            Template.create(
+                name = "정상 템플릿",
+                configuration = TemplateConfiguration.Auction(teamCount = 2, teamSize = 2, budgetValue = 300),
+            ),
+        )
+        jdbcTemplate.update(
+            """
+            insert into template (name, mode, team_count, team_size, budget, draft_order_strategy)
+            values (?, ?, ?, ?, ?, ?)
+            """.trimIndent(),
+            "유효하지 않은 legacy 템플릿",
+            "AUCTION",
+            2,
+            2,
+            null,
+            null,
+        )
+
+        val templates = templateFinder.list()
+
+        assertThat(templates.map { it.name }).contains("정상 템플릿")
+        assertThat(templates.map { it.name }).doesNotContain("유효하지 않은 legacy 템플릿")
+    }
+
+    @Test
     fun `template finder 상세 조회는 displayOrder 순서의 선수 목록을 반환한다`() {
         val template =
             templateRepository.save(

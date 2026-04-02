@@ -30,7 +30,11 @@ class TemplateRepositoryImpl(
     override fun findById(templateId: TemplateId): Template? =
         templateJdbcCrudRepository.findById(templateId.value).orElse(null)?.toDomain()
 
-    override fun findAll(): List<Template> = templateJdbcCrudRepository.findAll().sortedBy { it.id }.map { it.toDomain() }
+    override fun findAll(): List<Template> =
+        templateJdbcCrudRepository
+            .findAll()
+            .sortedBy { it.id }
+            .mapNotNull { it.toDomainOrNull() }
 
     private fun TemplateEntity.toDomain() =
         Template(
@@ -40,4 +44,11 @@ class TemplateRepositoryImpl(
             createdAt = createdAt,
             updatedAt = updatedAt,
         )
+
+    private fun TemplateEntity.toDomainOrNull(): Template? =
+        try {
+            toDomain()
+        } catch (_: IllegalArgumentException) {
+            null
+        }
 }

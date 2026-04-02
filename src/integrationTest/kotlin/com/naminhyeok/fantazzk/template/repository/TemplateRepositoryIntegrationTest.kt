@@ -91,6 +91,33 @@ class TemplateRepositoryIntegrationTest(
     }
 
     @Test
+    fun `전체 템플릿 목록 조회는 유효하지 않은 legacy row를 건너뛴다`() {
+        cut.save(
+            Template.create(
+                name = "정상 템플릿",
+                configuration = TemplateConfiguration.Auction(teamCount = 2, teamSize = 2, budgetValue = 300),
+            ),
+        )
+        jdbcTemplate.update(
+            """
+            insert into template (name, mode, team_count, team_size, budget, draft_order_strategy)
+            values (?, ?, ?, ?, ?, ?)
+            """.trimIndent(),
+            "유효하지 않은 legacy 템플릿",
+            "AUCTION",
+            2,
+            2,
+            null,
+            null,
+        )
+
+        val all = cut.findAll()
+
+        assertThat(all.map { it.name }).contains("정상 템플릿")
+        assertThat(all.map { it.name }).doesNotContain("유효하지 않은 legacy 템플릿")
+    }
+
+    @Test
     fun `템플릿 선수를 displayOrder 순서로 조회할 수 있다`() {
         val template =
             cut.save(
