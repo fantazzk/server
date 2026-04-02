@@ -96,12 +96,15 @@ class SpringModulithMigrationTest {
         listOf(
             "com.naminhyeok.fantazzk.RootCombinedJdbcConfiguration",
             "com.naminhyeok.fantazzk.room.config.RoomJdbcConfiguration",
+            "com.naminhyeok.fantazzk.room.config.EnumConverters",
             "com.naminhyeok.fantazzk.template.config.TemplateJdbcConfiguration",
+            "com.naminhyeok.fantazzk.template.config.EnumConverters",
             "com.naminhyeok.fantazzk.room.repository.RoomEntity",
             "com.naminhyeok.fantazzk.room.repository.RoomPlayerEntity",
             "com.naminhyeok.fantazzk.room.repository.RoomTeamLeaderEntity",
             "com.naminhyeok.fantazzk.room.repository.RoomTeamMemberEntity",
             "com.naminhyeok.fantazzk.room.repository.RoomBidEntity",
+            "com.naminhyeok.fantazzk.room.repository.RoomIdAttributeConverter",
         ).forEach { className ->
             assertThatThrownBy { Class.forName(className) }
                 .isInstanceOf(ClassNotFoundException::class.java)
@@ -110,12 +113,15 @@ class SpringModulithMigrationTest {
         listOf(
             "src/main/kotlin/com/naminhyeok/fantazzk/RootCombinedJdbcConfiguration.kt",
             "src/main/kotlin/com/naminhyeok/fantazzk/room/config/RoomJdbcConfiguration.kt",
+            "src/main/kotlin/com/naminhyeok/fantazzk/room/config/EnumConverters.kt",
             "src/main/kotlin/com/naminhyeok/fantazzk/template/config/TemplateJdbcConfiguration.kt",
+            "src/main/kotlin/com/naminhyeok/fantazzk/template/config/EnumConverters.kt",
             "src/main/kotlin/com/naminhyeok/fantazzk/room/repository/RoomEntity.kt",
             "src/main/kotlin/com/naminhyeok/fantazzk/room/repository/RoomPlayerEntity.kt",
             "src/main/kotlin/com/naminhyeok/fantazzk/room/repository/RoomTeamLeaderEntity.kt",
             "src/main/kotlin/com/naminhyeok/fantazzk/room/repository/RoomTeamMemberEntity.kt",
             "src/main/kotlin/com/naminhyeok/fantazzk/room/repository/RoomBidEntity.kt",
+            "src/main/kotlin/com/naminhyeok/fantazzk/room/repository/RoomIdAttributeConverter.kt",
         ).map { Path.of(it) }.forEach { path ->
             assertThat(path.exists()).isFalse()
         }
@@ -127,11 +133,20 @@ class SpringModulithMigrationTest {
         val auditColumns = Path.of("src/main/resources/db/changelog/team-building/add_audit_columns.sql").readText()
 
         assertThat(initialSchema).contains("created_at            TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP")
-        assertThat(initialSchema).contains("updated_at            TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP")
+        assertThat(initialSchema).doesNotContain("template\n(\n    id                    BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,\n    name                  VARCHAR(255) NOT NULL,\n    mode                  VARCHAR(20)  NOT NULL,\n    team_count            INT          NOT NULL,\n    team_size             INT          NOT NULL,\n    budget                INT,\n    draft_order_strategy  VARCHAR(20),\n    created_at            TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,\n    updated_at")
         assertThat(initialSchema).doesNotContain("template_player\n(\n    id            BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,\n    template_id   BIGINT       NOT NULL,\n    name          VARCHAR(255) NOT NULL,\n    display_order INT          NOT NULL,\n    created_at")
         assertThat(initialSchema).doesNotContain("room_player\n(\n    id            BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,\n    room_id       BIGINT       NOT NULL,\n    name          VARCHAR(255) NOT NULL,\n    status        VARCHAR(20)  NOT NULL,\n    display_order INT          NOT NULL,\n    created_at")
+        assertThat(initialSchema).doesNotContain("room_team_leader\n(\n    id               BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,\n    room_id          BIGINT       NOT NULL,\n    team_leader_id   VARCHAR(36)  NOT NULL,\n    nickname         VARCHAR(255) NOT NULL,\n    remaining_budget INT,\n    created_at")
+        assertThat(initialSchema).doesNotContain("room_team_member\n(\n    id             BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,\n    room_id        BIGINT       NOT NULL,\n    team_leader_id VARCHAR(36)  NOT NULL,\n    player_name    VARCHAR(255) NOT NULL,\n    assign_order   INT          NOT NULL,\n    created_at")
+        assertThat(initialSchema).doesNotContain("room_bid\n(\n    id             BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,\n    room_id        BIGINT      NOT NULL,\n    round          INT         NOT NULL,\n    team_leader_id VARCHAR(36) NOT NULL,\n    amount         INT         NOT NULL,\n    created_at     TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,\n    updated_at")
         assertThat(auditColumns).contains("ADD COLUMN updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;")
         assertThat(auditColumns).contains("ADD COLUMN created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,")
+        assertThat(auditColumns).contains("-- template: updated_at 추가")
+        assertThat(auditColumns).contains("-- template_player: created_at, updated_at 추가")
+        assertThat(auditColumns).contains("-- room_player: created_at, updated_at 추가")
+        assertThat(auditColumns).contains("-- room_team_leader: created_at, updated_at 추가")
+        assertThat(auditColumns).contains("-- room_team_member: created_at, updated_at 추가")
+        assertThat(auditColumns).contains("-- room_bid: updated_at 추가")
         assertThat(auditColumns).doesNotContain("IF NOT EXISTS")
     }
 

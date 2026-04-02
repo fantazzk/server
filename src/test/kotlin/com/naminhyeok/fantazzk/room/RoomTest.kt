@@ -301,8 +301,8 @@ class RoomTest {
                     updatedAt = Instant.parse("2025-02-12T00:00:00Z"),
                 )
 
-            val advanced = room.advanceAuction(nextRound = 3, completed = false)
-            val moved = room.moveAuctionTargetToNextRound(nextRound = 4)
+            val advanced = room.copy().advanceAuction(nextRound = 3, completed = false)
+            val moved = room.copy().moveAuctionTargetToNextRound(nextRound = 4)
 
             assertThat(advanced.currentAuctionRound).isEqualTo(3)
             assertThat(advanced.status).isEqualTo(RoomStatus.IN_PROGRESS)

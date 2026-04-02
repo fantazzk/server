@@ -74,11 +74,13 @@ class RoomStructureTransitionTest {
         listOf(
             "com.naminhyeok.fantazzk.RootCombinedJdbcConfiguration",
             "com.naminhyeok.fantazzk.room.config.RoomJdbcConfiguration",
+            "com.naminhyeok.fantazzk.room.config.EnumConverters",
             "com.naminhyeok.fantazzk.room.repository.RoomEntity",
             "com.naminhyeok.fantazzk.room.repository.RoomPlayerEntity",
             "com.naminhyeok.fantazzk.room.repository.RoomTeamLeaderEntity",
             "com.naminhyeok.fantazzk.room.repository.RoomTeamMemberEntity",
             "com.naminhyeok.fantazzk.room.repository.RoomBidEntity",
+            "com.naminhyeok.fantazzk.room.repository.RoomIdAttributeConverter",
         ).forEach { className ->
             assertThatThrownBy { Class.forName(className) }
                 .isInstanceOf(ClassNotFoundException::class.java)
