@@ -2,7 +2,6 @@ package com.naminhyeok.fantazzk.room.repository
 
 import com.naminhyeok.fantazzk.room.Room
 import com.naminhyeok.fantazzk.room.RoomId
-import com.naminhyeok.fantazzk.room.TeamBuildingMode
 import org.springframework.data.repository.CrudRepository
 
 interface RoomJdbcCrudRepository : CrudRepository<RoomEntity, Long> {
@@ -74,8 +73,8 @@ class RoomRepositoryImpl(
             mode = mode,
             teamCount = teamCount,
             teamSize = teamSize,
-            budget = if (mode == TeamBuildingMode.AUCTION) budget else null,
-            draftOrderStrategy = if (mode == TeamBuildingMode.DRAFT) draftOrderStrategy else null,
+            budget = budget,
+            draftOrderStrategy = draftOrderStrategy,
             currentTurnIndex = currentTurnIndex,
             currentAuctionRound = currentAuctionRound,
             createdAt = createdAt,

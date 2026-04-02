@@ -320,7 +320,7 @@ class RoomDomainPoliciesTest {
         }
 
         @Test
-        fun `legacy row에서 필수 설정이 비어 있으면 팀 구성 설정을 만들 수 없다`() {
+        fun `필수 설정이 비어 있으면 팀 구성 설정을 만들 수 없다`() {
             assertThatThrownBy {
                 TeamBuildingConfiguration.from(
                     auctionRoom(
@@ -369,7 +369,7 @@ class RoomDomainPoliciesTest {
         }
 
         @Test
-        fun `legacy row에서 현재 위치가 비어 있으면 진행 상태를 만들 수 없다`() {
+        fun `현재 위치가 비어 있으면 진행 상태를 만들 수 없다`() {
             assertThatThrownBy {
                 RoomProgress.from(auctionRoom(status = RoomStatus.IN_PROGRESS, currentAuctionRound = null))
             }

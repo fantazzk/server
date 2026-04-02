@@ -13,6 +13,7 @@ import com.naminhyeok.fantazzk.room.TeamBuildingMode
 import com.naminhyeok.fantazzk.room.config.RoomJdbcConfiguration
 import com.naminhyeok.fantazzk.template.config.TemplateJdbcConfiguration
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration
 import org.springframework.boot.data.jdbc.test.autoconfigure.DataJdbcTest
@@ -174,7 +175,7 @@ class RoomRepositoryIntegrationTest(
     }
 
     @Test
-    fun `legacy 드래프트 row는 stale budget이 있어도 코드 조회 시 정규화된다`() {
+    fun `드래프트 방 조회는 모드와 맞지 않는 budget row를 허용하지 않는다`() {
         jdbcTemplate.update(
             """
             INSERT INTO room (
@@ -197,16 +198,13 @@ class RoomRepositoryIntegrationTest(
             java.sql.Timestamp.from(java.time.Instant.parse("2025-01-01T00:00:00Z")),
         )
 
-        val found = cut.findByCode("RM0005")
-
-        assertThat(found).isNotNull
-        assertThat(found!!.mode).isEqualTo(TeamBuildingMode.DRAFT)
-        assertThat(found.budget).isNull()
-        assertThat(found.draftOrderStrategy).isEqualTo(DraftOrderStrategy.SNAKE)
+        assertThatThrownBy { cut.findByCode("RM0005") }
+            .isInstanceOf(IllegalArgumentException::class.java)
+            .hasMessage("드래프트 방에는 예산이 있으면 안 됩니다")
     }
 
     @Test
-    fun `legacy 경매 row는 stale draft strategy가 있어도 ID 조회 시 정규화된다`() {
+    fun `경매 방 조회는 모드와 맞지 않는 draft strategy row를 허용하지 않는다`() {
         jdbcTemplate.update(
             """
             INSERT INTO room (
@@ -230,13 +228,9 @@ class RoomRepositoryIntegrationTest(
         )
 
         val roomId = jdbcTemplate.queryForObject("SELECT id FROM room WHERE code = ?", Long::class.java, "RM0006")!!
-        val found = cut.findById(RoomId(roomId))
-
-        assertThat(found).isNotNull
-        assertThat(found!!.mode).isEqualTo(TeamBuildingMode.AUCTION)
-        assertThat(found.budget).isEqualTo(300)
-        assertThat(found.draftOrderStrategy).isNull()
-        assertThat(found.currentAuctionRound).isEqualTo(2)
+        assertThatThrownBy { cut.findById(RoomId(roomId)) }
+            .isInstanceOf(IllegalArgumentException::class.java)
+            .hasMessage("경매 방에는 드래프트 순서 전략이 있으면 안 됩니다")
     }
 
     @Test

@@ -3,6 +3,7 @@ package com.naminhyeok.fantazzk.template
 import com.naminhyeok.fantazzk.template.application.CreateTemplateCommand
 import com.naminhyeok.fantazzk.template.application.TemplateCreateService
 import com.naminhyeok.fantazzk.template.application.TemplateFinder
+import com.naminhyeok.fantazzk.template.exception.TemplateException
 import com.naminhyeok.fantazzk.template.repository.TemplatePlayerRepository
 import com.naminhyeok.fantazzk.template.repository.TemplateRepository
 import com.naminhyeok.fantazzk.template.spi.TemplateLookup
@@ -89,30 +90,35 @@ class TemplateModuleIntegrationTest {
     }
 
     @Test
-    fun `template finder 목록 조회는 유효하지 않은 legacy row가 있어도 정상 템플릿을 반환한다`() {
+    fun `template finder 목록 조회는 유효하지 않은 row를 TemplateInvalidException 으로 변환한다`() {
         templateRepository.save(
             Template.create(
                 name = "정상 템플릿",
                 configuration = TemplateConfiguration.Auction(teamCount = 2, teamSize = 2, budgetValue = 300),
             ),
         )
-        jdbcTemplate.update(
-            """
-            insert into template (name, mode, team_count, team_size, budget, draft_order_strategy)
-            values (?, ?, ?, ?, ?, ?)
-            """.trimIndent(),
-            "유효하지 않은 legacy 템플릿",
-            "AUCTION",
-            2,
-            2,
-            null,
-            null,
-        )
+        val invalidTemplateId =
+            jdbcTemplate.queryForObject(
+                """
+                insert into template (name, mode, team_count, team_size, budget, draft_order_strategy)
+                values (?, ?, ?, ?, ?, ?)
+                returning id
+                """.trimIndent(),
+                Long::class.java,
+                "유효하지 않은 템플릿",
+                "AUCTION",
+                2,
+                2,
+                null,
+                null,
+            )!!
 
-        val templates = templateFinder.list()
-
-        assertThat(templates.map { it.name }).contains("정상 템플릿")
-        assertThat(templates.map { it.name }).doesNotContain("유효하지 않은 legacy 템플릿")
+        try {
+            assertThatThrownBy { templateFinder.list() }
+                .isInstanceOf(TemplateException.TemplateInvalidException::class.java)
+        } finally {
+            jdbcTemplate.update("delete from template where id = ?", invalidTemplateId)
+        }
     }
 
     @Test

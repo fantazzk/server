@@ -55,29 +55,33 @@ class SpringModulithMigrationTest {
     }
 
     @Test
-    fun `dead room projection Liquibase 스키마는 제거되었다`() {
+    fun `dead room projection Liquibase 스키마와 cleanup 자산은 제거되었다`() {
         val changelogRoot = Path.of("src/main/resources/db/changelog/team-building")
         val masterChangelog = changelogRoot.resolve("db.changelog-master.yaml").readLines()
 
         assertThat(masterChangelog)
             .noneMatch { it.contains("db.changelog-room-projection.yaml") }
+        assertThat(masterChangelog)
+            .noneMatch { it.contains("db.changelog-room-projection-cleanup.yaml") }
         assertThat(changelogRoot.resolve("db.changelog-room-projection.yaml")).doesNotExist()
         assertThat(changelogRoot.resolve("room_projection.sql")).doesNotExist()
+        assertThat(changelogRoot.resolve("db.changelog-room-projection-cleanup.yaml")).doesNotExist()
+        assertThat(changelogRoot.resolve("room_projection_cleanup.sql")).doesNotExist()
     }
 
     @Test
-    fun `dead template projection Liquibase 스키마는 제거되고 cleanup changelog 만 남는다`() {
+    fun `dead template projection Liquibase 스키마와 cleanup 자산은 제거되었다`() {
         val changelogRoot = Path.of("src/main/resources/db/changelog/team-building")
         val masterChangelog = changelogRoot.resolve("db.changelog-master.yaml").readLines()
 
         assertThat(masterChangelog)
             .noneMatch { it.contains("db.changelog-template-projection.yaml") }
         assertThat(masterChangelog)
-            .anyMatch { it.contains("db.changelog-template-projection-cleanup.yaml") }
+            .noneMatch { it.contains("db.changelog-template-projection-cleanup.yaml") }
         assertThat(changelogRoot.resolve("db.changelog-template-projection.yaml")).doesNotExist()
         assertThat(changelogRoot.resolve("template_projection.sql")).doesNotExist()
-        assertThat(changelogRoot.resolve("db.changelog-template-projection-cleanup.yaml")).exists()
-        assertThat(changelogRoot.resolve("template_projection_cleanup.sql")).exists()
+        assertThat(changelogRoot.resolve("db.changelog-template-projection-cleanup.yaml")).doesNotExist()
+        assertThat(changelogRoot.resolve("template_projection_cleanup.sql")).doesNotExist()
     }
 
     @Test

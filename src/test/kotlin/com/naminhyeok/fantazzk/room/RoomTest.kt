@@ -260,7 +260,7 @@ class RoomTest {
         }
 
         @Test
-        fun `legacy row에서 현재 위치가 비어 있으면 aggregate가 거부한다`() {
+        fun `진행 중인 방에 현재 위치가 비어 있으면 aggregate가 거부한다`() {
             assertThatThrownBy {
                 room(
                     status = RoomStatus.IN_PROGRESS,

@@ -34,7 +34,7 @@ class TemplateRepositoryImpl(
         templateJdbcCrudRepository
             .findAll()
             .sortedBy { it.id }
-            .mapNotNull { it.toDomainOrNull() }
+            .map { it.toDomain() }
 
     private fun TemplateEntity.toDomain() =
         Template(
@@ -44,11 +44,4 @@ class TemplateRepositoryImpl(
             createdAt = createdAt,
             updatedAt = updatedAt,
         )
-
-    private fun TemplateEntity.toDomainOrNull(): Template? =
-        try {
-            toDomain()
-        } catch (_: IllegalArgumentException) {
-            null
-        }
 }

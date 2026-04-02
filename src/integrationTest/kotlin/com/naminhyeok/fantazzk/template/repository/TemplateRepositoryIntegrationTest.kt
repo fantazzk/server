@@ -91,30 +91,36 @@ class TemplateRepositoryIntegrationTest(
     }
 
     @Test
-    fun `전체 템플릿 목록 조회는 유효하지 않은 legacy row를 건너뛴다`() {
+    fun `전체 템플릿 목록 조회는 유효하지 않은 row를 만나면 즉시 실패한다`() {
         cut.save(
             Template.create(
                 name = "정상 템플릿",
                 configuration = TemplateConfiguration.Auction(teamCount = 2, teamSize = 2, budgetValue = 300),
             ),
         )
-        jdbcTemplate.update(
-            """
-            insert into template (name, mode, team_count, team_size, budget, draft_order_strategy)
-            values (?, ?, ?, ?, ?, ?)
-            """.trimIndent(),
-            "유효하지 않은 legacy 템플릿",
-            "AUCTION",
-            2,
-            2,
-            null,
-            null,
-        )
+        val invalidTemplateId =
+            jdbcTemplate.queryForObject(
+                """
+                insert into template (name, mode, team_count, team_size, budget, draft_order_strategy)
+                values (?, ?, ?, ?, ?, ?)
+                returning id
+                """.trimIndent(),
+                Long::class.java,
+                "유효하지 않은 템플릿",
+                "AUCTION",
+                2,
+                2,
+                null,
+                null,
+            )!!
 
-        val all = cut.findAll()
-
-        assertThat(all.map { it.name }).contains("정상 템플릿")
-        assertThat(all.map { it.name }).doesNotContain("유효하지 않은 legacy 템플릿")
+        try {
+            assertThatThrownBy { cut.findAll() }
+                .isInstanceOf(IllegalArgumentException::class.java)
+                .hasMessage("경매 템플릿에는 예산이 필요합니다")
+        } finally {
+            jdbcTemplate.update("delete from template where id = ?", invalidTemplateId)
+        }
     }
 
     @Test
@@ -157,8 +163,12 @@ class TemplateRepositoryIntegrationTest(
                 null,
             )!!
 
-        assertThatThrownBy { cut.findById(TemplateId(templateId)) }
-            .isInstanceOf(IllegalArgumentException::class.java)
-            .hasMessage("경매 템플릿에는 예산이 필요합니다")
+        try {
+            assertThatThrownBy { cut.findById(TemplateId(templateId)) }
+                .isInstanceOf(IllegalArgumentException::class.java)
+                .hasMessage("경매 템플릿에는 예산이 필요합니다")
+        } finally {
+            jdbcTemplate.update("delete from template where id = ?", templateId)
+        }
     }
 }
