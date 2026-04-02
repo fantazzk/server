@@ -139,6 +139,43 @@ class TemplateModuleIntegrationTest {
     }
 
     @Test
+    fun `템플릿 조회 서비스 목록 조회는 선수 구성이 불완전한 행을 템플릿 유효성 예외로 변환한다`() {
+        val templateId =
+            jdbcTemplate.queryForObject(
+                """
+                insert into template (name, mode, team_count, team_size, budget, draft_order_strategy)
+                values (?, ?, ?, ?, ?, ?)
+                returning id
+                """.trimIndent(),
+                Long::class.java,
+                "선수 구성 누락 템플릿",
+                "AUCTION",
+                2,
+                2,
+                300,
+                null,
+            )!!
+
+        jdbcTemplate.update(
+            """
+            insert into template_player (template_id, name, display_order)
+            values (?, ?, ?)
+            """.trimIndent(),
+            templateId,
+            "선수1",
+            0,
+        )
+
+        try {
+            assertThatThrownBy { templateFinder.list() }
+                .isInstanceOf(TemplateException.TemplateInvalidException::class.java)
+        } finally {
+            jdbcTemplate.update("delete from template_player where template_id = ?", templateId)
+            jdbcTemplate.update("delete from template where id = ?", templateId)
+        }
+    }
+
+    @Test
     fun `템플릿 조회 서비스 상세 조회는 표시 순서대로 선수 목록을 반환한다`() {
         val template =
             templateRepository.save(
@@ -212,7 +249,12 @@ class TemplateModuleIntegrationTest {
             0,
         )
 
-        assertThatThrownBy { templateCatalog.getTemplateBlueprint(templateId) }
-            .isInstanceOf(TemplateCatalogException.Invalid::class.java)
+        try {
+            assertThatThrownBy { templateCatalog.getTemplateBlueprint(templateId) }
+                .isInstanceOf(TemplateCatalogException.Invalid::class.java)
+        } finally {
+            jdbcTemplate.update("delete from template_player where template_id = ?", templateId)
+            jdbcTemplate.update("delete from template where id = ?", templateId)
+        }
     }
 }

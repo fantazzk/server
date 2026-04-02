@@ -42,7 +42,7 @@ internal class TemplateFinderImpl(
     @Transactional(readOnly = true)
     override fun list(): List<Template> =
         try {
-            templateRepository.findAll()
+            templateRepository.findAll().onEach { it.players() }
         } catch (_: IllegalArgumentException) {
             throw TemplateException.TemplateInvalidException()
         } catch (_: InvalidDataAccessApiUsageException) {
