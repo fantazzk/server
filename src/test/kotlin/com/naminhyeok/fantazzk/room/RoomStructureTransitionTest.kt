@@ -12,8 +12,8 @@ import com.naminhyeok.fantazzk.room.repository.RoomTeamLeaderEntity
 import com.naminhyeok.fantazzk.room.repository.RoomTeamLeaderRepository
 import com.naminhyeok.fantazzk.room.repository.RoomTeamMemberEntity
 import com.naminhyeok.fantazzk.room.repository.RoomTeamMemberRepository
-import com.naminhyeok.fantazzk.room.query.RoomQueryService
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 
 class RoomStructureTransitionTest {
@@ -27,7 +27,8 @@ class RoomStructureTransitionTest {
     @Test
     fun `room API 는 더 이상 query service 에 의존하지 않는다`() {
         val parameterTypes = RoomApiController::class.java.declaredConstructors.single().parameterTypes.toList()
-        assertThat(parameterTypes).doesNotContain(RoomQueryService::class.java)
+        assertThat(parameterTypes.map { it.name })
+            .doesNotContain("com.naminhyeok.fantazzk.room.query.RoomQueryService")
     }
 
     @Test
@@ -58,11 +59,32 @@ class RoomStructureTransitionTest {
     }
 
     @Test
-    fun `room persistence entity 는 model 인터페이스를 구현하지 않는다`() {
-        assertThat(RoomEntity::class.java.interfaces).doesNotContain(RoomModel::class.java)
-        assertThat(RoomPlayerEntity::class.java.interfaces).doesNotContain(RoomPlayerModel::class.java)
-        assertThat(RoomTeamLeaderEntity::class.java.interfaces).doesNotContain(RoomTeamLeaderModel::class.java)
-        assertThat(RoomTeamMemberEntity::class.java.interfaces).doesNotContain(RoomTeamMemberModel::class.java)
-        assertThat(RoomBidEntity::class.java.interfaces).doesNotContain(RoomBidModel::class.java)
+    fun `room shim 타입은 더 이상 클래스패스에 존재하지 않는다`() {
+        listOf(
+            "com.naminhyeok.fantazzk.room.RoomModel",
+            "com.naminhyeok.fantazzk.room.RoomProps",
+            "com.naminhyeok.fantazzk.room.RoomIdentity",
+            "com.naminhyeok.fantazzk.room.RoomPlayerModel",
+            "com.naminhyeok.fantazzk.room.RoomPlayerProps",
+            "com.naminhyeok.fantazzk.room.RoomPlayerIdentity",
+            "com.naminhyeok.fantazzk.room.RoomTeamLeaderModel",
+            "com.naminhyeok.fantazzk.room.RoomTeamLeaderProps",
+            "com.naminhyeok.fantazzk.room.RoomTeamLeaderIdentity",
+            "com.naminhyeok.fantazzk.room.RoomTeamMemberModel",
+            "com.naminhyeok.fantazzk.room.RoomTeamMemberProps",
+            "com.naminhyeok.fantazzk.room.RoomTeamMemberIdentity",
+            "com.naminhyeok.fantazzk.room.RoomBidModel",
+            "com.naminhyeok.fantazzk.room.RoomBidProps",
+            "com.naminhyeok.fantazzk.room.RoomBidIdentity",
+        ).forEach { className ->
+            assertThatThrownBy { Class.forName(className) }
+                .isInstanceOf(ClassNotFoundException::class.java)
+        }
+
+        assertThat(RoomEntity::class.java.interfaces).isEmpty()
+        assertThat(RoomPlayerEntity::class.java.interfaces).isEmpty()
+        assertThat(RoomTeamLeaderEntity::class.java.interfaces).isEmpty()
+        assertThat(RoomTeamMemberEntity::class.java.interfaces).isEmpty()
+        assertThat(RoomBidEntity::class.java.interfaces).isEmpty()
     }
 }

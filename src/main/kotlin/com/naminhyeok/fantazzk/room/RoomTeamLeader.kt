@@ -20,18 +20,7 @@ data class RoomTeamLeader(
             remainingBudget = budgetState().spend(amount).remainingBudget,
         )
 
-    companion object {
-        fun from(model: RoomTeamLeaderModel): RoomTeamLeader =
-            RoomTeamLeader(
-                roomTeamLeaderId = model.roomTeamLeaderId,
-                roomId = model.roomId,
-                teamLeaderId = model.teamLeaderId,
-                nickname = model.nickname,
-                remainingBudget = model.remainingBudget,
-                createdAt = model.createdAt,
-                updatedAt = model.updatedAt,
-            )
-    }
-
     private fun budgetState(): BudgetState = BudgetState.requireFrom(remainingBudget)
 }
+
+fun RoomTeamLeader.validateBudget(amount: Int) = requireCanBid(amount)

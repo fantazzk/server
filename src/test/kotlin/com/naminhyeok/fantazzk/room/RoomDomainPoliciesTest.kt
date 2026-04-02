@@ -323,7 +323,7 @@ class RoomDomainPoliciesTest {
         fun `legacy row에서 필수 설정이 비어 있으면 팀 구성 설정을 만들 수 없다`() {
             assertThatThrownBy {
                 TeamBuildingConfiguration.from(
-                    roomProps(
+                    auctionRoom(
                         mode = TeamBuildingMode.AUCTION,
                         budget = null,
                         draftOrderStrategy = null,
@@ -331,11 +331,11 @@ class RoomDomainPoliciesTest {
                 )
             }
                 .isInstanceOf(IllegalArgumentException::class.java)
-                .hasMessageContaining("경매 모드에서는 예산이 존재해야 합니다")
+                .hasMessageContaining("경매 방에는 예산이 필요합니다")
 
             assertThatThrownBy {
                 TeamBuildingConfiguration.from(
-                    roomProps(
+                    draftRoom(
                         mode = TeamBuildingMode.DRAFT,
                         budget = null,
                         draftOrderStrategy = null,
@@ -343,25 +343,22 @@ class RoomDomainPoliciesTest {
                 )
             }
                 .isInstanceOf(IllegalArgumentException::class.java)
-                .hasMessageContaining("드래프트 모드에서는 순서 전략이 존재해야 합니다")
+                .hasMessageContaining("드래프트 방에는 순서 전략이 필요합니다")
         }
 
         @Test
         fun `방 진행 상태는 현재 위치와 상태를 함께 노출한다`() {
-            val waiting = RoomProgress.from(roomProps(status = RoomStatus.WAITING))
-            val auction = RoomProgress.from(roomProps(status = RoomStatus.IN_PROGRESS, currentAuctionRound = 2))
+            val waiting = RoomProgress.from(auctionRoom(status = RoomStatus.WAITING))
+            val auction = RoomProgress.from(auctionRoom(status = RoomStatus.IN_PROGRESS, currentAuctionRound = 2))
             val draft =
                 RoomProgress.from(
-                    roomProps(
+                    draftRoom(
                         status = RoomStatus.IN_PROGRESS,
-                        mode = TeamBuildingMode.DRAFT,
-                        budget = null,
-                        draftOrderStrategy = DraftOrderStrategy.SNAKE,
                         currentTurnIndex = 1,
                         currentAuctionRound = null,
                     ),
                 )
-            val completed = RoomProgress.from(roomProps(status = RoomStatus.COMPLETED))
+            val completed = RoomProgress.from(auctionRoom(status = RoomStatus.COMPLETED))
 
             assertThat(waiting.status).isEqualTo(RoomStatus.WAITING)
             assertThat((auction as RoomProgress.Auction).currentRound).isEqualTo(2)
@@ -374,18 +371,15 @@ class RoomDomainPoliciesTest {
         @Test
         fun `legacy row에서 현재 위치가 비어 있으면 진행 상태를 만들 수 없다`() {
             assertThatThrownBy {
-                RoomProgress.from(roomProps(status = RoomStatus.IN_PROGRESS, currentAuctionRound = null))
+                RoomProgress.from(auctionRoom(status = RoomStatus.IN_PROGRESS, currentAuctionRound = null))
             }
                 .isInstanceOf(IllegalArgumentException::class.java)
                 .hasMessageContaining("현재 라운드가 존재해야 합니다")
 
             assertThatThrownBy {
                 RoomProgress.from(
-                    roomProps(
+                    draftRoom(
                         status = RoomStatus.IN_PROGRESS,
-                        mode = TeamBuildingMode.DRAFT,
-                        budget = null,
-                        draftOrderStrategy = DraftOrderStrategy.SNAKE,
                         currentTurnIndex = null,
                         currentAuctionRound = null,
                     ),
@@ -596,7 +590,11 @@ class RoomDomainPoliciesTest {
 
     private fun auctionRoom(
         status: RoomStatus = RoomStatus.WAITING,
+        mode: TeamBuildingMode = TeamBuildingMode.AUCTION,
         teamCount: Int = 2,
+        teamSize: Int = 3,
+        budget: Int? = 300,
+        draftOrderStrategy: DraftOrderStrategy? = null,
         currentTurnIndex: Int? = null,
         currentAuctionRound: Int? = null,
     ): Room =
@@ -604,17 +602,22 @@ class RoomDomainPoliciesTest {
             code = "ROOM01",
             hostId = "host-1",
             status = status,
-            mode = TeamBuildingMode.AUCTION,
+            mode = mode,
             teamCount = teamCount,
-            teamSize = 3,
-            budget = 300,
+            teamSize = teamSize,
+            budget = budget,
+            draftOrderStrategy = draftOrderStrategy,
             currentTurnIndex = currentTurnIndex,
             currentAuctionRound = currentAuctionRound,
         )
 
     private fun draftRoom(
         status: RoomStatus = RoomStatus.WAITING,
+        mode: TeamBuildingMode = TeamBuildingMode.DRAFT,
         teamCount: Int = 2,
+        teamSize: Int = 3,
+        budget: Int? = null,
+        draftOrderStrategy: DraftOrderStrategy? = DraftOrderStrategy.SNAKE,
         currentTurnIndex: Int? = null,
         currentAuctionRound: Int? = null,
     ): Room =
@@ -622,34 +625,12 @@ class RoomDomainPoliciesTest {
             code = "ROOM02",
             hostId = "host-2",
             status = status,
-            mode = TeamBuildingMode.DRAFT,
+            mode = mode,
             teamCount = teamCount,
-            teamSize = 3,
-            draftOrderStrategy = DraftOrderStrategy.SNAKE,
+            teamSize = teamSize,
+            budget = budget,
+            draftOrderStrategy = draftOrderStrategy,
             currentTurnIndex = currentTurnIndex,
             currentAuctionRound = currentAuctionRound,
         )
-
-    private fun roomProps(
-        status: RoomStatus = RoomStatus.WAITING,
-        mode: TeamBuildingMode = TeamBuildingMode.AUCTION,
-        teamCount: Int = 2,
-        teamSize: Int = 3,
-        budget: Int? = if (mode == TeamBuildingMode.AUCTION) 300 else null,
-        draftOrderStrategy: DraftOrderStrategy? = if (mode == TeamBuildingMode.DRAFT) DraftOrderStrategy.SNAKE else null,
-        currentTurnIndex: Int? = null,
-        currentAuctionRound: Int? = null,
-    ): RoomProps =
-        object : RoomProps {
-            override val code = "ROOMPS"
-            override val hostId = "host-props"
-            override val status = status
-            override val mode = mode
-            override val teamCount = teamCount
-            override val teamSize = teamSize
-            override val budget = budget
-            override val draftOrderStrategy = draftOrderStrategy
-            override val currentTurnIndex = currentTurnIndex
-            override val currentAuctionRound = currentAuctionRound
-        }
 }

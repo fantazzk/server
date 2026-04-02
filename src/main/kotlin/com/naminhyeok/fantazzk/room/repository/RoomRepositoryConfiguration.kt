@@ -16,9 +16,6 @@ import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories
 )
 class RoomRepositoryConfiguration {
     @Bean
-    fun roomRepository(roomJdbcCrudRepository: RoomJdbcCrudRepository): RoomRepository = RoomRepositoryImpl(roomJdbcCrudRepository)
-
-    @Bean
     fun roomPlayerRepository(roomPlayerJdbcCrudRepository: RoomPlayerJdbcCrudRepository): RoomPlayerRepository =
         RoomPlayerRepositoryImpl(roomPlayerJdbcCrudRepository)
 
@@ -33,4 +30,20 @@ class RoomRepositoryConfiguration {
     @Bean
     fun roomBidRepository(roomBidJdbcCrudRepository: RoomBidJdbcCrudRepository): RoomBidRepository =
         RoomBidRepositoryImpl(roomBidJdbcCrudRepository)
+
+    @Bean
+    fun roomRepository(
+        roomJdbcCrudRepository: RoomJdbcCrudRepository,
+        roomPlayerRepository: RoomPlayerRepository,
+        roomTeamLeaderRepository: RoomTeamLeaderRepository,
+        roomTeamMemberRepository: RoomTeamMemberRepository,
+        roomBidRepository: RoomBidRepository,
+    ): RoomRepository =
+        RoomRepositoryImpl(
+            roomJdbcCrudRepository,
+            roomPlayerRepository,
+            roomTeamLeaderRepository,
+            roomTeamMemberRepository,
+            roomBidRepository,
+        )
 }

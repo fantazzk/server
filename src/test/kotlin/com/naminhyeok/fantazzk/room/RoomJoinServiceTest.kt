@@ -3,8 +3,6 @@ package com.naminhyeok.fantazzk.room
 import com.naminhyeok.fantazzk.room.application.RoomJoinService
 import com.naminhyeok.fantazzk.room.application.RoomJoinServiceImpl
 import com.naminhyeok.fantazzk.room.exception.RoomException
-import com.naminhyeok.fantazzk.room.repository.RoomAggregateRepositoryImpl
-import com.naminhyeok.fantazzk.room.repository.RoomRepository
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomBidRepository
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomPlayerRepository
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomRepository
@@ -35,13 +33,13 @@ class RoomJoinServiceTest {
 
     @BeforeEach
     fun setUp() {
-        roomRepo = InMemoryRoomRepository()
         playerRepo = InMemoryRoomPlayerRepository()
         leaderRepo = InMemoryRoomTeamLeaderRepository()
         memberRepo = InMemoryRoomTeamMemberRepository()
         bidRepo = InMemoryRoomBidRepository()
+        roomRepo = InMemoryRoomRepository(playerRepo, leaderRepo, memberRepo, bidRepo)
         events = mockk(relaxed = true)
-        cut = RoomJoinServiceImpl(RoomAggregateRepositoryImpl(roomRepo, playerRepo, leaderRepo, memberRepo, bidRepo), events)
+        cut = RoomJoinServiceImpl(roomRepo, events)
 
         val room =
             roomRepo.save(
@@ -97,16 +95,6 @@ class RoomJoinServiceTest {
 
             assertThat(leader.remainingBudget).isNull()
         }
-
-        @Test
-        fun `legacy 드래프트 방의 stale budget은 무시하고 참가시킨다`() {
-            val legacyRoomRepo = LegacyRoomRepository(legacyDraftRoom())
-            cut = RoomJoinServiceImpl(RoomAggregateRepositoryImpl(legacyRoomRepo, playerRepo, leaderRepo, memberRepo, bidRepo), events)
-
-            val leader = cut.join(roomCode, "드래프트참가자")
-
-            assertThat(leader.remainingBudget).isNull()
-        }
     }
 
     @Nested
@@ -156,37 +144,5 @@ class RoomJoinServiceTest {
                 .isInstanceOf(IllegalStateException::class.java)
                 .hasMessage("방이 가득 찼습니다")
         }
-    }
-
-    private fun legacyDraftRoom(): Room =
-        Room.from(
-            object : RoomModel {
-                override val roomId = this@RoomJoinServiceTest.roomId
-                override val code = this@RoomJoinServiceTest.roomCode
-                override val hostId = "host"
-                override val status = RoomStatus.WAITING
-                override val mode = TeamBuildingMode.DRAFT
-                override val teamCount = 2
-                override val teamSize = 2
-                override val budget = 300
-                override val draftOrderStrategy = DraftOrderStrategy.SNAKE
-                override val currentTurnIndex: Int? = null
-                override val currentAuctionRound: Int? = null
-                override val createdAt = java.time.Instant.parse("2025-01-01T00:00:00Z")
-                override val updatedAt = java.time.Instant.parse("2025-01-01T00:00:00Z")
-            },
-        )
-
-    private class LegacyRoomRepository(
-        private var room: Room,
-    ) : RoomRepository {
-        override fun save(room: Room): Room {
-            this.room = room
-            return room
-        }
-
-        override fun findByCode(code: String): Room? = room.takeIf { it.code == code }
-
-        override fun findById(roomId: Long): Room? = room.takeIf { it.roomId == roomId }
     }
 }

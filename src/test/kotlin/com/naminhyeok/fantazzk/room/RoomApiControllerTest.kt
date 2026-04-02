@@ -11,9 +11,6 @@ import com.naminhyeok.fantazzk.room.application.RoomLookupService
 import com.naminhyeok.fantazzk.room.application.RoomStartService
 import com.naminhyeok.fantazzk.room.exception.RoomException
 import com.naminhyeok.fantazzk.room.exception.RoomTemplateNotFoundException
-import com.naminhyeok.fantazzk.room.query.RoomQueryService
-import com.naminhyeok.fantazzk.room.query.RoomView
-import com.naminhyeok.fantazzk.room.query.TeamLeaderView
 import io.mockk.every
 import io.mockk.justRun
 import io.mockk.mockk
@@ -29,7 +26,6 @@ import java.time.Instant
 class RoomApiControllerTest {
     private val roomCreateService: RoomCreateService = mockk()
     private val roomLookupService: RoomLookupService = mockk()
-    private val roomQueryService: RoomQueryService = mockk()
     private val roomJoinService: RoomJoinService = mockk()
     private val roomStartService: RoomStartService = mockk()
     private val auctionService: AuctionService = mockk()
@@ -43,7 +39,6 @@ class RoomApiControllerTest {
                 RoomApiController(
                     roomCreateService,
                     roomLookupService,
-                    roomQueryService,
                     roomJoinService,
                     roomStartService,
                     auctionService,
@@ -58,7 +53,7 @@ class RoomApiControllerTest {
         @Test
         fun `존재하는 방을 조회하면 200과 방 정보를 반환한다`() {
             val room = room("ABC123")
-            every { roomQueryService.getRoom("ABC123") } returns roomView(room)
+            every { roomLookupService.get("ABC123") } returns room
 
             mockMvc.get("/api/v1/rooms/ABC123")
                 .andExpect {
@@ -75,7 +70,7 @@ class RoomApiControllerTest {
 
         @Test
         fun `존재하지 않는 방을 조회하면 404를 반환한다`() {
-            every { roomQueryService.getRoom("NOCODE") } throws RoomException.RoomNotFoundException()
+            every { roomLookupService.get("NOCODE") } throws RoomException.RoomNotFoundException()
 
             mockMvc.get("/api/v1/rooms/NOCODE")
                 .andExpect {
@@ -362,6 +357,7 @@ class RoomApiControllerTest {
         teamCount = 2,
         teamSize = 2,
         budget = 300,
+        leaders = listOf(leader(roomId = 1L)),
         createdAt = now,
         updatedAt = now,
     )
@@ -375,16 +371,5 @@ class RoomApiControllerTest {
             remainingBudget = 300,
             createdAt = now,
             updatedAt = now,
-        )
-
-    private fun roomView(
-        room: Room,
-        leaders: List<RoomTeamLeader> = listOf(leader(room.roomId)),
-    ): RoomView =
-        RoomView(
-            roomId = room.roomId,
-            code = room.code,
-            status = room.status,
-            teamLeaders = leaders.map { TeamLeaderView(it.teamLeaderId, it.nickname, it.remainingBudget) },
         )
 }

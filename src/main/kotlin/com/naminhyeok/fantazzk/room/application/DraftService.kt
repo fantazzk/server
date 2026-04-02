@@ -2,7 +2,7 @@ package com.naminhyeok.fantazzk.room.application
 
 import com.naminhyeok.fantazzk.room.RoomTeamMember
 import com.naminhyeok.fantazzk.room.exception.RoomException
-import com.naminhyeok.fantazzk.room.repository.RoomAggregateRepository
+import com.naminhyeok.fantazzk.room.repository.RoomRepository
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -18,7 +18,7 @@ interface DraftService {
 @org.jmolecules.ddd.annotation.Service
 @Service
 internal open class DraftServiceImpl(
-    private val roomAggregateRepository: RoomAggregateRepository,
+    private val roomRepository: RoomRepository,
     private val events: ApplicationEventPublisher,
 ) : DraftService {
     @Transactional
@@ -27,8 +27,8 @@ internal open class DraftServiceImpl(
         teamLeaderId: String,
         playerName: String,
     ): RoomTeamMember {
-        val room = roomAggregateRepository.findByCode(code) ?: throw RoomException.RoomNotFoundException()
-        val savedRoom = roomAggregateRepository.save(room.pick(teamLeaderId = teamLeaderId, playerName = playerName))
+        val room = roomRepository.findByCode(code) ?: throw RoomException.RoomNotFoundException()
+        val savedRoom = roomRepository.save(room.pick(teamLeaderId = teamLeaderId, playerName = playerName))
         savedRoom.drainEvents().forEach(events::publishEvent)
         return savedRoom.members.last()
     }

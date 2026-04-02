@@ -3,8 +3,6 @@ package com.naminhyeok.fantazzk.room
 import com.naminhyeok.fantazzk.room.application.DraftService
 import com.naminhyeok.fantazzk.room.application.DraftServiceImpl
 import com.naminhyeok.fantazzk.room.exception.RoomException
-import com.naminhyeok.fantazzk.room.repository.RoomAggregateRepositoryImpl
-import com.naminhyeok.fantazzk.room.support.InMemoryRoomBidRepository
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomPlayerRepository
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomRepository
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomTeamLeaderRepository
@@ -31,22 +29,12 @@ class DraftServiceTest {
 
     @BeforeEach
     fun setUp() {
-        roomRepo = InMemoryRoomRepository()
         playerRepo = InMemoryRoomPlayerRepository()
         leaderRepo = InMemoryRoomTeamLeaderRepository()
         memberRepo = InMemoryRoomTeamMemberRepository()
+        roomRepo = InMemoryRoomRepository(playerRepo, leaderRepo, memberRepo)
         events = mockk(relaxed = true)
-        cut =
-            DraftServiceImpl(
-                RoomAggregateRepositoryImpl(
-                    roomRepo,
-                    playerRepo,
-                    leaderRepo,
-                    memberRepo,
-                    InMemoryRoomBidRepository(),
-                ),
-                events,
-            )
+        cut = DraftServiceImpl(roomRepo, events)
 
         val room =
             roomRepo.save(

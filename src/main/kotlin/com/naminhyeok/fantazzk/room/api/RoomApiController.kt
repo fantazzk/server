@@ -12,7 +12,6 @@ import com.naminhyeok.fantazzk.room.dto.JoinRoomRequest
 import com.naminhyeok.fantazzk.room.dto.PickRequest
 import com.naminhyeok.fantazzk.room.dto.PlaceBidRequest
 import com.naminhyeok.fantazzk.room.dto.RoomResponse
-import com.naminhyeok.fantazzk.room.query.RoomQueryService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
@@ -37,7 +36,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse as SwaggerApiResponse
 class RoomApiController(
     private val roomCreateService: RoomCreateService,
     private val roomLookupService: RoomLookupService,
-    private val roomQueryService: RoomQueryService,
     private val roomJoinService: RoomJoinService,
     private val roomStartService: RoomStartService,
     private val auctionService: AuctionService,
@@ -132,7 +130,10 @@ class RoomApiController(
     fun getByCode(
         @Parameter(description = RoomOpenApiDocs.ROOM_CODE_PARAMETER, example = "ROOM01")
         @PathVariable code: String,
-    ): ApiResponse<RoomResponse> = ApiResponse.success(RoomResponse.from(roomQueryService.getRoom(code)))
+    ): ApiResponse<RoomResponse> {
+        val room = roomLookupService.get(code)
+        return ApiResponse.success(RoomResponse.from(room, room.leaders))
+    }
 
     @PostMapping("/{code}/join")
     @Operation(summary = "방 참가", operationId = "joinRoom", description = RoomOpenApiDocs.JOIN_DESCRIPTION)

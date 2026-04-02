@@ -23,16 +23,6 @@ data class RoomPlayer(
         return copy(displayOrder = displayOrder)
     }
 
-    companion object {
-        fun from(model: RoomPlayerModel): RoomPlayer =
-            RoomPlayer(
-                roomPlayerId = model.roomPlayerId,
-                roomId = model.roomId,
-                name = model.name,
-                status = model.status,
-                displayOrder = model.displayOrder,
-                createdAt = model.createdAt,
-                updatedAt = model.updatedAt,
-            )
-    }
 }
+
+fun RoomPlayer.isAvailable(): Boolean = status == PlayerStatus.AVAILABLE

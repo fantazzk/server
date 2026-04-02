@@ -2,7 +2,7 @@ package com.naminhyeok.fantazzk.room.application
 
 import com.naminhyeok.fantazzk.room.Room
 import com.naminhyeok.fantazzk.room.exception.RoomTemplateNotFoundException
-import com.naminhyeok.fantazzk.room.repository.RoomAggregateRepository
+import com.naminhyeok.fantazzk.room.repository.RoomRepository
 import com.naminhyeok.fantazzk.template.spi.TemplateLookup
 import com.naminhyeok.fantazzk.template.spi.TemplateLookupException
 import org.springframework.context.ApplicationEventPublisher
@@ -21,7 +21,7 @@ interface RoomCreateService {
 @org.jmolecules.ddd.annotation.Service
 @Service
 internal class RoomCreateServiceImpl(
-    private val roomAggregateRepository: RoomAggregateRepository,
+    private val roomRepository: RoomRepository,
     private val templateLookup: TemplateLookup,
     private val events: ApplicationEventPublisher,
 ) : RoomCreateService {
@@ -40,12 +40,12 @@ internal class RoomCreateServiceImpl(
             }
         repeat(MAX_CODE_GENERATION_ATTEMPTS) {
             val code = generateCode()
-            if (roomAggregateRepository.findByCode(code) != null) return@repeat
+            if (roomRepository.findByCode(code) != null) return@repeat
 
             val hostId = UUID.randomUUID().toString()
             val room =
                 try {
-                    roomAggregateRepository.save(
+                    roomRepository.save(
                         Room.createFromTemplate(
                             code = code,
                             hostId = hostId,

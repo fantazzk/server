@@ -227,128 +227,19 @@ class RoomTest {
     }
 
     @Nested
-    inner class Identity {
+    inner class `aggregate 식별자` {
         @Test
-        fun `RoomIdentity를 생성할 수 있다`() {
-            val identity = RoomIdentity.of(42L)
-            assertThat(identity.roomId).isEqualTo(42L)
+        fun `Room은 RoomId를 aggregate 식별자로 사용한다`() {
+            val room = room(roomId = 42L)
+
+            assertThat(room.getId()).isEqualTo(RoomId(42L))
         }
     }
 
     @Nested
-    inner class `모델 변환` {
+    inner class `현재 위치와 진행 전이` {
         @Test
-        fun `RoomModel에서 Room을 복원할 수 있다`() {
-            val createdAt = Instant.parse("2025-02-01T00:00:00Z")
-            val updatedAt = Instant.parse("2025-02-02T00:00:00Z")
-            val model =
-                roomModel(
-                    roomId = 7L,
-                    code = "ROOM07",
-                    hostId = "host-7",
-                    status = RoomStatus.COMPLETED,
-                    mode = TeamBuildingMode.AUCTION,
-                    teamCount = 3,
-                    teamSize = 4,
-                    budget = 250,
-                    draftOrderStrategy = null,
-                    currentTurnIndex = 1,
-                    currentAuctionRound = 5,
-                    createdAt = createdAt,
-                    updatedAt = updatedAt,
-                )
-
-            val room = Room.from(model)
-
-            assertThat(room).isEqualTo(
-                Room(
-                    roomId = 7L,
-                    code = "ROOM07",
-                    hostId = "host-7",
-                    status = RoomStatus.COMPLETED,
-                    mode = TeamBuildingMode.AUCTION,
-                    teamCount = 3,
-                    teamSize = 4,
-                    budget = 250,
-                    draftOrderStrategy = null,
-                    currentTurnIndex = 1,
-                    currentAuctionRound = 5,
-                    createdAt = createdAt,
-                    updatedAt = updatedAt,
-                ),
-            )
-        }
-
-        @Test
-        fun `legacy 드래프트 row를 복원할 때 stale budget을 제거한다`() {
-            val room =
-                Room.from(
-                    roomModel(
-                        roomId = 8L,
-                        code = "ROOM08",
-                        hostId = "host-8",
-                        status = RoomStatus.WAITING,
-                        mode = TeamBuildingMode.DRAFT,
-                        teamCount = 2,
-                        teamSize = 3,
-                        budget = 300,
-                        draftOrderStrategy = DraftOrderStrategy.SNAKE,
-                        currentTurnIndex = null,
-                        currentAuctionRound = null,
-                        createdAt = Instant.parse("2025-02-03T00:00:00Z"),
-                        updatedAt = Instant.parse("2025-02-04T00:00:00Z"),
-                    ),
-                )
-
-            assertThat(room.budget).isNull()
-            assertThat(room.draftOrderStrategy).isEqualTo(DraftOrderStrategy.SNAKE)
-            assertThat(room.configuration).isEqualTo(
-                TeamBuildingConfiguration.Draft(
-                    teamCount = 2,
-                    teamSize = 3,
-                    strategy = DraftOrderStrategy.SNAKE,
-                ),
-            )
-        }
-
-        @Test
-        fun `legacy 경매 row를 복원할 때 stale draft strategy를 제거한다`() {
-            val room =
-                Room.from(
-                    roomModel(
-                        roomId = 9L,
-                        code = "ROOM09",
-                        hostId = "host-9",
-                        status = RoomStatus.IN_PROGRESS,
-                        mode = TeamBuildingMode.AUCTION,
-                        teamCount = 2,
-                        teamSize = 3,
-                        budget = 300,
-                        draftOrderStrategy = DraftOrderStrategy.FIXED,
-                        currentTurnIndex = null,
-                        currentAuctionRound = 2,
-                        createdAt = Instant.parse("2025-02-05T00:00:00Z"),
-                        updatedAt = Instant.parse("2025-02-06T00:00:00Z"),
-                    ),
-                )
-
-            assertThat(room.budget).isEqualTo(300)
-            assertThat(room.draftOrderStrategy).isNull()
-            assertThat(room.progress).isEqualTo(RoomProgress.Auction(currentRound = 2))
-            assertThat(room.configuration).isEqualTo(
-                TeamBuildingConfiguration.Auction(
-                    teamCount = 2,
-                    teamSize = 3,
-                    budget = 300,
-                ),
-            )
-        }
-    }
-
-    @Nested
-    inner class `현재 위치와 모델 확장` {
-        @Test
-        fun `현재 경매 라운드와 드래프트 턴은 aggregate와 모델 확장에서 읽을 수 있다`() {
+        fun `현재 경매 라운드와 드래프트 턴은 aggregate에서 읽을 수 있다`() {
             val auctionRoom =
                 room(
                     status = RoomStatus.IN_PROGRESS,
@@ -365,41 +256,7 @@ class RoomTest {
                 )
 
             assertThat(auctionRoom.requireCurrentAuctionRound()).isEqualTo(2)
-            assertThat(
-                roomModel(
-                    roomId = 21L,
-                    code = "ROOM21",
-                    hostId = "host-21",
-                    status = RoomStatus.IN_PROGRESS,
-                    mode = TeamBuildingMode.AUCTION,
-                    teamCount = 2,
-                    teamSize = 3,
-                    budget = 300,
-                    draftOrderStrategy = null,
-                    currentTurnIndex = null,
-                    currentAuctionRound = 2,
-                    createdAt = Instant.parse("2025-02-07T00:00:00Z"),
-                    updatedAt = Instant.parse("2025-02-08T00:00:00Z"),
-                ).requireCurrentAuctionRound(),
-            ).isEqualTo(2)
             assertThat(draftRoom.requireCurrentTurnIndex()).isEqualTo(3)
-            assertThat(
-                roomModel(
-                    roomId = 22L,
-                    code = "ROOM22",
-                    hostId = "host-22",
-                    status = RoomStatus.IN_PROGRESS,
-                    mode = TeamBuildingMode.DRAFT,
-                    teamCount = 2,
-                    teamSize = 3,
-                    budget = null,
-                    draftOrderStrategy = DraftOrderStrategy.SNAKE,
-                    currentTurnIndex = 3,
-                    currentAuctionRound = null,
-                    createdAt = Instant.parse("2025-02-09T00:00:00Z"),
-                    updatedAt = Instant.parse("2025-02-10T00:00:00Z"),
-                ).requireCurrentTurnIndex(),
-            ).isEqualTo(3)
         }
 
         @Test
@@ -428,9 +285,9 @@ class RoomTest {
         }
 
         @Test
-        fun `RoomModel 확장은 경매 진행 전이를 aggregate 규칙으로 위임한다`() {
-            val model =
-                roomModel(
+        fun `경매 진행 전이는 aggregate 규칙을 따른다`() {
+            val room =
+                room(
                     roomId = 23L,
                     code = "ROOM23",
                     hostId = "host-23",
@@ -439,15 +296,13 @@ class RoomTest {
                     teamCount = 2,
                     teamSize = 3,
                     budget = 300,
-                    draftOrderStrategy = null,
-                    currentTurnIndex = null,
                     currentAuctionRound = 2,
                     createdAt = Instant.parse("2025-02-11T00:00:00Z"),
                     updatedAt = Instant.parse("2025-02-12T00:00:00Z"),
                 )
 
-            val advanced = model.advanceAuction(nextRound = 3, completed = false)
-            val moved = model.moveAuctionTargetToNextRound(nextRound = 4)
+            val advanced = room.advanceAuction(nextRound = 3, completed = false)
+            val moved = room.moveAuctionTargetToNextRound(nextRound = 4)
 
             assertThat(advanced.currentAuctionRound).isEqualTo(3)
             assertThat(advanced.status).isEqualTo(RoomStatus.IN_PROGRESS)
@@ -456,9 +311,9 @@ class RoomTest {
         }
 
         @Test
-        fun `RoomModel 확장은 드래프트 진행 전이를 aggregate 규칙으로 위임한다`() {
-            val model =
-                roomModel(
+        fun `드래프트 진행 전이는 aggregate 규칙을 따른다`() {
+            val room =
+                room(
                     roomId = 24L,
                     code = "ROOM24",
                     hostId = "host-24",
@@ -474,7 +329,7 @@ class RoomTest {
                     updatedAt = Instant.parse("2025-02-14T00:00:00Z"),
                 )
 
-            val advanced = model.advanceDraftTurn(nextTurnIndex = 2, completed = false)
+            val advanced = room.advanceDraftTurn(nextTurnIndex = 2, completed = false)
 
             assertThat(advanced.currentTurnIndex).isEqualTo(2)
             assertThat(advanced.status).isEqualTo(RoomStatus.IN_PROGRESS)
@@ -581,34 +436,4 @@ class RoomTest {
         updatedAt = updatedAt,
     )
 
-    private fun roomModel(
-        roomId: Long,
-        code: String,
-        hostId: String,
-        status: RoomStatus,
-        mode: TeamBuildingMode,
-        teamCount: Int,
-        teamSize: Int,
-        budget: Int?,
-        draftOrderStrategy: DraftOrderStrategy?,
-        currentTurnIndex: Int?,
-        currentAuctionRound: Int?,
-        createdAt: Instant,
-        updatedAt: Instant,
-    ): RoomModel =
-        object : RoomModel {
-            override val roomId = roomId
-            override val code = code
-            override val hostId = hostId
-            override val status = status
-            override val mode = mode
-            override val teamCount = teamCount
-            override val teamSize = teamSize
-            override val budget = budget
-            override val draftOrderStrategy = draftOrderStrategy
-            override val currentTurnIndex = currentTurnIndex
-            override val currentAuctionRound = currentAuctionRound
-            override val createdAt = createdAt
-            override val updatedAt = updatedAt
-        }
 }
