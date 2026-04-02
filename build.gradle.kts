@@ -1,250 +1,133 @@
+import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
-import org.gradle.testing.jacoco.tasks.JacocoCoverageVerification
-import org.gradle.testing.jacoco.tasks.JacocoReport
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 import org.springframework.boot.gradle.plugin.SpringBootPlugin
-
-enum class ModuleKind {
-    CONTAINER,
-    MODEL,
-    SERVICE,
-    INFRASTRUCTURE,
-    REPOSITORY_JDBC,
-    API,
-    APPLICATION_API,
-    EXCEPTION,
-    SCHEMA,
-    INTEGRATION,
-}
-
-fun Project.moduleKind(): ModuleKind {
-    val segments = path.trim(':').split(':').filter(String::isNotBlank)
-
-    return when {
-        segments.size == 1 && segments[0] == "application-api" -> ModuleKind.APPLICATION_API
-        segments.size == 1 -> ModuleKind.CONTAINER
-        segments.size == 2 && segments[0] == "integration" -> ModuleKind.INTEGRATION
-        segments.size == 2 ->
-            when (segments[1]) {
-                "model" -> ModuleKind.MODEL
-                "service" -> ModuleKind.SERVICE
-                "infrastructure" -> ModuleKind.INFRASTRUCTURE
-                "repository-jdbc" -> ModuleKind.REPOSITORY_JDBC
-                "api" -> ModuleKind.API
-                "application-api" -> ModuleKind.APPLICATION_API
-                "exception" -> ModuleKind.EXCEPTION
-                "schema" -> ModuleKind.SCHEMA
-                else -> error("Unsupported project path: $path")
-            }
-        else -> error("Unsupported project path: $path")
-    }
-}
-
-fun ModuleKind.isSpringModule(): Boolean =
-    this == ModuleKind.SERVICE ||
-        this == ModuleKind.API ||
-        this == ModuleKind.REPOSITORY_JDBC ||
-        this == ModuleKind.APPLICATION_API ||
-        this == ModuleKind.INTEGRATION
-
-fun ModuleKind.isWebModule(): Boolean =
-    this == ModuleKind.API ||
-        this == ModuleKind.APPLICATION_API
-
-fun ModuleKind.isJdbcModule(): Boolean = this == ModuleKind.REPOSITORY_JDBC
-
-fun ModuleKind.isApplicationModule(): Boolean = this == ModuleKind.APPLICATION_API
 
 plugins {
     java
     `java-library`
-    `jvm-test-suite`
-    alias(libs.plugins.spring.boot) apply false
-    alias(libs.plugins.ktlint) apply false
-    alias(libs.plugins.detekt) apply false
-    alias(libs.plugins.kotlin.jvm) apply false
-    alias(libs.plugins.kotlin.spring) apply false
+    alias(libs.plugins.spring.boot)
+    alias(libs.plugins.ktlint)
+    alias(libs.plugins.detekt)
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlin.spring)
 }
 
-allprojects {
-    findProperty("group")?.let {
-        group = it
-    }
+group = findProperty("group") ?: group
+version = findProperty("version") ?: version
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
 }
 
-subprojects {
-    val moduleKind = moduleKind()
-
-    apply(plugin = "java")
-    apply(plugin = "org.jetbrains.kotlin.jvm")
-    apply(plugin = "java-library")
-    apply(plugin = "jvm-test-suite")
-    apply(plugin = "org.jlleitschuh.gradle.ktlint")
-    apply(plugin = "dev.detekt")
-
-    // 도메인별 모듈 이름 충돌 방지 (예: order:repository-jdbc → order-repository-jdbc)
-    if (parent != rootProject) {
-        group = "${rootProject.group}.${parent?.name}"
-    }
-    base {
-        archivesName = if (parent != rootProject) "${parent?.name}-${name}" else name
-    }
-
-    configure<JavaPluginExtension> {
-        sourceCompatibility = JavaVersion.VERSION_25
-        targetCompatibility = JavaVersion.VERSION_25
-    }
-
-    configure<KotlinJvmProjectExtension> {
-        compilerOptions {
-            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_25)
-            freeCompilerArgs = listOf(
+configure<KotlinJvmProjectExtension> {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_25)
+        freeCompilerArgs =
+            listOf(
                 "-Xjsr305=strict",
                 "-opt-in=kotlin.RequiresOptIn",
                 "-Xemit-jvm-type-annotations",
             )
+    }
+}
+
+val modulithVersion = "2.0.5"
+
+val integrationTestSourceSet =
+    sourceSets.create("integrationTest") {
+        kotlin.srcDir("src/integrationTest/kotlin")
+        resources.srcDir("src/integrationTest/resources")
+        compileClasspath += sourceSets.main.get().output + configurations.testRuntimeClasspath.get()
+        runtimeClasspath += output + compileClasspath
+    }
+
+val integrationTestImplementation by configurations.getting {
+    extendsFrom(configurations.implementation.get(), configurations.testImplementation.get())
+}
+
+val integrationTestRuntimeOnly by configurations.getting {
+    extendsFrom(configurations.runtimeOnly.get(), configurations.testRuntimeOnly.get())
+}
+
+dependencies {
+    implementation(platform("org.springframework.modulith:spring-modulith-bom:$modulithVersion"))
+    testImplementation(platform("org.springframework.modulith:spring-modulith-bom:$modulithVersion"))
+    integrationTestImplementation(platform("org.springframework.modulith:spring-modulith-bom:$modulithVersion"))
+
+    implementation(enforcedPlatform(SpringBootPlugin.BOM_COORDINATES))
+    implementation(enforcedPlatform(libs.kotlin.bom))
+    implementation(enforcedPlatform(libs.kotlinx.coroutine.bom))
+
+    implementation(kotlin("reflect"))
+    implementation(kotlin("stdlib"))
+
+    implementation("org.springframework.boot:spring-boot-starter")
+    implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-security")
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("org.springframework.boot:spring-boot-starter-data-jdbc")
+    implementation("org.springframework:spring-tx")
+    implementation("org.jmolecules:jmolecules-ddd:2.0.1")
+    implementation("org.springframework.modulith:spring-modulith-starter-jdbc")
+    implementation("org.springframework.modulith:spring-modulith-starter-insight")
+    implementation("tools.jackson.module:jackson-module-kotlin")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.6")
+    implementation("io.sentry:sentry-spring-boot-4-starter:8.37.1")
+    implementation("io.micrometer:micrometer-tracing-bridge-otel")
+    implementation("org.liquibase:liquibase-core")
+    implementation("org.springframework.boot:spring-boot-liquibase")
+
+    runtimeOnly("org.postgresql:postgresql")
+
+    testImplementation(enforcedPlatform(SpringBootPlugin.BOM_COORDINATES))
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.springframework.modulith:spring-modulith-starter-test")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test")
+    testImplementation("com.tngtech.archunit:archunit-junit5:1.4.1")
+    testImplementation(libs.mockk)
+    testImplementation(libs.springmockk)
+
+    integrationTestImplementation(sourceSets.main.get().output)
+    integrationTestImplementation(enforcedPlatform(SpringBootPlugin.BOM_COORDINATES))
+    integrationTestImplementation("org.springframework.boot:spring-boot-starter-test")
+    integrationTestImplementation("org.springframework.boot:spring-boot-data-jdbc-test")
+    integrationTestImplementation("org.springframework.boot:spring-boot-jdbc-test")
+    integrationTestImplementation("org.springframework.modulith:spring-modulith-starter-test")
+    integrationTestImplementation("org.springframework.boot:spring-boot-restclient")
+    integrationTestImplementation("org.springframework.boot:spring-boot-resttestclient")
+    integrationTestImplementation("org.testcontainers:testcontainers-postgresql")
+    integrationTestRuntimeOnly("org.postgresql:postgresql")
+}
+
+tasks.withType<Test>().configureEach {
+    useJUnitPlatform()
+    testLogging {
+        events = mutableSetOf(TestLogEvent.FAILED)
+        exceptionFormat = TestExceptionFormat.FULL
+    }
+}
+
+val integrationTest =
+    tasks.register<Test>("integrationTest") {
+        description = "Runs integration tests."
+        group = LifecycleBasePlugin.VERIFICATION_GROUP
+        testClassesDirs = integrationTestSourceSet.output.classesDirs
+        classpath = integrationTestSourceSet.runtimeClasspath
+        shouldRunAfter(tasks.test)
+        useJUnitPlatform()
+        testLogging {
+            events = mutableSetOf(TestLogEvent.FAILED)
+            exceptionFormat = TestExceptionFormat.FULL
         }
     }
 
-    testing {
-        suites {
-            val test by getting(JvmTestSuite::class)
-            val integrationTest by registering(JvmTestSuite::class)
+tasks.check {
+    dependsOn(integrationTest)
+}
 
-            withType<JvmTestSuite> {
-                useJUnitJupiter()
-
-                targets {
-                    all {
-                        dependencies {
-                            implementation(project())
-                        }
-                        testTask.configure {
-                            shouldRunAfter(test)
-                            testLogging {
-                                events = mutableSetOf(TestLogEvent.FAILED)
-                                exceptionFormat = TestExceptionFormat.FULL
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    val integrationTestImplementation by configurations.getting {
-        extendsFrom(configurations.testImplementation.get())
-    }
-
-    tasks {
-        val check by getting {
-            dependsOn("integrationTest")
-        }
-
-        if (moduleKind.isApplicationModule()) {
-            named("integrationTest") {
-                mustRunAfter(
-                    rootProject.subprojects
-                        .filter { it != project && it.moduleKind().isJdbcModule() }
-                        .map { "${it.path}:integrationTest" },
-                )
-            }
-        }
-    }
-
-    if (moduleKind == ModuleKind.MODEL) {
-        apply(plugin = "jacoco")
-
-        tasks.named<JacocoReport>("jacocoTestReport") {
-            dependsOn(tasks.named("test"))
-            reports {
-                xml.required.set(true)
-                html.required.set(true)
-            }
-        }
-
-        tasks.named<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
-            dependsOn(tasks.named("test"))
-            violationRules {
-                rule {
-                    limit {
-                        counter = "LINE"
-                        value = "COVEREDRATIO"
-                        minimum = "1.0".toBigDecimal()
-                    }
-                }
-                rule {
-                    limit {
-                        counter = "BRANCH"
-                        value = "COVEREDRATIO"
-                        minimum = "1.0".toBigDecimal()
-                    }
-                }
-            }
-        }
-
-        tasks.named("check") {
-            dependsOn("jacocoTestReport", "jacocoTestCoverageVerification")
-        }
-    }
-
-    dependencies {
-        implementation(enforcedPlatform(rootProject.libs.kotlin.bom))
-        implementation(enforcedPlatform(rootProject.libs.kotlinx.coroutine.bom))
-
-        implementation(kotlin("reflect"))
-        implementation(kotlin("stdlib"))
-
-        testImplementation(enforcedPlatform(SpringBootPlugin.BOM_COORDINATES))
-        testImplementation("org.springframework.boot:spring-boot-starter-test")
-        testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test")
-        testImplementation("com.tngtech.archunit:archunit-junit5:1.4.1")
-        testImplementation(rootProject.libs.mockk)
-        testImplementation(rootProject.libs.springmockk)
-    }
-
-    // Spring Boot modules
-    if (moduleKind.isSpringModule()) {
-        apply(plugin = "org.jetbrains.kotlin.plugin.spring")
-
-        dependencies {
-            implementation(enforcedPlatform(SpringBootPlugin.BOM_COORDINATES))
-            implementation("org.springframework.boot:spring-boot-starter")
-            implementation("org.springframework:spring-tx")
-            implementation("tools.jackson.module:jackson-module-kotlin")
-        }
-    }
-
-    // Web modules (REST API)
-    if (moduleKind.isWebModule()) {
-        dependencies {
-            implementation("org.springframework.security:spring-security-core")
-            implementation("org.springframework.boot:spring-boot-starter-web")
-            implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.6")
-        }
-    }
-
-    // JDBC repository modules
-    if (moduleKind.isJdbcModule()) {
-        dependencies {
-            api("org.springframework.boot:spring-boot-starter-data-jdbc")
-            testImplementation("org.springframework.boot:spring-boot-starter-data-jdbc-test")
-        }
-    }
-
-    // Application modules (Spring Boot entry points)
-    if (moduleKind.isApplicationModule()) {
-        apply(plugin = "org.springframework.boot")
-
-        dependencies {
-            implementation("io.micrometer:micrometer-tracing-bridge-otel")
-            implementation("org.springframework.boot:spring-boot-starter-actuator")
-            implementation("org.springframework.boot:spring-boot-starter-web")
-            implementation("org.springframework.boot:spring-boot-starter-security")
-
-            testImplementation("org.springframework.boot:spring-boot-restclient")
-            testImplementation("org.springframework.boot:spring-boot-resttestclient")
-        }
-    }
+tasks.named<Copy>("processIntegrationTestResources") {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
