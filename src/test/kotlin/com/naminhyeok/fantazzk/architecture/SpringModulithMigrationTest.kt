@@ -55,6 +55,17 @@ class SpringModulithMigrationTest {
     }
 
     @Test
+    fun `dead room projection Liquibase 스키마는 제거되었다`() {
+        val changelogRoot = Path.of("src/main/resources/db/changelog/team-building")
+        val masterChangelog = changelogRoot.resolve("db.changelog-master.yaml").readLines()
+
+        assertThat(masterChangelog)
+            .noneMatch { it.contains("db.changelog-room-projection.yaml") }
+        assertThat(changelogRoot.resolve("db.changelog-room-projection.yaml")).doesNotExist()
+        assertThat(changelogRoot.resolve("room_projection.sql")).doesNotExist()
+    }
+
+    @Test
     fun `소스 파일 경로는 패키지 선언과 일치한다`() {
         val sourceRoot = Path.of("src/main/kotlin/com/naminhyeok/fantazzk")
 

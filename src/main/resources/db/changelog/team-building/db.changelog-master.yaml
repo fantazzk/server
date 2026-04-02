@@ -6,6 +6,6 @@ databaseChangeLog:
   - include:
       file: db/changelog/team-building/db.changelog-template-projection.yaml
   - include:
-      file: db/changelog/team-building/db.changelog-room-projection.yaml
+      file: db/changelog/team-building/db.changelog-room-projection-cleanup.yaml
   - include:
       file: db/changelog/team-building/db.changelog-modulith-event-publication.yaml

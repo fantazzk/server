@@ -1,8 +1,0 @@
-databaseChangeLog:
-  - changeSet:
-      id: room-projection-v1
-      author: codex
-      changes:
-        - sqlFile:
-            path: db/changelog/team-building/room_projection.sql
-            relativeToChangelogFile: false
