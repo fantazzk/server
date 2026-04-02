@@ -1,7 +1,7 @@
 package com.naminhyeok.fantazzk.room
 
 import com.naminhyeok.fantazzk.room.api.RoomApiController
-import com.naminhyeok.fantazzk.room.application.RoomLookupService
+import com.naminhyeok.fantazzk.room.application.RoomFinder
 import com.naminhyeok.fantazzk.room.repository.RoomBidEntity
 import com.naminhyeok.fantazzk.room.repository.RoomBidRepository
 import com.naminhyeok.fantazzk.room.repository.RoomEntity
@@ -29,6 +29,7 @@ class RoomStructureTransitionTest {
         val parameterTypes = RoomApiController::class.java.declaredConstructors.single().parameterTypes.toList()
         assertThat(parameterTypes.map { it.name })
             .doesNotContain("com.naminhyeok.fantazzk.room.query.RoomQueryService")
+            .doesNotContain("com.naminhyeok.fantazzk.room.application.RoomLookupService")
     }
 
     @Test
@@ -54,8 +55,24 @@ class RoomStructureTransitionTest {
         ).isEqualTo(RoomBid::class.java)
 
         assertThat(
-            RoomLookupService::class.java.getMethod("get", String::class.java).returnType,
+            RoomFinder::class.java.getMethod("get", String::class.java).returnType,
         ).isEqualTo(Room::class.java)
+    }
+
+    @Test
+    fun `room query projection 타입은 더 이상 클래스패스에 존재하지 않는다`() {
+        listOf(
+            "com.naminhyeok.fantazzk.room.query.RoomQueryService",
+            "com.naminhyeok.fantazzk.room.query.RoomProjectionUpdater",
+            "com.naminhyeok.fantazzk.room.query.RoomProjectionWriter",
+            "com.naminhyeok.fantazzk.room.query.RoomViewProjectionRepository",
+            "com.naminhyeok.fantazzk.room.query.TeamLeaderViewProjectionRepository",
+            "com.naminhyeok.fantazzk.room.query.RoomView",
+            "com.naminhyeok.fantazzk.room.query.TeamLeaderView",
+        ).forEach { className ->
+            assertThatThrownBy { Class.forName(className) }
+                .isInstanceOf(ClassNotFoundException::class.java)
+        }
     }
 
     @Test

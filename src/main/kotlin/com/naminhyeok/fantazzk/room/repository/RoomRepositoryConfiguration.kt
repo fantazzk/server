@@ -1,7 +1,5 @@
 package com.naminhyeok.fantazzk.room.repository
 
-import com.naminhyeok.fantazzk.room.query.RoomViewCrudRepository
-import com.naminhyeok.fantazzk.room.query.TeamLeaderViewCrudRepository
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories
@@ -10,8 +8,6 @@ import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories
 @EnableJdbcRepositories(
     basePackageClasses = [
         RoomRepositoryConfiguration::class,
-        RoomViewCrudRepository::class,
-        TeamLeaderViewCrudRepository::class,
     ],
 )
 class RoomRepositoryConfiguration {

@@ -1,8 +1,8 @@
 package com.naminhyeok.fantazzk.room
 
 import com.naminhyeok.fantazzk.room.application.RoomCreateService
+import com.naminhyeok.fantazzk.room.application.RoomFinder
 import com.naminhyeok.fantazzk.room.application.RoomStartService
-import com.naminhyeok.fantazzk.room.query.RoomViewProjectionRepository
 import com.naminhyeok.fantazzk.template.spi.TemplateLookup
 import com.naminhyeok.fantazzk.template.spi.TemplateMode
 import com.naminhyeok.fantazzk.template.spi.TemplatePlayerSnapshot
@@ -14,7 +14,6 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.modulith.test.ApplicationModuleTest
 import org.springframework.modulith.test.PublishedEvents
-import org.springframework.modulith.test.Scenario
 
 @ApplicationModuleTest(
     module = "room",
@@ -31,7 +30,7 @@ class RoomModuleIntegrationTest {
     lateinit var roomStartService: RoomStartService
 
     @Autowired
-    lateinit var roomViewProjectionRepository: RoomViewProjectionRepository
+    lateinit var roomFinder: RoomFinder
 
     @Test
     fun `room module boots with direct dependencies`() {
@@ -62,7 +61,7 @@ class RoomModuleIntegrationTest {
     }
 
     @Test
-    fun `room create updates room query projection`(scenario: Scenario) {
+    fun `room create 후 aggregate finder 로 즉시 조회할 수 있다`() {
         every { templateLookup.getTemplate(1L) } returns
             TemplateSnapshot(
                 mode = TemplateMode.AUCTION,
@@ -77,11 +76,12 @@ class RoomModuleIntegrationTest {
                     ),
             )
 
-        scenario
-            .stimulate { roomCreateService.create(1L, "호스트") }
-            .andWaitForStateChange({ roomViewProjectionRepository.findAll().size }) { it > 0 }
-            .andVerify { projectionCount ->
-                assertThat(projectionCount).isGreaterThan(0)
-            }
+        val createdRoom = roomCreateService.create(1L, "호스트")
+
+        val foundRoom = roomFinder.get(createdRoom.code)
+
+        assertThat(foundRoom.code).isEqualTo(createdRoom.code)
+        assertThat(foundRoom.status).isEqualTo(RoomStatus.WAITING)
+        assertThat(foundRoom.leaders.map { it.nickname }).containsExactly("호스트")
     }
 }
