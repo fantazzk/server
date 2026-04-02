@@ -1,4 +1,4 @@
-package com.naminhyeok.fantazzk.room.application
+package com.naminhyeok.fantazzk.room
 
 internal data class RoomTemplateSpec(
     val mode: Mode,

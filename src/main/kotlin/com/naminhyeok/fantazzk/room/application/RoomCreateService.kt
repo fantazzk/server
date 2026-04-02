@@ -1,6 +1,7 @@
 package com.naminhyeok.fantazzk.room.application
 
 import com.naminhyeok.fantazzk.room.Room
+import com.naminhyeok.fantazzk.room.RoomTemplateSpec
 import com.naminhyeok.fantazzk.room.exception.RoomTemplateNotFoundException
 import com.naminhyeok.fantazzk.room.repository.RoomRepository
 import com.naminhyeok.fantazzk.template.TemplateBlueprint

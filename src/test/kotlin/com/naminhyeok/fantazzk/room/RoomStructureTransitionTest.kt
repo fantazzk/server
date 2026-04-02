@@ -100,6 +100,13 @@ class RoomStructureTransitionTest {
     }
 
     @Test
+    fun `room aggregate 생성 명세는 room 루트 패키지에 둔다`() {
+        assertThat(Class.forName("com.naminhyeok.fantazzk.room.RoomTemplateSpec")).isNotNull
+        assertThatThrownBy { Class.forName("com.naminhyeok.fantazzk.room.application.RoomTemplateSpec") }
+            .isInstanceOf(ClassNotFoundException::class.java)
+    }
+
+    @Test
     fun `room shim 타입은 더 이상 클래스패스에 존재하지 않는다`() {
         listOf(
             "com.naminhyeok.fantazzk.room.RoomModel",

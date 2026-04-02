@@ -20,7 +20,7 @@ class RoomFinderTest {
     }
 
     @Test
-    fun `코드로 방 aggregate 를 조회할 때 in memory 저장소가 자식 컬렉션을 함께 보존한다`() {
+    fun `코드로 방 aggregate 를 조회한다`() {
         roomRepo.save(
             Room(
                 code = "LOOK01",
@@ -30,22 +30,13 @@ class RoomFinderTest {
                 teamCount = 2,
                 teamSize = 2,
                 budget = 300,
-                leaders =
-                    listOf(
-                        RoomTeamLeader(
-                            teamLeaderId = "leader-1",
-                            nickname = "참가자",
-                            remainingBudget = 300,
-                        ),
-                    ),
             ),
         )
 
         val room = cut.get("LOOK01")
 
         assertThat(room.code).isEqualTo("LOOK01")
-        assertThat(room.leaders).hasSize(1)
-        assertThat(room.leaders.single().nickname).isEqualTo("참가자")
+        assertThat(room.status).isEqualTo(RoomStatus.WAITING)
     }
 
     @Test

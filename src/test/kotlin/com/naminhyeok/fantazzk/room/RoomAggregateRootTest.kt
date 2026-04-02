@@ -1,6 +1,4 @@
 package com.naminhyeok.fantazzk.room
-
-import com.naminhyeok.fantazzk.room.application.RoomTemplateSpec
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
