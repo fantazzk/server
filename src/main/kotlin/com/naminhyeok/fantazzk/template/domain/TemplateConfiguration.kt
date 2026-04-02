@@ -64,7 +64,13 @@ class TemplateConfiguration protected constructor(
     }
 
     override fun toString(): String =
-        "TemplateConfiguration(mode=$mode, teamCount=$teamCount, teamSize=$teamSize, budget=$budget, draftOrderStrategy=$draftOrderStrategy)"
+        "TemplateConfiguration(" +
+            "mode=$mode, " +
+            "teamCount=$teamCount, " +
+            "teamSize=$teamSize, " +
+            "budget=$budget, " +
+            "draftOrderStrategy=$draftOrderStrategy" +
+            ")"
 
     companion object {
         fun auction(

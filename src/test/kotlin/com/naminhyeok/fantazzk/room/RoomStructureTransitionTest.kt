@@ -45,7 +45,14 @@ class RoomStructureTransitionTest {
         val draftDependencies = DraftServiceImpl::class.java.declaredConstructors.single().parameterTypes.map { it.simpleName }
         val auctionDependencies = AuctionServiceImpl::class.java.declaredConstructors.single().parameterTypes.map { it.simpleName }
 
-        listOf(createDependencies, finderDependencies, joinDependencies, startDependencies, draftDependencies, auctionDependencies).forEach { dependencies ->
+        listOf(
+            createDependencies,
+            finderDependencies,
+            joinDependencies,
+            startDependencies,
+            draftDependencies,
+            auctionDependencies,
+        ).forEach { dependencies ->
             assertThat(dependencies).doesNotContain(
                 "RoomPlayerRepository",
                 "RoomTeamLeaderRepository",

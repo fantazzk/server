@@ -1,7 +1,7 @@
 package com.naminhyeok.fantazzk.room
 
-import com.naminhyeok.fantazzk.room.application.RoomCreateService
 import com.naminhyeok.fantazzk.room.application.RoomCreateAttemptExecutor
+import com.naminhyeok.fantazzk.room.application.RoomCreateService
 import com.naminhyeok.fantazzk.room.application.RoomCreateServiceImpl
 import com.naminhyeok.fantazzk.room.exception.RoomTemplateNotFoundException
 import com.naminhyeok.fantazzk.room.repository.RoomRepository
@@ -13,7 +13,6 @@ import com.naminhyeok.fantazzk.template.TemplateCatalogException
 import com.naminhyeok.fantazzk.template.TemplateDraftOrderStrategy
 import com.naminhyeok.fantazzk.template.TemplateMode
 import com.naminhyeok.fantazzk.template.TemplatePlayerBlueprint
-import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach

@@ -13,10 +13,10 @@ import org.springframework.modulith.core.ApplicationModules
 import org.springframework.modulith.docs.Documenter
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.readText
 import kotlin.io.path.extension
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.readText
 
 class SpringModulithArchitectureTest {
     private val modules = ApplicationModules.of(FantazzkApplication::class.java)

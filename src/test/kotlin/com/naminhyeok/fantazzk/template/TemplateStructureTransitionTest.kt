@@ -46,8 +46,10 @@ class TemplateStructureTransitionTest {
 
     @Test
     fun `template finder 와 create service 는 더 이상 선수 리포지토리에 의존하지 않는다`() {
-        val finderDependencies = TemplateFinderImpl::class.java.declaredConstructors.single().parameterTypes.map { it.simpleName }
-        val createServiceDependencies = TemplateCreateServiceImpl::class.java.declaredConstructors.single().parameterTypes.map { it.simpleName }
+        val finderDependencies =
+            TemplateFinderImpl::class.java.declaredConstructors.single().parameterTypes.map { it.simpleName }
+        val createServiceDependencies =
+            TemplateCreateServiceImpl::class.java.declaredConstructors.single().parameterTypes.map { it.simpleName }
 
         assertThat(finderDependencies).doesNotContain("TemplatePlayerRepository")
         assertThat(createServiceDependencies).doesNotContain("TemplatePlayerRepository")

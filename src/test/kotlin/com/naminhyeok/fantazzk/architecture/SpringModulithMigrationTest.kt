@@ -131,14 +131,83 @@ class SpringModulithMigrationTest {
     fun `역사적 Liquibase 초기 스키마와 감사 컬럼 추가 changeSet 은 서로 역할이 섞이지 않는다`() {
         val initialSchema = Path.of("src/main/resources/db/changelog/team-building/initial_schema.sql").readText()
         val auditColumns = Path.of("src/main/resources/db/changelog/team-building/add_audit_columns.sql").readText()
+        val templateUpdatedAtInInitialSchema =
+            """
+            template
+            (
+                id                    BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+                name                  VARCHAR(255) NOT NULL,
+                mode                  VARCHAR(20)  NOT NULL,
+                team_count            INT          NOT NULL,
+                team_size             INT          NOT NULL,
+                budget                INT,
+                draft_order_strategy  VARCHAR(20),
+                created_at            TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at
+            """.trimIndent()
+        val templatePlayerAuditColumnsInInitialSchema =
+            """
+            template_player
+            (
+                id            BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+                template_id   BIGINT       NOT NULL,
+                name          VARCHAR(255) NOT NULL,
+                display_order INT          NOT NULL,
+                created_at
+            """.trimIndent()
+        val roomPlayerAuditColumnsInInitialSchema =
+            """
+            room_player
+            (
+                id            BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+                room_id       BIGINT       NOT NULL,
+                name          VARCHAR(255) NOT NULL,
+                status        VARCHAR(20)  NOT NULL,
+                display_order INT          NOT NULL,
+                created_at
+            """.trimIndent()
+        val roomTeamLeaderAuditColumnsInInitialSchema =
+            """
+            room_team_leader
+            (
+                id               BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+                room_id          BIGINT       NOT NULL,
+                team_leader_id   VARCHAR(36)  NOT NULL,
+                nickname         VARCHAR(255) NOT NULL,
+                remaining_budget INT,
+                created_at
+            """.trimIndent()
+        val roomTeamMemberAuditColumnsInInitialSchema =
+            """
+            room_team_member
+            (
+                id             BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+                room_id        BIGINT       NOT NULL,
+                team_leader_id VARCHAR(36)  NOT NULL,
+                player_name    VARCHAR(255) NOT NULL,
+                assign_order   INT          NOT NULL,
+                created_at
+            """.trimIndent()
+        val roomBidUpdatedAtInInitialSchema =
+            """
+            room_bid
+            (
+                id             BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+                room_id        BIGINT      NOT NULL,
+                round          INT         NOT NULL,
+                team_leader_id VARCHAR(36) NOT NULL,
+                amount         INT         NOT NULL,
+                created_at     TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at
+            """.trimIndent()
 
         assertThat(initialSchema).contains("created_at            TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP")
-        assertThat(initialSchema).doesNotContain("template\n(\n    id                    BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,\n    name                  VARCHAR(255) NOT NULL,\n    mode                  VARCHAR(20)  NOT NULL,\n    team_count            INT          NOT NULL,\n    team_size             INT          NOT NULL,\n    budget                INT,\n    draft_order_strategy  VARCHAR(20),\n    created_at            TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,\n    updated_at")
-        assertThat(initialSchema).doesNotContain("template_player\n(\n    id            BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,\n    template_id   BIGINT       NOT NULL,\n    name          VARCHAR(255) NOT NULL,\n    display_order INT          NOT NULL,\n    created_at")
-        assertThat(initialSchema).doesNotContain("room_player\n(\n    id            BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,\n    room_id       BIGINT       NOT NULL,\n    name          VARCHAR(255) NOT NULL,\n    status        VARCHAR(20)  NOT NULL,\n    display_order INT          NOT NULL,\n    created_at")
-        assertThat(initialSchema).doesNotContain("room_team_leader\n(\n    id               BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,\n    room_id          BIGINT       NOT NULL,\n    team_leader_id   VARCHAR(36)  NOT NULL,\n    nickname         VARCHAR(255) NOT NULL,\n    remaining_budget INT,\n    created_at")
-        assertThat(initialSchema).doesNotContain("room_team_member\n(\n    id             BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,\n    room_id        BIGINT       NOT NULL,\n    team_leader_id VARCHAR(36)  NOT NULL,\n    player_name    VARCHAR(255) NOT NULL,\n    assign_order   INT          NOT NULL,\n    created_at")
-        assertThat(initialSchema).doesNotContain("room_bid\n(\n    id             BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,\n    room_id        BIGINT      NOT NULL,\n    round          INT         NOT NULL,\n    team_leader_id VARCHAR(36) NOT NULL,\n    amount         INT         NOT NULL,\n    created_at     TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,\n    updated_at")
+        assertThat(initialSchema).doesNotContain(templateUpdatedAtInInitialSchema)
+        assertThat(initialSchema).doesNotContain(templatePlayerAuditColumnsInInitialSchema)
+        assertThat(initialSchema).doesNotContain(roomPlayerAuditColumnsInInitialSchema)
+        assertThat(initialSchema).doesNotContain(roomTeamLeaderAuditColumnsInInitialSchema)
+        assertThat(initialSchema).doesNotContain(roomTeamMemberAuditColumnsInInitialSchema)
+        assertThat(initialSchema).doesNotContain(roomBidUpdatedAtInInitialSchema)
         assertThat(auditColumns).contains("ADD COLUMN updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;")
         assertThat(auditColumns).contains("ADD COLUMN created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,")
         assertThat(auditColumns).contains("-- template: updated_at 추가")
