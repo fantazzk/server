@@ -23,7 +23,7 @@ internal interface RoomJpaStore : JpaRepository<Room, Long> {
 }
 
 @Component
-internal class RoomRepositoryAdapter(
+class RoomRepositoryAdapter internal constructor(
     private val store: RoomJpaStore,
 ) : RoomRepository {
     @Transactional
