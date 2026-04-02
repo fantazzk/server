@@ -3,7 +3,12 @@ package com.naminhyeok.fantazzk.room.repository
 import com.naminhyeok.fantazzk.RootCombinedJdbcConfiguration
 import com.naminhyeok.fantazzk.room.DraftOrderStrategy
 import com.naminhyeok.fantazzk.room.Room
+import com.naminhyeok.fantazzk.room.RoomBid
+import com.naminhyeok.fantazzk.room.RoomId
+import com.naminhyeok.fantazzk.room.RoomPlayer
 import com.naminhyeok.fantazzk.room.RoomStatus
+import com.naminhyeok.fantazzk.room.RoomTeamLeader
+import com.naminhyeok.fantazzk.room.RoomTeamMember
 import com.naminhyeok.fantazzk.room.TeamBuildingMode
 import com.naminhyeok.fantazzk.room.config.RoomJdbcConfiguration
 import com.naminhyeok.fantazzk.template.config.TemplateJdbcConfiguration
@@ -69,7 +74,7 @@ class RoomRepositoryIntegrationTest(
                 ),
             )
 
-        val found = cut.findById(saved.roomId)
+        val found = cut.findById(RoomId(saved.roomId))
         assertThat(found).isNotNull
         assertThat(found!!.draftOrderStrategy).isEqualTo(DraftOrderStrategy.SNAKE)
         assertThat(found.currentTurnIndex).isEqualTo(0)
@@ -82,7 +87,7 @@ class RoomRepositoryIntegrationTest(
 
     @Test
     fun `존재하지 않는 방 ID는 조회하면 null을 반환한다`() {
-        assertThat(cut.findById(Long.MAX_VALUE)).isNull()
+        assertThat(cut.findById(RoomId(Long.MAX_VALUE))).isNull()
     }
 
     @Test
@@ -100,12 +105,72 @@ class RoomRepositoryIntegrationTest(
                 ),
             )
 
-        val found = cut.findById(saved.roomId)
+        val found = cut.findById(RoomId(saved.roomId))
         assertThat(found).isNotNull
         assertThat(found!!.budget).isEqualTo(300)
         assertThat(found.draftOrderStrategy).isNull()
         assertThat(found.currentTurnIndex).isNull()
         assertThat(found.currentAuctionRound).isNull()
+    }
+
+    @Test
+    fun `aggregate 를 저장하면 코드와 ID 조회 모두 자식 컬렉션까지 재수화한다`() {
+        val saved =
+            cut.save(
+                Room(
+                    code = "RMCH01",
+                    hostId = "host",
+                    status = RoomStatus.IN_PROGRESS,
+                    mode = TeamBuildingMode.AUCTION,
+                    teamCount = 2,
+                    teamSize = 3,
+                    budget = 300,
+                    currentAuctionRound = 2,
+                    players =
+                        listOf(
+                            RoomPlayer(roomId = 0L, name = "선수1", displayOrder = 0),
+                            RoomPlayer(roomId = 0L, name = "선수2", displayOrder = 1),
+                        ),
+                    leaders =
+                        listOf(
+                            RoomTeamLeader(roomId = 0L, teamLeaderId = "leader-A", nickname = "팀장A", remainingBudget = 250),
+                            RoomTeamLeader(roomId = 0L, teamLeaderId = "leader-B", nickname = "팀장B", remainingBudget = 300),
+                        ),
+                    members =
+                        listOf(
+                            RoomTeamMember(roomId = 0L, teamLeaderId = "leader-A", playerName = "선수1", assignOrder = 0),
+                        ),
+                    bids =
+                        listOf(
+                            RoomBid(roomId = 0L, round = 2, teamLeaderId = "leader-A", amount = 120),
+                            RoomBid(roomId = 0L, round = 2, teamLeaderId = "leader-B", amount = 150),
+                        ),
+                ),
+            )
+
+        val foundByCode = cut.findByCode("RMCH01")
+        val foundById = cut.findById(RoomId(saved.roomId))
+
+        assertThat(foundByCode).isNotNull
+        assertThat(foundById).isNotNull
+
+        listOf(foundByCode!!, foundById!!).forEach { found ->
+            assertThat(found.players).hasSize(2)
+            assertThat(found.players.map { it.name to it.displayOrder })
+                .containsExactly("선수1" to 0, "선수2" to 1)
+
+            assertThat(found.leaders).hasSize(2)
+            assertThat(found.leaders.map { it.teamLeaderId to it.remainingBudget })
+                .containsExactlyInAnyOrder("leader-A" to 250, "leader-B" to 300)
+
+            assertThat(found.members).hasSize(1)
+            assertThat(found.members.single().playerName).isEqualTo("선수1")
+            assertThat(found.members.single().teamLeaderId).isEqualTo("leader-A")
+
+            assertThat(found.bids).hasSize(2)
+            assertThat(found.bids.map { it.teamLeaderId to it.amount })
+                .containsExactlyInAnyOrder("leader-A" to 120, "leader-B" to 150)
+        }
     }
 
     @Test
@@ -165,12 +230,13 @@ class RoomRepositoryIntegrationTest(
         )
 
         val roomId = jdbcTemplate.queryForObject("SELECT id FROM room WHERE code = ?", Long::class.java, "RM0006")!!
-        val found = cut.findById(roomId)
+        val found = cut.findById(RoomId(roomId))
 
         assertThat(found).isNotNull
         assertThat(found!!.mode).isEqualTo(TeamBuildingMode.AUCTION)
         assertThat(found.budget).isEqualTo(300)
         assertThat(found.draftOrderStrategy).isNull()
+        assertThat(found.currentAuctionRound).isEqualTo(2)
     }
 
     @Test
