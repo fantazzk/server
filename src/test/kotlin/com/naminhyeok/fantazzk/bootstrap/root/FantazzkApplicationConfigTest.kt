@@ -6,6 +6,13 @@ import org.yaml.snakeyaml.Yaml
 
 class FantazzkApplicationConfigTest {
     @Test
+    fun `애플리케이션은 PORT 환경 변수를 우선 사용한다`() {
+        val defaultDocument = readYamlDocuments().first()
+
+        assertThat(nestedValue(defaultDocument, "server", "port")).isEqualTo("\${PORT:8080}")
+    }
+
+    @Test
     fun `프로덕션 프로필은 actuator health만 노출한다`() {
         val productionDocument =
             readYamlDocuments()

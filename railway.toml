@@ -1,4 +1,4 @@
-# Synced from the live Railway `server` service on 2026-03-30.
+# Synced from the live Railway `server` service on 2026-04-02.
 # This file intentionally mirrors only the explicit build/deploy settings.
 
 "$schema" = "https://railway.com/railway.schema.json"
@@ -6,12 +6,16 @@
 [environments.dev.build]
 builder = "RAILPACK"
 
+[environments.dev.deploy]
+startCommand = "java -jar $(find build/libs -maxdepth 1 -name '*.jar' ! -name '*-plain.jar' -print -quit)"
+sleepApplication = true
+
 [environments.dev.deploy.multiRegionConfig."asia-southeast1-eqsg3a"]
 numReplicas = 1
 
 [environments.dev.deploy.limitOverride.containers]
-cpu = 0.5
-memoryBytes = 500_000_000
+cpu = 0.1
+memoryBytes = 256_000_000
 
 [environments.production.build]
 builder = "RAILPACK"
@@ -19,10 +23,12 @@ builder = "RAILPACK"
 [environments.production.deploy]
 healthcheckPath = "/actuator/health"
 drainingSeconds = 30
+startCommand = "java -jar $(find build/libs -maxdepth 1 -name '*.jar' ! -name '*-plain.jar' -print -quit)"
+sleepApplication = true
 
 [environments.production.deploy.multiRegionConfig."asia-southeast1-eqsg3a"]
 numReplicas = 1
 
 [environments.production.deploy.limitOverride.containers]
-cpu = 1.0
-memoryBytes = 2_000_000_000
+cpu = 0.5
+memoryBytes = 500_000_000

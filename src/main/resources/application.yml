@@ -26,6 +26,7 @@ logging:
     com.naminhyeok.fantazzk: DEBUG
 
 server:
+  port: ${PORT:8080}
   shutdown: graceful
   tomcat:
     mbeanregistry:
