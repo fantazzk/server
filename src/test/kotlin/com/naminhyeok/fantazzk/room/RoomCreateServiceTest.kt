@@ -1,6 +1,7 @@
 package com.naminhyeok.fantazzk.room
 
 import com.naminhyeok.fantazzk.room.application.RoomCreateService
+import com.naminhyeok.fantazzk.room.application.RoomCreateAttemptExecutor
 import com.naminhyeok.fantazzk.room.application.RoomCreateServiceImpl
 import com.naminhyeok.fantazzk.room.exception.RoomTemplateNotFoundException
 import com.naminhyeok.fantazzk.room.repository.RoomRepository
@@ -19,22 +20,21 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
-import org.springframework.context.ApplicationEventPublisher
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.dao.DuplicateKeyException
 
 class RoomCreateServiceTest {
     private lateinit var roomRepo: InMemoryRoomRepository
     private lateinit var templateCatalog: InMemoryTemplateCatalog
-    private lateinit var events: ApplicationEventPublisher
+    private lateinit var roomCreateAttemptExecutor: RoomCreateAttemptExecutor
     private lateinit var cut: RoomCreateService
 
     @BeforeEach
     fun setUp() {
         roomRepo = InMemoryRoomRepository()
         templateCatalog = InMemoryTemplateCatalog()
-        events = mockk(relaxed = true)
-        cut = RoomCreateServiceImpl(roomRepo, templateCatalog, events)
+        roomCreateAttemptExecutor = ImmediateRoomCreateAttemptExecutor(roomRepo)
+        cut = RoomCreateServiceImpl(roomRepo, templateCatalog, roomCreateAttemptExecutor)
     }
 
     @Nested
@@ -181,7 +181,7 @@ class RoomCreateServiceTest {
                             throw TemplateCatalogException.NotFound(templateId)
                         }
                     },
-                    events,
+                    roomCreateAttemptExecutor,
                 )
 
             assertThatThrownBy { cut.create(999L, "호스트") }
@@ -199,7 +199,7 @@ class RoomCreateServiceTest {
                             throw TemplateCatalogException.Invalid(templateId)
                         }
                     },
-                    events,
+                    roomCreateAttemptExecutor,
                 )
 
             assertThatThrownBy { cut.create(999L, "호스트") }
@@ -218,7 +218,7 @@ class RoomCreateServiceTest {
                 RoomCreateServiceImpl(
                     retryingRoomRepo,
                     templateCatalog,
-                    events,
+                    ImmediateRoomCreateAttemptExecutor(retryingRoomRepo),
                 )
 
             val room = cut.create(1L, "호스트")
@@ -238,7 +238,7 @@ class RoomCreateServiceTest {
                 RoomCreateServiceImpl(
                     retryingRoomRepo,
                     templateCatalog,
-                    events,
+                    ImmediateRoomCreateAttemptExecutor(retryingRoomRepo),
                 )
 
             val room = cut.create(1L, "호스트")
@@ -258,7 +258,7 @@ class RoomCreateServiceTest {
                 RoomCreateServiceImpl(
                     alwaysExistingCodeRoomRepository,
                     templateCatalog,
-                    events,
+                    ImmediateRoomCreateAttemptExecutor(alwaysExistingCodeRoomRepository),
                 )
 
             assertThatThrownBy { cut.create(1L, "호스트") }
@@ -276,7 +276,7 @@ class RoomCreateServiceTest {
                 RoomCreateServiceImpl(
                     alwaysDuplicateRoomRepo,
                     templateCatalog,
-                    events,
+                    ImmediateRoomCreateAttemptExecutor(alwaysDuplicateRoomRepo),
                 )
 
             assertThatThrownBy { cut.create(1L, "호스트") }
@@ -341,19 +341,35 @@ class RoomCreateServiceTest {
         var saveAttempts: Int = 0
         val attemptedCodes = mutableListOf<String>()
         var collidingCode: String? = null
+        private var collisionVisible = false
 
         override fun save(room: Room): Room {
             saveAttempts += 1
             attemptedCodes += room.code
             if (saveAttempts == 1) {
                 collidingCode = room.code
+                collisionVisible = true
                 throw DataIntegrityViolationException("duplicate room code")
             }
             check(room.code != collidingCode) { "중복된 방 코드를 그대로 재사용했습니다" }
             return delegate.save(room)
         }
 
-        override fun findByCode(code: String): Room? = delegate.findByCode(code)
+        override fun findByCode(code: String): Room? =
+            when {
+                collisionVisible && code == collidingCode ->
+                    Room(
+                        roomId = 99L,
+                        code = code,
+                        hostId = "existing",
+                        status = RoomStatus.WAITING,
+                        mode = TeamBuildingMode.AUCTION,
+                        teamCount = 2,
+                        teamSize = 2,
+                        budget = 300,
+                    )
+                else -> delegate.findByCode(code)
+            }
 
         override fun findById(roomId: RoomId): Room? = delegate.findById(roomId)
     }
@@ -382,5 +398,11 @@ class RoomCreateServiceTest {
         }
 
         override fun findById(roomId: RoomId): Room? = null
+    }
+
+    private class ImmediateRoomCreateAttemptExecutor(
+        private val roomRepository: RoomRepository,
+    ) : RoomCreateAttemptExecutor {
+        override fun create(room: Room): Room = roomRepository.save(room)
     }
 }

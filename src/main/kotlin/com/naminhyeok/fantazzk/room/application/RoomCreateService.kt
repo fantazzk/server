@@ -9,11 +9,9 @@ import com.naminhyeok.fantazzk.template.TemplateCatalog
 import com.naminhyeok.fantazzk.template.TemplateCatalogException
 import com.naminhyeok.fantazzk.template.TemplateDraftOrderStrategy
 import com.naminhyeok.fantazzk.template.TemplateMode
-import org.springframework.context.ApplicationEventPublisher
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 import java.util.UUID
 
 interface RoomCreateService {
@@ -28,9 +26,8 @@ interface RoomCreateService {
 internal class RoomCreateServiceImpl(
     private val roomRepository: RoomRepository,
     private val templateCatalog: TemplateCatalog,
-    private val events: ApplicationEventPublisher,
+    private val roomCreateAttemptExecutor: RoomCreateAttemptExecutor,
 ) : RoomCreateService {
-    @Transactional
     override fun create(
         templateId: Long,
         hostNickname: String,
@@ -50,7 +47,7 @@ internal class RoomCreateServiceImpl(
             val hostId = UUID.randomUUID().toString()
             val room =
                 try {
-                    roomRepository.save(
+                    roomCreateAttemptExecutor.create(
                         Room.createFromTemplate(
                             code = code,
                             hostId = hostId,
@@ -60,11 +57,12 @@ internal class RoomCreateServiceImpl(
                     )
                 } catch (_: DuplicateKeyException) {
                     return@repeat
-                } catch (_: DataIntegrityViolationException) {
-                    return@repeat
+                } catch (exception: DataIntegrityViolationException) {
+                    if (roomRepository.findByCode(code) != null) {
+                        return@repeat
+                    }
+                    throw exception
                 }
-
-            room.recordCreated().drainEvents().forEach(events::publishEvent)
             return room
         }
         throw IllegalStateException("방 코드를 생성할 수 없습니다")

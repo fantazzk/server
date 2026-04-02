@@ -3,6 +3,8 @@ package com.naminhyeok.fantazzk.room
 import com.naminhyeok.fantazzk.room.api.RoomApiController
 import com.naminhyeok.fantazzk.room.application.AuctionServiceImpl
 import com.naminhyeok.fantazzk.room.application.DraftServiceImpl
+import com.naminhyeok.fantazzk.room.application.RoomCreateAttemptExecutorImpl
+import com.naminhyeok.fantazzk.room.application.RoomCreateServiceImpl
 import com.naminhyeok.fantazzk.room.application.RoomFinder
 import com.naminhyeok.fantazzk.room.application.RoomFinderImpl
 import com.naminhyeok.fantazzk.room.application.RoomJoinServiceImpl
@@ -11,6 +13,8 @@ import com.naminhyeok.fantazzk.room.repository.RoomRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
+import org.springframework.transaction.annotation.Propagation
+import org.springframework.transaction.annotation.Transactional
 
 class RoomStructureTransitionTest {
     @Test
@@ -34,13 +38,14 @@ class RoomStructureTransitionTest {
 
     @Test
     fun `room finder 와 유스케이스 서비스는 단일 aggregate 리포지토리에만 의존한다`() {
+        val createDependencies = RoomCreateServiceImpl::class.java.declaredConstructors.single().parameterTypes.map { it.simpleName }
         val finderDependencies = RoomFinderImpl::class.java.declaredConstructors.single().parameterTypes.map { it.simpleName }
         val joinDependencies = RoomJoinServiceImpl::class.java.declaredConstructors.single().parameterTypes.map { it.simpleName }
         val startDependencies = RoomStartServiceImpl::class.java.declaredConstructors.single().parameterTypes.map { it.simpleName }
         val draftDependencies = DraftServiceImpl::class.java.declaredConstructors.single().parameterTypes.map { it.simpleName }
         val auctionDependencies = AuctionServiceImpl::class.java.declaredConstructors.single().parameterTypes.map { it.simpleName }
 
-        listOf(finderDependencies, joinDependencies, startDependencies, draftDependencies, auctionDependencies).forEach { dependencies ->
+        listOf(createDependencies, finderDependencies, joinDependencies, startDependencies, draftDependencies, auctionDependencies).forEach { dependencies ->
             assertThat(dependencies).doesNotContain(
                 "RoomPlayerRepository",
                 "RoomTeamLeaderRepository",
@@ -49,6 +54,15 @@ class RoomStructureTransitionTest {
             )
             assertThat(dependencies).contains("RoomRepository")
         }
+    }
+
+    @Test
+    fun `방 생성 재시도는 외부 서비스와 개별 시도 트랜잭션으로 분리한다`() {
+        val createMethod = RoomCreateServiceImpl::class.java.getMethod("create", Long::class.javaPrimitiveType, String::class.java)
+        val attemptMethod = RoomCreateAttemptExecutorImpl::class.java.getMethod("create", Room::class.java)
+
+        assertThat(createMethod.isAnnotationPresent(Transactional::class.java)).isFalse()
+        assertThat(attemptMethod.getAnnotation(Transactional::class.java).propagation).isEqualTo(Propagation.REQUIRES_NEW)
     }
 
     @Test
