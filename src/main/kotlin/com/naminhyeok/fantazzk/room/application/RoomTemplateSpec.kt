@@ -1,12 +1,12 @@
-package com.naminhyeok.fantazzk.room
+package com.naminhyeok.fantazzk.room.application
 
-data class RoomTemplateSeed(
+internal data class RoomTemplateSpec(
     val mode: Mode,
     val teamCount: Int,
     val teamSize: Int,
     val budget: Int?,
     val draftOrderStrategy: DraftOrderStrategy?,
-    val players: List<RoomTemplatePlayerSeed>,
+    val players: List<Player>,
 ) {
     enum class Mode {
         AUCTION,
@@ -17,9 +17,9 @@ data class RoomTemplateSeed(
         FIXED,
         SNAKE,
     }
-}
 
-data class RoomTemplatePlayerSeed(
-    val name: String,
-    val displayOrder: Int,
-)
+    data class Player(
+        val name: String,
+        val displayOrder: Int,
+    )
+}

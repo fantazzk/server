@@ -1,5 +1,6 @@
 package com.naminhyeok.fantazzk.room
 
+import com.naminhyeok.fantazzk.room.application.RoomTemplateSpec
 import com.naminhyeok.fantazzk.room.exception.RoomException
 import org.jmolecules.ddd.types.AggregateRoot
 import org.springframework.data.annotation.Transient
@@ -314,28 +315,28 @@ data class Room(
             code: String,
             hostId: String,
             hostNickname: String,
-            template: RoomTemplateSeed,
+            spec: RoomTemplateSpec,
         ): Room {
             val room =
-                when (template.mode) {
-                    RoomTemplateSeed.Mode.AUCTION ->
+                when (spec.mode) {
+                    RoomTemplateSpec.Mode.AUCTION ->
                         createAuction(
                             code = code,
                             hostId = hostId,
-                            teamCount = template.teamCount,
-                            teamSize = template.teamSize,
-                            budget = requireNotNull(template.budget) { "경매 템플릿에는 예산이 필요합니다" },
+                            teamCount = spec.teamCount,
+                            teamSize = spec.teamSize,
+                            budget = requireNotNull(spec.budget) { "경매 템플릿에는 예산이 필요합니다" },
                         )
 
-                    RoomTemplateSeed.Mode.DRAFT ->
+                    RoomTemplateSpec.Mode.DRAFT ->
                         createDraft(
                             code = code,
                             hostId = hostId,
-                            teamCount = template.teamCount,
-                            teamSize = template.teamSize,
+                            teamCount = spec.teamCount,
+                            teamSize = spec.teamSize,
                             draftOrderStrategy =
                                 DraftOrderStrategy.valueOf(
-                                    requireNotNull(template.draftOrderStrategy) {
+                                    requireNotNull(spec.draftOrderStrategy) {
                                         "드래프트 템플릿에는 순서 전략이 필요합니다"
                                     }.name,
                                 ),
@@ -344,7 +345,7 @@ data class Room(
 
             return room.copy(
                 players =
-                    template.players
+                    spec.players
                         .sortedBy { it.displayOrder }
                         .map { RoomPlayer(roomId = room.roomId, name = it.name, displayOrder = it.displayOrder) },
                 leaders = listOf(room.createHostLeader(hostNickname)),

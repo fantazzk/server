@@ -36,7 +36,7 @@ class RoomModuleIntegrationTest {
     lateinit var templateCatalogBean: TemplateCatalog
 
     @Test
-    fun `방 모듈은 템플릿 루트 계약과 함께 부팅된다`() {
+    fun `방 모듈은 템플릿 계약 빈과 함께 부팅된다`() {
         assertThat(templateCatalogBean).isNotNull()
         assertThat(roomCreateService).isNotNull()
         assertThat(roomStartService).isNotNull()

@@ -1,8 +1,6 @@
 package com.naminhyeok.fantazzk.room.application
 
 import com.naminhyeok.fantazzk.room.Room
-import com.naminhyeok.fantazzk.room.RoomTemplatePlayerSeed
-import com.naminhyeok.fantazzk.room.RoomTemplateSeed
 import com.naminhyeok.fantazzk.room.exception.RoomTemplateNotFoundException
 import com.naminhyeok.fantazzk.room.repository.RoomRepository
 import com.naminhyeok.fantazzk.template.TemplateBlueprint
@@ -37,7 +35,7 @@ internal class RoomCreateServiceImpl(
     ): Room {
         val template =
             try {
-                templateCatalog.getTemplateBlueprint(templateId).toRoomTemplateSeed()
+                templateCatalog.getTemplateBlueprint(templateId).toRoomTemplateSpec()
             } catch (_: TemplateCatalogException.NotFound) {
                 throw RoomTemplateNotFoundException()
             } catch (_: TemplateCatalogException.Invalid) {
@@ -55,7 +53,7 @@ internal class RoomCreateServiceImpl(
                             code = code,
                             hostId = hostId,
                             hostNickname = hostNickname,
-                            template = template,
+                            spec = template,
                         ),
                     )
                 } catch (_: DuplicateKeyException) {
@@ -78,12 +76,12 @@ internal class RoomCreateServiceImpl(
     }
 }
 
-private fun TemplateBlueprint.toRoomTemplateSeed(): RoomTemplateSeed =
-    RoomTemplateSeed(
+private fun TemplateBlueprint.toRoomTemplateSpec(): RoomTemplateSpec =
+    RoomTemplateSpec(
         mode =
             when (mode) {
-                TemplateMode.AUCTION -> RoomTemplateSeed.Mode.AUCTION
-                TemplateMode.DRAFT -> RoomTemplateSeed.Mode.DRAFT
+                TemplateMode.AUCTION -> RoomTemplateSpec.Mode.AUCTION
+                TemplateMode.DRAFT -> RoomTemplateSpec.Mode.DRAFT
             },
         teamCount = teamCount,
         teamSize = teamSize,
@@ -91,12 +89,12 @@ private fun TemplateBlueprint.toRoomTemplateSeed(): RoomTemplateSeed =
         draftOrderStrategy =
             when (draftOrderStrategy) {
                 null -> null
-                TemplateDraftOrderStrategy.FIXED -> RoomTemplateSeed.DraftOrderStrategy.FIXED
-                TemplateDraftOrderStrategy.SNAKE -> RoomTemplateSeed.DraftOrderStrategy.SNAKE
+                TemplateDraftOrderStrategy.FIXED -> RoomTemplateSpec.DraftOrderStrategy.FIXED
+                TemplateDraftOrderStrategy.SNAKE -> RoomTemplateSpec.DraftOrderStrategy.SNAKE
             },
         players =
             players.map {
-                RoomTemplatePlayerSeed(
+                RoomTemplateSpec.Player(
                     name = it.name,
                     displayOrder = it.displayOrder,
                 )

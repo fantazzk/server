@@ -49,7 +49,7 @@ class RoomCreateServiceTest {
     }
 
     @Nested
-    inner class `모드별 필드 전파` {
+    inner class `템플릿 계약 번역` {
         @Test
         fun `경매 템플릿으로 방을 생성하면 경매 필드만 채워진다`() {
             templateCatalog.addTemplate(

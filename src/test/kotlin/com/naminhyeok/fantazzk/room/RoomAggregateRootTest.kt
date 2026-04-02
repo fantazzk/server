@@ -1,27 +1,28 @@
 package com.naminhyeok.fantazzk.room
 
+import com.naminhyeok.fantazzk.room.application.RoomTemplateSpec
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class RoomAggregateRootTest {
     @Test
-    fun `방 생성 시드 정보로 방 애그리거트 루트를 만들면 방 선수 호스트를 함께 초기화한다`() {
+    fun `방 생성 명세로 방 애그리거트 루트를 만들면 방 선수 호스트를 함께 초기화한다`() {
         val room =
             Room.createFromTemplate(
                 code = "ROOM01",
                 hostId = "host-1",
                 hostNickname = "호스트",
-                template =
-                    RoomTemplateSeed(
-                        mode = RoomTemplateSeed.Mode.AUCTION,
+                spec =
+                    RoomTemplateSpec(
+                        mode = RoomTemplateSpec.Mode.AUCTION,
                         teamCount = 2,
                         teamSize = 3,
                         budget = 300,
                         draftOrderStrategy = null,
                         players =
                             listOf(
-                                RoomTemplatePlayerSeed(name = "선수B", displayOrder = 1),
-                                RoomTemplatePlayerSeed(name = "선수A", displayOrder = 0),
+                                RoomTemplateSpec.Player(name = "선수B", displayOrder = 1),
+                                RoomTemplateSpec.Player(name = "선수A", displayOrder = 0),
                             ),
                     ),
             )
@@ -177,20 +178,20 @@ class RoomAggregateRootTest {
     }
 
     @Test
-    fun `드래프트 방 생성 시드 정보는 방 전략 열거형으로 변환된다`() {
+    fun `드래프트 방 생성 명세는 방 전략 열거형으로 변환된다`() {
         val room =
             Room.createFromTemplate(
                 code = "ROOM02",
                 hostId = "host-1",
                 hostNickname = "호스트",
-                template =
-                    RoomTemplateSeed(
-                        mode = RoomTemplateSeed.Mode.DRAFT,
+                spec =
+                    RoomTemplateSpec(
+                        mode = RoomTemplateSpec.Mode.DRAFT,
                         teamCount = 2,
                         teamSize = 2,
                         budget = null,
-                        draftOrderStrategy = RoomTemplateSeed.DraftOrderStrategy.SNAKE,
-                        players = listOf(RoomTemplatePlayerSeed(name = "선수A", displayOrder = 0)),
+                        draftOrderStrategy = RoomTemplateSpec.DraftOrderStrategy.SNAKE,
+                        players = listOf(RoomTemplateSpec.Player(name = "선수A", displayOrder = 0)),
                     ),
             )
 
