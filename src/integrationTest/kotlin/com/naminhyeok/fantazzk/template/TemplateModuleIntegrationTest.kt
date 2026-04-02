@@ -39,13 +39,13 @@ class TemplateModuleIntegrationTest {
     lateinit var jdbcTemplate: JdbcTemplate
 
     @Test
-    fun `template module boots in standalone mode`() {
+    fun `template 모듈은 루트 계약과 함께 단독 부팅된다`() {
         assertThat(templateCreateService).isNotNull()
         assertThat(templateCatalog).isNotNull()
     }
 
     @Test
-    fun `template create publishes TemplateCreated`(publishedEvents: PublishedEvents) {
+    fun `template 생성은 TemplateCreated 이벤트를 발행한다`(publishedEvents: PublishedEvents) {
         templateCreateService.create(
             CreateTemplateCommand.Auction(
                 name = "모듈 테스트 템플릿",

@@ -36,14 +36,14 @@ class RoomModuleIntegrationTest {
     lateinit var templateCatalogBean: TemplateCatalog
 
     @Test
-    fun `room module boots with template root contract`() {
+    fun `room 모듈은 template 루트 계약과 함께 부팅된다`() {
         assertThat(templateCatalogBean).isNotNull()
         assertThat(roomCreateService).isNotNull()
         assertThat(roomStartService).isNotNull()
     }
 
     @Test
-    fun `room create publishes RoomCreated`(publishedEvents: PublishedEvents) {
+    fun `room 생성은 RoomCreated 이벤트를 발행한다`(publishedEvents: PublishedEvents) {
         every { templateCatalog.getTemplateBlueprint(1L) } returns
             TemplateBlueprint(
                 templateId = 1L,
