@@ -1,5 +1,6 @@
 package com.naminhyeok.fantazzk.template
 
+import com.naminhyeok.fantazzk.template.domain.TemplatePlayer
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.time.Instant

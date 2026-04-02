@@ -4,11 +4,20 @@ import com.naminhyeok.fantazzk.template.TemplateId
 import com.naminhyeok.fantazzk.template.domain.Template
 import org.jmolecules.ddd.annotation.Repository
 import org.springframework.data.jpa.repository.JpaRepository
-import java.util.Optional
 
 @Repository
-interface TemplateRepository : JpaRepository<Template, Long> {
-    fun findById(templateId: TemplateId): Optional<Template> = findById(templateId.value)
+interface TemplateRepository {
+    fun save(template: Template): Template
+
+    fun findById(templateId: TemplateId): Template?
+
+    fun findAll(): List<Template>
+}
+
+internal interface TemplateJpaStore : JpaRepository<Template, Long>, TemplateRepository {
+    override fun save(template: Template): Template
 
     override fun findAll(): List<Template>
+
+    override fun findById(templateId: TemplateId): Template? = findById(templateId.value).orElse(null)
 }

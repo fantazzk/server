@@ -5,6 +5,7 @@ import com.naminhyeok.fantazzk.template.TeamBuildingMode
 import com.naminhyeok.fantazzk.template.TemplateCreated
 import com.naminhyeok.fantazzk.template.TemplateId
 import com.naminhyeok.fantazzk.template.TemplatePlayerCreated
+import com.naminhyeok.fantazzk.template.TemplateRoster
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.Embedded
@@ -42,35 +43,6 @@ class Template protected constructor(
     @Transient
     private val pendingEvents: MutableList<Any> = mutableListOf()
 
-    constructor(
-        templateId: Long = 0L,
-        name: String,
-        templateConfiguration: com.naminhyeok.fantazzk.template.TemplateConfiguration,
-        createdAt: Instant = Instant.now(),
-        updatedAt: Instant = Instant.now(),
-    ) : this(
-        persistentId = templateId.takeIf { it > 0 },
-        name = name,
-        persistentConfiguration =
-            when (templateConfiguration) {
-                is com.naminhyeok.fantazzk.template.TemplateConfiguration.Auction ->
-                    TemplateConfiguration.auction(
-                        teamCount = templateConfiguration.teamCount,
-                        teamSize = templateConfiguration.teamSize,
-                        budget = templateConfiguration.budgetValue,
-                    )
-
-                is com.naminhyeok.fantazzk.template.TemplateConfiguration.Draft ->
-                    TemplateConfiguration.draft(
-                        teamCount = templateConfiguration.teamCount,
-                        teamSize = templateConfiguration.teamSize,
-                        strategy = templateConfiguration.strategy,
-                    )
-            },
-        createdAt = createdAt,
-        updatedAt = updatedAt,
-    )
-
     override fun getId(): TemplateId = TemplateId(requireNotNull(persistentId))
 
     val templateId: Long
@@ -91,9 +63,9 @@ class Template protected constructor(
     val draftOrderStrategy: DraftOrderStrategy?
         get() = persistentConfiguration.draftOrderStrategy
 
-    val configuration: com.naminhyeok.fantazzk.template.TemplateConfiguration
+    val configuration: TemplateConfiguration
         get() =
-            com.naminhyeok.fantazzk.template.TemplateConfiguration.from(
+            TemplateConfiguration.from(
                 mode = mode,
                 teamCount = teamCount,
                 teamSize = teamSize,
@@ -101,7 +73,15 @@ class Template protected constructor(
                 draftOrderStrategy = draftOrderStrategy,
             )
 
-    fun players(): List<TemplatePlayer> = persistentPlayers.toList()
+    val picksPerTeam: Int
+        get() = teamSize - 1
+
+    fun players(): List<TemplatePlayer> = persistentPlayers.toList().also(::requireValidRoster)
+
+    fun requireValidRoster(players: List<TemplatePlayer>) {
+        val orderedPlayerNames = players.sortedBy { it.displayOrder }.map { it.name }
+        TemplateRoster.exactlyRequired(orderedPlayerNames, configuration.requiredPlayerCount)
+    }
 
     internal fun recordCreated(): Template =
         registerEvent(
@@ -137,7 +117,7 @@ class Template protected constructor(
             Template(
                 name = name,
                 persistentConfiguration = TemplateConfiguration.auction(teamCount = teamCount, teamSize = teamSize, budget = budget),
-            ).registerPlayers(playerNames)
+            ).registerPlayers(playerNames).also { it.requireValidRoster(it.players()) }
 
         fun createDraft(
             name: String,
@@ -149,7 +129,7 @@ class Template protected constructor(
             Template(
                 name = name,
                 persistentConfiguration = TemplateConfiguration.draft(teamCount = teamCount, teamSize = teamSize, strategy = strategy),
-            ).registerPlayers(playerNames)
+            ).registerPlayers(playerNames).also { it.requireValidRoster(it.players()) }
 
         fun reference(templateId: Long): Template = Template(persistentId = templateId)
     }

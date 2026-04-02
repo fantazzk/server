@@ -1,7 +1,6 @@
 package com.naminhyeok.fantazzk.template.application
 
 import com.naminhyeok.fantazzk.template.DraftOrderStrategy
-import com.naminhyeok.fantazzk.template.TemplateRoster
 import com.naminhyeok.fantazzk.template.domain.Template
 import com.naminhyeok.fantazzk.template.repository.TemplateRepository
 import org.springframework.context.ApplicationEventPublisher
@@ -43,10 +42,6 @@ internal class TemplateCreateServiceImpl(
 ) : TemplateCreateService {
     @Transactional
     override fun create(command: CreateTemplateCommand): Template {
-        val sortedPlayers = command.playerNames.sorted()
-        val requiredPlayerCount = command.teamCount * (command.teamSize - 1)
-        TemplateRoster.exactlyRequired(sortedPlayers, requiredPlayerCount)
-
         val template =
             when (command) {
                 is CreateTemplateCommand.Auction ->
@@ -55,7 +50,7 @@ internal class TemplateCreateServiceImpl(
                         teamCount = command.teamCount,
                         teamSize = command.teamSize,
                         budget = command.budget,
-                        playerNames = sortedPlayers,
+                        playerNames = command.playerNames,
                     )
 
                 is CreateTemplateCommand.Draft ->
@@ -64,7 +59,7 @@ internal class TemplateCreateServiceImpl(
                         teamCount = command.teamCount,
                         teamSize = command.teamSize,
                         strategy = command.strategy,
-                        playerNames = sortedPlayers,
+                        playerNames = command.playerNames,
                     )
             }
         val saved = templateRepository.save(template)

@@ -11,7 +11,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import java.util.Optional
+import org.springframework.dao.InvalidDataAccessApiUsageException
 
 class TemplateFinderTest {
     private lateinit var templateRepo: TemplateRepository
@@ -25,7 +25,7 @@ class TemplateFinderTest {
 
     @Test
     fun `존재하지 않는 ID로 상세 조회하면 예외가 발생한다`() {
-        every { templateRepo.findById(TemplateId(999L)) } returns Optional.empty()
+        every { templateRepo.findById(TemplateId(999L)) } returns null
 
         assertThatThrownBy { cut.getDetail(TemplateId(999L)) }
             .isInstanceOf(TemplateException.TemplateNotFoundException::class.java)
@@ -65,7 +65,7 @@ class TemplateFinderTest {
                 budget = 300,
                 playerNames = listOf("선수1", "선수2"),
             ).assignId(TemplateId(1L))
-        every { templateRepo.findById(TemplateId(template.templateId)) } returns Optional.of(template)
+        every { templateRepo.findById(TemplateId(template.templateId)) } returns template
 
         val detail = cut.getDetail(TemplateId(template.templateId))
 
@@ -74,18 +74,10 @@ class TemplateFinderTest {
     }
 
     @Test
-    fun `상세 조회는 선수 수가 exact count를 만족하지 않으면 템플릿 invalid 예외를 던진다`() {
-        val template =
-            Template.createAuction(
-                name = "테스트",
-                teamCount = 2,
-                teamSize = 2,
-                budget = 300,
-                playerNames = listOf("선수1"),
-            ).assignId(TemplateId(1L))
-        every { templateRepo.findById(TemplateId(template.templateId)) } returns Optional.of(template)
+    fun `상세 조회는 저장소가 유효하지 않은 aggregate를 로드하면 템플릿 invalid 예외를 던진다`() {
+        every { templateRepo.findById(TemplateId(1L)) } throws InvalidDataAccessApiUsageException("선수 수는 정확히 2명이어야 합니다")
 
-        assertThatThrownBy { cut.getDetail(TemplateId(template.templateId)) }
+        assertThatThrownBy { cut.getDetail(TemplateId(1L)) }
             .isInstanceOf(TemplateException.TemplateInvalidException::class.java)
     }
 }

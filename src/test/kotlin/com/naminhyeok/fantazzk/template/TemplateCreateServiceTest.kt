@@ -4,6 +4,7 @@ import com.naminhyeok.fantazzk.template.application.CreateTemplateCommand
 import com.naminhyeok.fantazzk.template.application.TemplateCreateService
 import com.naminhyeok.fantazzk.template.application.TemplateCreateServiceImpl
 import com.naminhyeok.fantazzk.template.domain.Template
+import com.naminhyeok.fantazzk.template.domain.TemplateConfiguration
 import com.naminhyeok.fantazzk.template.repository.TemplateRepository
 import io.mockk.every
 import io.mockk.mockk
@@ -43,7 +44,7 @@ class TemplateCreateServiceTest {
 
         assertThat(template.name).isEqualTo("경매전")
         assertThat(template.configuration)
-            .isEqualTo(TemplateConfiguration.Auction(teamCount = 2, teamSize = 2, budgetValue = 500))
+            .isEqualTo(TemplateConfiguration.auction(teamCount = 2, teamSize = 2, budget = 500))
 
         val players = template.players()
         assertThat(players.map { it.name }).containsExactly("선수A", "선수B")
@@ -64,7 +65,7 @@ class TemplateCreateServiceTest {
             )
 
         assertThat(template.configuration)
-            .isEqualTo(TemplateConfiguration.Draft(teamCount = 2, teamSize = 2, strategy = DraftOrderStrategy.SNAKE))
+            .isEqualTo(TemplateConfiguration.draft(teamCount = 2, teamSize = 2, strategy = DraftOrderStrategy.SNAKE))
         assertThat(template.budget).isNull()
     }
 

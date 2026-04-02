@@ -1,7 +1,6 @@
 package com.naminhyeok.fantazzk.template.application
 
 import com.naminhyeok.fantazzk.template.TemplateId
-import com.naminhyeok.fantazzk.template.TemplateRoster
 import com.naminhyeok.fantazzk.template.domain.Template
 import com.naminhyeok.fantazzk.template.domain.TemplatePlayer
 import com.naminhyeok.fantazzk.template.exception.TemplateException
@@ -29,9 +28,9 @@ internal class TemplateFinderImpl(
     @Transactional(readOnly = true)
     override fun getDetail(templateId: TemplateId): TemplateDetail {
         try {
-            val template = templateRepository.findById(templateId).orElse(null) ?: throw TemplateException.TemplateNotFoundException()
+            val template = templateRepository.findById(templateId) ?: throw TemplateException.TemplateNotFoundException()
             val players = template.players()
-            TemplateRoster.exactlyRequired(players.map { it.name }, template.configuration.requiredPlayerCount)
+            template.requireValidRoster(players)
             return TemplateDetail(template, players)
         } catch (_: IllegalArgumentException) {
             throw TemplateException.TemplateInvalidException()

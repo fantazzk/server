@@ -1,5 +1,6 @@
 package com.naminhyeok.fantazzk.template
 
+import com.naminhyeok.fantazzk.template.domain.TemplateConfiguration
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Nested
@@ -12,7 +13,7 @@ class TemplateConfigurationTest {
         fun `경매 설정은 예산과 필요한 선수 수를 노출한다`() {
             val configuration = TemplateConfiguration.from(TeamBuildingMode.AUCTION, 2, 3, 300, null)
 
-            assertThat(configuration).isEqualTo(TemplateConfiguration.Auction(teamCount = 2, teamSize = 3, budgetValue = 300))
+            assertThat(configuration).isEqualTo(TemplateConfiguration.auction(teamCount = 2, teamSize = 3, budget = 300))
             assertThat(configuration.requiredPlayerCount).isEqualTo(4)
             assertThat(configuration.budget).isEqualTo(300)
             assertThat(configuration.draftOrderStrategy).isNull()
@@ -20,10 +21,10 @@ class TemplateConfigurationTest {
 
         @Test
         fun `경매 설정은 구체 필드를 그대로 노출한다`() {
-            val configuration = TemplateConfiguration.Auction(teamCount = 2, teamSize = 2, budgetValue = 300)
+            val configuration = TemplateConfiguration.auction(teamCount = 2, teamSize = 2, budget = 300)
 
             assertThat(configuration.mode).isEqualTo(TeamBuildingMode.AUCTION)
-            assertThat(configuration.budgetValue).isEqualTo(300)
+            assertThat(configuration.budget).isEqualTo(300)
         }
 
         @Test
@@ -57,7 +58,7 @@ class TemplateConfigurationTest {
                 )
 
             assertThat(configuration).isEqualTo(
-                TemplateConfiguration.Draft(teamCount = 2, teamSize = 3, strategy = DraftOrderStrategy.SNAKE),
+                TemplateConfiguration.draft(teamCount = 2, teamSize = 3, strategy = DraftOrderStrategy.SNAKE),
             )
             assertThat(configuration.requiredPlayerCount).isEqualTo(4)
             assertThat(configuration.budget).isNull()
@@ -85,14 +86,14 @@ class TemplateConfigurationTest {
     inner class `공통 검증` {
         @Test
         fun `팀 수는 0보다 커야 한다`() {
-            assertThatThrownBy { TemplateConfiguration.Auction(teamCount = 0, teamSize = 2, budgetValue = 300) }
+            assertThatThrownBy { TemplateConfiguration.auction(teamCount = 0, teamSize = 2, budget = 300) }
                 .isInstanceOf(IllegalArgumentException::class.java)
                 .hasMessage("팀 수는 0보다 커야 합니다")
         }
 
         @Test
         fun `경매 설정의 팀 크기는 0보다 커야 한다`() {
-            assertThatThrownBy { TemplateConfiguration.Auction(teamCount = 2, teamSize = 0, budgetValue = 300) }
+            assertThatThrownBy { TemplateConfiguration.auction(teamCount = 2, teamSize = 0, budget = 300) }
                 .isInstanceOf(IllegalArgumentException::class.java)
                 .hasMessage("팀 크기는 0보다 커야 합니다")
         }
@@ -100,7 +101,7 @@ class TemplateConfigurationTest {
         @Test
         fun `팀 크기는 0보다 커야 한다`() {
             assertThatThrownBy {
-                TemplateConfiguration.Draft(teamCount = 2, teamSize = 0, strategy = DraftOrderStrategy.SNAKE)
+                TemplateConfiguration.draft(teamCount = 2, teamSize = 0, strategy = DraftOrderStrategy.SNAKE)
             }.isInstanceOf(IllegalArgumentException::class.java)
                 .hasMessage("팀 크기는 0보다 커야 합니다")
         }
@@ -108,24 +109,24 @@ class TemplateConfigurationTest {
         @Test
         fun `드래프트 설정의 팀 수는 0보다 커야 한다`() {
             assertThatThrownBy {
-                TemplateConfiguration.Draft(teamCount = 0, teamSize = 2, strategy = DraftOrderStrategy.SNAKE)
+                TemplateConfiguration.draft(teamCount = 0, teamSize = 2, strategy = DraftOrderStrategy.SNAKE)
             }.isInstanceOf(IllegalArgumentException::class.java)
                 .hasMessage("팀 수는 0보다 커야 합니다")
         }
 
         @Test
         fun `예산은 0보다 커야 한다`() {
-            assertThatThrownBy { TemplateConfiguration.Auction(teamCount = 2, teamSize = 2, budgetValue = 0) }
+            assertThatThrownBy { TemplateConfiguration.auction(teamCount = 2, teamSize = 2, budget = 0) }
                 .isInstanceOf(IllegalArgumentException::class.java)
                 .hasMessage("예산은 0보다 커야 합니다")
         }
 
         @Test
         fun `드래프트 설정은 구체 필드를 그대로 노출한다`() {
-            val configuration = TemplateConfiguration.Draft(teamCount = 2, teamSize = 2, strategy = DraftOrderStrategy.FIXED)
+            val configuration = TemplateConfiguration.draft(teamCount = 2, teamSize = 2, strategy = DraftOrderStrategy.FIXED)
 
             assertThat(configuration.mode).isEqualTo(TeamBuildingMode.DRAFT)
-            assertThat(configuration.strategy).isEqualTo(DraftOrderStrategy.FIXED)
+            assertThat(configuration.draftOrderStrategy).isEqualTo(DraftOrderStrategy.FIXED)
             assertThat(configuration.requiredPlayerCount).isEqualTo(2)
         }
     }

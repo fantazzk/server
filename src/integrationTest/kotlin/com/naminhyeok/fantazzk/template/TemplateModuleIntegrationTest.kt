@@ -4,6 +4,7 @@ import com.naminhyeok.fantazzk.template.application.CreateTemplateCommand
 import com.naminhyeok.fantazzk.template.application.TemplateCreateService
 import com.naminhyeok.fantazzk.template.application.TemplateFinder
 import com.naminhyeok.fantazzk.template.domain.Template
+import com.naminhyeok.fantazzk.template.domain.TemplateConfiguration
 import com.naminhyeok.fantazzk.template.exception.TemplateException
 import com.naminhyeok.fantazzk.template.repository.TemplateRepository
 import org.assertj.core.api.Assertions.assertThat
@@ -105,9 +106,12 @@ class TemplateModuleIntegrationTest {
     @Test
     fun `템플릿 조회 서비스 목록 조회는 유효하지 않은 행을 템플릿 유효성 예외로 변환한다`() {
         templateRepository.save(
-            Template(
+            Template.createAuction(
                 name = "정상 템플릿",
-                templateConfiguration = TemplateConfiguration.Auction(teamCount = 2, teamSize = 2, budgetValue = 300),
+                teamCount = 2,
+                teamSize = 2,
+                budget = 300,
+                playerNames = listOf("선수1", "선수2"),
             ),
         )
         val invalidTemplateId =

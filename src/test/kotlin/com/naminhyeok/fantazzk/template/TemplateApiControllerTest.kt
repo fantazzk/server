@@ -19,13 +19,10 @@ import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
-import java.time.Instant
 
 class TemplateApiControllerTest {
     private val templateCreateService: TemplateCreateService = mockk()
     private val templateFinder: TemplateFinder = mockk()
-
-    private val now = Instant.now()
 
     private val mockMvc: MockMvc =
         MockMvcBuilders
@@ -144,16 +141,12 @@ class TemplateApiControllerTest {
                         templateId = 1L,
                         name = "선수1",
                         displayOrder = 0,
-                        createdAt = now,
-                        updatedAt = now,
                     ),
                     TemplatePlayer(
                         templatePlayerId = 2L,
                         templateId = 1L,
                         name = "선수2",
                         displayOrder = 1,
-                        createdAt = now,
-                        updatedAt = now,
                     ),
                 )
             every { templateFinder.getDetail(TemplateId(1L)) } returns TemplateDetail(template, players)

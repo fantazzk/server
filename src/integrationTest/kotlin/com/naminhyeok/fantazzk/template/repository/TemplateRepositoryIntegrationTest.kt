@@ -7,6 +7,7 @@ import com.naminhyeok.fantazzk.template.TeamBuildingMode
 import com.naminhyeok.fantazzk.template.TemplateId
 import com.naminhyeok.fantazzk.template.config.TemplateJdbcConfiguration
 import com.naminhyeok.fantazzk.template.domain.Template
+import com.naminhyeok.fantazzk.template.domain.TemplateConfiguration
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
@@ -35,15 +36,22 @@ class TemplateRepositoryIntegrationTest(
     fun `템플릿을 저장하고 조회할 수 있다`() {
         val saved =
             cut.save(
-                Template(
+                Template.createAuction(
                     name = "테스트 경매",
-                    templateConfiguration = com.naminhyeok.fantazzk.template.TemplateConfiguration.Auction(teamCount = 5, teamSize = 5, budgetValue = 300),
+                    teamCount = 5,
+                    teamSize = 5,
+                    budget = 300,
+                    playerNames = listOf(
+                        "선수1", "선수2", "선수3", "선수4", "선수5", "선수6", "선수7", "선수8",
+                        "선수9", "선수10", "선수11", "선수12", "선수13", "선수14", "선수15", "선수16",
+                        "선수17", "선수18", "선수19", "선수20",
+                    ),
                 ),
             )
 
         assertThat(saved.templateId).isGreaterThan(0)
 
-        val found = cut.findById(TemplateId(saved.templateId)).orElse(null)
+        val found = cut.findById(TemplateId(saved.templateId))
         assertThat(found).isNotNull
         assertThat(found!!.mode).isEqualTo(TeamBuildingMode.AUCTION)
         assertThat(found.budget).isEqualTo(300)
@@ -62,7 +70,7 @@ class TemplateRepositoryIntegrationTest(
                 ),
             )
 
-        val found = cut.findById(saved.getId()).orElse(null)
+        val found = cut.findById(saved.getId())
 
         assertThat(found).isNotNull
         assertThat(found!!.players().map { it.name }).containsExactly("선수1", "선수2")
@@ -81,19 +89,22 @@ class TemplateRepositoryIntegrationTest(
                 ),
             )
 
-        val found = cut.findById(TemplateId(saved.templateId)).orElse(null)
+        val found = cut.findById(TemplateId(saved.templateId))
 
         assertThat(found).isNotNull
         assertThat(found!!.configuration)
-            .isEqualTo(com.naminhyeok.fantazzk.template.TemplateConfiguration.Draft(teamCount = 2, teamSize = 2, strategy = DraftOrderStrategy.SNAKE))
+            .isEqualTo(TemplateConfiguration.draft(teamCount = 2, teamSize = 2, strategy = DraftOrderStrategy.SNAKE))
     }
 
     @Test
     fun `전체 템플릿 목록을 조회할 수 있다`() {
         cut.save(
-            Template(
+            Template.createAuction(
                 name = "첫째",
-                templateConfiguration = com.naminhyeok.fantazzk.template.TemplateConfiguration.Auction(teamCount = 2, teamSize = 2, budgetValue = 300),
+                teamCount = 2,
+                teamSize = 2,
+                budget = 300,
+                playerNames = listOf("선수1", "선수2"),
             ),
         )
         cut.save(
@@ -114,9 +125,12 @@ class TemplateRepositoryIntegrationTest(
     @Test
     fun `전체 템플릿 목록 조회는 유효하지 않은 row를 만나면 즉시 실패한다`() {
         cut.save(
-            Template(
+            Template.createAuction(
                 name = "정상 템플릿",
-                templateConfiguration = com.naminhyeok.fantazzk.template.TemplateConfiguration.Auction(teamCount = 2, teamSize = 2, budgetValue = 300),
+                teamCount = 2,
+                teamSize = 2,
+                budget = 300,
+                playerNames = listOf("선수1", "선수2"),
             ),
         )
         val invalidTemplateId =
@@ -157,7 +171,7 @@ class TemplateRepositoryIntegrationTest(
                 ),
             )
 
-        val found = cut.findById(saved.getId()).orElse(null)
+        val found = cut.findById(saved.getId())
 
         assertThat(found).isNotNull
         assertThat(found!!.players().map { it.name }).containsExactly("선수1", "선수2")
