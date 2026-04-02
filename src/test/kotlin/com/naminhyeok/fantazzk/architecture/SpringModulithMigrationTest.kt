@@ -122,6 +122,20 @@ class SpringModulithMigrationTest {
     }
 
     @Test
+    fun `역사적 Liquibase 초기 스키마와 감사 컬럼 추가 changeSet 은 서로 역할이 섞이지 않는다`() {
+        val initialSchema = Path.of("src/main/resources/db/changelog/team-building/initial_schema.sql").readText()
+        val auditColumns = Path.of("src/main/resources/db/changelog/team-building/add_audit_columns.sql").readText()
+
+        assertThat(initialSchema).contains("created_at            TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP")
+        assertThat(initialSchema).contains("updated_at            TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP")
+        assertThat(initialSchema).doesNotContain("template_player\n(\n    id            BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,\n    template_id   BIGINT       NOT NULL,\n    name          VARCHAR(255) NOT NULL,\n    display_order INT          NOT NULL,\n    created_at")
+        assertThat(initialSchema).doesNotContain("room_player\n(\n    id            BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,\n    room_id       BIGINT       NOT NULL,\n    name          VARCHAR(255) NOT NULL,\n    status        VARCHAR(20)  NOT NULL,\n    display_order INT          NOT NULL,\n    created_at")
+        assertThat(auditColumns).contains("ADD COLUMN updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;")
+        assertThat(auditColumns).contains("ADD COLUMN created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,")
+        assertThat(auditColumns).doesNotContain("IF NOT EXISTS")
+    }
+
+    @Test
     fun `사용하지 않는 방 투영용 변경 이력 스키마와 정리 자산은 제거되었다`() {
         val changelogRoot = Path.of("src/main/resources/db/changelog/team-building")
         val masterChangelog = changelogRoot.resolve("db.changelog-master.yaml").readLines()

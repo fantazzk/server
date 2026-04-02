@@ -7,8 +7,7 @@ CREATE TABLE template
     team_size             INT          NOT NULL,
     budget                INT,
     draft_order_strategy  VARCHAR(20),
-    created_at            TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at            TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at            TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE template_player
@@ -17,8 +16,6 @@ CREATE TABLE template_player
     template_id   BIGINT       NOT NULL,
     name          VARCHAR(255) NOT NULL,
     display_order INT          NOT NULL,
-    created_at    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_template_player_template FOREIGN KEY (template_id) REFERENCES template (id)
 );
 
@@ -48,8 +45,6 @@ CREATE TABLE room_player
     name          VARCHAR(255) NOT NULL,
     status        VARCHAR(20)  NOT NULL,
     display_order INT          NOT NULL,
-    created_at    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_room_player_room FOREIGN KEY (room_id) REFERENCES room (id)
 );
 
@@ -60,8 +55,6 @@ CREATE TABLE room_team_leader
     team_leader_id   VARCHAR(36)  NOT NULL,
     nickname         VARCHAR(255) NOT NULL,
     remaining_budget INT,
-    created_at       TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at       TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_room_team_leader_room FOREIGN KEY (room_id) REFERENCES room (id)
 );
 
@@ -72,8 +65,6 @@ CREATE TABLE room_team_member
     team_leader_id VARCHAR(36)  NOT NULL,
     player_name    VARCHAR(255) NOT NULL,
     assign_order   INT          NOT NULL,
-    created_at     TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at     TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_room_team_member_room FOREIGN KEY (room_id) REFERENCES room (id)
 );
 
@@ -85,6 +76,5 @@ CREATE TABLE room_bid
     team_leader_id VARCHAR(36) NOT NULL,
     amount         INT         NOT NULL,
     created_at     TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at     TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_room_bid_room FOREIGN KEY (room_id) REFERENCES room (id)
 );
