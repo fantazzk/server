@@ -36,14 +36,14 @@ class RoomModuleIntegrationTest {
     lateinit var templateCatalogBean: TemplateCatalog
 
     @Test
-    fun `room 모듈은 template 루트 계약과 함께 부팅된다`() {
+    fun `방 모듈은 템플릿 루트 계약과 함께 부팅된다`() {
         assertThat(templateCatalogBean).isNotNull()
         assertThat(roomCreateService).isNotNull()
         assertThat(roomStartService).isNotNull()
     }
 
     @Test
-    fun `room 생성은 RoomCreated 이벤트를 발행한다`(publishedEvents: PublishedEvents) {
+    fun `방 생성은 생성 이벤트를 발행한다`(publishedEvents: PublishedEvents) {
         every { templateCatalog.getTemplateBlueprint(1L) } returns
             TemplateBlueprint(
                 templateId = 1L,
@@ -66,7 +66,7 @@ class RoomModuleIntegrationTest {
     }
 
     @Test
-    fun `room create 후 aggregate finder 로 즉시 조회할 수 있다`() {
+    fun `방 생성 후 애그리거트 조회 서비스로 즉시 조회할 수 있다`() {
         every { templateCatalog.getTemplateBlueprint(1L) } returns
             TemplateBlueprint(
                 templateId = 1L,

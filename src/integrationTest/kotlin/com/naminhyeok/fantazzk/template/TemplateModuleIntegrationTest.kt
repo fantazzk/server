@@ -45,7 +45,7 @@ class TemplateModuleIntegrationTest {
     }
 
     @Test
-    fun `template 생성은 TemplateCreated 이벤트를 발행한다`(publishedEvents: PublishedEvents) {
+    fun `템플릿 생성은 생성 이벤트를 발행한다`(publishedEvents: PublishedEvents) {
         templateCreateService.create(
             CreateTemplateCommand.Auction(
                 name = "모듈 테스트 템플릿",
@@ -66,7 +66,7 @@ class TemplateModuleIntegrationTest {
     }
 
     @Test
-    fun `template create 이후 finder 목록에서 새 템플릿을 조회할 수 있다`(scenario: Scenario) {
+    fun `템플릿 생성 이후 조회 서비스 목록에서 새 템플릿을 조회할 수 있다`(scenario: Scenario) {
         scenario
             .stimulate {
                 templateCreateService.create(
@@ -88,7 +88,7 @@ class TemplateModuleIntegrationTest {
     }
 
     @Test
-    fun `template finder 목록 조회는 유효하지 않은 row를 TemplateInvalidException 으로 변환한다`() {
+    fun `템플릿 조회 서비스 목록 조회는 유효하지 않은 행을 템플릿 유효성 예외로 변환한다`() {
         templateRepository.save(
             Template.create(
                 name = "정상 템플릿",
@@ -120,7 +120,7 @@ class TemplateModuleIntegrationTest {
     }
 
     @Test
-    fun `template finder 상세 조회는 displayOrder 순서의 선수 목록을 반환한다`() {
+    fun `템플릿 조회 서비스 상세 조회는 표시 순서대로 선수 목록을 반환한다`() {
         val template =
             templateRepository.save(
                 Template.create(
@@ -143,7 +143,7 @@ class TemplateModuleIntegrationTest {
     }
 
     @Test
-    fun `template catalog 는 aggregate 기반 상세 조회를 blueprint 로 변환한다`() {
+    fun `템플릿 목록 계약은 애그리거트 기반 상세 조회를 설계 정보로 변환한다`() {
         val template =
             templateRepository.save(
                 Template.create(
@@ -170,13 +170,13 @@ class TemplateModuleIntegrationTest {
     }
 
     @Test
-    fun `template catalog 는 존재하지 않는 템플릿을 not found 로 변환한다`() {
+    fun `템플릿 목록 계약은 존재하지 않는 템플릿을 찾을 수 없음 예외로 변환한다`() {
         assertThatThrownBy { templateCatalog.getTemplateBlueprint(999_999L) }
             .isInstanceOf(TemplateCatalogException.NotFound::class.java)
     }
 
     @Test
-    fun `template catalog 는 유효하지 않은 roster 를 invalid 로 변환한다`() {
+    fun `템플릿 목록 계약은 유효하지 않은 선수 구성을 유효성 예외로 변환한다`() {
         val templateId =
             jdbcTemplate.queryForObject(
                 """
