@@ -2,11 +2,12 @@
 
 package com.naminhyeok.fantazzk.room
 
-import com.naminhyeok.fantazzk.room.application.AuctionService
 import com.naminhyeok.fantazzk.room.application.CreateRoom
 import com.naminhyeok.fantazzk.room.application.GetRoom
 import com.naminhyeok.fantazzk.room.application.JoinRoom
 import com.naminhyeok.fantazzk.room.application.PickDraft
+import com.naminhyeok.fantazzk.room.application.PlaceBid
+import com.naminhyeok.fantazzk.room.application.SettleAuction
 import com.naminhyeok.fantazzk.room.application.StartRoom
 import com.naminhyeok.fantazzk.room.domain.*
 import com.naminhyeok.fantazzk.template.TemplateBlueprint
@@ -42,7 +43,10 @@ class RoomModuleIntegrationTest {
     lateinit var roomJoinService: JoinRoom
 
     @Autowired
-    lateinit var auctionService: AuctionService
+    lateinit var placeBid: PlaceBid
+
+    @Autowired
+    lateinit var settleAuction: SettleAuction
 
     @Autowired
     lateinit var draftService: PickDraft
@@ -152,8 +156,8 @@ class RoomModuleIntegrationTest {
         val guestLeader = roomJoinService.join(createdRoom.code, "게스트")
         roomStartService.start(createdRoom.code)
 
-        auctionService.placeBid(createdRoom.code, guestLeader.teamLeaderId, 150)
-        auctionService.settle(createdRoom.code)
+        placeBid.place(createdRoom.code, guestLeader.teamLeaderId, 150)
+        settleAuction.settle(createdRoom.code)
 
         val foundRoom = roomFinder.get(createdRoom.code)
         assertThat(foundRoom.members).hasSize(1)

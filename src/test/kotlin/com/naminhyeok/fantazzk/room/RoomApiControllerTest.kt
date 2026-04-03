@@ -2,12 +2,13 @@
 
 package com.naminhyeok.fantazzk.room
 
-import com.naminhyeok.fantazzk.room.application.AuctionService
 import com.naminhyeok.fantazzk.room.application.AuctionSettleResult
 import com.naminhyeok.fantazzk.room.application.CreateRoom
 import com.naminhyeok.fantazzk.room.application.GetRoom
 import com.naminhyeok.fantazzk.room.application.JoinRoom
 import com.naminhyeok.fantazzk.room.application.PickDraft
+import com.naminhyeok.fantazzk.room.application.PlaceBid
+import com.naminhyeok.fantazzk.room.application.SettleAuction
 import com.naminhyeok.fantazzk.room.application.StartRoom
 import com.naminhyeok.fantazzk.room.domain.*
 import com.naminhyeok.fantazzk.room.exception.RoomException
@@ -31,7 +32,8 @@ class RoomApiControllerTest {
     private val roomFinder: GetRoom = mockk()
     private val roomJoinService: JoinRoom = mockk()
     private val roomStartService: StartRoom = mockk()
-    private val auctionService: AuctionService = mockk()
+    private val placeBid: PlaceBid = mockk()
+    private val settleAuction: SettleAuction = mockk()
     private val draftService: PickDraft = mockk()
 
     private val now = Instant.now()
@@ -44,7 +46,8 @@ class RoomApiControllerTest {
                     roomFinder,
                     roomJoinService,
                     roomStartService,
-                    auctionService,
+                    placeBid,
+                    settleAuction,
                     draftService,
                 ),
             )
@@ -240,7 +243,7 @@ class RoomApiControllerTest {
                     createdAt = now,
                     updatedAt = now,
                 )
-            every { auctionService.placeBid("BID001", "leader-A", 100) } returns bid
+            every { placeBid.place("BID001", "leader-A", 100) } returns bid
             every { roomFinder.get("BID001") } returns room.copy(leaders = emptyList())
 
             mockMvc.post("/api/v1/rooms/BID001/bid") {
@@ -255,7 +258,7 @@ class RoomApiControllerTest {
 
         @Test
         fun `예산 초과 입찰 시 400을 반환한다`() {
-            every { auctionService.placeBid("BID001", "leader-A", 9999) } throws
+            every { placeBid.place("BID001", "leader-A", 9999) } throws
                 IllegalArgumentException("예산이 부족합니다")
 
             mockMvc.post("/api/v1/rooms/BID001/bid") {
@@ -274,7 +277,7 @@ class RoomApiControllerTest {
         @Test
         fun `성공적으로 정산하면 200과 방 정보를 반환한다`() {
             val room = room("SET001")
-            every { auctionService.settle("SET001") } returns AuctionSettleResult("선수1", AuctionOutcome.SOLD)
+            every { settleAuction.settle("SET001") } returns AuctionSettleResult("선수1", AuctionOutcome.SOLD)
             every { roomFinder.get("SET001") } returns room.copy(leaders = emptyList())
 
             mockMvc.post("/api/v1/rooms/SET001/settle")
@@ -287,7 +290,7 @@ class RoomApiControllerTest {
 
         @Test
         fun `정산할 선수가 없으면 400을 반환한다`() {
-            every { auctionService.settle("SET001") } throws IllegalArgumentException("경매할 선수가 없습니다")
+            every { settleAuction.settle("SET001") } throws IllegalArgumentException("경매할 선수가 없습니다")
 
             mockMvc.post("/api/v1/rooms/SET001/settle")
                 .andExpect {

@@ -1,7 +1,6 @@
 package com.naminhyeok.fantazzk.room.application
 
 import com.naminhyeok.fantazzk.room.domain.AuctionOutcome
-import com.naminhyeok.fantazzk.room.domain.RoomBid
 import com.naminhyeok.fantazzk.room.exception.RoomException
 import com.naminhyeok.fantazzk.room.repository.Rooms
 import org.springframework.stereotype.Component
@@ -13,23 +12,12 @@ data class AuctionSettleResult(
 )
 
 @Component
-class AuctionService(
-    private val roomRepository: Rooms,
+class SettleAuction(
+    private val rooms: Rooms,
 ) {
     @Transactional
-    fun placeBid(
-        code: String,
-        teamLeaderId: String,
-        amount: Int,
-    ): RoomBid {
-        val room = roomRepository.findByCode(code) ?: throw RoomException.RoomNotFoundException()
-        val savedRoom = roomRepository.save(room.placeBid(teamLeaderId, amount))
-        return savedRoom.bids.last()
-    }
-
-    @Transactional
     fun settle(code: String): AuctionSettleResult {
-        val room = roomRepository.findByCode(code) ?: throw RoomException.RoomNotFoundException()
+        val room = rooms.findByCode(code) ?: throw RoomException.RoomNotFoundException()
         val playerName =
             requireNotNull(
                 room.players
@@ -39,7 +27,7 @@ class AuctionService(
             ) { "경매할 선수가 없습니다" }
         val outcome = if (room.bids.isEmpty()) AuctionOutcome.PASSED else AuctionOutcome.SOLD
 
-        roomRepository.save(room.settleAuction())
+        rooms.save(room.settleAuction())
         return AuctionSettleResult(playerName, outcome)
     }
 }

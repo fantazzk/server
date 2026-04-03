@@ -2,12 +2,13 @@
 
 package com.naminhyeok.fantazzk.room
 
-import com.naminhyeok.fantazzk.room.application.AuctionService
 import com.naminhyeok.fantazzk.room.application.CreateRoom
 import com.naminhyeok.fantazzk.room.application.GetRoom
 import com.naminhyeok.fantazzk.room.application.JoinRoom
 import com.naminhyeok.fantazzk.room.application.PickDraft
+import com.naminhyeok.fantazzk.room.application.PlaceBid
 import com.naminhyeok.fantazzk.room.application.RoomCreateAttemptExecutor
+import com.naminhyeok.fantazzk.room.application.SettleAuction
 import com.naminhyeok.fantazzk.room.application.StartRoom
 import com.naminhyeok.fantazzk.room.domain.*
 import com.naminhyeok.fantazzk.room.repository.Rooms
@@ -45,7 +46,8 @@ class RoomStructureTransitionTest {
         val joinDependencies = JoinRoom::class.java.declaredConstructors.single().parameterTypes.map { it.simpleName }
         val startDependencies = StartRoom::class.java.declaredConstructors.single().parameterTypes.map { it.simpleName }
         val draftDependencies = PickDraft::class.java.declaredConstructors.single().parameterTypes.map { it.simpleName }
-        val auctionDependencies = AuctionService::class.java.declaredConstructors.single().parameterTypes.map { it.simpleName }
+        val placeBidDependencies = PlaceBid::class.java.declaredConstructors.single().parameterTypes.map { it.simpleName }
+        val settleDependencies = SettleAuction::class.java.declaredConstructors.single().parameterTypes.map { it.simpleName }
 
         listOf(
             createDependencies,
@@ -53,7 +55,8 @@ class RoomStructureTransitionTest {
             joinDependencies,
             startDependencies,
             draftDependencies,
-            auctionDependencies,
+            placeBidDependencies,
+            settleDependencies,
         ).forEach { dependencies ->
             assertThat(dependencies).doesNotContain(
                 "RoomPlayerRepository",

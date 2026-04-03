@@ -1,10 +1,11 @@
 package com.naminhyeok.fantazzk.room.web
 
-import com.naminhyeok.fantazzk.room.application.AuctionService
 import com.naminhyeok.fantazzk.room.application.CreateRoom
 import com.naminhyeok.fantazzk.room.application.GetRoom
 import com.naminhyeok.fantazzk.room.application.JoinRoom
 import com.naminhyeok.fantazzk.room.application.PickDraft
+import com.naminhyeok.fantazzk.room.application.PlaceBid
+import com.naminhyeok.fantazzk.room.application.SettleAuction
 import com.naminhyeok.fantazzk.room.application.StartRoom
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
@@ -32,7 +33,8 @@ class RoomApiController(
     private val roomFinder: GetRoom,
     private val roomJoinService: JoinRoom,
     private val roomStartService: StartRoom,
-    private val auctionService: AuctionService,
+    private val placeBid: PlaceBid,
+    private val settleAuction: SettleAuction,
     private val draftService: PickDraft,
 ) {
     @PostMapping
@@ -302,7 +304,7 @@ class RoomApiController(
         )
         @RequestBody request: PlaceBidRequest,
     ): ApiResponse<RoomResponse> {
-        auctionService.placeBid(code, request.teamLeaderId, request.amount)
+        placeBid.place(code, request.teamLeaderId, request.amount)
         val room = roomFinder.get(code)
         return ApiResponse.success(RoomResponse.from(room))
     }
@@ -365,7 +367,7 @@ class RoomApiController(
         @Parameter(description = RoomOpenApiDocs.ROOM_CODE_PARAMETER, example = "ROOM01")
         @PathVariable code: String,
     ): ApiResponse<RoomResponse> {
-        auctionService.settle(code)
+        settleAuction.settle(code)
         val room = roomFinder.get(code)
         return ApiResponse.success(RoomResponse.from(room))
     }
