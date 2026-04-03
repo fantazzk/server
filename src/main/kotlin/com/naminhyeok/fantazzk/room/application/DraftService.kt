@@ -3,11 +3,10 @@ package com.naminhyeok.fantazzk.room.application
 import com.naminhyeok.fantazzk.room.RoomTeamMember
 import com.naminhyeok.fantazzk.room.exception.RoomException
 import com.naminhyeok.fantazzk.room.repository.RoomRepository
-import org.springframework.stereotype.Service
+import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 
-@org.jmolecules.ddd.annotation.Service
-@Service
+@Component
 class DraftService(
     private val roomRepository: RoomRepository,
 ) {

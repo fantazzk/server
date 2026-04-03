@@ -4,7 +4,7 @@ import com.naminhyeok.fantazzk.room.AuctionOutcome
 import com.naminhyeok.fantazzk.room.RoomBid
 import com.naminhyeok.fantazzk.room.exception.RoomException
 import com.naminhyeok.fantazzk.room.repository.RoomRepository
-import org.springframework.stereotype.Service
+import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 
 data class AuctionSettleResult(
@@ -12,8 +12,7 @@ data class AuctionSettleResult(
     val outcome: AuctionOutcome,
 )
 
-@org.jmolecules.ddd.annotation.Service
-@Service
+@Component
 class AuctionService(
     private val roomRepository: RoomRepository,
 ) {

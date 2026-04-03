@@ -3,10 +3,9 @@ package com.naminhyeok.fantazzk.room.application
 import com.naminhyeok.fantazzk.room.Room
 import com.naminhyeok.fantazzk.room.exception.RoomException
 import com.naminhyeok.fantazzk.room.repository.RoomRepository
-import org.springframework.stereotype.Service
+import org.springframework.stereotype.Component
 
-@org.jmolecules.ddd.annotation.Service
-@Service
+@Component
 class RoomFinder(
     private val roomRepository: RoomRepository,
 ) {

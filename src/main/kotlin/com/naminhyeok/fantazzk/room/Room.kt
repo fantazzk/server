@@ -106,7 +106,8 @@ class Room protected constructor(
         registerBids(bids)
     }
 
-    override fun getId(): RoomId = RoomId(requireNotNull(persistentId))
+    override val id: RoomId
+        get() = RoomId(requireNotNull(persistentId))
 
     val roomId: Long
         get() = persistentId ?: 0L
@@ -586,6 +587,12 @@ fun Room.isInProgress(): Boolean = status == RoomStatus.IN_PROGRESS
 fun Room.isAuction(): Boolean = mode == TeamBuildingMode.AUCTION
 
 fun Room.isDraft(): Boolean = mode == TeamBuildingMode.DRAFT
+
+enum class RoomStatus {
+    WAITING,
+    IN_PROGRESS,
+    COMPLETED,
+}
 
 val Room.configuration: TeamBuildingConfiguration
     get() = TeamBuildingConfiguration.from(this)

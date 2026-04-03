@@ -53,7 +53,7 @@ class TemplateModuleIntegrationTest {
                 ),
             )
 
-        val detail = templateFinder.getDetail(created.getId())
+        val detail = templateFinder.getDetail(created.id)
 
         assertThat(detail.template.name).isEqualTo("모듈 테스트 템플릿")
         assertThat(detail.players.map { it.name }).containsExactly("선수1", "선수2")
@@ -88,7 +88,7 @@ class TemplateModuleIntegrationTest {
                 ),
             )
 
-        val detail = templateFinder.getDetail(created.getId())
+        val detail = templateFinder.getDetail(created.id)
 
         assertThat(detail.players.map { it.name }).containsExactly("선수1", "선수2")
     }

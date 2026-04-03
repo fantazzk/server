@@ -37,7 +37,8 @@ class Template protected constructor(
     @Column(name = "updated_at", nullable = false)
     val updatedAt: Instant = Instant.now(),
 ) : AggregateRoot<Template, TemplateId> {
-    override fun getId(): TemplateId = TemplateId(requireNotNull(persistentId))
+    override val id: TemplateId
+        get() = TemplateId(requireNotNull(persistentId))
 
     val templateId: Long
         get() = persistentId ?: 0L

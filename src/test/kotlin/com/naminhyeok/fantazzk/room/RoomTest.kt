@@ -232,7 +232,7 @@ class RoomTest {
         fun `Room은 RoomId를 aggregate 식별자로 사용한다`() {
             val room = room(roomId = 42L)
 
-            assertThat(room.getId()).isEqualTo(RoomId(42L))
+            assertThat(room.id).isEqualTo(RoomId(42L))
         }
     }
 

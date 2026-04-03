@@ -169,7 +169,7 @@ class TemplateTest {
     @Nested
     inner class Identity {
         @Test
-        fun `Template getId는 TemplateId를 반환한다`() {
+        fun `Template id는 TemplateId를 반환한다`() {
             val template =
                 Template.createAuction(
                     name = "테스트",
@@ -179,7 +179,7 @@ class TemplateTest {
                     playerNames = listOf("선수1", "선수2"),
                 ).assignId(TemplateId(42L))
 
-            assertThat(template.getId()).isEqualTo(TemplateId(42L))
+            assertThat(template.id).isEqualTo(TemplateId(42L))
         }
     }
 }

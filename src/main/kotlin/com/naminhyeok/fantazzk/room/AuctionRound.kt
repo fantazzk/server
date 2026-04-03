@@ -54,3 +54,8 @@ data class AuctionRoundSettlement(
     val completed: Boolean,
     val winningBid: RoomBid?,
 )
+
+enum class AuctionOutcome {
+    SOLD,
+    PASSED,
+}

@@ -65,7 +65,7 @@ class TemplateRepositoryIntegrationTest(
                 ),
             )
 
-        val found = cut.findById(saved.getId())
+        val found = cut.findById(saved.id)
 
         assertThat(found).isNotNull
         assertThat(found!!.players().map { it.name }).containsExactly("선수2", "선수1")
@@ -166,7 +166,7 @@ class TemplateRepositoryIntegrationTest(
                 ),
             )
 
-        val found = cut.findById(saved.getId())
+        val found = cut.findById(saved.id)
 
         assertThat(found).isNotNull
         assertThat(found!!.players().map { it.name }).containsExactly("선수2", "선수1")

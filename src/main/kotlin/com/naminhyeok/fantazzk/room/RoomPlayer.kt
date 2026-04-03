@@ -123,3 +123,8 @@ class RoomPlayer protected constructor(
 }
 
 fun RoomPlayer.isAvailable(): Boolean = status == PlayerStatus.AVAILABLE
+
+enum class PlayerStatus {
+    AVAILABLE,
+    ASSIGNED,
+}

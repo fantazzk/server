@@ -1,5 +1,15 @@
 package com.naminhyeok.fantazzk.room
 
+enum class TeamBuildingMode {
+    AUCTION,
+    DRAFT,
+}
+
+enum class DraftOrderStrategy {
+    SNAKE,
+    FIXED,
+}
+
 sealed interface TeamBuildingConfiguration {
     val mode: TeamBuildingMode
     val teamCount: Int
