@@ -1,8 +1,8 @@
 package com.naminhyeok.fantazzk.template.repository
 
-import com.naminhyeok.fantazzk.template.DraftOrderStrategy
-import com.naminhyeok.fantazzk.template.TeamBuildingMode
 import com.naminhyeok.fantazzk.template.TemplateId
+import com.naminhyeok.fantazzk.template.domain.DraftOrderStrategy
+import com.naminhyeok.fantazzk.template.domain.TeamBuildingMode
 import com.naminhyeok.fantazzk.template.domain.Template
 import com.naminhyeok.fantazzk.template.domain.TemplateConfiguration
 import org.assertj.core.api.Assertions.assertThat
@@ -23,7 +23,7 @@ import org.springframework.test.context.TestConstructor
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
 class TemplateRepositoryIntegrationTest(
-    private val cut: TemplateRepository,
+    private val cut: Templates,
     private val jdbcTemplate: JdbcTemplate,
 ) {
     @Test
@@ -65,7 +65,7 @@ class TemplateRepositoryIntegrationTest(
                 ),
             )
 
-        val found = cut.findById(saved.getId())
+        val found = cut.findById(saved.id)
 
         assertThat(found).isNotNull
         assertThat(found!!.players().map { it.name }).containsExactly("선수2", "선수1")
@@ -166,7 +166,7 @@ class TemplateRepositoryIntegrationTest(
                 ),
             )
 
-        val found = cut.findById(saved.getId())
+        val found = cut.findById(saved.id)
 
         assertThat(found).isNotNull
         assertThat(found!!.players().map { it.name }).containsExactly("선수2", "선수1")

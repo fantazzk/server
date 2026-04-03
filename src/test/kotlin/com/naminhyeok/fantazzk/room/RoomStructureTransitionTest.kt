@@ -1,14 +1,18 @@
+@file:Suppress("ktlint:standard:no-wildcard-imports")
+
 package com.naminhyeok.fantazzk.room
 
-import com.naminhyeok.fantazzk.room.api.RoomApiController
-import com.naminhyeok.fantazzk.room.application.AuctionService
-import com.naminhyeok.fantazzk.room.application.DraftService
+import com.naminhyeok.fantazzk.room.application.CreateRoom
+import com.naminhyeok.fantazzk.room.application.GetRoom
+import com.naminhyeok.fantazzk.room.application.JoinRoom
+import com.naminhyeok.fantazzk.room.application.PickDraft
+import com.naminhyeok.fantazzk.room.application.PlaceBid
 import com.naminhyeok.fantazzk.room.application.RoomCreateAttemptExecutor
-import com.naminhyeok.fantazzk.room.application.RoomCreateService
-import com.naminhyeok.fantazzk.room.application.RoomFinder
-import com.naminhyeok.fantazzk.room.application.RoomJoinService
-import com.naminhyeok.fantazzk.room.application.RoomStartService
-import com.naminhyeok.fantazzk.room.repository.RoomRepository
+import com.naminhyeok.fantazzk.room.application.SettleAuction
+import com.naminhyeok.fantazzk.room.application.StartRoom
+import com.naminhyeok.fantazzk.room.domain.*
+import com.naminhyeok.fantazzk.room.repository.Rooms
+import com.naminhyeok.fantazzk.room.web.RoomApiController
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
@@ -18,9 +22,9 @@ import org.springframework.transaction.annotation.Transactional
 class RoomStructureTransitionTest {
     @Test
     fun `room 리포지토리 공개 surface 는 typed aggregate 계약만 노출한다`() {
-        val methods = RoomRepository::class.java.methods.filter { it.declaringClass == RoomRepository::class.java }
+        val methods = Rooms::class.java.methods.filter { it.declaringClass == Rooms::class.java }
 
-        assertThat(RoomRepository::class.java.interfaces.map { it.simpleName }).doesNotContain("JpaRepository")
+        assertThat(Rooms::class.java.interfaces.map { it.simpleName }).doesNotContain("JpaRepository")
         assertThat(methods.map { it.name to it.parameterTypes.toList() })
             .contains("save" to listOf(Room::class.java))
             .contains("findByCode" to listOf(String::class.java))
@@ -37,12 +41,13 @@ class RoomStructureTransitionTest {
 
     @Test
     fun `room finder 와 유스케이스 서비스는 단일 aggregate 리포지토리에만 의존한다`() {
-        val createDependencies = RoomCreateService::class.java.declaredConstructors.single().parameterTypes.map { it.simpleName }
-        val finderDependencies = RoomFinder::class.java.declaredConstructors.single().parameterTypes.map { it.simpleName }
-        val joinDependencies = RoomJoinService::class.java.declaredConstructors.single().parameterTypes.map { it.simpleName }
-        val startDependencies = RoomStartService::class.java.declaredConstructors.single().parameterTypes.map { it.simpleName }
-        val draftDependencies = DraftService::class.java.declaredConstructors.single().parameterTypes.map { it.simpleName }
-        val auctionDependencies = AuctionService::class.java.declaredConstructors.single().parameterTypes.map { it.simpleName }
+        val createDependencies = CreateRoom::class.java.declaredConstructors.single().parameterTypes.map { it.simpleName }
+        val finderDependencies = GetRoom::class.java.declaredConstructors.single().parameterTypes.map { it.simpleName }
+        val joinDependencies = JoinRoom::class.java.declaredConstructors.single().parameterTypes.map { it.simpleName }
+        val startDependencies = StartRoom::class.java.declaredConstructors.single().parameterTypes.map { it.simpleName }
+        val draftDependencies = PickDraft::class.java.declaredConstructors.single().parameterTypes.map { it.simpleName }
+        val placeBidDependencies = PlaceBid::class.java.declaredConstructors.single().parameterTypes.map { it.simpleName }
+        val settleDependencies = SettleAuction::class.java.declaredConstructors.single().parameterTypes.map { it.simpleName }
 
         listOf(
             createDependencies,
@@ -50,7 +55,8 @@ class RoomStructureTransitionTest {
             joinDependencies,
             startDependencies,
             draftDependencies,
-            auctionDependencies,
+            placeBidDependencies,
+            settleDependencies,
         ).forEach { dependencies ->
             assertThat(dependencies).doesNotContain(
                 "RoomPlayerRepository",
@@ -58,13 +64,13 @@ class RoomStructureTransitionTest {
                 "RoomTeamMemberRepository",
                 "RoomBidRepository",
             )
-            assertThat(dependencies).contains("RoomRepository")
+            assertThat(dependencies).contains("Rooms")
         }
     }
 
     @Test
     fun `방 생성 재시도는 외부 서비스와 개별 시도 트랜잭션으로 분리한다`() {
-        val createMethod = RoomCreateService::class.java.getMethod("create", Long::class.javaPrimitiveType, String::class.java)
+        val createMethod = CreateRoom::class.java.getMethod("create", Long::class.javaPrimitiveType, String::class.java)
         val attemptMethod = RoomCreateAttemptExecutor::class.java.getMethod("create", Room::class.java)
 
         assertThat(createMethod.isAnnotationPresent(Transactional::class.java)).isFalse()
@@ -110,14 +116,14 @@ class RoomStructureTransitionTest {
     @Test
     fun `room 리포지토리와 조회 서비스는 concrete domain 타입을 사용한다`() {
         assertThat(
-            RoomRepository::class.java.getMethod("save", Room::class.java).returnType,
+            Rooms::class.java.getMethod("save", Room::class.java).returnType,
         ).isEqualTo(Room::class.java)
         assertThat(
-            RoomRepository::class.java.getMethod("findByCode", String::class.java).returnType,
+            Rooms::class.java.getMethod("findByCode", String::class.java).returnType,
         ).isEqualTo(Room::class.java)
 
         assertThat(
-            RoomFinder::class.java.getMethod("get", String::class.java).returnType,
+            GetRoom::class.java.getMethod("get", String::class.java).returnType,
         ).isEqualTo(Room::class.java)
     }
 
@@ -138,10 +144,10 @@ class RoomStructureTransitionTest {
     }
 
     @Test
-    fun `room aggregate 생성 명세는 room 루트 패키지에 둔다`() {
-        assertThat(Class.forName("com.naminhyeok.fantazzk.room.RoomTemplateSpec")).isNotNull
-        assertThatThrownBy { Class.forName("com.naminhyeok.fantazzk.room.application.RoomTemplateSpec") }
+    fun `room aggregate 생성 명세는 application 패키지에 둔다`() {
+        assertThatThrownBy { Class.forName("com.naminhyeok.fantazzk.room.RoomTemplateSpec") }
             .isInstanceOf(ClassNotFoundException::class.java)
+        assertThat(Class.forName("com.naminhyeok.fantazzk.room.application.RoomTemplateSpec")).isNotNull
     }
 
     @Test

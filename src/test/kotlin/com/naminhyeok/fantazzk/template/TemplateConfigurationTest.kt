@@ -1,5 +1,7 @@
 package com.naminhyeok.fantazzk.template
 
+import com.naminhyeok.fantazzk.template.domain.DraftOrderStrategy
+import com.naminhyeok.fantazzk.template.domain.TeamBuildingMode
 import com.naminhyeok.fantazzk.template.domain.TemplateConfiguration
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy

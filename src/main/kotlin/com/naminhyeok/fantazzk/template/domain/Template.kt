@@ -1,16 +1,16 @@
 package com.naminhyeok.fantazzk.template.domain
 
-import com.naminhyeok.fantazzk.template.DraftOrderStrategy
-import com.naminhyeok.fantazzk.template.TeamBuildingMode
 import com.naminhyeok.fantazzk.template.TemplateId
-import com.naminhyeok.fantazzk.template.TemplateRoster
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.Embedded
 import jakarta.persistence.Entity
+import jakarta.persistence.FetchType
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
+import jakarta.persistence.JoinColumn
+import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToMany
 import jakarta.persistence.OrderBy
 import jakarta.persistence.PostLoad
@@ -37,7 +37,8 @@ class Template protected constructor(
     @Column(name = "updated_at", nullable = false)
     val updatedAt: Instant = Instant.now(),
 ) : AggregateRoot<Template, TemplateId> {
-    override fun getId(): TemplateId = TemplateId(requireNotNull(persistentId))
+    override val id: TemplateId
+        get() = TemplateId(requireNotNull(persistentId))
 
     val templateId: Long
         get() = persistentId ?: 0L
@@ -123,4 +124,62 @@ class Template protected constructor(
                     ).also { it.attach(this) }
                 }.forEach(persistentPlayers::add)
         }
+}
+
+@Entity
+@Table(name = "template_player")
+class TemplatePlayer(
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
+    var templatePlayerId: Long = 0L,
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "template_id", nullable = false)
+    private var template: Template? = null,
+    @Column(name = "name", nullable = false)
+    val name: String = "",
+    @Column(name = "display_order", nullable = false)
+    val displayOrder: Int = 0,
+    @Column(name = "created_at", nullable = false)
+    val createdAt: Instant = Instant.now(),
+    @Column(name = "updated_at", nullable = false)
+    val updatedAt: Instant = Instant.now(),
+) {
+    constructor(
+        templatePlayerId: Long = 0L,
+        templateId: Long,
+        name: String,
+        displayOrder: Int,
+        createdAt: Instant = Instant.now(),
+        updatedAt: Instant = Instant.now(),
+    ) : this(
+        templatePlayerId = templatePlayerId,
+        template = Template.reference(templateId),
+        name = name,
+        displayOrder = displayOrder,
+        createdAt = createdAt,
+        updatedAt = updatedAt,
+    )
+
+    constructor(
+        templateId: Long,
+        name: String,
+        displayOrder: Int,
+        createdAt: Instant = Instant.now(),
+        updatedAt: Instant = Instant.now(),
+    ) : this(
+        templatePlayerId = 0L,
+        templateId = templateId,
+        name = name,
+        displayOrder = displayOrder,
+        createdAt = createdAt,
+        updatedAt = updatedAt,
+    )
+
+    val templateId: Long
+        get() = template?.templateId ?: 0L
+
+    internal fun attach(template: Template) {
+        this.template = template
+    }
 }

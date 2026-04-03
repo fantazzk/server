@@ -1,6 +1,9 @@
+@file:Suppress("ktlint:standard:no-wildcard-imports")
+
 package com.naminhyeok.fantazzk.room
 
-import com.naminhyeok.fantazzk.room.application.RoomStartService
+import com.naminhyeok.fantazzk.room.application.StartRoom
+import com.naminhyeok.fantazzk.room.domain.*
 import com.naminhyeok.fantazzk.room.exception.RoomException
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomRepository
 import org.assertj.core.api.Assertions.assertThat
@@ -14,12 +17,12 @@ import org.junit.jupiter.params.provider.ValueSource
 
 class RoomStartServiceTest {
     private lateinit var roomRepo: InMemoryRoomRepository
-    private lateinit var cut: RoomStartService
+    private lateinit var cut: StartRoom
 
     @BeforeEach
     fun setUp() {
         roomRepo = InMemoryRoomRepository()
-        cut = RoomStartService(roomRepo)
+        cut = StartRoom(roomRepo)
     }
 
     @Nested

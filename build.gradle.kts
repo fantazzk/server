@@ -71,7 +71,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework:spring-tx")
-    implementation("org.jmolecules:jmolecules-ddd:2.0.1")
+    implementation("org.jmolecules:kmolecules-ddd:2.0.1")
     implementation("org.springframework.modulith:spring-modulith-starter-jpa")
     implementation("org.springframework.modulith:spring-modulith-starter-insight")
     implementation("tools.jackson.module:jackson-module-kotlin")

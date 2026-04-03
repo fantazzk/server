@@ -1,14 +1,14 @@
 package com.naminhyeok.fantazzk.room.repository
 
-import com.naminhyeok.fantazzk.room.DraftOrderStrategy
-import com.naminhyeok.fantazzk.room.Room
-import com.naminhyeok.fantazzk.room.RoomBid
-import com.naminhyeok.fantazzk.room.RoomId
-import com.naminhyeok.fantazzk.room.RoomPlayer
-import com.naminhyeok.fantazzk.room.RoomStatus
-import com.naminhyeok.fantazzk.room.RoomTeamLeader
-import com.naminhyeok.fantazzk.room.RoomTeamMember
-import com.naminhyeok.fantazzk.room.TeamBuildingMode
+import com.naminhyeok.fantazzk.room.domain.DraftOrderStrategy
+import com.naminhyeok.fantazzk.room.domain.Room
+import com.naminhyeok.fantazzk.room.domain.RoomBid
+import com.naminhyeok.fantazzk.room.domain.RoomId
+import com.naminhyeok.fantazzk.room.domain.RoomPlayer
+import com.naminhyeok.fantazzk.room.domain.RoomStatus
+import com.naminhyeok.fantazzk.room.domain.RoomTeamLeader
+import com.naminhyeok.fantazzk.room.domain.RoomTeamMember
+import com.naminhyeok.fantazzk.room.domain.TeamBuildingMode
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
@@ -29,7 +29,7 @@ import org.springframework.test.context.TestConstructor
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
 class RoomRepositoryIntegrationTest(
-    private val cut: RoomRepository,
+    private val cut: Rooms,
     private val jdbcTemplate: JdbcTemplate,
 ) {
     @Test

@@ -1,10 +1,10 @@
 package com.naminhyeok.fantazzk.template
 
-import com.naminhyeok.fantazzk.template.api.TemplateApiController
-import com.naminhyeok.fantazzk.template.application.TemplateCreateService
-import com.naminhyeok.fantazzk.template.application.TemplateFinder
+import com.naminhyeok.fantazzk.template.application.CreateTemplate
+import com.naminhyeok.fantazzk.template.application.FindTemplates
 import com.naminhyeok.fantazzk.template.domain.Template
-import com.naminhyeok.fantazzk.template.repository.TemplateRepository
+import com.naminhyeok.fantazzk.template.repository.Templates
+import com.naminhyeok.fantazzk.template.web.TemplateApiController
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
@@ -13,9 +13,9 @@ import java.lang.reflect.Modifier
 class TemplateStructureTransitionTest {
     @Test
     fun `template 리포지토리 공개 surface 는 typed id 계약만 노출한다`() {
-        val methods = TemplateRepository::class.java.methods.filter { it.declaringClass == TemplateRepository::class.java }
+        val methods = Templates::class.java.methods.filter { it.declaringClass == Templates::class.java }
 
-        assertThat(TemplateRepository::class.java.interfaces.map { it.simpleName }).doesNotContain("JpaRepository")
+        assertThat(Templates::class.java.interfaces.map { it.simpleName }).doesNotContain("JpaRepository")
         assertThat(methods.map { it.name to it.parameterTypes.toList() })
             .contains("save" to listOf(Template::class.java))
             .contains("findById" to listOf(TemplateId::class.java))
@@ -26,7 +26,7 @@ class TemplateStructureTransitionTest {
     fun `template API 는 더 이상 query service 에 의존하지 않는다`() {
         val parameterTypes = TemplateApiController::class.java.declaredConstructors.single().parameterTypes.toList()
         assertThat(parameterTypes.map { it.name }).doesNotContain("com.naminhyeok.fantazzk.template.query.TemplateQueryService")
-        assertThat(parameterTypes).contains(TemplateFinder::class.java)
+        assertThat(parameterTypes).contains(FindTemplates::class.java)
     }
 
     @Test
@@ -46,9 +46,9 @@ class TemplateStructureTransitionTest {
     @Test
     fun `template finder 와 create service 는 더 이상 선수 리포지토리에 의존하지 않는다`() {
         val finderDependencies =
-            TemplateFinder::class.java.declaredConstructors.single().parameterTypes.map { it.simpleName }
+            FindTemplates::class.java.declaredConstructors.single().parameterTypes.map { it.simpleName }
         val createServiceDependencies =
-            TemplateCreateService::class.java.declaredConstructors.single().parameterTypes.map { it.simpleName }
+            CreateTemplate::class.java.declaredConstructors.single().parameterTypes.map { it.simpleName }
 
         assertThat(finderDependencies).doesNotContain("TemplatePlayerRepository")
         assertThat(createServiceDependencies).doesNotContain("TemplatePlayerRepository")
