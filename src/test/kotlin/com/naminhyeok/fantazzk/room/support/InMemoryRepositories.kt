@@ -16,7 +16,6 @@ class InMemoryRoomRepository : RoomRepository {
     private var bidSeq = 1L
 
     override fun save(room: Room): Room {
-        val pendingEvents = room.pendingEvents()
         val assignedRoomId = if (room.roomId == 0L) roomSeq++ else room.roomId
         val savedRoom =
             room.copy(
@@ -52,7 +51,7 @@ class InMemoryRoomRepository : RoomRepository {
             )
 
         store[assignedRoomId] = savedRoom.snapshot()
-        return savedRoom.restorePendingEvents(pendingEvents)
+        return savedRoom
     }
 
     override fun findByCode(code: String): Room? = store.values.firstOrNull { it.code == code }?.snapshot()

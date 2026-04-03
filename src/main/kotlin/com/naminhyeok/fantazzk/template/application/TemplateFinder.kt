@@ -14,19 +14,13 @@ data class TemplateDetail(
     val players: List<TemplatePlayer>,
 )
 
-interface TemplateFinder {
-    fun getDetail(templateId: TemplateId): TemplateDetail
-
-    fun list(): List<Template>
-}
-
 @org.jmolecules.ddd.annotation.Service
 @Service
-internal class TemplateFinderImpl(
+class TemplateFinder(
     private val templateRepository: TemplateRepository,
-) : TemplateFinder {
+) {
     @Transactional(readOnly = true)
-    override fun getDetail(templateId: TemplateId): TemplateDetail {
+    fun getDetail(templateId: TemplateId): TemplateDetail {
         try {
             val template = templateRepository.findById(templateId) ?: throw TemplateException.TemplateNotFoundException()
             val players = template.players()
@@ -40,7 +34,7 @@ internal class TemplateFinderImpl(
     }
 
     @Transactional(readOnly = true)
-    override fun list(): List<Template> =
+    fun list(): List<Template> =
         try {
             templateRepository.findAll().onEach { it.players() }
         } catch (_: IllegalArgumentException) {

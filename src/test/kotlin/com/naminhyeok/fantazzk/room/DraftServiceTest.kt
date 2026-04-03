@@ -1,21 +1,16 @@
 package com.naminhyeok.fantazzk.room
 
 import com.naminhyeok.fantazzk.room.application.DraftService
-import com.naminhyeok.fantazzk.room.application.DraftServiceImpl
 import com.naminhyeok.fantazzk.room.exception.RoomException
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomRepository
-import io.mockk.mockk
-import io.mockk.verify
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.springframework.context.ApplicationEventPublisher
 
 class DraftServiceTest {
     private lateinit var roomRepo: InMemoryRoomRepository
-    private lateinit var events: ApplicationEventPublisher
     private lateinit var cut: DraftService
 
     private lateinit var roomCode: String
@@ -24,8 +19,7 @@ class DraftServiceTest {
     @BeforeEach
     fun setUp() {
         roomRepo = InMemoryRoomRepository()
-        events = mockk(relaxed = true)
-        cut = DraftServiceImpl(roomRepo, events)
+        cut = DraftService(roomRepo)
 
         val room =
             roomRepo.save(
@@ -66,38 +60,12 @@ class DraftServiceTest {
         }
 
         @Test
-        fun `픽 성공 시 DraftPickCompleted 이벤트를 발행한다`() {
-            cut.pick(roomCode, "leader-A", "선수1")
-
-            verify {
-                events.publishEvent(
-                    match<DraftPickCompleted> {
-                        it.roomId == roomId &&
-                            it.code == roomCode &&
-                            it.playerName == "선수1" &&
-                            it.teamLeaderId == "leader-A"
-                    },
-                )
-            }
-        }
-
-        @Test
         fun `모든 픽이 완료되면 방이 완료된다`() {
             cut.pick(roomCode, "leader-A", "선수1")
             cut.pick(roomCode, "leader-B", "선수2")
 
             val room = currentRoom()
             assertThat(room.status).isEqualTo(RoomStatus.COMPLETED)
-
-            verify {
-                events.publishEvent(
-                    match<RoomCompleted> {
-                        it.roomId == roomId &&
-                            it.code == roomCode &&
-                            it.mode == RoomStarted.Mode.DRAFT
-                    },
-                )
-            }
         }
     }
 

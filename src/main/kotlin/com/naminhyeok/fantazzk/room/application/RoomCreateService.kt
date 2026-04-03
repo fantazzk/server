@@ -14,21 +14,14 @@ import org.springframework.dao.DuplicateKeyException
 import org.springframework.stereotype.Service
 import java.util.UUID
 
-interface RoomCreateService {
-    fun create(
-        templateId: Long,
-        hostNickname: String,
-    ): Room
-}
-
 @org.jmolecules.ddd.annotation.Service
 @Service
-internal class RoomCreateServiceImpl(
+class RoomCreateService(
     private val roomRepository: RoomRepository,
     private val templateCatalog: TemplateCatalog,
     private val roomCreateAttemptExecutor: RoomCreateAttemptExecutor,
-) : RoomCreateService {
-    override fun create(
+) {
+    fun create(
         templateId: Long,
         hostNickname: String,
     ): Room {

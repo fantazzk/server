@@ -2,7 +2,6 @@ package com.naminhyeok.fantazzk.room
 
 import com.naminhyeok.fantazzk.room.application.RoomCreateAttemptExecutor
 import com.naminhyeok.fantazzk.room.application.RoomCreateService
-import com.naminhyeok.fantazzk.room.application.RoomCreateServiceImpl
 import com.naminhyeok.fantazzk.room.exception.RoomTemplateNotFoundException
 import com.naminhyeok.fantazzk.room.repository.RoomRepository
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomRepository
@@ -32,8 +31,8 @@ class RoomCreateServiceTest {
     fun setUp() {
         roomRepo = InMemoryRoomRepository()
         templateCatalog = InMemoryTemplateCatalog()
-        roomCreateAttemptExecutor = ImmediateRoomCreateAttemptExecutor(roomRepo)
-        cut = RoomCreateServiceImpl(roomRepo, templateCatalog, roomCreateAttemptExecutor)
+        roomCreateAttemptExecutor = RoomCreateAttemptExecutor(roomRepo)
+        cut = RoomCreateService(roomRepo, templateCatalog, roomCreateAttemptExecutor)
     }
 
     @Nested
@@ -173,7 +172,7 @@ class RoomCreateServiceTest {
         @Test
         fun `포트에서 템플릿 없음 예외가 오면 방 도메인 예외로 번역한다`() {
             cut =
-                RoomCreateServiceImpl(
+                RoomCreateService(
                     roomRepo,
                     object : TemplateCatalog {
                         override fun getTemplateBlueprint(templateId: Long): TemplateBlueprint {
@@ -191,7 +190,7 @@ class RoomCreateServiceTest {
         @Test
         fun `포트에서 유효하지 않은 템플릿 예외가 오면 생성 불가 상태로 번역한다`() {
             cut =
-                RoomCreateServiceImpl(
+                RoomCreateService(
                     roomRepo,
                     object : TemplateCatalog {
                         override fun getTemplateBlueprint(templateId: Long): TemplateBlueprint {
@@ -214,10 +213,10 @@ class RoomCreateServiceTest {
             val retryingRoomRepo = DuplicateOnceWithDistinctRetryRoomRepository()
             addAuctionTemplate(templateId = 1L)
             cut =
-                RoomCreateServiceImpl(
+                RoomCreateService(
                     retryingRoomRepo,
                     templateCatalog,
-                    ImmediateRoomCreateAttemptExecutor(retryingRoomRepo),
+                    RoomCreateAttemptExecutor(retryingRoomRepo),
                 )
 
             val room = cut.create(1L, "호스트")
@@ -234,10 +233,10 @@ class RoomCreateServiceTest {
             val retryingRoomRepo = DuplicateOnceWithDataIntegrityRetryRoomRepository()
             addAuctionTemplate(templateId = 1L)
             cut =
-                RoomCreateServiceImpl(
+                RoomCreateService(
                     retryingRoomRepo,
                     templateCatalog,
-                    ImmediateRoomCreateAttemptExecutor(retryingRoomRepo),
+                    RoomCreateAttemptExecutor(retryingRoomRepo),
                 )
 
             val room = cut.create(1L, "호스트")
@@ -254,10 +253,10 @@ class RoomCreateServiceTest {
             val alwaysExistingCodeRoomRepository = AlwaysExistingCodeRoomRepository()
             addAuctionTemplate(templateId = 1L)
             cut =
-                RoomCreateServiceImpl(
+                RoomCreateService(
                     alwaysExistingCodeRoomRepository,
                     templateCatalog,
-                    ImmediateRoomCreateAttemptExecutor(alwaysExistingCodeRoomRepository),
+                    RoomCreateAttemptExecutor(alwaysExistingCodeRoomRepository),
                 )
 
             assertThatThrownBy { cut.create(1L, "호스트") }
@@ -272,10 +271,10 @@ class RoomCreateServiceTest {
             val alwaysDuplicateRoomRepo = AlwaysDuplicateRoomRepository()
             addAuctionTemplate(templateId = 1L)
             cut =
-                RoomCreateServiceImpl(
+                RoomCreateService(
                     alwaysDuplicateRoomRepo,
                     templateCatalog,
-                    ImmediateRoomCreateAttemptExecutor(alwaysDuplicateRoomRepo),
+                    RoomCreateAttemptExecutor(alwaysDuplicateRoomRepo),
                 )
 
             assertThatThrownBy { cut.create(1L, "호스트") }
@@ -397,11 +396,5 @@ class RoomCreateServiceTest {
         }
 
         override fun findById(roomId: RoomId): Room? = null
-    }
-
-    private class ImmediateRoomCreateAttemptExecutor(
-        private val roomRepository: RoomRepository,
-    ) : RoomCreateAttemptExecutor {
-        override fun create(room: Room): Room = roomRepository.save(room)
     }
 }

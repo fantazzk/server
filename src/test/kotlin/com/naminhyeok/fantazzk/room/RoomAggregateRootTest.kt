@@ -36,7 +36,7 @@ class RoomAggregateRootTest {
     }
 
     @Test
-    fun `방 애그리거트 루트가 방 시작을 처리하며 방 시작 이벤트를 만든다`() {
+    fun `방 애그리거트 루트가 방 시작을 처리하며 진행 상태를 초기화한다`() {
         val room =
             Room.createAuction(
                 code = "START1",
@@ -57,18 +57,10 @@ class RoomAggregateRootTest {
 
         assertThat(startedRoom.status).isEqualTo(RoomStatus.IN_PROGRESS)
         assertThat(startedRoom.currentAuctionRound).isEqualTo(1)
-        assertThat(startedRoom.drainEvents()).containsExactly(
-            RoomStarted(
-                roomId = 10L,
-                code = "START1",
-                status = RoomStatus.IN_PROGRESS,
-                mode = RoomStarted.Mode.AUCTION,
-            ),
-        )
     }
 
     @Test
-    fun `방 애그리거트 루트가 경매 정산을 처리하며 선수 배정과 경매 정산 이벤트를 만든다`() {
+    fun `방 애그리거트 루트가 경매 정산을 처리하며 선수 배정과 예산 차감을 반영한다`() {
         val room =
             Room.createAuction(
                 code = "AUC01",
@@ -120,23 +112,10 @@ class RoomAggregateRootTest {
         assertThat(assignedMember.teamLeaderId).isEqualTo("leader-B")
         assertThat(assignedMember.playerName).isEqualTo("선수1")
         assertThat(settledRoom.leaders.single { it.teamLeaderId == "leader-B" }.remainingBudget).isEqualTo(150)
-        assertThat(settledRoom.drainEvents()).contains(
-            AuctionSettled(
-                roomId = 10L,
-                code = "AUC01",
-                playerName = "선수1",
-                outcome = AuctionOutcome.SOLD,
-                leaders =
-                    listOf(
-                        LeaderSnapshot(teamLeaderId = "leader-A", nickname = "A", remainingBudget = 300),
-                        LeaderSnapshot(teamLeaderId = "leader-B", nickname = "B", remainingBudget = 150),
-                    ),
-            ),
-        )
     }
 
     @Test
-    fun `방 애그리거트 루트가 마지막 드래프트 지명을 처리하면 방 완료 이벤트까지 만든다`() {
+    fun `방 애그리거트 루트가 마지막 드래프트 지명을 처리하면 방을 완료한다`() {
         val room =
             Room.createDraft(
                 code = "DRF01",
@@ -164,15 +143,7 @@ class RoomAggregateRootTest {
 
         assertThat(pickedRoom.status).isEqualTo(RoomStatus.COMPLETED)
         assertThat(pickedRoom.players.single().status).isEqualTo(PlayerStatus.ASSIGNED)
-        assertThat(pickedRoom.drainEvents()).contains(
-            DraftPickCompleted(
-                roomId = 11L,
-                code = "DRF01",
-                playerName = "선수2",
-                teamLeaderId = "leader-B",
-            ),
-            RoomCompleted(roomId = 11L, code = "DRF01", status = RoomStatus.COMPLETED, mode = RoomStarted.Mode.DRAFT),
-        )
+        assertThat(pickedRoom.members.map { it.playerName }).containsExactly("선수1", "선수2")
     }
 
     @Test

@@ -1,11 +1,9 @@
 package com.naminhyeok.fantazzk.room.application
 
 import com.naminhyeok.fantazzk.room.AuctionOutcome
-import com.naminhyeok.fantazzk.room.AuctionSettled
 import com.naminhyeok.fantazzk.room.RoomBid
 import com.naminhyeok.fantazzk.room.exception.RoomException
 import com.naminhyeok.fantazzk.room.repository.RoomRepository
-import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -14,24 +12,13 @@ data class AuctionSettleResult(
     val outcome: AuctionOutcome,
 )
 
-interface AuctionService {
-    fun placeBid(
-        code: String,
-        teamLeaderId: String,
-        amount: Int,
-    ): RoomBid
-
-    fun settle(code: String): AuctionSettleResult
-}
-
 @org.jmolecules.ddd.annotation.Service
 @Service
-internal open class AuctionServiceImpl(
+class AuctionService(
     private val roomRepository: RoomRepository,
-    private val events: ApplicationEventPublisher,
-) : AuctionService {
+) {
     @Transactional
-    override fun placeBid(
+    fun placeBid(
         code: String,
         teamLeaderId: String,
         amount: Int,
@@ -42,16 +29,18 @@ internal open class AuctionServiceImpl(
     }
 
     @Transactional
-    override fun settle(code: String): AuctionSettleResult {
+    fun settle(code: String): AuctionSettleResult {
         val room = roomRepository.findByCode(code) ?: throw RoomException.RoomNotFoundException()
-        val savedRoom = roomRepository.save(room.settleAuction())
-        val domainEvents = savedRoom.drainEvents()
-        domainEvents.forEach(events::publishEvent)
-        val settled =
-            domainEvents
-                .filterIsInstance<AuctionSettled>()
-                .lastOrNull()
-                ?: error("AuctionSettled event was not registered")
-        return AuctionSettleResult(settled.playerName, settled.outcome)
+        val playerName =
+            requireNotNull(
+                room.players
+                    .filter { it.status.name == "AVAILABLE" }
+                    .minByOrNull { it.displayOrder }
+                    ?.name,
+            ) { "경매할 선수가 없습니다" }
+        val outcome = if (room.bids.isEmpty()) AuctionOutcome.PASSED else AuctionOutcome.SOLD
+
+        roomRepository.save(room.settleAuction())
+        return AuctionSettleResult(playerName, outcome)
     }
 }

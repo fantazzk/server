@@ -1,21 +1,16 @@
 package com.naminhyeok.fantazzk.room
 
 import com.naminhyeok.fantazzk.room.application.AuctionService
-import com.naminhyeok.fantazzk.room.application.AuctionServiceImpl
 import com.naminhyeok.fantazzk.room.exception.RoomException
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomRepository
-import io.mockk.mockk
-import io.mockk.verify
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.springframework.context.ApplicationEventPublisher
 
 class AuctionServiceTest {
     private lateinit var roomRepo: InMemoryRoomRepository
-    private lateinit var events: ApplicationEventPublisher
     private lateinit var cut: AuctionService
 
     private lateinit var roomCode: String
@@ -24,8 +19,7 @@ class AuctionServiceTest {
     @BeforeEach
     fun setUp() {
         roomRepo = InMemoryRoomRepository()
-        events = mockk(relaxed = true)
-        cut = AuctionServiceImpl(roomRepo, events)
+        cut = AuctionService(roomRepo)
 
         val room =
             roomRepo.save(
@@ -167,26 +161,6 @@ class AuctionServiceTest {
         }
 
         @Test
-        fun `정산 성공 시 AuctionSettled 이벤트를 발행한다`() {
-            cut.placeBid(roomCode, "leader-A", 100)
-
-            cut.settle(roomCode)
-
-            verify {
-                events.publishEvent(
-                    match<AuctionSettled> {
-                        it.roomId == roomId &&
-                            it.code == roomCode &&
-                            it.playerName == "선수1" &&
-                            it.outcome == AuctionOutcome.SOLD &&
-                            it.leaders.any { leader -> leader.teamLeaderId == "leader-A" && leader.remainingBudget == 200 } &&
-                            it.leaders.any { leader -> leader.teamLeaderId == "leader-B" && leader.remainingBudget == 300 }
-                    },
-                )
-            }
-        }
-
-        @Test
         fun `모든 팀 정원이 채워지면 방이 완료된다`() {
             cut.placeBid(roomCode, "leader-A", 100)
             cut.settle(roomCode)
@@ -196,17 +170,6 @@ class AuctionServiceTest {
 
             val room = currentRoom()
             assertThat(room.status).isEqualTo(RoomStatus.COMPLETED)
-
-            verify {
-                events.publishEvent(
-                    match<RoomCompleted> {
-                        it.roomId == roomId &&
-                            it.code == roomCode &&
-                            it.status == RoomStatus.COMPLETED &&
-                            it.mode == RoomStarted.Mode.AUCTION
-                    },
-                )
-            }
         }
     }
 

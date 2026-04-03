@@ -2,9 +2,7 @@ package com.naminhyeok.fantazzk.template.domain
 
 import com.naminhyeok.fantazzk.template.DraftOrderStrategy
 import com.naminhyeok.fantazzk.template.TeamBuildingMode
-import com.naminhyeok.fantazzk.template.TemplateCreated
 import com.naminhyeok.fantazzk.template.TemplateId
-import com.naminhyeok.fantazzk.template.TemplatePlayerCreated
 import com.naminhyeok.fantazzk.template.TemplateRoster
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
@@ -17,7 +15,6 @@ import jakarta.persistence.OneToMany
 import jakarta.persistence.OrderBy
 import jakarta.persistence.PostLoad
 import jakarta.persistence.Table
-import jakarta.persistence.Transient
 import org.jmolecules.ddd.types.AggregateRoot
 import java.time.Instant
 
@@ -40,9 +37,6 @@ class Template protected constructor(
     @Column(name = "updated_at", nullable = false)
     val updatedAt: Instant = Instant.now(),
 ) : AggregateRoot<Template, TemplateId> {
-    @Transient
-    private val pendingEvents: MutableList<Any> = mutableListOf()
-
     override fun getId(): TemplateId = TemplateId(requireNotNull(persistentId))
 
     val templateId: Long
@@ -83,22 +77,6 @@ class Template protected constructor(
         TemplateRoster.exactlyRequired(orderedPlayerNames, configuration.requiredPlayerCount)
     }
 
-    internal fun recordCreated(): Template =
-        registerEvent(
-            TemplateCreated(
-                templateId = templateId,
-                name = name,
-                mode = mode,
-                teamCount = teamCount,
-                teamSize = teamSize,
-                budget = budget,
-                draftOrderStrategy = draftOrderStrategy,
-                players = players().map { TemplatePlayerCreated(name = it.name, displayOrder = it.displayOrder) },
-            ),
-        )
-
-    internal fun drainEvents(): List<Any> = pendingEvents.toList().also { pendingEvents.clear() }
-
     internal fun assignId(templateId: TemplateId): Template = apply { persistentId = templateId.value }
 
     @PostLoad
@@ -133,8 +111,6 @@ class Template protected constructor(
 
         fun reference(templateId: Long): Template = Template(persistentId = templateId)
     }
-
-    private fun registerEvent(event: Any): Template = apply { pendingEvents += event }
 
     private fun registerPlayers(playerNames: List<String>): Template =
         apply {

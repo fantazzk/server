@@ -1,10 +1,8 @@
 package com.naminhyeok.fantazzk.room
 
 import com.naminhyeok.fantazzk.room.application.RoomJoinService
-import com.naminhyeok.fantazzk.room.application.RoomJoinServiceImpl
 import com.naminhyeok.fantazzk.room.exception.RoomException
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomRepository
-import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
@@ -13,11 +11,9 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
 import org.junit.jupiter.params.provider.ValueSource
-import org.springframework.context.ApplicationEventPublisher
 
 class RoomJoinServiceTest {
     private lateinit var roomRepo: InMemoryRoomRepository
-    private lateinit var events: ApplicationEventPublisher
     private lateinit var cut: RoomJoinService
 
     private lateinit var roomCode: String
@@ -26,8 +22,7 @@ class RoomJoinServiceTest {
     @BeforeEach
     fun setUp() {
         roomRepo = InMemoryRoomRepository()
-        events = mockk(relaxed = true)
-        cut = RoomJoinServiceImpl(roomRepo, events)
+        cut = RoomJoinService(roomRepo)
 
         val room =
             roomRepo.save(

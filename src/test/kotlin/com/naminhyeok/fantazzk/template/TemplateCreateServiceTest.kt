@@ -2,7 +2,6 @@ package com.naminhyeok.fantazzk.template
 
 import com.naminhyeok.fantazzk.template.application.CreateTemplateCommand
 import com.naminhyeok.fantazzk.template.application.TemplateCreateService
-import com.naminhyeok.fantazzk.template.application.TemplateCreateServiceImpl
 import com.naminhyeok.fantazzk.template.domain.Template
 import com.naminhyeok.fantazzk.template.domain.TemplateConfiguration
 import com.naminhyeok.fantazzk.template.repository.TemplateRepository
@@ -12,21 +11,18 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.springframework.context.ApplicationEventPublisher
 
 class TemplateCreateServiceTest {
     private lateinit var templateRepo: TemplateRepository
-    private lateinit var events: ApplicationEventPublisher
     private lateinit var cut: TemplateCreateService
 
     @BeforeEach
     fun setUp() {
         templateRepo = mockk()
-        events = mockk(relaxed = true)
         every { templateRepo.save(any<Template>()) } answers {
             firstArg<Template>().takeUnless { it.templateId == 0L } ?: firstArg<Template>().assignId(TemplateId(1L))
         }
-        cut = TemplateCreateServiceImpl(templateRepo, events)
+        cut = TemplateCreateService(templateRepo)
     }
 
     @Test

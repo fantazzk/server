@@ -1,9 +1,8 @@
 package com.naminhyeok.fantazzk.template
 
 import com.naminhyeok.fantazzk.template.api.TemplateApiController
-import com.naminhyeok.fantazzk.template.application.TemplateCreateServiceImpl
+import com.naminhyeok.fantazzk.template.application.TemplateCreateService
 import com.naminhyeok.fantazzk.template.application.TemplateFinder
-import com.naminhyeok.fantazzk.template.application.TemplateFinderImpl
 import com.naminhyeok.fantazzk.template.domain.Template
 import com.naminhyeok.fantazzk.template.repository.TemplateRepository
 import org.assertj.core.api.Assertions.assertThat
@@ -47,9 +46,9 @@ class TemplateStructureTransitionTest {
     @Test
     fun `template finder 와 create service 는 더 이상 선수 리포지토리에 의존하지 않는다`() {
         val finderDependencies =
-            TemplateFinderImpl::class.java.declaredConstructors.single().parameterTypes.map { it.simpleName }
+            TemplateFinder::class.java.declaredConstructors.single().parameterTypes.map { it.simpleName }
         val createServiceDependencies =
-            TemplateCreateServiceImpl::class.java.declaredConstructors.single().parameterTypes.map { it.simpleName }
+            TemplateCreateService::class.java.declaredConstructors.single().parameterTypes.map { it.simpleName }
 
         assertThat(finderDependencies).doesNotContain("TemplatePlayerRepository")
         assertThat(createServiceDependencies).doesNotContain("TemplatePlayerRepository")

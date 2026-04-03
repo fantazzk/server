@@ -12,7 +12,6 @@ import jakarta.persistence.OneToMany
 import jakarta.persistence.OrderBy
 import jakarta.persistence.PostLoad
 import jakarta.persistence.Table
-import jakarta.persistence.Transient
 import org.jmolecules.ddd.types.AggregateRoot
 import java.time.Instant
 import java.util.UUID
@@ -64,9 +63,6 @@ class Room protected constructor(
     @Column(name = "updated_at", nullable = false)
     val updatedAt: Instant = Instant.now(),
 ) : AggregateRoot<Room, RoomId> {
-    @Transient
-    private val pendingEvents: MutableList<Any> = mutableListOf()
-
     init {
         validateState()
     }
@@ -152,18 +148,7 @@ class Room protected constructor(
     ): Room {
         val leader = join(teamLeaderId = teamLeaderId, nickname = nickname, currentLeaderCount = leaders.size)
         addLeader(leader)
-        return registerEvent(
-            RoomJoined(
-                roomId = roomId,
-                code = code,
-                leader =
-                    LeaderSnapshot(
-                        teamLeaderId = leader.teamLeaderId,
-                        nickname = leader.nickname,
-                        remainingBudget = leader.remainingBudget,
-                    ),
-            ),
-        )
+        return this
     }
 
     fun start(leaderCount: Int): Room {
@@ -188,18 +173,7 @@ class Room protected constructor(
 
     internal fun start(): Room {
         start(leaders.size)
-        return registerEvent(
-            RoomStarted(
-                roomId = roomId,
-                code = code,
-                status = status,
-                mode =
-                    when (mode) {
-                        TeamBuildingMode.AUCTION -> RoomStarted.Mode.AUCTION
-                        TeamBuildingMode.DRAFT -> RoomStarted.Mode.DRAFT
-                    },
-            ),
-        )
+        return this
     }
 
     fun requireCurrentAuctionRound(): Int = requireNotNull(currentAuctionRound) { "현재 경매 라운드가 없습니다" }
@@ -329,53 +303,8 @@ class Room protected constructor(
             ),
         )
 
-        val events =
-            buildList {
-                add(
-                    DraftPickCompleted(
-                        roomId = roomId,
-                        code = code,
-                        playerName = playerName,
-                        teamLeaderId = teamLeaderId,
-                    ),
-                )
-                if (status == RoomStatus.COMPLETED) {
-                    add(
-                        RoomCompleted(
-                            roomId = roomId,
-                            code = code,
-                            status = status,
-                            mode = RoomStarted.Mode.DRAFT,
-                        ),
-                    )
-                }
-            }
-
-        return registerEvents(events)
+        return this
     }
-
-    internal fun recordCreated(): Room {
-        val hostLeader = leaders.single()
-        return registerEvent(
-            RoomCreated(
-                roomId = roomId,
-                code = code,
-                status = status,
-                hostLeader =
-                    LeaderSnapshot(
-                        teamLeaderId = hostLeader.teamLeaderId,
-                        nickname = hostLeader.nickname,
-                        remainingBudget = hostLeader.remainingBudget,
-                    ),
-            ),
-        )
-    }
-
-    internal fun pendingEvents(): List<Any> = pendingEvents.toList()
-
-    internal fun drainEvents(): List<Any> = pendingEvents.toList().also { pendingEvents.clear() }
-
-    internal fun restorePendingEvents(events: Collection<Any>): Room = apply { pendingEvents.addAll(events) }
 
     internal fun assignId(roomId: RoomId): Room = apply { persistentId = roomId.value }
 
@@ -398,7 +327,7 @@ class Room protected constructor(
             bids = bidHistory().map(RoomBid::detachCopy),
             createdAt = createdAt,
             updatedAt = updatedAt,
-        ).restorePendingEvents(pendingEvents())
+        )
 
     fun copy(
         roomId: Long = this.roomId,
@@ -437,7 +366,7 @@ class Room protected constructor(
             bids = bids,
             createdAt = createdAt,
             updatedAt = updatedAt,
-        ).restorePendingEvents(pendingEvents())
+        )
 
     @PostLoad
     private fun validateLoadedState() {
@@ -549,30 +478,7 @@ class Room protected constructor(
             ),
         )
 
-        val events =
-            buildList {
-                add(
-                    AuctionSettled(
-                        roomId = roomId,
-                        code = code,
-                        playerName = target.name,
-                        outcome = AuctionOutcome.SOLD,
-                        leaders = leaderSnapshots(),
-                    ),
-                )
-                if (status == RoomStatus.COMPLETED) {
-                    add(
-                        RoomCompleted(
-                            roomId = roomId,
-                            code = code,
-                            status = status,
-                            mode = RoomStarted.Mode.AUCTION,
-                        ),
-                    )
-                }
-            }
-
-        return registerEvents(events)
+        return this
     }
 
     private fun settlePassed(
@@ -583,15 +489,7 @@ class Room protected constructor(
         val maxOrder = players.maxOf { it.displayOrder }
         target.moveToBack(maxOrder + 1)
 
-        return registerEvent(
-            AuctionSettled(
-                roomId = roomId,
-                code = code,
-                playerName = settlement.playerName,
-                outcome = settlement.outcome,
-                leaders = leaderSnapshots(),
-            ),
-        )
+        return this
     }
 
     private fun createTeamLeader(
@@ -665,19 +563,6 @@ class Room protected constructor(
         val currentIndex = requireCurrentTurnIndex()
         require(nextTurnIndex > currentIndex) { "다음 드래프트 턴은 현재보다 커야 합니다" }
     }
-
-    private fun leaderSnapshots(): List<LeaderSnapshot> =
-        leaders.map { leader ->
-            LeaderSnapshot(
-                teamLeaderId = leader.teamLeaderId,
-                nickname = leader.nickname,
-                remainingBudget = leader.remainingBudget,
-            )
-        }
-
-    private fun registerEvent(event: Any): Room = apply { pendingEvents += event }
-
-    private fun registerEvents(events: Collection<Any>): Room = apply { pendingEvents.addAll(events) }
 
     private fun validateState() {
         when (mode) {

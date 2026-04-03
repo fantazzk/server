@@ -77,38 +77,6 @@ class TemplateTest {
             assertThat(template.updatedAt).isNotNull()
             assertThat(template.draftOrderStrategy).isEqualTo(DraftOrderStrategy.FIXED)
         }
-
-        @Test
-        fun `템플릿은 생성 완료 이벤트를 내부 pending event로 기록할 수 있다`() {
-            val template =
-                Template.createAuction(
-                    name = "경매전",
-                    teamCount = 2,
-                    teamSize = 2,
-                    budget = 300,
-                    playerNames = listOf("선수1", "선수2"),
-                )
-                    .assignId(TemplateId(1L))
-
-            val recorded = template.recordCreated()
-
-            assertThat(recorded.drainEvents()).containsExactly(
-                TemplateCreated(
-                    templateId = 1L,
-                    name = "경매전",
-                    mode = TeamBuildingMode.AUCTION,
-                    teamCount = 2,
-                    teamSize = 2,
-                    budget = 300,
-                    draftOrderStrategy = null,
-                    players =
-                        listOf(
-                            TemplatePlayerCreated(name = "선수1", displayOrder = 0),
-                            TemplatePlayerCreated(name = "선수2", displayOrder = 1),
-                        ),
-                ),
-            )
-        }
     }
 
     @Nested

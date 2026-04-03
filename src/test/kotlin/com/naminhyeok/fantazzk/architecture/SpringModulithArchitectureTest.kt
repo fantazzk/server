@@ -88,8 +88,11 @@ class SpringModulithArchitectureTest {
         val implViolations =
             classes
                 .filter { it.packageName.contains(".application") }
-                .filter { it.simpleName.endsWith("ServiceImpl") || it.simpleName.endsWith("FinderImpl") || it.simpleName.endsWith("ExecutorImpl") }
-                .map { it.fullName }
+                .filter {
+                    it.simpleName.endsWith("ServiceImpl") ||
+                        it.simpleName.endsWith("FinderImpl") ||
+                        it.simpleName.endsWith("ExecutorImpl")
+                }.map { it.fullName }
 
         assertThat(interfaceViolations).isEmpty()
         assertThat(implViolations).isEmpty()

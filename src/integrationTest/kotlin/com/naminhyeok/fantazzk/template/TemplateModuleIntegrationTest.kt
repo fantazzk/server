@@ -12,8 +12,6 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.modulith.test.ApplicationModuleTest
-import org.springframework.modulith.test.PublishedEvents
-import org.springframework.modulith.test.Scenario
 
 @ApplicationModuleTest(
     module = "template",
@@ -42,10 +40,29 @@ class TemplateModuleIntegrationTest {
     }
 
     @Test
-    fun `템플릿 생성은 생성 이벤트를 발행한다`(publishedEvents: PublishedEvents) {
+    fun `템플릿 생성은 저장 직후 상세 조회가 가능하다`() {
+        val created =
+            templateCreateService.create(
+                CreateTemplateCommand.Auction(
+                    name = "모듈 테스트 템플릿",
+                    teamCount = 2,
+                    teamSize = 2,
+                    budget = 300,
+                    playerNames = listOf("선수1", "선수2"),
+                ),
+            )
+
+        val detail = templateFinder.getDetail(created.getId())
+
+        assertThat(detail.template.name).isEqualTo("모듈 테스트 템플릿")
+        assertThat(detail.players.map { it.name }).containsExactly("선수1", "선수2")
+    }
+
+    @Test
+    fun `템플릿 생성 이후 목록 조회에서 새 템플릿을 바로 조회할 수 있다`() {
         templateCreateService.create(
             CreateTemplateCommand.Auction(
-                name = "모듈 테스트 템플릿",
+                name = "프로젝션 템플릿",
                 teamCount = 2,
                 teamSize = 2,
                 budget = 300,
@@ -53,35 +70,8 @@ class TemplateModuleIntegrationTest {
             ),
         )
 
-        val events =
-            publishedEvents
-                .ofType(TemplateCreated::class.java)
-                .matching { it.name == "모듈 테스트 템플릿" }
-                .toList()
-
-        assertThat(events).hasSize(1)
-    }
-
-    @Test
-    fun `템플릿 생성 이후 조회 서비스 목록에서 새 템플릿을 조회할 수 있다`(scenario: Scenario) {
-        scenario
-            .stimulate {
-                templateCreateService.create(
-                    CreateTemplateCommand.Auction(
-                        name = "프로젝션 템플릿",
-                        teamCount = 2,
-                        teamSize = 2,
-                        budget = 300,
-                        playerNames = listOf("선수1", "선수2"),
-                    ),
-                )
-            }
-            .andWaitForStateChange({ templateFinder.list() }) { templates ->
-                templates.any { it.name == "프로젝션 템플릿" }
-            }
-            .andVerify { templates ->
-                assertThat(templates.map { it.name }).contains("프로젝션 템플릿")
-            }
+        val templates = templateFinder.list()
+        assertThat(templates.map { it.name }).contains("프로젝션 템플릿")
     }
 
     @Test

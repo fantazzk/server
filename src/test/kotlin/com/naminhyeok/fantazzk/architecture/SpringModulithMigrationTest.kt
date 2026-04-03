@@ -73,6 +73,39 @@ class SpringModulithMigrationTest {
     }
 
     @Test
+    fun `현재 목표 구조는 소비자 없는 room 과 template 이벤트 타입을 유지하지 않는다`() {
+        listOf(
+            "com.naminhyeok.fantazzk.room.RoomCreated",
+            "com.naminhyeok.fantazzk.room.RoomJoined",
+            "com.naminhyeok.fantazzk.room.RoomStarted",
+            "com.naminhyeok.fantazzk.room.AuctionSettled",
+            "com.naminhyeok.fantazzk.room.DraftPickCompleted",
+            "com.naminhyeok.fantazzk.room.RoomCompleted",
+            "com.naminhyeok.fantazzk.room.LeaderSnapshot",
+            "com.naminhyeok.fantazzk.template.TemplateCreated",
+            "com.naminhyeok.fantazzk.template.TemplatePlayerCreated",
+        ).forEach { className ->
+            assertThatThrownBy { Class.forName(className) }
+                .isInstanceOf(ClassNotFoundException::class.java)
+        }
+    }
+
+    @Test
+    fun `현재 목표 구조는 aggregate 내부 로컬 이벤트 큐를 유지하지 않는다`() {
+        val roomSource = Path.of("src/main/kotlin/com/naminhyeok/fantazzk/room/Room.kt").readText()
+        val templateSource = Path.of("src/main/kotlin/com/naminhyeok/fantazzk/template/domain/Template.kt").readText()
+
+        listOf("pendingEvents", "drainEvents(", "recordCreated(", "restorePendingEvents(", "registerEvent(", "registerEvents(")
+            .forEach { marker ->
+                assertThat(roomSource).doesNotContain(marker)
+            }
+        listOf("pendingEvents", "drainEvents(", "recordCreated(", "registerEvent(")
+            .forEach { marker ->
+                assertThat(templateSource).doesNotContain(marker)
+            }
+    }
+
+    @Test
     fun `현재 목표 구조는 루트 Liquibase 마스터만 사용한다`() {
         val rootMasterPath = "classpath:/db/changelog/db.changelog-master.yaml"
         val mainApplication = Path.of("src/main/resources/application.yml").readText()

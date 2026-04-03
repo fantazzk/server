@@ -1,7 +1,6 @@
 package com.naminhyeok.fantazzk.room
 
 import com.naminhyeok.fantazzk.room.application.RoomFinder
-import com.naminhyeok.fantazzk.room.application.RoomFinderImpl
 import com.naminhyeok.fantazzk.room.exception.RoomException
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomRepository
 import org.assertj.core.api.Assertions.assertThat
@@ -16,7 +15,7 @@ class RoomFinderTest {
     @BeforeEach
     fun setUp() {
         roomRepo = InMemoryRoomRepository()
-        cut = RoomFinderImpl(roomRepo)
+        cut = RoomFinder(roomRepo)
     }
 
     @Test

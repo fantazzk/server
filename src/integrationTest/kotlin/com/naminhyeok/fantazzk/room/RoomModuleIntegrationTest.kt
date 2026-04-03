@@ -17,7 +17,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.modulith.test.ApplicationModuleTest
-import org.springframework.modulith.test.PublishedEvents
 
 @ApplicationModuleTest(
     module = "room",
@@ -56,7 +55,7 @@ class RoomModuleIntegrationTest {
     }
 
     @Test
-    fun `방 생성은 생성 이벤트를 발행한다`(publishedEvents: PublishedEvents) {
+    fun `방 생성은 대기 상태와 호스트 팀장을 갖는 방을 만든다`() {
         every { templateCatalog.getTemplateBlueprint(1L) } returns
             TemplateBlueprint(
                 templateId = 1L,
@@ -74,8 +73,8 @@ class RoomModuleIntegrationTest {
 
         val room = roomCreateService.create(1L, "호스트")
 
-        val events = publishedEvents.ofType(RoomCreated::class.java).matching { it.code == room.code }.toList()
-        assertThat(events).hasSize(1)
+        assertThat(room.status).isEqualTo(RoomStatus.WAITING)
+        assertThat(room.leaders.map { it.nickname }).containsExactly("호스트")
     }
 
     @Test

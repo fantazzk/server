@@ -9,32 +9,28 @@
 
 ## 패키지 규칙
 
-각 모듈은 다음 역할 중심으로 정리한다.
-
-- 모듈 루트 패키지
-  aggregate root, value object, domain event, 식별자, 도메인 정책
-- `application`
-  유스케이스 오케스트레이션. load -> invoke aggregate -> save -> publish 역할만 담당
-- `api`
-  REST controller, exception handler, DTO
-- `query`
-  read model, projection writer/repository, query service
-- `repository`
-  persistence adapter, Spring Data JDBC wiring
-- `spi`
-  다른 모듈에 공개할 계약이 정말 필요할 때만 사용하는 named interface
-- `infrastructure`
-  외부 시스템 adapter나 모듈 내부 보조 wiring이 필요할 때만 사용
-
-새로 손대는 파일은 경로와 패키지 선언을 맞춘다. 기존 어긋남은 점진적으로 해소한다.
+- 애플리케이션 모듈은 모듈 루트 패키지로 정의한다.
+- 모듈 루트 패키지의 public 타입만 다른 모듈에 공개되는 기본 계약으로 본다.
+- 모듈 하위 패키지는 기본적으로 내부 구현으로 취급한다.
+- aggregate와 핵심 도메인 개념은 모듈 루트 또는 `domain` 아래에 둘 수 있다. 한 모듈 안에서는 한 가지 스타일을 일관되게 유지한다.
+- `application`은 유스케이스 오케스트레이션을 둔다. 기본 흐름은 `load -> invoke aggregate -> save`다.
+- `api`, `repository`, `query`, `infrastructure`는 필요할 때만 둔다. Modulith가 요구하는 필수 구조는 아니다.
+- DTO, exception, helper는 특정 패키지 배치를 강제하지 않는다. 다만 한 모듈 안에서는 일관성을 유지한다.
+- cross-module contract는 모듈 루트 패키지에 최소 개수만 공개한다.
+- `spi` 패키지는 사용하지 않는다.
+- 의미 없는 port/adapter, interface/impl 쌍은 두지 않는다. 추상화는 모듈 경계, 도메인 개념, 기술적 제약을 분명히 드러낼 때만 유지한다.
+- 새로 손대는 파일은 경로와 패키지 선언을 맞춘다. 기존 어긋남은 점진적으로 해소한다.
 
 ## 모듈 경계
 
-- `room`은 `template :: spi`만 참조할 수 있다.
+- 다른 모듈은 모듈 루트에 공개된 계약 외 타입에 직접 의존하지 않는다.
+- `room`은 `template` 모듈 루트에 공개된 계약만 참조할 수 있다.
 - `template`는 `room` 내부 타입을 직접 참조하지 않는다.
-- `api`와 `query`는 외부 모듈에 공개하는 surface가 아니다.
-- named interface는 `template.spi`처럼 실제 cross-module contract가 있을 때만 만든다.
-- read-side가 필요해도 그것만으로 named interface를 추가하지 않는다.
+- `api`, `application`, `repository`, `query` 같은 하위 패키지는 모듈 내부 구현 세부사항으로 본다.
+- 모듈 간 필수 동기 협력은 명시적 contract bean 으로 표현한다.
+- 모듈 간 후속 반응은 실제 consumer 가 있을 때만 event 로 표현한다.
+- 이벤트는 RPC 대체재로 사용하지 않는다.
+- named interface 는 기본적으로 도입하지 않는다.
 
 ## 빈 등록 규칙
 
@@ -47,11 +43,14 @@
 
 ## 도메인 간 협력
 
-- 기본은 application event 또는 named interface다.
+- 같은 모듈 내부 협력은 direct call 을 기본으로 한다.
+- 모듈 간 필수 동기 협력은 explicit contract bean 을 기본으로 한다.
+- 모듈 간 후속 반응이나 비동기 협력은 domain event 를 사용한다.
 - 다른 모듈의 repository, application service, query service를 직접 찌르지 않는다.
-- aggregate는 자신의 이벤트를 만든다.
-- application service는 저장 후 이벤트를 발행한다.
-- projection/listener는 가능하면 event payload만으로 갱신되게 만들고, read-side 갱신을 위해 write repository를 다시 조회하는 구조는 피한다.
+- 이벤트는 RPC 대체재처럼 쓰지 않는다. required consistency 는 direct contract 로 표현한다.
+- aggregate는 자신의 규칙과 상태 전이를 우선 책임진다. 이벤트는 실제 consumer 가 있을 때만 유지한다.
+- application service는 manual publisher 를 들고 same-module orchestration 을 하지 않는다.
+- listener/projection 이 필요하면 event payload 만으로 처리하고, read-side 갱신을 위해 write repository 를 다시 조회하는 구조는 피한다.
 
 ## CQRS / Read Model
 
@@ -62,9 +61,13 @@
 
 ## 테스트 기준
 
+- 테스트는 구현 세부보다 설계 규칙과 모듈 경계를 우선 검증한다.
+- 테스트는 특정 클래스 이름이나 패키지 배치를 고정하기보다, 공개 surface, 의존 방향, 협력 방식 같은 구조 규칙을 검증해야 한다.
 - `ApplicationModules.verify()`가 항상 통과해야 한다.
 - module canvas / PlantUML 문서 생성 테스트를 유지한다.
-- 모듈 간 협력은 `@ApplicationModuleTest`, `Scenario` 기반 테스트로 검증한다.
+- 모듈 간 협력은 `@ApplicationModuleTest`로 검증한다.
+- `PublishedEvents`, `Scenario`는 실제 module event 와 listener 가 있을 때만 사용한다.
+- module event 가 없다면 direct state assertion 으로 검증한다.
 - aggregate 정책은 단위 테스트로 검증한다.
 - 저장소/HTTP 동작은 통합 테스트로 검증한다.
 
@@ -74,7 +77,7 @@
 - 판단 우선순위는 다음과 같다.
   1. 모듈 경계가 분명한가
   2. 공개 surface가 최소인가
-  3. 도메인 이벤트가 협력의 기본인가
+  3. required consistency 와 decoupled reaction 이 정직하게 구분되는가
   4. projection이 정말 필요한가
   5. 테스트가 모듈 경계를 증명하는가
 

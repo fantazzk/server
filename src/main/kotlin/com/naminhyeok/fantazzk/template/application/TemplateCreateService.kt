@@ -3,7 +3,6 @@ package com.naminhyeok.fantazzk.template.application
 import com.naminhyeok.fantazzk.template.DraftOrderStrategy
 import com.naminhyeok.fantazzk.template.domain.Template
 import com.naminhyeok.fantazzk.template.repository.TemplateRepository
-import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -30,18 +29,13 @@ sealed interface CreateTemplateCommand {
     ) : CreateTemplateCommand
 }
 
-interface TemplateCreateService {
-    fun create(command: CreateTemplateCommand): Template
-}
-
 @org.jmolecules.ddd.annotation.Service
 @Service
-internal class TemplateCreateServiceImpl(
+class TemplateCreateService(
     private val templateRepository: TemplateRepository,
-    private val events: ApplicationEventPublisher,
-) : TemplateCreateService {
+) {
     @Transactional
-    override fun create(command: CreateTemplateCommand): Template {
+    fun create(command: CreateTemplateCommand): Template {
         val template =
             when (command) {
                 is CreateTemplateCommand.Auction ->
@@ -62,9 +56,6 @@ internal class TemplateCreateServiceImpl(
                         playerNames = command.playerNames,
                     )
             }
-        val saved = templateRepository.save(template)
-        saved.recordCreated().drainEvents().forEach(events::publishEvent)
-
-        return saved
+        return templateRepository.save(template)
     }
 }

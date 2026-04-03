@@ -52,7 +52,14 @@ class TemplatePlayer(
         displayOrder: Int,
         createdAt: Instant = Instant.now(),
         updatedAt: Instant = Instant.now(),
-    ) : this(templatePlayerId = 0L, templateId = templateId, name = name, displayOrder = displayOrder, createdAt = createdAt, updatedAt = updatedAt)
+    ) : this(
+        templatePlayerId = 0L,
+        templateId = templateId,
+        name = name,
+        displayOrder = displayOrder,
+        createdAt = createdAt,
+        updatedAt = updatedAt,
+    )
 
     val templateId: Long
         get() = template?.templateId ?: 0L
