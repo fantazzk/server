@@ -1,4 +1,4 @@
-package com.naminhyeok.fantazzk.template.api
+package com.naminhyeok.fantazzk.template.web
 
 internal object TemplateOpenApiDocs {
     const val TAG_DESCRIPTION = "팀 빌딩에 사용할 템플릿을 생성하고 조회하는 API입니다."

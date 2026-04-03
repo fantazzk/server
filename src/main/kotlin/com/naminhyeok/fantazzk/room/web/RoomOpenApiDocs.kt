@@ -1,4 +1,4 @@
-package com.naminhyeok.fantazzk.room.api
+package com.naminhyeok.fantazzk.room.web
 
 internal object RoomOpenApiDocs {
     const val TAG_DESCRIPTION = "방 생성, 참가, 시작, 경매, 드래프트 진행을 위한 API입니다."

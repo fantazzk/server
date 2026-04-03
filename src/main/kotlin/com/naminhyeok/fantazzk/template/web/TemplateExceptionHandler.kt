@@ -1,6 +1,5 @@
-package com.naminhyeok.fantazzk.template.api
+package com.naminhyeok.fantazzk.template.web
 
-import com.naminhyeok.fantazzk.template.dto.ApiResponse
 import com.naminhyeok.fantazzk.template.exception.TemplateException
 import org.slf4j.LoggerFactory
 import org.springframework.boot.logging.LogLevel

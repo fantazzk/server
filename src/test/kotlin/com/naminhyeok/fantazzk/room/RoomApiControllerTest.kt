@@ -1,7 +1,5 @@
 package com.naminhyeok.fantazzk.room
 
-import com.naminhyeok.fantazzk.room.api.RoomApiController
-import com.naminhyeok.fantazzk.room.api.RoomExceptionHandler
 import com.naminhyeok.fantazzk.room.application.AuctionService
 import com.naminhyeok.fantazzk.room.application.AuctionSettleResult
 import com.naminhyeok.fantazzk.room.application.DraftService
@@ -11,6 +9,8 @@ import com.naminhyeok.fantazzk.room.application.RoomJoinService
 import com.naminhyeok.fantazzk.room.application.RoomStartService
 import com.naminhyeok.fantazzk.room.exception.RoomException
 import com.naminhyeok.fantazzk.room.exception.RoomTemplateNotFoundException
+import com.naminhyeok.fantazzk.room.web.RoomApiController
+import com.naminhyeok.fantazzk.room.web.RoomExceptionHandler
 import io.mockk.every
 import io.mockk.justRun
 import io.mockk.mockk

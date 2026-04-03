@@ -1,4 +1,4 @@
-package com.naminhyeok.fantazzk.room.api
+package com.naminhyeok.fantazzk.room.web
 
 import com.naminhyeok.fantazzk.room.application.AuctionService
 import com.naminhyeok.fantazzk.room.application.DraftService
@@ -6,12 +6,6 @@ import com.naminhyeok.fantazzk.room.application.RoomCreateService
 import com.naminhyeok.fantazzk.room.application.RoomFinder
 import com.naminhyeok.fantazzk.room.application.RoomJoinService
 import com.naminhyeok.fantazzk.room.application.RoomStartService
-import com.naminhyeok.fantazzk.room.dto.ApiResponse
-import com.naminhyeok.fantazzk.room.dto.CreateRoomRequest
-import com.naminhyeok.fantazzk.room.dto.JoinRoomRequest
-import com.naminhyeok.fantazzk.room.dto.PickRequest
-import com.naminhyeok.fantazzk.room.dto.PlaceBidRequest
-import com.naminhyeok.fantazzk.room.dto.RoomResponse
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content

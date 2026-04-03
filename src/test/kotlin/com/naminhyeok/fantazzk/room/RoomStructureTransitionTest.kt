@@ -1,6 +1,5 @@
 package com.naminhyeok.fantazzk.room
 
-import com.naminhyeok.fantazzk.room.api.RoomApiController
 import com.naminhyeok.fantazzk.room.application.AuctionService
 import com.naminhyeok.fantazzk.room.application.DraftService
 import com.naminhyeok.fantazzk.room.application.RoomCreateAttemptExecutor
@@ -9,6 +8,7 @@ import com.naminhyeok.fantazzk.room.application.RoomFinder
 import com.naminhyeok.fantazzk.room.application.RoomJoinService
 import com.naminhyeok.fantazzk.room.application.RoomStartService
 import com.naminhyeok.fantazzk.room.repository.RoomRepository
+import com.naminhyeok.fantazzk.room.web.RoomApiController
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test

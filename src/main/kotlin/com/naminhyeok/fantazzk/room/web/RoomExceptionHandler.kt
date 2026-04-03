@@ -1,6 +1,5 @@
-package com.naminhyeok.fantazzk.room.api
+package com.naminhyeok.fantazzk.room.web
 
-import com.naminhyeok.fantazzk.room.dto.ApiResponse
 import com.naminhyeok.fantazzk.room.exception.RoomException
 import org.slf4j.LoggerFactory
 import org.springframework.boot.logging.LogLevel

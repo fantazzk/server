@@ -1,4 +1,4 @@
-package com.naminhyeok.fantazzk.room.dto
+package com.naminhyeok.fantazzk.room.web
 
 import io.swagger.v3.oas.annotations.media.Schema
 

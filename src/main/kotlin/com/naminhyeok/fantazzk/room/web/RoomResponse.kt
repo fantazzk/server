@@ -1,4 +1,4 @@
-package com.naminhyeok.fantazzk.room.dto
+package com.naminhyeok.fantazzk.room.web
 
 import com.naminhyeok.fantazzk.room.Room
 import com.naminhyeok.fantazzk.room.RoomStatus

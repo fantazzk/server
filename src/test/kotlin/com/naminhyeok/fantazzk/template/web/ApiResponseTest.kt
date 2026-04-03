@@ -1,4 +1,4 @@
-package com.naminhyeok.fantazzk.template.dto
+package com.naminhyeok.fantazzk.template.web
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Nested
@@ -22,14 +22,14 @@ class ApiResponseTest {
         @Test
         fun `에러 정보를 담아 ERROR 타입으로 반환한다`() {
             val cut = ApiResponse.error(404, "NOT_FOUND", "찾을 수 없습니다")
+            val error = requireNotNull(cut.error)
 
             assertThat(cut.resultType).isEqualTo(ApiResponse.ResultType.ERROR)
             assertThat(cut.success as Any?).isNull()
-            assertThat(cut.error).isNotNull()
-            assertThat(cut.error!!.status).isEqualTo(404)
-            assertThat(cut.error!!.errorCode).isEqualTo("NOT_FOUND")
-            assertThat(cut.error!!.reason).isEqualTo("찾을 수 없습니다")
-            assertThat(cut.error!!.data).isNull()
+            assertThat(error.status).isEqualTo(404)
+            assertThat(error.errorCode).isEqualTo("NOT_FOUND")
+            assertThat(error.reason).isEqualTo("찾을 수 없습니다")
+            assertThat(error.data).isNull()
         }
 
         @Test
@@ -37,7 +37,7 @@ class ApiResponseTest {
             val data = mapOf("field" to "값이 필요합니다")
             val cut = ApiResponse.error(400, "VALIDATION_ERROR", "검증 실패", data)
 
-            assertThat(cut.error!!.data).isEqualTo(data)
+            assertThat(requireNotNull(cut.error).data).isEqualTo(data)
         }
     }
 }

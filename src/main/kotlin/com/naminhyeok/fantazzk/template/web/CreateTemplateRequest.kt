@@ -1,4 +1,4 @@
-package com.naminhyeok.fantazzk.template.dto
+package com.naminhyeok.fantazzk.template.web
 
 import com.naminhyeok.fantazzk.template.DraftOrderStrategy
 import com.naminhyeok.fantazzk.template.TeamBuildingMode

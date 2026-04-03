@@ -1,10 +1,10 @@
 package com.naminhyeok.fantazzk.template
 
-import com.naminhyeok.fantazzk.template.api.TemplateApiController
 import com.naminhyeok.fantazzk.template.application.TemplateCreateService
 import com.naminhyeok.fantazzk.template.application.TemplateFinder
 import com.naminhyeok.fantazzk.template.domain.Template
 import com.naminhyeok.fantazzk.template.repository.TemplateRepository
+import com.naminhyeok.fantazzk.template.web.TemplateApiController
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test

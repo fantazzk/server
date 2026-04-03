@@ -1,13 +1,10 @@
-package com.naminhyeok.fantazzk.template.api
+package com.naminhyeok.fantazzk.template.web
 
 import com.naminhyeok.fantazzk.template.TeamBuildingMode
 import com.naminhyeok.fantazzk.template.TemplateId
 import com.naminhyeok.fantazzk.template.application.CreateTemplateCommand
 import com.naminhyeok.fantazzk.template.application.TemplateCreateService
 import com.naminhyeok.fantazzk.template.application.TemplateFinder
-import com.naminhyeok.fantazzk.template.dto.ApiResponse
-import com.naminhyeok.fantazzk.template.dto.CreateTemplateRequest
-import com.naminhyeok.fantazzk.template.dto.TemplateResponse
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
