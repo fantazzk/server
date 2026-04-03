@@ -5,11 +5,6 @@ class TemplateRoster private constructor(
 ) {
     fun playerNames(): List<String> = names.toList()
 
-    fun toPlayers(templateId: Long): List<TemplatePlayer> =
-        names.mapIndexed { index, playerName ->
-            TemplatePlayer(templateId = templateId, name = playerName, displayOrder = index)
-        }
-
     companion object {
         fun exactlyRequired(
             playerNames: List<String>,

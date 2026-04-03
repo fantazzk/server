@@ -1,47 +1,46 @@
 package com.naminhyeok.fantazzk.template.repository
 
-import com.naminhyeok.fantazzk.RootCombinedJdbcConfiguration
-import com.naminhyeok.fantazzk.room.config.RoomJdbcConfiguration
 import com.naminhyeok.fantazzk.template.DraftOrderStrategy
 import com.naminhyeok.fantazzk.template.TeamBuildingMode
-import com.naminhyeok.fantazzk.template.Template
-import com.naminhyeok.fantazzk.template.TemplateConfiguration
 import com.naminhyeok.fantazzk.template.TemplateId
-import com.naminhyeok.fantazzk.template.TemplatePlayer
-import com.naminhyeok.fantazzk.template.config.TemplateJdbcConfiguration
-import com.naminhyeok.fantazzk.template.configuration
+import com.naminhyeok.fantazzk.template.domain.Template
+import com.naminhyeok.fantazzk.template.domain.TemplateConfiguration
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration
-import org.springframework.boot.data.jdbc.test.autoconfigure.DataJdbcTest
+import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest
 import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase
 import org.springframework.boot.liquibase.autoconfigure.LiquibaseAutoConfiguration
+import org.springframework.dao.InvalidDataAccessApiUsageException
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.test.context.TestConstructor
 
 @ImportAutoConfiguration(
     LiquibaseAutoConfiguration::class,
-    RootCombinedJdbcConfiguration::class,
-    RoomJdbcConfiguration::class,
-    TemplateJdbcConfiguration::class,
-    TemplateRepositoryConfiguration::class,
 )
-@DataJdbcTest
+@DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
 class TemplateRepositoryIntegrationTest(
     private val cut: TemplateRepository,
-    private val templatePlayerRepository: TemplatePlayerRepository,
     private val jdbcTemplate: JdbcTemplate,
 ) {
     @Test
     fun `템플릿을 저장하고 조회할 수 있다`() {
         val saved =
             cut.save(
-                Template.create(
+                Template.createAuction(
                     name = "테스트 경매",
-                    configuration = TemplateConfiguration.Auction(teamCount = 5, teamSize = 5, budgetValue = 300),
+                    teamCount = 5,
+                    teamSize = 5,
+                    budget = 300,
+                    playerNames =
+                        listOf(
+                            "선수1", "선수2", "선수3", "선수4", "선수5", "선수6", "선수7", "선수8",
+                            "선수9", "선수10", "선수11", "선수12", "선수13", "선수14", "선수15", "선수16",
+                            "선수17", "선수18", "선수19", "선수20",
+                        ),
                 ),
             )
 
@@ -54,12 +53,34 @@ class TemplateRepositoryIntegrationTest(
     }
 
     @Test
+    fun `템플릿 aggregate 하나를 저장하면 선수 컬렉션까지 함께 조회된다`() {
+        val saved =
+            cut.save(
+                Template.createAuction(
+                    name = "통합 템플릿",
+                    teamCount = 2,
+                    teamSize = 2,
+                    budget = 300,
+                    playerNames = listOf("선수2", "선수1"),
+                ),
+            )
+
+        val found = cut.findById(saved.getId())
+
+        assertThat(found).isNotNull
+        assertThat(found!!.players().map { it.name }).containsExactly("선수2", "선수1")
+    }
+
+    @Test
     fun `드래프트 템플릿도 강타입 설정으로 복원된다`() {
         val saved =
             cut.save(
-                Template.create(
+                Template.createDraft(
                     name = "드래프트",
-                    configuration = TemplateConfiguration.Draft(teamCount = 2, teamSize = 2, strategy = DraftOrderStrategy.SNAKE),
+                    teamCount = 2,
+                    teamSize = 2,
+                    strategy = DraftOrderStrategy.SNAKE,
+                    playerNames = listOf("선수1", "선수2"),
                 ),
             )
 
@@ -67,21 +88,27 @@ class TemplateRepositoryIntegrationTest(
 
         assertThat(found).isNotNull
         assertThat(found!!.configuration)
-            .isEqualTo(TemplateConfiguration.Draft(teamCount = 2, teamSize = 2, strategy = DraftOrderStrategy.SNAKE))
+            .isEqualTo(TemplateConfiguration.draft(teamCount = 2, teamSize = 2, strategy = DraftOrderStrategy.SNAKE))
     }
 
     @Test
     fun `전체 템플릿 목록을 조회할 수 있다`() {
         cut.save(
-            Template.create(
+            Template.createAuction(
                 name = "첫째",
-                configuration = TemplateConfiguration.Auction(teamCount = 2, teamSize = 2, budgetValue = 300),
+                teamCount = 2,
+                teamSize = 2,
+                budget = 300,
+                playerNames = listOf("선수1", "선수2"),
             ),
         )
         cut.save(
-            Template.create(
+            Template.createDraft(
                 name = "둘째",
-                configuration = TemplateConfiguration.Draft(teamCount = 2, teamSize = 2, strategy = DraftOrderStrategy.SNAKE),
+                teamCount = 2,
+                teamSize = 2,
+                strategy = DraftOrderStrategy.SNAKE,
+                playerNames = listOf("선수1", "선수2"),
             ),
         )
 
@@ -93,9 +120,12 @@ class TemplateRepositoryIntegrationTest(
     @Test
     fun `전체 템플릿 목록 조회는 유효하지 않은 row를 만나면 즉시 실패한다`() {
         cut.save(
-            Template.create(
+            Template.createAuction(
                 name = "정상 템플릿",
-                configuration = TemplateConfiguration.Auction(teamCount = 2, teamSize = 2, budgetValue = 300),
+                teamCount = 2,
+                teamSize = 2,
+                budget = 300,
+                playerNames = listOf("선수1", "선수2"),
             ),
         )
         val invalidTemplateId =
@@ -116,7 +146,7 @@ class TemplateRepositoryIntegrationTest(
 
         try {
             assertThatThrownBy { cut.findAll() }
-                .isInstanceOf(IllegalArgumentException::class.java)
+                .isInstanceOf(InvalidDataAccessApiUsageException::class.java)
                 .hasMessage("경매 템플릿에는 예산이 필요합니다")
         } finally {
             jdbcTemplate.update("delete from template where id = ?", invalidTemplateId)
@@ -124,25 +154,22 @@ class TemplateRepositoryIntegrationTest(
     }
 
     @Test
-    fun `템플릿 선수를 displayOrder 순서로 조회할 수 있다`() {
-        val template =
+    fun `aggregate 에 저장된 선수는 displayOrder 순서로 재수화된다`() {
+        val saved =
             cut.save(
-                Template.create(
+                Template.createAuction(
                     name = "드래프트",
-                    configuration = TemplateConfiguration.Draft(teamCount = 2, teamSize = 2, strategy = DraftOrderStrategy.SNAKE),
+                    teamCount = 2,
+                    teamSize = 2,
+                    budget = 300,
+                    playerNames = listOf("선수2", "선수1"),
                 ),
             )
 
-        templatePlayerRepository.saveAll(
-            listOf(
-                TemplatePlayer(templateId = template.templateId, name = "선수2", displayOrder = 1),
-                TemplatePlayer(templateId = template.templateId, name = "선수1", displayOrder = 0),
-            ),
-        )
+        val found = cut.findById(saved.getId())
 
-        val found = templatePlayerRepository.findByTemplateId(template.templateId)
-        assertThat(found).hasSize(2)
-        assertThat(found.map { it.name }).containsExactly("선수1", "선수2")
+        assertThat(found).isNotNull
+        assertThat(found!!.players().map { it.name }).containsExactly("선수2", "선수1")
     }
 
     @Test
@@ -165,7 +192,7 @@ class TemplateRepositoryIntegrationTest(
 
         try {
             assertThatThrownBy { cut.findById(TemplateId(templateId)) }
-                .isInstanceOf(IllegalArgumentException::class.java)
+                .isInstanceOf(InvalidDataAccessApiUsageException::class.java)
                 .hasMessage("경매 템플릿에는 예산이 필요합니다")
         } finally {
             jdbcTemplate.update("delete from template where id = ?", templateId)

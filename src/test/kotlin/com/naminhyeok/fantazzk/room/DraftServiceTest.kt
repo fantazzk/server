@@ -1,27 +1,16 @@
 package com.naminhyeok.fantazzk.room
 
 import com.naminhyeok.fantazzk.room.application.DraftService
-import com.naminhyeok.fantazzk.room.application.DraftServiceImpl
 import com.naminhyeok.fantazzk.room.exception.RoomException
-import com.naminhyeok.fantazzk.room.support.InMemoryRoomPlayerRepository
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomRepository
-import com.naminhyeok.fantazzk.room.support.InMemoryRoomTeamLeaderRepository
-import com.naminhyeok.fantazzk.room.support.InMemoryRoomTeamMemberRepository
-import io.mockk.mockk
-import io.mockk.verify
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.springframework.context.ApplicationEventPublisher
 
 class DraftServiceTest {
     private lateinit var roomRepo: InMemoryRoomRepository
-    private lateinit var playerRepo: InMemoryRoomPlayerRepository
-    private lateinit var leaderRepo: InMemoryRoomTeamLeaderRepository
-    private lateinit var memberRepo: InMemoryRoomTeamMemberRepository
-    private lateinit var events: ApplicationEventPublisher
     private lateinit var cut: DraftService
 
     private lateinit var roomCode: String
@@ -29,12 +18,8 @@ class DraftServiceTest {
 
     @BeforeEach
     fun setUp() {
-        playerRepo = InMemoryRoomPlayerRepository()
-        leaderRepo = InMemoryRoomTeamLeaderRepository()
-        memberRepo = InMemoryRoomTeamMemberRepository()
-        roomRepo = InMemoryRoomRepository(playerRepo, leaderRepo, memberRepo)
-        events = mockk(relaxed = true)
-        cut = DraftServiceImpl(roomRepo, events)
+        roomRepo = InMemoryRoomRepository()
+        cut = DraftService(roomRepo)
 
         val room =
             roomRepo.save(
@@ -47,19 +32,20 @@ class DraftServiceTest {
                     teamSize = 2,
                     draftOrderStrategy = DraftOrderStrategy.SNAKE,
                     currentTurnIndex = 0,
+                    players =
+                        listOf(
+                            RoomPlayer(name = "선수1", displayOrder = 0),
+                            RoomPlayer(name = "선수2", displayOrder = 1),
+                        ),
+                    leaders =
+                        listOf(
+                            RoomTeamLeader(teamLeaderId = "leader-A", nickname = "팀장A"),
+                            RoomTeamLeader(teamLeaderId = "leader-B", nickname = "팀장B"),
+                        ),
                 ),
             )
         roomCode = room.code
         roomId = room.roomId
-
-        playerRepo.saveAll(
-            listOf(
-                RoomPlayer(roomId = roomId, name = "선수1", displayOrder = 0),
-                RoomPlayer(roomId = roomId, name = "선수2", displayOrder = 1),
-            ),
-        )
-        leaderRepo.save(RoomTeamLeader(roomId = roomId, teamLeaderId = "leader-A", nickname = "팀장A"))
-        leaderRepo.save(RoomTeamLeader(roomId = roomId, teamLeaderId = "leader-B", nickname = "팀장B"))
     }
 
     @Nested
@@ -70,25 +56,7 @@ class DraftServiceTest {
 
             assertThat(member.teamLeaderId).isEqualTo("leader-A")
             assertThat(member.playerName).isEqualTo("선수1")
-
-            val assignedPlayer = playerRepo.findByRoomId(roomId).first { it.name == "선수1" }
-            assertThat(assignedPlayer.status).isEqualTo(PlayerStatus.ASSIGNED)
-        }
-
-        @Test
-        fun `픽 성공 시 DraftPickCompleted 이벤트를 발행한다`() {
-            cut.pick(roomCode, "leader-A", "선수1")
-
-            verify {
-                events.publishEvent(
-                    match<DraftPickCompleted> {
-                        it.roomId == roomId &&
-                            it.code == roomCode &&
-                            it.playerName == "선수1" &&
-                            it.teamLeaderId == "leader-A"
-                    },
-                )
-            }
+            assertThat(currentRoom().players.first { it.name == "선수1" }.status).isEqualTo(PlayerStatus.ASSIGNED)
         }
 
         @Test
@@ -96,18 +64,8 @@ class DraftServiceTest {
             cut.pick(roomCode, "leader-A", "선수1")
             cut.pick(roomCode, "leader-B", "선수2")
 
-            val room = roomRepo.findByCode(roomCode)!!
+            val room = currentRoom()
             assertThat(room.status).isEqualTo(RoomStatus.COMPLETED)
-
-            verify {
-                events.publishEvent(
-                    match<RoomCompleted> {
-                        it.roomId == roomId &&
-                            it.code == roomCode &&
-                            it.mode == RoomStarted.Mode.DRAFT
-                    },
-                )
-            }
         }
     }
 
@@ -121,19 +79,7 @@ class DraftServiceTest {
 
         @Test
         fun `대기 중인 방에서는 픽할 수 없다`() {
-            roomRepo.save(
-                Room(
-                    roomId = roomId,
-                    code = roomCode,
-                    hostId = "host",
-                    status = RoomStatus.WAITING,
-                    mode = TeamBuildingMode.DRAFT,
-                    teamCount = 2,
-                    teamSize = 2,
-                    draftOrderStrategy = DraftOrderStrategy.SNAKE,
-                    currentTurnIndex = 0,
-                ),
-            )
+            persistRoom { room -> room.copy(status = RoomStatus.WAITING) }
 
             assertThatThrownBy { cut.pick(roomCode, "leader-A", "선수1") }
                 .isInstanceOf(IllegalStateException::class.java)
@@ -141,7 +87,7 @@ class DraftServiceTest {
 
         @Test
         fun `경매 모드에서는 픽할 수 없다`() {
-            roomRepo.save(
+            persistRoom {
                 Room(
                     roomId = roomId,
                     code = roomCode,
@@ -151,8 +97,11 @@ class DraftServiceTest {
                     teamCount = 2,
                     teamSize = 2,
                     budget = 300,
-                ),
-            )
+                    players = it.players,
+                    leaders = it.leaders,
+                    members = it.members,
+                )
+            }
 
             assertThatThrownBy { cut.pick(roomCode, "leader-A", "선수1") }
                 .isInstanceOf(IllegalStateException::class.java)
@@ -173,28 +122,16 @@ class DraftServiceTest {
 
         @Test
         fun `현재 드래프트 턴이 없으면 픽 전에 어떤 상태도 변경하지 않는다`() {
-            roomRepo.save(
-                Room(
-                    roomId = roomId,
-                    code = roomCode,
-                    hostId = "host",
-                    status = RoomStatus.IN_PROGRESS,
-                    mode = TeamBuildingMode.DRAFT,
-                    teamCount = 2,
-                    teamSize = 2,
-                    draftOrderStrategy = DraftOrderStrategy.SNAKE,
-                    currentTurnIndex = null,
-                ),
-            )
+            persistRoom { room -> room.copy(currentTurnIndex = null) }
 
             assertThatThrownBy { cut.pick(roomCode, "leader-A", "선수1") }
                 .isInstanceOf(IllegalArgumentException::class.java)
                 .hasMessageContaining("현재 드래프트 턴이 없습니다")
 
-            val player = playerRepo.findByRoomId(roomId).first { it.name == "선수1" }
-            assertThat(player.status).isEqualTo(PlayerStatus.AVAILABLE)
-            assertThat(memberRepo.countByRoomId(roomId)).isZero()
-            assertThat(roomRepo.findByCode(roomCode)?.currentTurnIndex).isNull()
+            val room = currentRoom()
+            assertThat(room.players.first { it.name == "선수1" }.status).isEqualTo(PlayerStatus.AVAILABLE)
+            assertThat(room.members).isEmpty()
+            assertThat(room.currentTurnIndex).isNull()
         }
     }
 
@@ -211,5 +148,11 @@ class DraftServiceTest {
             val order = DraftBoard(listOf("A", "B"), DraftOrderStrategy.FIXED, 2).pickOrder()
             assertThat(order).containsExactly("A", "B", "A", "B")
         }
+    }
+
+    private fun currentRoom(): Room = roomRepo.findByCode(roomCode)!!
+
+    private fun persistRoom(transform: (Room) -> Room) {
+        roomRepo.save(transform(currentRoom()))
     }
 }

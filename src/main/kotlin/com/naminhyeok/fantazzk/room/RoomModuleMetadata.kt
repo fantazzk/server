@@ -4,7 +4,7 @@ import org.springframework.modulith.ApplicationModule
 import org.springframework.modulith.ApplicationModule.Type
 
 @ApplicationModule(
-    allowedDependencies = ["template :: spi"],
+    allowedDependencies = ["template"],
     type = Type.CLOSED,
 )
 class RoomModuleMetadata

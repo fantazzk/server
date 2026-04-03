@@ -6,7 +6,6 @@ import com.tngtech.archunit.core.importer.ImportOption
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatCode
 import org.jmolecules.ddd.annotation.Repository
-import org.jmolecules.ddd.annotation.Service
 import org.junit.jupiter.api.Test
 import org.springframework.context.annotation.Configuration
 import org.springframework.modulith.core.ApplicationModules
@@ -16,6 +15,7 @@ import java.nio.file.Path
 import kotlin.io.path.extension
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.readText
 
 class SpringModulithArchitectureTest {
     private val modules = ApplicationModules.of(FantazzkApplication::class.java)
@@ -43,19 +43,59 @@ class SpringModulithArchitectureTest {
     }
 
     @Test
-    fun `애플리케이션 과 쿼리 서비스 구현은 jmolecules service 역할을 선언한다`() {
+    fun `같은 모듈의 애플리케이션 서비스는 수동 이벤트 발행을 사용하지 않는다`() {
+        val sourceRoot = Path.of("src/main/kotlin/com/naminhyeok/fantazzk")
+        val forbiddenMarkers = listOf("ApplicationEventPublisher", "publishEvent(", "drainEvents(")
+
+        val violatingFiles =
+            Files.walk(sourceRoot).use { paths ->
+                paths
+                    .filter { Files.isRegularFile(it) && it.fileName.toString().endsWith(".kt") }
+                    .toList()
+                    .mapNotNull { path ->
+                        val content = path.readText()
+                        val isApplicationSource = path.toString().contains("/application/")
+
+                        if (isApplicationSource && forbiddenMarkers.any(content::contains)) {
+                            sourceRoot.relativize(path).toString()
+                        } else {
+                            null
+                        }
+                    }
+            }
+
+        assertThat(violatingFiles).isEmpty()
+    }
+
+    @Test
+    fun `같은 모듈의 애플리케이션 서비스는 서비스 인터페이스 와 impl 접미사를 두지 않는다`() {
         val classes =
             ClassFileImporter()
                 .withImportOption(ImportOption.DoNotIncludeTests())
                 .importPackages("com.naminhyeok.fantazzk")
 
-        val serviceImplementations =
+        val interfaceViolations =
             classes
-                .filter { it.simpleName.endsWith("ServiceImpl") }
-                .map { it.reflect() }
+                .filter { it.packageName.contains(".application") }
+                .filter { it.isInterface }
+                .filter {
+                    it.simpleName.endsWith("Service") ||
+                        it.simpleName.endsWith("Finder") ||
+                        it.simpleName.endsWith("Executor")
+                }
+                .map { it.fullName }
 
-        assertThat(serviceImplementations).isNotEmpty()
-        assertThat(serviceImplementations).allMatch { it.isAnnotationPresent(Service::class.java) }
+        val implViolations =
+            classes
+                .filter { it.packageName.contains(".application") }
+                .filter {
+                    it.simpleName.endsWith("ServiceImpl") ||
+                        it.simpleName.endsWith("FinderImpl") ||
+                        it.simpleName.endsWith("ExecutorImpl")
+                }.map { it.fullName }
+
+        assertThat(interfaceViolations).isEmpty()
+        assertThat(implViolations).isEmpty()
     }
 
     @Test
@@ -74,6 +114,40 @@ class SpringModulithArchitectureTest {
 
         assertThat(repositories).isNotEmpty()
         assertThat(repositories).allMatch { it.isAnnotationPresent(Repository::class.java) }
+    }
+
+    @Test
+    fun `메인 소스는 더 이상 spring data jdbc 전용 타입을 사용하지 않는다`() {
+        val sourceRoot = Path.of("src/main/kotlin/com/naminhyeok/fantazzk")
+        val jdbcUsages =
+            Files.walk(sourceRoot).use { paths ->
+                paths
+                    .filter { Files.isRegularFile(it) && it.fileName.toString().endsWith(".kt") }
+                    .toList()
+                    .mapNotNull { path ->
+                        val content = path.readText()
+                        if (
+                            "org.springframework.data.jdbc" in content ||
+                            "org.springframework.data.relational.core.mapping" in content ||
+                            "AbstractJdbcConfiguration" in content
+                        ) {
+                            sourceRoot.relativize(path).toString()
+                        } else {
+                            null
+                        }
+                    }
+            }
+
+        assertThat(jdbcUsages).isEmpty()
+    }
+
+    @Test
+    fun `빌드 설정은 JPA 전환 이후 메인 JDBC starter 와 불필요한 data jdbc 테스트 슬라이스를 제거한다`() {
+        val buildScript = Path.of("build.gradle.kts").readText()
+
+        assertThat(buildScript).doesNotContain("implementation(\"org.springframework.boot:spring-boot-starter-data-jdbc\")")
+        assertThat(buildScript).doesNotContain("integrationTestImplementation(\"org.springframework.boot:spring-boot-data-jdbc-test\")")
+        assertThat(buildScript).contains("integrationTestImplementation(\"org.springframework.boot:spring-boot-jdbc-test\")")
     }
 
     @Test

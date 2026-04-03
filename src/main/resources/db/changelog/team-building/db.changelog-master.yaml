@@ -1,7 +1,7 @@
 databaseChangeLog:
   - include:
-      file: db/changelog/team-building/db.changelog-initial-schema.yaml
+      file: /db/changelog/team-building/db.changelog-initial-schema.yaml
   - include:
-      file: db/changelog/team-building/db.changelog-add-audit-columns.yaml
+      file: /db/changelog/team-building/db.changelog-add-audit-columns.yaml
   - include:
-      file: db/changelog/team-building/db.changelog-modulith-event-publication.yaml
+      file: /db/changelog/team-building/db.changelog-modulith-event-publication.yaml

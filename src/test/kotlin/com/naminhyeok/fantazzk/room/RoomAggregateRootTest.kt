@@ -1,31 +1,26 @@
 package com.naminhyeok.fantazzk.room
-
-import com.naminhyeok.fantazzk.template.spi.TemplateDraftOrderStrategy
-import com.naminhyeok.fantazzk.template.spi.TemplateMode
-import com.naminhyeok.fantazzk.template.spi.TemplatePlayerSnapshot
-import com.naminhyeok.fantazzk.template.spi.TemplateSnapshot
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class RoomAggregateRootTest {
     @Test
-    fun `템플릿 스냅샷으로 Room aggregate root를 만들면 방 선수 호스트를 함께 초기화한다`() {
+    fun `방 생성 명세로 방 애그리거트 루트를 만들면 방 선수 호스트를 함께 초기화한다`() {
         val room =
             Room.createFromTemplate(
                 code = "ROOM01",
                 hostId = "host-1",
                 hostNickname = "호스트",
-                template =
-                    TemplateSnapshot(
-                        mode = TemplateMode.AUCTION,
+                spec =
+                    RoomTemplateSpec(
+                        mode = RoomTemplateSpec.Mode.AUCTION,
                         teamCount = 2,
                         teamSize = 3,
                         budget = 300,
                         draftOrderStrategy = null,
                         players =
                             listOf(
-                                TemplatePlayerSnapshot(name = "선수B", displayOrder = 1),
-                                TemplatePlayerSnapshot(name = "선수A", displayOrder = 0),
+                                RoomTemplateSpec.Player(name = "선수B", displayOrder = 1),
+                                RoomTemplateSpec.Player(name = "선수A", displayOrder = 0),
                             ),
                     ),
             )
@@ -41,7 +36,7 @@ class RoomAggregateRootTest {
     }
 
     @Test
-    fun `룸 애그리거트 루트가 방 시작을 처리하며 RoomStarted 이벤트를 만든다`() {
+    fun `방 애그리거트 루트가 방 시작을 처리하며 진행 상태를 초기화한다`() {
         val room =
             Room.createAuction(
                 code = "START1",
@@ -62,18 +57,10 @@ class RoomAggregateRootTest {
 
         assertThat(startedRoom.status).isEqualTo(RoomStatus.IN_PROGRESS)
         assertThat(startedRoom.currentAuctionRound).isEqualTo(1)
-        assertThat(startedRoom.drainEvents()).containsExactly(
-            RoomStarted(
-                roomId = 10L,
-                code = "START1",
-                status = RoomStatus.IN_PROGRESS,
-                mode = RoomStarted.Mode.AUCTION,
-            ),
-        )
     }
 
     @Test
-    fun `룸 애그리거트 루트가 경매 정산을 처리하며 선수 배정과 AuctionSettled 이벤트를 만든다`() {
+    fun `방 애그리거트 루트가 경매 정산을 처리하며 선수 배정과 예산 차감을 반영한다`() {
         val room =
             Room.createAuction(
                 code = "AUC01",
@@ -125,23 +112,10 @@ class RoomAggregateRootTest {
         assertThat(assignedMember.teamLeaderId).isEqualTo("leader-B")
         assertThat(assignedMember.playerName).isEqualTo("선수1")
         assertThat(settledRoom.leaders.single { it.teamLeaderId == "leader-B" }.remainingBudget).isEqualTo(150)
-        assertThat(settledRoom.drainEvents()).contains(
-            AuctionSettled(
-                roomId = 10L,
-                code = "AUC01",
-                playerName = "선수1",
-                outcome = AuctionOutcome.SOLD,
-                leaders =
-                    listOf(
-                        LeaderSnapshot(teamLeaderId = "leader-A", nickname = "A", remainingBudget = 300),
-                        LeaderSnapshot(teamLeaderId = "leader-B", nickname = "B", remainingBudget = 150),
-                    ),
-            ),
-        )
     }
 
     @Test
-    fun `룸 애그리거트 루트가 마지막 드래프트 픽을 처리하면 RoomCompleted까지 만든다`() {
+    fun `방 애그리거트 루트가 마지막 드래프트 지명을 처리하면 방을 완료한다`() {
         val room =
             Room.createDraft(
                 code = "DRF01",
@@ -169,32 +143,24 @@ class RoomAggregateRootTest {
 
         assertThat(pickedRoom.status).isEqualTo(RoomStatus.COMPLETED)
         assertThat(pickedRoom.players.single().status).isEqualTo(PlayerStatus.ASSIGNED)
-        assertThat(pickedRoom.drainEvents()).contains(
-            DraftPickCompleted(
-                roomId = 11L,
-                code = "DRF01",
-                playerName = "선수2",
-                teamLeaderId = "leader-B",
-            ),
-            RoomCompleted(roomId = 11L, code = "DRF01", status = RoomStatus.COMPLETED, mode = RoomStarted.Mode.DRAFT),
-        )
+        assertThat(pickedRoom.members.map { it.playerName }).containsExactly("선수1", "선수2")
     }
 
     @Test
-    fun `드래프트 템플릿 스냅샷은 room 전략 enum으로 변환된다`() {
+    fun `드래프트 방 생성 명세는 방 전략 열거형으로 변환된다`() {
         val room =
             Room.createFromTemplate(
                 code = "ROOM02",
                 hostId = "host-1",
                 hostNickname = "호스트",
-                template =
-                    TemplateSnapshot(
-                        mode = TemplateMode.DRAFT,
+                spec =
+                    RoomTemplateSpec(
+                        mode = RoomTemplateSpec.Mode.DRAFT,
                         teamCount = 2,
                         teamSize = 2,
                         budget = null,
-                        draftOrderStrategy = TemplateDraftOrderStrategy.SNAKE,
-                        players = listOf(TemplatePlayerSnapshot(name = "선수A", displayOrder = 0)),
+                        draftOrderStrategy = RoomTemplateSpec.DraftOrderStrategy.SNAKE,
+                        players = listOf(RoomTemplateSpec.Player(name = "선수A", displayOrder = 0)),
                     ),
             )
 

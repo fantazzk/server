@@ -1,41 +1,36 @@
 package com.naminhyeok.fantazzk.room.application
 
 import com.naminhyeok.fantazzk.room.Room
+import com.naminhyeok.fantazzk.room.RoomTemplateSpec
 import com.naminhyeok.fantazzk.room.exception.RoomTemplateNotFoundException
 import com.naminhyeok.fantazzk.room.repository.RoomRepository
-import com.naminhyeok.fantazzk.template.spi.TemplateLookup
-import com.naminhyeok.fantazzk.template.spi.TemplateLookupException
-import org.springframework.context.ApplicationEventPublisher
+import com.naminhyeok.fantazzk.template.TemplateBlueprint
+import com.naminhyeok.fantazzk.template.TemplateCatalog
+import com.naminhyeok.fantazzk.template.TemplateCatalogException
+import com.naminhyeok.fantazzk.template.TemplateDraftOrderStrategy
+import com.naminhyeok.fantazzk.template.TemplateMode
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 import java.util.UUID
-
-interface RoomCreateService {
-    fun create(
-        templateId: Long,
-        hostNickname: String,
-    ): Room
-}
 
 @org.jmolecules.ddd.annotation.Service
 @Service
-internal class RoomCreateServiceImpl(
+class RoomCreateService(
     private val roomRepository: RoomRepository,
-    private val templateLookup: TemplateLookup,
-    private val events: ApplicationEventPublisher,
-) : RoomCreateService {
-    @Transactional
-    override fun create(
+    private val templateCatalog: TemplateCatalog,
+    private val roomCreateAttemptExecutor: RoomCreateAttemptExecutor,
+) {
+    fun create(
         templateId: Long,
         hostNickname: String,
     ): Room {
         val template =
             try {
-                templateLookup.getTemplate(templateId)
-            } catch (_: TemplateLookupException.NotFound) {
+                templateCatalog.getTemplateBlueprint(templateId).toRoomTemplateSpec()
+            } catch (_: TemplateCatalogException.NotFound) {
                 throw RoomTemplateNotFoundException()
-            } catch (_: TemplateLookupException.Invalid) {
+            } catch (_: TemplateCatalogException.Invalid) {
                 throw IllegalStateException("유효하지 않은 템플릿입니다")
             }
         repeat(MAX_CODE_GENERATION_ATTEMPTS) {
@@ -45,19 +40,22 @@ internal class RoomCreateServiceImpl(
             val hostId = UUID.randomUUID().toString()
             val room =
                 try {
-                    roomRepository.save(
+                    roomCreateAttemptExecutor.create(
                         Room.createFromTemplate(
                             code = code,
                             hostId = hostId,
                             hostNickname = hostNickname,
-                            template = template,
+                            spec = template,
                         ),
                     )
                 } catch (_: DuplicateKeyException) {
                     return@repeat
+                } catch (exception: DataIntegrityViolationException) {
+                    if (roomRepository.findByCode(code) != null) {
+                        return@repeat
+                    }
+                    throw exception
                 }
-
-            room.recordCreated().drainEvents().forEach(events::publishEvent)
             return room
         }
         throw IllegalStateException("방 코드를 생성할 수 없습니다")
@@ -72,3 +70,28 @@ internal class RoomCreateServiceImpl(
         private const val MAX_CODE_GENERATION_ATTEMPTS = 5
     }
 }
+
+private fun TemplateBlueprint.toRoomTemplateSpec(): RoomTemplateSpec =
+    RoomTemplateSpec(
+        mode =
+            when (mode) {
+                TemplateMode.AUCTION -> RoomTemplateSpec.Mode.AUCTION
+                TemplateMode.DRAFT -> RoomTemplateSpec.Mode.DRAFT
+            },
+        teamCount = teamCount,
+        teamSize = teamSize,
+        budget = budget,
+        draftOrderStrategy =
+            when (draftOrderStrategy) {
+                null -> null
+                TemplateDraftOrderStrategy.FIXED -> RoomTemplateSpec.DraftOrderStrategy.FIXED
+                TemplateDraftOrderStrategy.SNAKE -> RoomTemplateSpec.DraftOrderStrategy.SNAKE
+            },
+        players =
+            players.map {
+                RoomTemplateSpec.Player(
+                    name = it.name,
+                    displayOrder = it.displayOrder,
+                )
+            },
+    )

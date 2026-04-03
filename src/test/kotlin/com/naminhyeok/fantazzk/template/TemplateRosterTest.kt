@@ -21,15 +21,9 @@ class TemplateRosterTest {
     }
 
     @Test
-    fun `일급 컬렉션은 템플릿 선수 목록으로 변환할 때 displayOrder를 보존한다`() {
+    fun `일급 컬렉션은 playerNames 조회 시 입력 순서를 유지한다`() {
         val roster = TemplateRoster.exactlyRequired(listOf("선수B", "선수A"), requiredPlayerCount = 2)
 
-        val players = roster.toPlayers(templateId = 11L)
-
-        assertThat(players.map { Triple(it.templateId, it.name, it.displayOrder) })
-            .containsExactly(
-                Triple(11L, "선수B", 0),
-                Triple(11L, "선수A", 1),
-            )
+        assertThat(roster.playerNames()).containsExactly("선수B", "선수A")
     }
 }

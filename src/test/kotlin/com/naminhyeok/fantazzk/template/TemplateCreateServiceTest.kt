@@ -2,28 +2,27 @@ package com.naminhyeok.fantazzk.template
 
 import com.naminhyeok.fantazzk.template.application.CreateTemplateCommand
 import com.naminhyeok.fantazzk.template.application.TemplateCreateService
-import com.naminhyeok.fantazzk.template.application.TemplateCreateServiceImpl
-import com.naminhyeok.fantazzk.template.support.InMemoryTemplatePlayerRepository
-import com.naminhyeok.fantazzk.template.support.InMemoryTemplateRepository
+import com.naminhyeok.fantazzk.template.domain.Template
+import com.naminhyeok.fantazzk.template.domain.TemplateConfiguration
+import com.naminhyeok.fantazzk.template.repository.TemplateRepository
+import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.springframework.context.ApplicationEventPublisher
 
 class TemplateCreateServiceTest {
-    private lateinit var templateRepo: InMemoryTemplateRepository
-    private lateinit var playerRepo: InMemoryTemplatePlayerRepository
-    private lateinit var events: ApplicationEventPublisher
+    private lateinit var templateRepo: TemplateRepository
     private lateinit var cut: TemplateCreateService
 
     @BeforeEach
     fun setUp() {
-        templateRepo = InMemoryTemplateRepository()
-        playerRepo = InMemoryTemplatePlayerRepository()
-        events = mockk(relaxed = true)
-        cut = TemplateCreateServiceImpl(templateRepo, playerRepo, events)
+        templateRepo = mockk()
+        every { templateRepo.save(any<Template>()) } answers {
+            firstArg<Template>().takeUnless { it.templateId == 0L } ?: firstArg<Template>().assignId(TemplateId(1L))
+        }
+        cut = TemplateCreateService(templateRepo)
     }
 
     @Test
@@ -41,9 +40,9 @@ class TemplateCreateServiceTest {
 
         assertThat(template.name).isEqualTo("경매전")
         assertThat(template.configuration)
-            .isEqualTo(TemplateConfiguration.Auction(teamCount = 2, teamSize = 2, budgetValue = 500))
+            .isEqualTo(TemplateConfiguration.auction(teamCount = 2, teamSize = 2, budget = 500))
 
-        val players = playerRepo.findByTemplateId(template.templateId)
+        val players = template.players()
         assertThat(players.map { it.name }).containsExactly("선수A", "선수B")
         assertThat(players.map { it.displayOrder }).containsExactly(0, 1)
     }
@@ -62,7 +61,7 @@ class TemplateCreateServiceTest {
             )
 
         assertThat(template.configuration)
-            .isEqualTo(TemplateConfiguration.Draft(teamCount = 2, teamSize = 2, strategy = DraftOrderStrategy.SNAKE))
+            .isEqualTo(TemplateConfiguration.draft(teamCount = 2, teamSize = 2, strategy = DraftOrderStrategy.SNAKE))
         assertThat(template.budget).isNull()
     }
 

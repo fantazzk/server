@@ -2,9 +2,9 @@ package com.naminhyeok.fantazzk.template.dto
 
 import com.naminhyeok.fantazzk.template.DraftOrderStrategy
 import com.naminhyeok.fantazzk.template.TeamBuildingMode
-import com.naminhyeok.fantazzk.template.Template
-import com.naminhyeok.fantazzk.template.TemplatePlayer
 import com.naminhyeok.fantazzk.template.application.TemplateDetail
+import com.naminhyeok.fantazzk.template.domain.Template
+import com.naminhyeok.fantazzk.template.domain.TemplatePlayer
 import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.Schema
 

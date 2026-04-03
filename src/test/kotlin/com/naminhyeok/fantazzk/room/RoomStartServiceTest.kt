@@ -1,15 +1,8 @@
 package com.naminhyeok.fantazzk.room
 
 import com.naminhyeok.fantazzk.room.application.RoomStartService
-import com.naminhyeok.fantazzk.room.application.RoomStartServiceImpl
 import com.naminhyeok.fantazzk.room.exception.RoomException
-import com.naminhyeok.fantazzk.room.support.InMemoryRoomBidRepository
-import com.naminhyeok.fantazzk.room.support.InMemoryRoomPlayerRepository
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomRepository
-import com.naminhyeok.fantazzk.room.support.InMemoryRoomTeamLeaderRepository
-import com.naminhyeok.fantazzk.room.support.InMemoryRoomTeamMemberRepository
-import io.mockk.mockk
-import io.mockk.verify
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
@@ -18,26 +11,15 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
 import org.junit.jupiter.params.provider.ValueSource
-import org.springframework.context.ApplicationEventPublisher
 
 class RoomStartServiceTest {
     private lateinit var roomRepo: InMemoryRoomRepository
-    private lateinit var playerRepo: InMemoryRoomPlayerRepository
-    private lateinit var leaderRepo: InMemoryRoomTeamLeaderRepository
-    private lateinit var memberRepo: InMemoryRoomTeamMemberRepository
-    private lateinit var bidRepo: InMemoryRoomBidRepository
-    private lateinit var events: ApplicationEventPublisher
     private lateinit var cut: RoomStartService
 
     @BeforeEach
     fun setUp() {
-        playerRepo = InMemoryRoomPlayerRepository()
-        leaderRepo = InMemoryRoomTeamLeaderRepository()
-        memberRepo = InMemoryRoomTeamMemberRepository()
-        bidRepo = InMemoryRoomBidRepository()
-        roomRepo = InMemoryRoomRepository(playerRepo, leaderRepo, memberRepo, bidRepo)
-        events = mockk(relaxed = true)
-        cut = RoomStartServiceImpl(roomRepo, events)
+        roomRepo = InMemoryRoomRepository()
+        cut = RoomStartService(roomRepo)
     }
 
     @Nested
@@ -51,24 +33,6 @@ class RoomStartServiceTest {
 
             val started = roomRepo.findByCode(room.code)!!
             assertThat(started.status).isEqualTo(RoomStatus.IN_PROGRESS)
-        }
-
-        @Test
-        fun `방 시작 성공 시 RoomStarted 이벤트를 발행한다`() {
-            val room = createWaitingRoom(TeamBuildingMode.AUCTION, budget = 300)
-            fillLeaders(room)
-
-            cut.start(room.code)
-
-            verify {
-                events.publishEvent(
-                    match<RoomStarted> {
-                        it.roomId == room.roomId &&
-                            it.code == room.code &&
-                            it.mode == RoomStarted.Mode.AUCTION
-                    },
-                )
-            }
         }
 
         @ParameterizedTest(name = "{0} 상태의 방은 시작할 수 없다")
@@ -130,7 +94,6 @@ class RoomStartServiceTest {
             val started = roomRepo.findByCode(room.code)!!
             assertThat(started.currentAuctionRound).isEqualTo(1)
             assertThat(started.currentTurnIndex).isNull()
-            assertThat(started.progress).isEqualTo(RoomProgress.Auction(currentRound = 1))
         }
 
         @Test
@@ -149,7 +112,6 @@ class RoomStartServiceTest {
             val started = roomRepo.findByCode(room.code)!!
             assertThat(started.currentTurnIndex).isEqualTo(0)
             assertThat(started.currentAuctionRound).isNull()
-            assertThat(started.progress).isEqualTo(RoomProgress.Draft(currentTurnIndex = 0))
         }
     }
 
@@ -195,12 +157,17 @@ class RoomStartServiceTest {
         count: Int,
     ) {
         repeat(count) { index ->
-            leaderRepo.save(
-                RoomTeamLeader(
-                    roomId = room.roomId,
-                    teamLeaderId = "leader-${index + 1}",
-                    nickname = "팀장${index + 1}",
-                    remainingBudget = room.budget,
+            val current = roomRepo.findById(RoomId(room.roomId))!!
+            roomRepo.save(
+                current.copy(
+                    leaders =
+                        current.leaders +
+                            RoomTeamLeader(
+                                roomId = room.roomId,
+                                teamLeaderId = "leader-${index + 1}",
+                                nickname = "팀장${index + 1}",
+                                remainingBudget = room.budget,
+                            ),
                 ),
             )
         }

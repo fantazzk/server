@@ -1,14 +1,18 @@
 package com.naminhyeok.fantazzk.room.application
 
 import com.naminhyeok.fantazzk.room.Room
-import com.naminhyeok.fantazzk.room.exception.RoomException
 import com.naminhyeok.fantazzk.room.repository.RoomRepository
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Propagation
+import org.springframework.transaction.annotation.Transactional
 
 @org.jmolecules.ddd.annotation.Service
 @Service
-class RoomFinder(
+class RoomCreateAttemptExecutor(
     private val roomRepository: RoomRepository,
 ) {
-    fun get(code: String): Room = roomRepository.findByCode(code) ?: throw RoomException.RoomNotFoundException()
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    fun create(room: Room): Room {
+        return roomRepository.save(room)
+    }
 }

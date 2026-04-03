@@ -3,19 +3,15 @@ package com.naminhyeok.fantazzk.template
 import com.naminhyeok.fantazzk.template.application.CreateTemplateCommand
 import com.naminhyeok.fantazzk.template.application.TemplateCreateService
 import com.naminhyeok.fantazzk.template.application.TemplateFinder
+import com.naminhyeok.fantazzk.template.domain.Template
 import com.naminhyeok.fantazzk.template.exception.TemplateException
-import com.naminhyeok.fantazzk.template.repository.TemplatePlayerRepository
 import com.naminhyeok.fantazzk.template.repository.TemplateRepository
-import com.naminhyeok.fantazzk.template.spi.TemplateLookup
-import com.naminhyeok.fantazzk.template.spi.TemplateLookupException
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.modulith.test.ApplicationModuleTest
-import org.springframework.modulith.test.PublishedEvents
-import org.springframework.modulith.test.Scenario
 
 @ApplicationModuleTest(
     module = "template",
@@ -26,7 +22,7 @@ class TemplateModuleIntegrationTest {
     lateinit var templateCreateService: TemplateCreateService
 
     @Autowired
-    lateinit var templateLookup: TemplateLookup
+    lateinit var templateCatalog: TemplateCatalog
 
     @Autowired
     lateinit var templateFinder: TemplateFinder
@@ -35,22 +31,38 @@ class TemplateModuleIntegrationTest {
     lateinit var templateRepository: TemplateRepository
 
     @Autowired
-    lateinit var templatePlayerRepository: TemplatePlayerRepository
-
-    @Autowired
     lateinit var jdbcTemplate: JdbcTemplate
 
     @Test
-    fun `template module boots in standalone mode`() {
+    fun `템플릿 모듈은 루트 계약과 함께 단독 부팅된다`() {
         assertThat(templateCreateService).isNotNull()
-        assertThat(templateLookup).isNotNull()
+        assertThat(templateCatalog).isNotNull()
     }
 
     @Test
-    fun `template create publishes TemplateCreated`(publishedEvents: PublishedEvents) {
+    fun `템플릿 생성은 저장 직후 상세 조회가 가능하다`() {
+        val created =
+            templateCreateService.create(
+                CreateTemplateCommand.Auction(
+                    name = "모듈 테스트 템플릿",
+                    teamCount = 2,
+                    teamSize = 2,
+                    budget = 300,
+                    playerNames = listOf("선수1", "선수2"),
+                ),
+            )
+
+        val detail = templateFinder.getDetail(created.getId())
+
+        assertThat(detail.template.name).isEqualTo("모듈 테스트 템플릿")
+        assertThat(detail.players.map { it.name }).containsExactly("선수1", "선수2")
+    }
+
+    @Test
+    fun `템플릿 생성 이후 목록 조회에서 새 템플릿을 바로 조회할 수 있다`() {
         templateCreateService.create(
             CreateTemplateCommand.Auction(
-                name = "모듈 테스트 템플릿",
+                name = "프로젝션 템플릿",
                 teamCount = 2,
                 teamSize = 2,
                 budget = 300,
@@ -58,43 +70,37 @@ class TemplateModuleIntegrationTest {
             ),
         )
 
-        val events =
-            publishedEvents
-                .ofType(TemplateCreated::class.java)
-                .matching { it.name == "모듈 테스트 템플릿" }
-                .toList()
-
-        assertThat(events).hasSize(1)
+        val templates = templateFinder.list()
+        assertThat(templates.map { it.name }).contains("프로젝션 템플릿")
     }
 
     @Test
-    fun `template create 이후 finder 목록에서 새 템플릿을 조회할 수 있다`(scenario: Scenario) {
-        scenario
-            .stimulate {
-                templateCreateService.create(
-                    CreateTemplateCommand.Auction(
-                        name = "프로젝션 템플릿",
-                        teamCount = 2,
-                        teamSize = 2,
-                        budget = 300,
-                        playerNames = listOf("선수1", "선수2"),
-                    ),
-                )
-            }
-            .andWaitForStateChange({ templateFinder.list() }) { templates ->
-                templates.any { it.name == "프로젝션 템플릿" }
-            }
-            .andVerify { templates ->
-                assertThat(templates.map { it.name }).contains("프로젝션 템플릿")
-            }
+    fun `template finder 는 별도 선수 리포지토리 없이 aggregate 에서 선수 목록을 읽는다`() {
+        val created =
+            templateCreateService.create(
+                CreateTemplateCommand.Auction(
+                    name = "집약 루트",
+                    teamCount = 2,
+                    teamSize = 2,
+                    budget = 300,
+                    playerNames = listOf("선수1", "선수2"),
+                ),
+            )
+
+        val detail = templateFinder.getDetail(created.getId())
+
+        assertThat(detail.players.map { it.name }).containsExactly("선수1", "선수2")
     }
 
     @Test
-    fun `template finder 목록 조회는 유효하지 않은 row를 TemplateInvalidException 으로 변환한다`() {
+    fun `템플릿 조회 서비스 목록 조회는 유효하지 않은 행을 템플릿 유효성 예외로 변환한다`() {
         templateRepository.save(
-            Template.create(
+            Template.createAuction(
                 name = "정상 템플릿",
-                configuration = TemplateConfiguration.Auction(teamCount = 2, teamSize = 2, budgetValue = 300),
+                teamCount = 2,
+                teamSize = 2,
+                budget = 300,
+                playerNames = listOf("선수1", "선수2"),
             ),
         )
         val invalidTemplateId =
@@ -122,63 +128,90 @@ class TemplateModuleIntegrationTest {
     }
 
     @Test
-    fun `template finder 상세 조회는 displayOrder 순서의 선수 목록을 반환한다`() {
+    fun `템플릿 조회 서비스 목록 조회는 선수 구성이 불완전한 행을 템플릿 유효성 예외로 변환한다`() {
+        val templateId =
+            jdbcTemplate.queryForObject(
+                """
+                insert into template (name, mode, team_count, team_size, budget, draft_order_strategy)
+                values (?, ?, ?, ?, ?, ?)
+                returning id
+                """.trimIndent(),
+                Long::class.java,
+                "선수 구성 누락 템플릿",
+                "AUCTION",
+                2,
+                2,
+                300,
+                null,
+            )!!
+
+        jdbcTemplate.update(
+            """
+            insert into template_player (template_id, name, display_order)
+            values (?, ?, ?)
+            """.trimIndent(),
+            templateId,
+            "선수1",
+            0,
+        )
+
+        try {
+            assertThatThrownBy { templateFinder.list() }
+                .isInstanceOf(TemplateException.TemplateInvalidException::class.java)
+        } finally {
+            jdbcTemplate.update("delete from template_player where template_id = ?", templateId)
+            jdbcTemplate.update("delete from template where id = ?", templateId)
+        }
+    }
+
+    @Test
+    fun `템플릿 조회 서비스 상세 조회는 표시 순서대로 선수 목록을 반환한다`() {
         val template =
             templateRepository.save(
-                Template.create(
+                Template.createDraft(
                     name = "순서 검증",
-                    configuration = TemplateConfiguration.Draft(teamCount = 2, teamSize = 3, strategy = DraftOrderStrategy.SNAKE),
+                    teamCount = 2,
+                    teamSize = 3,
+                    strategy = DraftOrderStrategy.SNAKE,
+                    playerNames = listOf("선수3", "선수1", "선수2", "선수4"),
                 ),
             )
-        templatePlayerRepository.saveAll(
-            listOf(
-                TemplatePlayer(templateId = template.templateId, name = "선수3", displayOrder = 2),
-                TemplatePlayer(templateId = template.templateId, name = "선수1", displayOrder = 0),
-                TemplatePlayer(templateId = template.templateId, name = "선수2", displayOrder = 1),
-                TemplatePlayer(templateId = template.templateId, name = "선수4", displayOrder = 3),
-            ),
-        )
 
         val detail = templateFinder.getDetail(TemplateId(template.templateId))
 
-        assertThat(detail.players.map { it.name }).containsExactly("선수1", "선수2", "선수3", "선수4")
+        assertThat(detail.players.map { it.name }).containsExactly("선수3", "선수1", "선수2", "선수4")
     }
 
     @Test
-    fun `template lookup 은 aggregate 기반 상세 조회를 snapshot 으로 변환한다`() {
+    fun `템플릿 목록 계약은 애그리거트 기반 상세 조회를 설계 정보로 변환한다`() {
         val template =
             templateRepository.save(
-                Template.create(
+                Template.createDraft(
                     name = "snapshot 검증",
-                    configuration = TemplateConfiguration.Draft(teamCount = 2, teamSize = 3, strategy = DraftOrderStrategy.FIXED),
+                    teamCount = 2,
+                    teamSize = 3,
+                    strategy = DraftOrderStrategy.FIXED,
+                    playerNames = listOf("선수4", "선수1", "선수3", "선수2"),
                 ),
             )
-        templatePlayerRepository.saveAll(
-            listOf(
-                TemplatePlayer(templateId = template.templateId, name = "선수4", displayOrder = 3),
-                TemplatePlayer(templateId = template.templateId, name = "선수1", displayOrder = 0),
-                TemplatePlayer(templateId = template.templateId, name = "선수3", displayOrder = 2),
-                TemplatePlayer(templateId = template.templateId, name = "선수2", displayOrder = 1),
-            ),
-        )
 
-        val snapshot = templateLookup.getTemplate(template.templateId)
+        val blueprint = templateCatalog.getTemplateBlueprint(template.templateId)
 
-        assertThat(snapshot.mode.name).isEqualTo("DRAFT")
-        assertThat(snapshot.teamCount).isEqualTo(2)
-        assertThat(snapshot.teamSize).isEqualTo(3)
-        assertThat(snapshot.draftOrderStrategy?.name).isEqualTo("FIXED")
-        assertThat(snapshot.players.map { it.name }).containsExactly("선수1", "선수2", "선수3", "선수4")
+        assertThat(blueprint.mode).isEqualTo(TemplateMode.DRAFT)
+        assertThat(blueprint.teamCount).isEqualTo(2)
+        assertThat(blueprint.teamSize).isEqualTo(3)
+        assertThat(blueprint.draftOrderStrategy).isEqualTo(TemplateDraftOrderStrategy.FIXED)
+        assertThat(blueprint.players.map { it.name }).containsExactly("선수4", "선수1", "선수3", "선수2")
     }
 
     @Test
-    fun `template lookup 은 존재하지 않는 템플릿을 not found 로 변환한다`() {
-        assertThatThrownBy { templateLookup.getTemplate(999_999L) }
-            .isInstanceOf(TemplateLookupException.NotFound::class.java)
+    fun `템플릿 목록 계약은 존재하지 않는 템플릿을 찾을 수 없음 예외로 변환한다`() {
+        assertThatThrownBy { templateCatalog.getTemplateBlueprint(999_999L) }
+            .isInstanceOf(TemplateCatalogException.NotFound::class.java)
     }
 
     @Test
-    fun `template lookup 은 유효하지 않은 roster 를 invalid 로 변환한다`() {
+    fun `템플릿 목록 계약은 유효하지 않은 선수 구성을 유효성 예외로 변환한다`() {
         val templateId =
             jdbcTemplate.queryForObject(
                 """
@@ -195,13 +228,22 @@ class TemplateModuleIntegrationTest {
                 null,
             )!!
 
-        templatePlayerRepository.saveAll(
-            listOf(
-                TemplatePlayer(templateId = templateId, name = "선수1", displayOrder = 0),
-            ),
+        jdbcTemplate.update(
+            """
+            insert into template_player (template_id, name, display_order)
+            values (?, ?, ?)
+            """.trimIndent(),
+            templateId,
+            "선수1",
+            0,
         )
 
-        assertThatThrownBy { templateLookup.getTemplate(templateId) }
-            .isInstanceOf(TemplateLookupException.Invalid::class.java)
+        try {
+            assertThatThrownBy { templateCatalog.getTemplateBlueprint(templateId) }
+                .isInstanceOf(TemplateCatalogException.Invalid::class.java)
+        } finally {
+            jdbcTemplate.update("delete from template_player where template_id = ?", templateId)
+            jdbcTemplate.update("delete from template where id = ?", templateId)
+        }
     }
 }

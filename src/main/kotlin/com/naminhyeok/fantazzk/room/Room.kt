@@ -1,50 +1,129 @@
 package com.naminhyeok.fantazzk.room
-
 import com.naminhyeok.fantazzk.room.exception.RoomException
-import com.naminhyeok.fantazzk.template.spi.TemplateMode
-import com.naminhyeok.fantazzk.template.spi.TemplateSnapshot
+import jakarta.persistence.CascadeType
+import jakarta.persistence.Column
+import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
+import jakarta.persistence.GeneratedValue
+import jakarta.persistence.GenerationType
+import jakarta.persistence.Id
+import jakarta.persistence.OneToMany
+import jakarta.persistence.OrderBy
+import jakarta.persistence.PostLoad
+import jakarta.persistence.Table
 import org.jmolecules.ddd.types.AggregateRoot
-import org.springframework.data.annotation.Transient
 import java.time.Instant
 import java.util.UUID
 
-data class Room(
-    val roomId: Long = 0L,
-    val code: String,
-    val hostId: String,
-    val status: RoomStatus,
-    val mode: TeamBuildingMode,
-    val teamCount: Int,
-    val teamSize: Int,
-    val budget: Int? = null,
-    val draftOrderStrategy: DraftOrderStrategy? = null,
-    val currentTurnIndex: Int? = null,
-    val currentAuctionRound: Int? = null,
-    val players: List<RoomPlayer> = emptyList(),
-    val leaders: List<RoomTeamLeader> = emptyList(),
-    val members: List<RoomTeamMember> = emptyList(),
-    val bids: List<RoomBid> = emptyList(),
+@Entity
+@Table(name = "room")
+class Room protected constructor(
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
+    private var persistentId: Long? = null,
+    @Column(name = "code", nullable = false)
+    val code: String = "",
+    @Column(name = "host_id", nullable = false)
+    val hostId: String = "",
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    var status: RoomStatus = RoomStatus.WAITING,
+    @Enumerated(EnumType.STRING)
+    @Column(name = "mode", nullable = false)
+    val mode: TeamBuildingMode = TeamBuildingMode.AUCTION,
+    @Column(name = "team_count", nullable = false)
+    val teamCount: Int = 1,
+    @Column(name = "team_size", nullable = false)
+    val teamSize: Int = 2,
+    @Column(name = "budget")
+    val budget: Int? = 1,
+    @Enumerated(EnumType.STRING)
+    @Column(name = "draft_order_strategy")
+    var draftOrderStrategy: DraftOrderStrategy? = null,
+    @Column(name = "current_turn_index")
+    var currentTurnIndex: Int? = null,
+    @Column(name = "current_auction_round")
+    var currentAuctionRound: Int? = null,
+    @OneToMany(mappedBy = "room", cascade = [CascadeType.ALL], orphanRemoval = true)
+    @OrderBy("displayOrder ASC")
+    private val persistentPlayers: MutableList<RoomPlayer> = mutableListOf(),
+    @OneToMany(mappedBy = "room", cascade = [CascadeType.ALL], orphanRemoval = true)
+    @OrderBy("roomTeamLeaderId ASC")
+    private val persistentLeaders: MutableList<RoomTeamLeader> = mutableListOf(),
+    @OneToMany(mappedBy = "room", cascade = [CascadeType.ALL], orphanRemoval = true)
+    @OrderBy("assignOrder ASC")
+    private val persistentMembers: MutableList<RoomTeamMember> = mutableListOf(),
+    @OneToMany(mappedBy = "room", cascade = [CascadeType.ALL])
+    @OrderBy("roomBidId ASC")
+    private val persistentBids: MutableList<RoomBid> = mutableListOf(),
+    @Column(name = "created_at", nullable = false)
     val createdAt: Instant = Instant.now(),
+    @Column(name = "updated_at", nullable = false)
     val updatedAt: Instant = Instant.now(),
 ) : AggregateRoot<Room, RoomId> {
-    @Transient
-    private val pendingEvents: MutableList<Any> = mutableListOf()
-
-    override fun getId(): RoomId = RoomId(roomId)
-
     init {
-        when (mode) {
-            TeamBuildingMode.AUCTION -> {
-                requireNotNull(budget) { "경매 방에는 예산이 필요합니다" }
-                require(draftOrderStrategy == null) { "경매 방에는 드래프트 순서 전략이 있으면 안 됩니다" }
-            }
-
-            TeamBuildingMode.DRAFT -> {
-                require(budget == null) { "드래프트 방에는 예산이 있으면 안 됩니다" }
-                requireNotNull(draftOrderStrategy) { "드래프트 방에는 순서 전략이 필요합니다" }
-            }
-        }
+        validateState()
     }
+
+    constructor(
+        roomId: Long = 0L,
+        code: String,
+        hostId: String,
+        status: RoomStatus,
+        mode: TeamBuildingMode,
+        teamCount: Int,
+        teamSize: Int,
+        budget: Int? = null,
+        draftOrderStrategy: DraftOrderStrategy? = null,
+        currentTurnIndex: Int? = null,
+        currentAuctionRound: Int? = null,
+        players: List<RoomPlayer> = emptyList(),
+        leaders: List<RoomTeamLeader> = emptyList(),
+        members: List<RoomTeamMember> = emptyList(),
+        bids: List<RoomBid> = emptyList(),
+        createdAt: Instant = Instant.now(),
+        updatedAt: Instant = Instant.now(),
+    ) : this(
+        persistentId = roomId.takeIf { it != 0L },
+        code = code,
+        hostId = hostId,
+        status = status,
+        mode = mode,
+        teamCount = teamCount,
+        teamSize = teamSize,
+        budget = budget,
+        draftOrderStrategy = draftOrderStrategy,
+        currentTurnIndex = currentTurnIndex,
+        currentAuctionRound = currentAuctionRound,
+        createdAt = createdAt,
+        updatedAt = updatedAt,
+    ) {
+        registerPlayers(players)
+        registerLeaders(leaders)
+        registerMembers(members)
+        registerBids(bids)
+    }
+
+    override fun getId(): RoomId = RoomId(requireNotNull(persistentId))
+
+    val roomId: Long
+        get() = persistentId ?: 0L
+
+    val players: List<RoomPlayer>
+        get() = persistentPlayers.toList()
+
+    val leaders: List<RoomTeamLeader>
+        get() = persistentLeaders.toList()
+
+    val members: List<RoomTeamMember>
+        get() = persistentMembers.toList()
+
+    val bids: List<RoomBid>
+        get() = currentAuctionRound?.let { round -> persistentBids.filter { it.round == round } }.orEmpty()
+
+    internal fun bidHistory(): List<RoomBid> = persistentBids.toList()
 
     fun createHostLeader(nickname: String): RoomTeamLeader = createTeamLeader(teamLeaderId = hostId, nickname = nickname)
 
@@ -68,56 +147,33 @@ data class Room(
         teamLeaderId: String = UUID.randomUUID().toString(),
     ): Room {
         val leader = join(teamLeaderId = teamLeaderId, nickname = nickname, currentLeaderCount = leaders.size)
-        return copy(leaders = leaders + leader)
-            .registerEvent(
-                RoomJoined(
-                    roomId = roomId,
-                    code = code,
-                    leader =
-                        LeaderSnapshot(
-                            teamLeaderId = leader.teamLeaderId,
-                            nickname = leader.nickname,
-                            remainingBudget = leader.remainingBudget,
-                        ),
-                ),
-            )
+        addLeader(leader)
+        return this
     }
 
     fun start(leaderCount: Int): Room {
         check(isWaiting()) { "대기 중인 방에서만 시작할 수 있습니다" }
         check(leaderCount == teamCount) { "모든 팀장 자리가 채워져야 시작할 수 있습니다" }
 
-        return when (configuration) {
-            is TeamBuildingConfiguration.Auction ->
-                copy(
-                    status = RoomStatus.IN_PROGRESS,
-                    currentAuctionRound = 1,
-                    currentTurnIndex = null,
-                )
+        when (configuration) {
+            is TeamBuildingConfiguration.Auction -> {
+                status = RoomStatus.IN_PROGRESS
+                currentAuctionRound = 1
+                currentTurnIndex = null
+            }
 
-            is TeamBuildingConfiguration.Draft ->
-                copy(
-                    status = RoomStatus.IN_PROGRESS,
-                    currentTurnIndex = 0,
-                    currentAuctionRound = null,
-                )
+            is TeamBuildingConfiguration.Draft -> {
+                status = RoomStatus.IN_PROGRESS
+                currentTurnIndex = 0
+                currentAuctionRound = null
+            }
         }
+        return this
     }
 
     internal fun start(): Room {
-        val startedRoom = start(leaders.size)
-        return startedRoom.registerEvent(
-            RoomStarted(
-                roomId = startedRoom.roomId,
-                code = startedRoom.code,
-                status = startedRoom.status,
-                mode =
-                    when (startedRoom.mode) {
-                        TeamBuildingMode.AUCTION -> RoomStarted.Mode.AUCTION
-                        TeamBuildingMode.DRAFT -> RoomStarted.Mode.DRAFT
-                    },
-            ),
-        )
+        start(leaders.size)
+        return this
     }
 
     fun requireCurrentAuctionRound(): Int = requireNotNull(currentAuctionRound) { "현재 경매 라운드가 없습니다" }
@@ -131,21 +187,21 @@ data class Room(
         check(isAuction()) { "경매 모드가 아닙니다" }
         check(isInProgress()) { "진행 중인 방에서만 가능합니다" }
         requireNextAuctionRound(nextRound)
-        return copy(
-            currentAuctionRound = nextRound,
-            status = if (completed) RoomStatus.COMPLETED else status,
-            currentTurnIndex = null,
-        )
+        currentAuctionRound = nextRound
+        currentTurnIndex = null
+        if (completed) {
+            status = RoomStatus.COMPLETED
+        }
+        return this
     }
 
     fun moveAuctionTargetToNextRound(nextRound: Int): Room {
         check(isAuction()) { "경매 모드가 아닙니다" }
         check(isInProgress()) { "진행 중인 방에서만 가능합니다" }
         requireNextAuctionRound(nextRound)
-        return copy(
-            currentAuctionRound = nextRound,
-            currentTurnIndex = null,
-        )
+        currentAuctionRound = nextRound
+        currentTurnIndex = null
+        return this
     }
 
     fun advanceDraftTurn(
@@ -155,11 +211,12 @@ data class Room(
         check(isDraft()) { "드래프트 모드가 아닙니다" }
         check(isInProgress()) { "진행 중인 방에서만 가능합니다" }
         requireNextDraftTurn(nextTurnIndex)
-        return copy(
-            currentTurnIndex = nextTurnIndex,
-            status = if (completed) RoomStatus.COMPLETED else status,
-            currentAuctionRound = null,
-        )
+        currentTurnIndex = nextTurnIndex
+        currentAuctionRound = null
+        if (completed) {
+            status = RoomStatus.COMPLETED
+        }
+        return this
     }
 
     internal fun placeBid(
@@ -173,18 +230,18 @@ data class Room(
         val leader = leaders.firstOrNull { it.teamLeaderId == teamLeaderId } ?: throw RoomException.TeamLeaderNotFoundException()
         leader.requireCanBid(amount)
 
-        val highest = bids.filter { it.round == currentRound }.maxByOrNull { it.amount }
+        val highest = bids.maxByOrNull { it.amount }
         AuctionRound(round = currentRound, highestBid = highest).requireHigherBid(amount)
 
-        val bid =
+        addBid(
             RoomBid(
-                roomId = roomId,
                 round = currentRound,
                 teamLeaderId = teamLeaderId,
                 amount = amount,
-            )
+            ),
+        )
 
-        return copy(bids = bids + bid)
+        return this
     }
 
     internal fun settleAuction(): Room {
@@ -195,7 +252,7 @@ data class Room(
         val target = players.filter { it.status == PlayerStatus.AVAILABLE }.minByOrNull { it.displayOrder }
         requireNotNull(target) { "경매할 선수가 없습니다" }
 
-        val highest = bids.filter { it.round == currentRound }.maxByOrNull { it.amount }
+        val highest = bids.maxByOrNull { it.amount }
         val assignedCountAfterSettlement = members.size + 1
         val totalRequired = teamCount * picksPerTeam
         val settlement =
@@ -236,45 +293,84 @@ data class Room(
 
         val assignedCount = members.size
         val settlement = draftBoard.settlePick(turnIndex = turnIndex, assignedCountAfterPick = assignedCount + 1)
-        val nextRoom = advanceDraftTurn(nextTurnIndex = settlement.nextTurnIndex, completed = settlement.completed)
-        val assignedPlayer = target.assign()
-        val member =
+        advanceDraftTurn(nextTurnIndex = settlement.nextTurnIndex, completed = settlement.completed)
+        target.assign()
+        addMember(
             RoomTeamMember(
-                roomId = roomId,
                 teamLeaderId = teamLeaderId,
                 playerName = playerName,
                 assignOrder = assignedCount,
-            )
+            ),
+        )
 
-        val updatedRoom =
-            nextRoom.copy(
-                players = players.replacePlayerById(assignedPlayer.roomPlayerId, assignedPlayer),
-                members = members + member,
-            )
+        return this
+    }
 
-        val events =
-            buildList {
-                add(
-                    DraftPickCompleted(
-                        roomId = updatedRoom.roomId,
-                        code = updatedRoom.code,
-                        playerName = playerName,
-                        teamLeaderId = teamLeaderId,
-                    ),
-                )
-                if (updatedRoom.status == RoomStatus.COMPLETED) {
-                    add(
-                        RoomCompleted(
-                            roomId = updatedRoom.roomId,
-                            code = updatedRoom.code,
-                            status = updatedRoom.status,
-                            mode = RoomStarted.Mode.DRAFT,
-                        ),
-                    )
-                }
-            }
+    internal fun assignId(roomId: RoomId): Room = apply { persistentId = roomId.value }
 
-        return updatedRoom.registerEvents(events)
+    internal fun detachCopy(): Room =
+        Room(
+            roomId = roomId,
+            code = code,
+            hostId = hostId,
+            status = status,
+            mode = mode,
+            teamCount = teamCount,
+            teamSize = teamSize,
+            budget = budget,
+            draftOrderStrategy = draftOrderStrategy,
+            currentTurnIndex = currentTurnIndex,
+            currentAuctionRound = currentAuctionRound,
+            players = players.map(RoomPlayer::detachCopy),
+            leaders = leaders.map(RoomTeamLeader::detachCopy),
+            members = members.map(RoomTeamMember::detachCopy),
+            bids = bidHistory().map(RoomBid::detachCopy),
+            createdAt = createdAt,
+            updatedAt = updatedAt,
+        )
+
+    fun copy(
+        roomId: Long = this.roomId,
+        code: String = this.code,
+        hostId: String = this.hostId,
+        status: RoomStatus = this.status,
+        mode: TeamBuildingMode = this.mode,
+        teamCount: Int = this.teamCount,
+        teamSize: Int = this.teamSize,
+        budget: Int? = this.budget,
+        draftOrderStrategy: DraftOrderStrategy? = this.draftOrderStrategy,
+        currentTurnIndex: Int? = this.currentTurnIndex,
+        currentAuctionRound: Int? = this.currentAuctionRound,
+        players: List<RoomPlayer> = this.players.map(RoomPlayer::detachCopy),
+        leaders: List<RoomTeamLeader> = this.leaders.map(RoomTeamLeader::detachCopy),
+        members: List<RoomTeamMember> = this.members.map(RoomTeamMember::detachCopy),
+        bids: List<RoomBid> = this.bidHistory().map(RoomBid::detachCopy),
+        createdAt: Instant = this.createdAt,
+        updatedAt: Instant = this.updatedAt,
+    ): Room =
+        Room(
+            roomId = roomId,
+            code = code,
+            hostId = hostId,
+            status = status,
+            mode = mode,
+            teamCount = teamCount,
+            teamSize = teamSize,
+            budget = budget,
+            draftOrderStrategy = draftOrderStrategy,
+            currentTurnIndex = currentTurnIndex,
+            currentAuctionRound = currentAuctionRound,
+            players = players,
+            leaders = leaders,
+            members = members,
+            bids = bids,
+            createdAt = createdAt,
+            updatedAt = updatedAt,
+        )
+
+    @PostLoad
+    private fun validateLoadedState() {
+        validateState()
     }
 
     companion object {
@@ -286,6 +382,7 @@ data class Room(
             budget: Int,
         ): Room =
             Room(
+                roomId = 0L,
                 code = code,
                 hostId = hostId,
                 status = RoomStatus.WAITING,
@@ -303,6 +400,7 @@ data class Room(
             draftOrderStrategy: DraftOrderStrategy,
         ): Room =
             Room(
+                roomId = 0L,
                 code = code,
                 hostId = hostId,
                 status = RoomStatus.WAITING,
@@ -316,42 +414,43 @@ data class Room(
             code: String,
             hostId: String,
             hostNickname: String,
-            template: TemplateSnapshot,
+            spec: RoomTemplateSpec,
         ): Room {
             val room =
-                when (template.mode) {
-                    TemplateMode.AUCTION ->
+                when (spec.mode) {
+                    RoomTemplateSpec.Mode.AUCTION ->
                         createAuction(
                             code = code,
                             hostId = hostId,
-                            teamCount = template.teamCount,
-                            teamSize = template.teamSize,
-                            budget = requireNotNull(template.budget) { "경매 템플릿에는 예산이 필요합니다" },
+                            teamCount = spec.teamCount,
+                            teamSize = spec.teamSize,
+                            budget = requireNotNull(spec.budget) { "경매 템플릿에는 예산이 필요합니다" },
                         )
 
-                    TemplateMode.DRAFT ->
+                    RoomTemplateSpec.Mode.DRAFT ->
                         createDraft(
                             code = code,
                             hostId = hostId,
-                            teamCount = template.teamCount,
-                            teamSize = template.teamSize,
+                            teamCount = spec.teamCount,
+                            teamSize = spec.teamSize,
                             draftOrderStrategy =
                                 DraftOrderStrategy.valueOf(
-                                    requireNotNull(template.draftOrderStrategy) {
+                                    requireNotNull(spec.draftOrderStrategy) {
                                         "드래프트 템플릿에는 순서 전략이 필요합니다"
                                     }.name,
                                 ),
                         )
                 }
 
-            return room.copy(
-                players =
-                    template.players
-                        .sortedBy { it.displayOrder }
-                        .map { RoomPlayer(roomId = room.roomId, name = it.name, displayOrder = it.displayOrder) },
-                leaders = listOf(room.createHostLeader(hostNickname)),
-            )
+            spec.players
+                .sortedBy { it.displayOrder }
+                .map { RoomPlayer(name = it.name, displayOrder = it.displayOrder) }
+                .forEach(room::addPlayer)
+            room.addLeader(room.createHostLeader(hostNickname))
+            return room
         }
+
+        internal fun reference(roomId: Long): Room = Room(persistentId = roomId)
     }
 
     private fun settleSold(
@@ -368,97 +467,36 @@ data class Room(
         )
 
         val assignedCount = members.size
-        val nextRoom = advanceAuction(nextRound = settlement.nextRound, completed = settlement.completed)
-        val assignedPlayer = target.assign()
-        val updatedWinner = winner.spend(winningBid.amount)
-        val member =
+        advanceAuction(nextRound = settlement.nextRound, completed = settlement.completed)
+        target.assign()
+        winner.spend(winningBid.amount)
+        addMember(
             RoomTeamMember(
-                roomId = roomId,
                 teamLeaderId = winningBid.teamLeaderId,
                 playerName = target.name,
                 assignOrder = assignedCount,
-            )
+            ),
+        )
 
-        val updatedRoom =
-            nextRoom.copy(
-                players = players.replacePlayerById(assignedPlayer.roomPlayerId, assignedPlayer),
-                leaders = leaders.replaceLeaderById(updatedWinner.roomTeamLeaderId, updatedWinner),
-                members = members + member,
-            )
-
-        val events =
-            buildList {
-                add(
-                    AuctionSettled(
-                        roomId = updatedRoom.roomId,
-                        code = updatedRoom.code,
-                        playerName = target.name,
-                        outcome = AuctionOutcome.SOLD,
-                        leaders = updatedRoom.leaderSnapshots(),
-                    ),
-                )
-                if (updatedRoom.status == RoomStatus.COMPLETED) {
-                    add(
-                        RoomCompleted(
-                            roomId = updatedRoom.roomId,
-                            code = updatedRoom.code,
-                            status = updatedRoom.status,
-                            mode = RoomStarted.Mode.AUCTION,
-                        ),
-                    )
-                }
-            }
-
-        return updatedRoom.registerEvents(events)
+        return this
     }
 
     private fun settlePassed(
         target: RoomPlayer,
         settlement: AuctionRoundSettlement,
     ): Room {
-        val nextRoom = moveAuctionTargetToNextRound(nextRound = settlement.nextRound)
+        moveAuctionTargetToNextRound(nextRound = settlement.nextRound)
         val maxOrder = players.maxOf { it.displayOrder }
-        val movedTarget = target.moveToBack(maxOrder + 1)
-        val updatedRoom = nextRoom.copy(players = players.replacePlayerById(movedTarget.roomPlayerId, movedTarget))
+        target.moveToBack(maxOrder + 1)
 
-        return updatedRoom.registerEvent(
-            AuctionSettled(
-                roomId = updatedRoom.roomId,
-                code = updatedRoom.code,
-                playerName = settlement.playerName,
-                outcome = settlement.outcome,
-                leaders = updatedRoom.leaderSnapshots(),
-            ),
-        )
+        return this
     }
-
-    internal fun recordCreated(): Room {
-        val hostLeader = leaders.single()
-        return registerEvent(
-            RoomCreated(
-                roomId = roomId,
-                code = code,
-                status = status,
-                hostLeader =
-                    LeaderSnapshot(
-                        teamLeaderId = hostLeader.teamLeaderId,
-                        nickname = hostLeader.nickname,
-                        remainingBudget = hostLeader.remainingBudget,
-                    ),
-            ),
-        )
-    }
-
-    internal fun pendingEvents(): List<Any> = pendingEvents.toList()
-
-    internal fun drainEvents(): List<Any> = pendingEvents.toList().also { pendingEvents.clear() }
 
     private fun createTeamLeader(
         teamLeaderId: String,
         nickname: String,
     ): RoomTeamLeader =
         RoomTeamLeader(
-            roomId = roomId,
             teamLeaderId = teamLeaderId,
             nickname = nickname,
             remainingBudget =
@@ -466,7 +504,55 @@ data class Room(
                     is TeamBuildingConfiguration.Auction -> configuration.budget
                     is TeamBuildingConfiguration.Draft -> null
                 },
-        )
+        ).also { it.attach(this) }
+
+    private fun registerPlayers(players: List<RoomPlayer>) {
+        persistentPlayers.clear()
+        players.forEach(::addPlayer)
+    }
+
+    private fun registerLeaders(leaders: List<RoomTeamLeader>) {
+        persistentLeaders.clear()
+        leaders.forEach(::addLeader)
+    }
+
+    private fun registerMembers(members: List<RoomTeamMember>) {
+        persistentMembers.clear()
+        members.forEach(::addMember)
+    }
+
+    private fun registerBids(bids: List<RoomBid>) {
+        persistentBids.clear()
+        bids.forEach(::addBid)
+    }
+
+    private fun addPlayer(player: RoomPlayer) {
+        player.detachCopy().also {
+            it.attach(this)
+            persistentPlayers += it
+        }
+    }
+
+    private fun addLeader(leader: RoomTeamLeader) {
+        leader.detachCopy().also {
+            it.attach(this)
+            persistentLeaders += it
+        }
+    }
+
+    private fun addMember(member: RoomTeamMember) {
+        member.detachCopy().also {
+            it.attach(this)
+            persistentMembers += it
+        }
+    }
+
+    private fun addBid(bid: RoomBid) {
+        bid.detachCopy().also {
+            it.attach(this)
+            persistentBids += it
+        }
+    }
 
     private fun requireNextAuctionRound(nextRound: Int) {
         val currentRound = requireCurrentAuctionRound()
@@ -478,20 +564,19 @@ data class Room(
         require(nextTurnIndex > currentIndex) { "다음 드래프트 턴은 현재보다 커야 합니다" }
     }
 
-    private fun leaderSnapshots(): List<LeaderSnapshot> =
-        leaders.map { leader ->
-            LeaderSnapshot(
-                teamLeaderId = leader.teamLeaderId,
-                nickname = leader.nickname,
-                remainingBudget = leader.remainingBudget,
-            )
+    private fun validateState() {
+        when (mode) {
+            TeamBuildingMode.AUCTION -> {
+                requireNotNull(budget) { "경매 방에는 예산이 필요합니다" }
+                require(draftOrderStrategy == null) { "경매 방에는 드래프트 순서 전략이 있으면 안 됩니다" }
+            }
+
+            TeamBuildingMode.DRAFT -> {
+                require(budget == null) { "드래프트 방에는 예산이 있으면 안 됩니다" }
+                requireNotNull(draftOrderStrategy) { "드래프트 방에는 순서 전략이 필요합니다" }
+            }
         }
-
-    private fun registerEvent(event: Any): Room = apply { pendingEvents += event }
-
-    private fun registerEvents(events: Collection<Any>): Room = apply { pendingEvents.addAll(events) }
-
-    internal fun restorePendingEvents(events: Collection<Any>): Room = apply { pendingEvents.addAll(events) }
+    }
 }
 
 fun Room.isWaiting(): Boolean = status == RoomStatus.WAITING
@@ -510,13 +595,3 @@ val Room.progress: RoomProgress
 
 val Room.picksPerTeam: Int
     get() = teamSize - 1
-
-private fun List<RoomPlayer>.replacePlayerById(
-    roomPlayerId: Long,
-    replacement: RoomPlayer,
-): List<RoomPlayer> = map { if (it.roomPlayerId == roomPlayerId) replacement else it }
-
-private fun List<RoomTeamLeader>.replaceLeaderById(
-    roomTeamLeaderId: Long,
-    replacement: RoomTeamLeader,
-): List<RoomTeamLeader> = map { if (it.roomTeamLeaderId == roomTeamLeaderId) replacement else it }

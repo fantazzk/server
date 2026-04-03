@@ -1,46 +1,45 @@
 package com.naminhyeok.fantazzk.template.application
 
-import com.naminhyeok.fantazzk.template.Template
 import com.naminhyeok.fantazzk.template.TemplateId
-import com.naminhyeok.fantazzk.template.TemplatePlayer
+import com.naminhyeok.fantazzk.template.domain.Template
+import com.naminhyeok.fantazzk.template.domain.TemplatePlayer
 import com.naminhyeok.fantazzk.template.exception.TemplateException
-import com.naminhyeok.fantazzk.template.repository.TemplatePlayerRepository
 import com.naminhyeok.fantazzk.template.repository.TemplateRepository
-import com.naminhyeok.fantazzk.template.requireValidRoster
+import org.springframework.dao.InvalidDataAccessApiUsageException
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
 data class TemplateDetail(
     val template: Template,
     val players: List<TemplatePlayer>,
 )
 
-interface TemplateFinder {
-    fun getDetail(templateId: TemplateId): TemplateDetail
-
-    fun list(): List<Template>
-}
-
 @org.jmolecules.ddd.annotation.Service
 @Service
-internal class TemplateFinderImpl(
+class TemplateFinder(
     private val templateRepository: TemplateRepository,
-    private val templatePlayerRepository: TemplatePlayerRepository,
-) : TemplateFinder {
-    override fun getDetail(templateId: TemplateId): TemplateDetail {
+) {
+    @Transactional(readOnly = true)
+    fun getDetail(templateId: TemplateId): TemplateDetail {
         try {
             val template = templateRepository.findById(templateId) ?: throw TemplateException.TemplateNotFoundException()
-            val players = templatePlayerRepository.findByTemplateId(template.templateId).sortedBy { it.displayOrder }
+            val players = template.players()
             template.requireValidRoster(players)
             return TemplateDetail(template, players)
         } catch (_: IllegalArgumentException) {
             throw TemplateException.TemplateInvalidException()
+        } catch (_: InvalidDataAccessApiUsageException) {
+            throw TemplateException.TemplateInvalidException()
         }
     }
 
-    override fun list(): List<Template> =
+    @Transactional(readOnly = true)
+    fun list(): List<Template> =
         try {
-            templateRepository.findAll()
+            templateRepository.findAll().onEach { it.players() }
         } catch (_: IllegalArgumentException) {
+            throw TemplateException.TemplateInvalidException()
+        } catch (_: InvalidDataAccessApiUsageException) {
             throw TemplateException.TemplateInvalidException()
         }
 }

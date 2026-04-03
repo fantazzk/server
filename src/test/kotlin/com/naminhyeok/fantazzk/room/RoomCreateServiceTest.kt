@@ -1,71 +1,59 @@
 package com.naminhyeok.fantazzk.room
 
+import com.naminhyeok.fantazzk.room.application.RoomCreateAttemptExecutor
 import com.naminhyeok.fantazzk.room.application.RoomCreateService
-import com.naminhyeok.fantazzk.room.application.RoomCreateServiceImpl
 import com.naminhyeok.fantazzk.room.exception.RoomTemplateNotFoundException
 import com.naminhyeok.fantazzk.room.repository.RoomRepository
-import com.naminhyeok.fantazzk.room.support.InMemoryRoomBidRepository
-import com.naminhyeok.fantazzk.room.support.InMemoryRoomPlayerRepository
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomRepository
-import com.naminhyeok.fantazzk.room.support.InMemoryRoomTeamLeaderRepository
-import com.naminhyeok.fantazzk.room.support.InMemoryRoomTeamMemberRepository
-import com.naminhyeok.fantazzk.room.support.InMemoryTemplateLookup
-import com.naminhyeok.fantazzk.template.spi.TemplateDraftOrderStrategy
-import com.naminhyeok.fantazzk.template.spi.TemplateLookup
-import com.naminhyeok.fantazzk.template.spi.TemplateLookupException
-import com.naminhyeok.fantazzk.template.spi.TemplateMode
-import com.naminhyeok.fantazzk.template.spi.TemplatePlayerSnapshot
-import com.naminhyeok.fantazzk.template.spi.TemplateSnapshot
-import io.mockk.mockk
+import com.naminhyeok.fantazzk.room.support.InMemoryTemplateCatalog
+import com.naminhyeok.fantazzk.template.TemplateBlueprint
+import com.naminhyeok.fantazzk.template.TemplateCatalog
+import com.naminhyeok.fantazzk.template.TemplateCatalogException
+import com.naminhyeok.fantazzk.template.TemplateDraftOrderStrategy
+import com.naminhyeok.fantazzk.template.TemplateMode
+import com.naminhyeok.fantazzk.template.TemplatePlayerBlueprint
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
-import org.springframework.context.ApplicationEventPublisher
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.dao.DuplicateKeyException
 
 class RoomCreateServiceTest {
     private lateinit var roomRepo: InMemoryRoomRepository
-    private lateinit var playerRepo: InMemoryRoomPlayerRepository
-    private lateinit var leaderRepo: InMemoryRoomTeamLeaderRepository
-    private lateinit var memberRepo: InMemoryRoomTeamMemberRepository
-    private lateinit var bidRepo: InMemoryRoomBidRepository
-    private lateinit var templateLookupPort: InMemoryTemplateLookup
-    private lateinit var events: ApplicationEventPublisher
+    private lateinit var templateCatalog: InMemoryTemplateCatalog
+    private lateinit var roomCreateAttemptExecutor: RoomCreateAttemptExecutor
     private lateinit var cut: RoomCreateService
 
     @BeforeEach
     fun setUp() {
-        playerRepo = InMemoryRoomPlayerRepository()
-        leaderRepo = InMemoryRoomTeamLeaderRepository()
-        memberRepo = InMemoryRoomTeamMemberRepository()
-        bidRepo = InMemoryRoomBidRepository()
-        roomRepo = InMemoryRoomRepository(playerRepo, leaderRepo, memberRepo, bidRepo)
-        templateLookupPort = InMemoryTemplateLookup()
-        events = mockk(relaxed = true)
-        cut = RoomCreateServiceImpl(roomRepo, templateLookupPort, events)
+        roomRepo = InMemoryRoomRepository()
+        templateCatalog = InMemoryTemplateCatalog()
+        roomCreateAttemptExecutor = RoomCreateAttemptExecutor(roomRepo)
+        cut = RoomCreateService(roomRepo, templateCatalog, roomCreateAttemptExecutor)
     }
 
     @Nested
-    inner class `모드별 필드 전파` {
+    inner class `템플릿 계약 번역` {
         @Test
         fun `경매 템플릿으로 방을 생성하면 경매 필드만 채워진다`() {
-            templateLookupPort.addTemplate(
+            templateCatalog.addTemplate(
                 1L,
-                TemplateSnapshot(
+                TemplateBlueprint(
+                    templateId = 1L,
                     mode = TemplateMode.AUCTION,
                     teamCount = 2,
                     teamSize = 2,
                     budget = 300,
                     draftOrderStrategy = null,
-                    players = listOf(TemplatePlayerSnapshot("선수1", 0), TemplatePlayerSnapshot("선수2", 1)),
+                    players = listOf(TemplatePlayerBlueprint("선수1", 0), TemplatePlayerBlueprint("선수2", 1)),
                 ),
             )
 
             val room = cut.create(1L, "호스트")
-            val leader = leaderRepo.findByRoomId(room.roomId).single()
+            val leader = room.leaders.single()
 
             assertThat(room.status).isEqualTo(RoomStatus.WAITING)
             assertThat(room.mode).isEqualTo(TeamBuildingMode.AUCTION)
@@ -89,20 +77,21 @@ class RoomCreateServiceTest {
 
         @Test
         fun `드래프트 템플릿으로 방을 생성하면 드래프트 필드만 채워진다`() {
-            templateLookupPort.addTemplate(
+            templateCatalog.addTemplate(
                 2L,
-                TemplateSnapshot(
+                TemplateBlueprint(
+                    templateId = 2L,
                     mode = TemplateMode.DRAFT,
                     teamCount = 2,
                     teamSize = 2,
                     budget = null,
                     draftOrderStrategy = TemplateDraftOrderStrategy.SNAKE,
-                    players = listOf(TemplatePlayerSnapshot("선수1", 0), TemplatePlayerSnapshot("선수2", 1)),
+                    players = listOf(TemplatePlayerBlueprint("선수1", 0), TemplatePlayerBlueprint("선수2", 1)),
                 ),
             )
 
             val room = cut.create(2L, "호스트")
-            val leader = leaderRepo.findByRoomId(room.roomId).single()
+            val leader = room.leaders.single()
 
             assertThat(room.mode).isEqualTo(TeamBuildingMode.DRAFT)
             assertThat(room.budget).isNull()
@@ -139,7 +128,7 @@ class RoomCreateServiceTest {
 
             val room = cut.create(1L, "호스트닉네임")
 
-            val leaders = leaderRepo.findByRoomId(room.roomId)
+            val leaders = room.leaders
             assertThat(leaders).hasSize(1)
             assertThat(leaders.first().nickname).isEqualTo("호스트닉네임")
             assertThat(leaders.first().teamLeaderId).isEqualTo(room.hostId)
@@ -147,9 +136,10 @@ class RoomCreateServiceTest {
 
         @Test
         fun `방 생성 시 템플릿 선수 목록이 표시 순서와 상태를 유지한 채 복사된다`() {
-            templateLookupPort.addTemplate(
+            templateCatalog.addTemplate(
                 1L,
-                TemplateSnapshot(
+                TemplateBlueprint(
+                    templateId = 1L,
                     mode = TemplateMode.AUCTION,
                     teamCount = 2,
                     teamSize = 2,
@@ -157,15 +147,15 @@ class RoomCreateServiceTest {
                     draftOrderStrategy = null,
                     players =
                         listOf(
-                            TemplatePlayerSnapshot("선수A", 2),
-                            TemplatePlayerSnapshot("선수B", 0),
-                            TemplatePlayerSnapshot("선수C", 1),
+                            TemplatePlayerBlueprint("선수A", 2),
+                            TemplatePlayerBlueprint("선수B", 0),
+                            TemplatePlayerBlueprint("선수C", 1),
                         ),
                 ),
             )
 
             val room = cut.create(1L, "호스트")
-            val roomPlayers = playerRepo.findByRoomId(room.roomId)
+            val roomPlayers = room.players
 
             assertThat(roomPlayers).hasSize(3)
             assertThat(roomPlayers.map { Triple(it.name, it.displayOrder, it.status) })
@@ -182,14 +172,14 @@ class RoomCreateServiceTest {
         @Test
         fun `포트에서 템플릿 없음 예외가 오면 방 도메인 예외로 번역한다`() {
             cut =
-                RoomCreateServiceImpl(
+                RoomCreateService(
                     roomRepo,
-                    object : TemplateLookup {
-                        override fun getTemplate(templateId: Long): TemplateSnapshot {
-                            throw TemplateLookupException.NotFound(templateId)
+                    object : TemplateCatalog {
+                        override fun getTemplateBlueprint(templateId: Long): TemplateBlueprint {
+                            throw TemplateCatalogException.NotFound(templateId)
                         }
                     },
-                    events,
+                    roomCreateAttemptExecutor,
                 )
 
             assertThatThrownBy { cut.create(999L, "호스트") }
@@ -198,16 +188,16 @@ class RoomCreateServiceTest {
         }
 
         @Test
-        fun `포트에서 invalid 템플릿 예외가 오면 생성 불가 상태로 번역한다`() {
+        fun `포트에서 유효하지 않은 템플릿 예외가 오면 생성 불가 상태로 번역한다`() {
             cut =
-                RoomCreateServiceImpl(
+                RoomCreateService(
                     roomRepo,
-                    object : TemplateLookup {
-                        override fun getTemplate(templateId: Long): TemplateSnapshot {
-                            throw TemplateLookupException.Invalid(templateId)
+                    object : TemplateCatalog {
+                        override fun getTemplateBlueprint(templateId: Long): TemplateBlueprint {
+                            throw TemplateCatalogException.Invalid(templateId)
                         }
                     },
-                    events,
+                    roomCreateAttemptExecutor,
                 )
 
             assertThatThrownBy { cut.create(999L, "호스트") }
@@ -223,10 +213,30 @@ class RoomCreateServiceTest {
             val retryingRoomRepo = DuplicateOnceWithDistinctRetryRoomRepository()
             addAuctionTemplate(templateId = 1L)
             cut =
-                RoomCreateServiceImpl(
+                RoomCreateService(
                     retryingRoomRepo,
-                    templateLookupPort,
-                    events,
+                    templateCatalog,
+                    RoomCreateAttemptExecutor(retryingRoomRepo),
+                )
+
+            val room = cut.create(1L, "호스트")
+
+            assertThat(room.roomId).isPositive()
+            assertThat(retryingRoomRepo.saveAttempts).isEqualTo(2)
+            assertThat(retryingRoomRepo.attemptedCodes).hasSize(2)
+            assertThat(retryingRoomRepo.attemptedCodes.distinct()).hasSize(2)
+            assertThat(room.code).isNotEqualTo(retryingRoomRepo.collidingCode)
+        }
+
+        @Test
+        fun `JPA 저장소에서 무결성 예외가 발생해도 다른 코드로 재시도한다`() {
+            val retryingRoomRepo = DuplicateOnceWithDataIntegrityRetryRoomRepository()
+            addAuctionTemplate(templateId = 1L)
+            cut =
+                RoomCreateService(
+                    retryingRoomRepo,
+                    templateCatalog,
+                    RoomCreateAttemptExecutor(retryingRoomRepo),
                 )
 
             val room = cut.create(1L, "호스트")
@@ -243,10 +253,10 @@ class RoomCreateServiceTest {
             val alwaysExistingCodeRoomRepository = AlwaysExistingCodeRoomRepository()
             addAuctionTemplate(templateId = 1L)
             cut =
-                RoomCreateServiceImpl(
+                RoomCreateService(
                     alwaysExistingCodeRoomRepository,
-                    templateLookupPort,
-                    events,
+                    templateCatalog,
+                    RoomCreateAttemptExecutor(alwaysExistingCodeRoomRepository),
                 )
 
             assertThatThrownBy { cut.create(1L, "호스트") }
@@ -261,10 +271,10 @@ class RoomCreateServiceTest {
             val alwaysDuplicateRoomRepo = AlwaysDuplicateRoomRepository()
             addAuctionTemplate(templateId = 1L)
             cut =
-                RoomCreateServiceImpl(
+                RoomCreateService(
                     alwaysDuplicateRoomRepo,
-                    templateLookupPort,
-                    events,
+                    templateCatalog,
+                    RoomCreateAttemptExecutor(alwaysDuplicateRoomRepo),
                 )
 
             assertThatThrownBy { cut.create(1L, "호스트") }
@@ -275,9 +285,10 @@ class RoomCreateServiceTest {
     }
 
     private fun addAuctionTemplate(templateId: Long) {
-        templateLookupPort.addTemplate(
+        templateCatalog.addTemplate(
             templateId,
-            TemplateSnapshot(
+            TemplateBlueprint(
+                templateId = templateId,
                 mode = TemplateMode.AUCTION,
                 teamCount = 2,
                 teamSize = 2,
@@ -321,6 +332,44 @@ class RoomCreateServiceTest {
         override fun findByCode(code: String): Room? = null
 
         override fun findById(roomId: RoomId): Room? = null
+    }
+
+    private class DuplicateOnceWithDataIntegrityRetryRoomRepository : RoomRepository {
+        private val delegate = InMemoryRoomRepository()
+        var saveAttempts: Int = 0
+        val attemptedCodes = mutableListOf<String>()
+        var collidingCode: String? = null
+        private var collisionVisible = false
+
+        override fun save(room: Room): Room {
+            saveAttempts += 1
+            attemptedCodes += room.code
+            if (saveAttempts == 1) {
+                collidingCode = room.code
+                collisionVisible = true
+                throw DataIntegrityViolationException("duplicate room code")
+            }
+            check(room.code != collidingCode) { "중복된 방 코드를 그대로 재사용했습니다" }
+            return delegate.save(room)
+        }
+
+        override fun findByCode(code: String): Room? =
+            when {
+                collisionVisible && code == collidingCode ->
+                    Room(
+                        roomId = 99L,
+                        code = code,
+                        hostId = "existing",
+                        status = RoomStatus.WAITING,
+                        mode = TeamBuildingMode.AUCTION,
+                        teamCount = 2,
+                        teamSize = 2,
+                        budget = 300,
+                    )
+                else -> delegate.findByCode(code)
+            }
+
+        override fun findById(roomId: RoomId): Room? = delegate.findById(roomId)
     }
 
     private class AlwaysExistingCodeRoomRepository : RoomRepository {
