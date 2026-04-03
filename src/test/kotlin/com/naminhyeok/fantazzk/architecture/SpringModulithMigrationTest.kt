@@ -92,7 +92,7 @@ class SpringModulithMigrationTest {
 
     @Test
     fun `현재 목표 구조는 aggregate 내부 로컬 이벤트 큐를 유지하지 않는다`() {
-        val roomSource = Path.of("src/main/kotlin/com/naminhyeok/fantazzk/room/Room.kt").readText()
+        val roomSource = Path.of("src/main/kotlin/com/naminhyeok/fantazzk/room/domain/Room.kt").readText()
         val templateSource = Path.of("src/main/kotlin/com/naminhyeok/fantazzk/template/domain/Template.kt").readText()
 
         listOf("pendingEvents", "drainEvents(", "recordCreated(", "restorePendingEvents(", "registerEvent(", "registerEvents(")

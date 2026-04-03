@@ -1,14 +1,14 @@
 package com.naminhyeok.fantazzk.room.application
 
-import com.naminhyeok.fantazzk.room.RoomTeamLeader
+import com.naminhyeok.fantazzk.room.domain.RoomTeamLeader
 import com.naminhyeok.fantazzk.room.exception.RoomException
-import com.naminhyeok.fantazzk.room.repository.RoomRepository
+import com.naminhyeok.fantazzk.room.repository.Rooms
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 
 @Component
-class RoomJoinService(
-    private val roomRepository: RoomRepository,
+class JoinRoom(
+    private val roomRepository: Rooms,
 ) {
     @Transactional
     fun join(

@@ -1,4 +1,6 @@
-package com.naminhyeok.fantazzk.room
+package com.naminhyeok.fantazzk.room.domain
+
+import com.naminhyeok.fantazzk.room.application.RoomTemplateSpec
 import com.naminhyeok.fantazzk.room.exception.RoomException
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column

@@ -1,11 +1,11 @@
 package com.naminhyeok.fantazzk.room.web
 
 import com.naminhyeok.fantazzk.room.application.AuctionService
-import com.naminhyeok.fantazzk.room.application.DraftService
-import com.naminhyeok.fantazzk.room.application.RoomCreateService
-import com.naminhyeok.fantazzk.room.application.RoomFinder
-import com.naminhyeok.fantazzk.room.application.RoomJoinService
-import com.naminhyeok.fantazzk.room.application.RoomStartService
+import com.naminhyeok.fantazzk.room.application.CreateRoom
+import com.naminhyeok.fantazzk.room.application.GetRoom
+import com.naminhyeok.fantazzk.room.application.JoinRoom
+import com.naminhyeok.fantazzk.room.application.PickDraft
+import com.naminhyeok.fantazzk.room.application.StartRoom
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
@@ -28,12 +28,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse as SwaggerApiResponse
 @RestController
 @RequestMapping("/api/v1/rooms")
 class RoomApiController(
-    private val roomCreateService: RoomCreateService,
-    private val roomFinder: RoomFinder,
-    private val roomJoinService: RoomJoinService,
-    private val roomStartService: RoomStartService,
+    private val roomCreateService: CreateRoom,
+    private val roomFinder: GetRoom,
+    private val roomJoinService: JoinRoom,
+    private val roomStartService: StartRoom,
     private val auctionService: AuctionService,
-    private val draftService: DraftService,
+    private val draftService: PickDraft,
 ) {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)

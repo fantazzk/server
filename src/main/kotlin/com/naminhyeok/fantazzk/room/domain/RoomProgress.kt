@@ -1,4 +1,4 @@
-package com.naminhyeok.fantazzk.room
+package com.naminhyeok.fantazzk.room.domain
 
 sealed interface RoomProgress {
     val status: RoomStatus

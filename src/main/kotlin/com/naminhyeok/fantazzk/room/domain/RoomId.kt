@@ -1,4 +1,4 @@
-package com.naminhyeok.fantazzk.room
+package com.naminhyeok.fantazzk.room.domain
 
 import org.jmolecules.ddd.types.Identifier
 

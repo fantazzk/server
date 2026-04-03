@@ -1,11 +1,11 @@
 package com.naminhyeok.fantazzk.template
 
+import com.naminhyeok.fantazzk.template.application.CreateTemplate
 import com.naminhyeok.fantazzk.template.application.CreateTemplateCommand
-import com.naminhyeok.fantazzk.template.application.TemplateCreateService
 import com.naminhyeok.fantazzk.template.domain.DraftOrderStrategy
 import com.naminhyeok.fantazzk.template.domain.Template
 import com.naminhyeok.fantazzk.template.domain.TemplateConfiguration
-import com.naminhyeok.fantazzk.template.repository.TemplateRepository
+import com.naminhyeok.fantazzk.template.repository.Templates
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -14,8 +14,8 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 class TemplateCreateServiceTest {
-    private lateinit var templateRepo: TemplateRepository
-    private lateinit var cut: TemplateCreateService
+    private lateinit var templateRepo: Templates
+    private lateinit var cut: CreateTemplate
 
     @BeforeEach
     fun setUp() {
@@ -23,7 +23,7 @@ class TemplateCreateServiceTest {
         every { templateRepo.save(any<Template>()) } answers {
             firstArg<Template>().takeUnless { it.templateId == 0L } ?: firstArg<Template>().assignId(TemplateId(1L))
         }
-        cut = TemplateCreateService(templateRepo)
+        cut = CreateTemplate(templateRepo)
     }
 
     @Test

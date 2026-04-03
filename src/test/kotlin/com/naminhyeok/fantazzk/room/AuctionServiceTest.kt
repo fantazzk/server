@@ -1,6 +1,9 @@
+@file:Suppress("ktlint:standard:no-wildcard-imports")
+
 package com.naminhyeok.fantazzk.room
 
 import com.naminhyeok.fantazzk.room.application.AuctionService
+import com.naminhyeok.fantazzk.room.domain.*
 import com.naminhyeok.fantazzk.room.exception.RoomException
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomRepository
 import org.assertj.core.api.Assertions.assertThat

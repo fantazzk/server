@@ -1,11 +1,14 @@
+@file:Suppress("ktlint:standard:no-wildcard-imports")
+
 package com.naminhyeok.fantazzk.room
 
 import com.naminhyeok.fantazzk.room.application.AuctionService
-import com.naminhyeok.fantazzk.room.application.DraftService
-import com.naminhyeok.fantazzk.room.application.RoomCreateService
-import com.naminhyeok.fantazzk.room.application.RoomFinder
-import com.naminhyeok.fantazzk.room.application.RoomJoinService
-import com.naminhyeok.fantazzk.room.application.RoomStartService
+import com.naminhyeok.fantazzk.room.application.CreateRoom
+import com.naminhyeok.fantazzk.room.application.GetRoom
+import com.naminhyeok.fantazzk.room.application.JoinRoom
+import com.naminhyeok.fantazzk.room.application.PickDraft
+import com.naminhyeok.fantazzk.room.application.StartRoom
+import com.naminhyeok.fantazzk.room.domain.*
 import com.naminhyeok.fantazzk.template.TemplateBlueprint
 import com.naminhyeok.fantazzk.template.TemplateCatalog
 import com.naminhyeok.fantazzk.template.TemplateDraftOrderStrategy
@@ -27,22 +30,22 @@ class RoomModuleIntegrationTest {
     lateinit var templateCatalog: TemplateCatalog
 
     @Autowired
-    lateinit var roomCreateService: RoomCreateService
+    lateinit var roomCreateService: CreateRoom
 
     @Autowired
-    lateinit var roomStartService: RoomStartService
+    lateinit var roomStartService: StartRoom
 
     @Autowired
-    lateinit var roomFinder: RoomFinder
+    lateinit var roomFinder: GetRoom
 
     @Autowired
-    lateinit var roomJoinService: RoomJoinService
+    lateinit var roomJoinService: JoinRoom
 
     @Autowired
     lateinit var auctionService: AuctionService
 
     @Autowired
-    lateinit var draftService: DraftService
+    lateinit var draftService: PickDraft
 
     @Autowired
     lateinit var templateCatalogBean: TemplateCatalog

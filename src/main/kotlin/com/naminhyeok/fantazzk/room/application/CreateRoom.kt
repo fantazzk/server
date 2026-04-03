@@ -1,9 +1,8 @@
 package com.naminhyeok.fantazzk.room.application
 
-import com.naminhyeok.fantazzk.room.Room
-import com.naminhyeok.fantazzk.room.RoomTemplateSpec
+import com.naminhyeok.fantazzk.room.domain.Room
 import com.naminhyeok.fantazzk.room.exception.RoomTemplateNotFoundException
-import com.naminhyeok.fantazzk.room.repository.RoomRepository
+import com.naminhyeok.fantazzk.room.repository.Rooms
 import com.naminhyeok.fantazzk.template.TemplateBlueprint
 import com.naminhyeok.fantazzk.template.TemplateCatalog
 import com.naminhyeok.fantazzk.template.TemplateCatalogException
@@ -15,8 +14,8 @@ import org.springframework.stereotype.Component
 import java.util.UUID
 
 @Component
-class RoomCreateService(
-    private val roomRepository: RoomRepository,
+class CreateRoom(
+    private val roomRepository: Rooms,
     private val templateCatalog: TemplateCatalog,
     private val roomCreateAttemptExecutor: RoomCreateAttemptExecutor,
 ) {

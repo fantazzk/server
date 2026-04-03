@@ -11,8 +11,8 @@ import com.naminhyeok.fantazzk.template.exception.TemplateException
 import org.springframework.stereotype.Component
 
 @Component
-internal class TemplateCatalogService(
-    private val templateFinder: TemplateFinder,
+internal class ProvideTemplateCatalog(
+    private val templateFinder: FindTemplates,
 ) : TemplateCatalog {
     override fun getTemplateBlueprint(templateId: Long): TemplateBlueprint =
         try {

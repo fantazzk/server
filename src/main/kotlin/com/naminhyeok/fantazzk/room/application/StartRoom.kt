@@ -1,13 +1,13 @@
 package com.naminhyeok.fantazzk.room.application
 
 import com.naminhyeok.fantazzk.room.exception.RoomException
-import com.naminhyeok.fantazzk.room.repository.RoomRepository
+import com.naminhyeok.fantazzk.room.repository.Rooms
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 
 @Component
-class RoomStartService(
-    private val roomRepository: RoomRepository,
+class StartRoom(
+    private val roomRepository: Rooms,
 ) {
     @Transactional
     fun start(code: String) {

@@ -5,7 +5,6 @@ import com.tngtech.archunit.core.importer.ClassFileImporter
 import com.tngtech.archunit.core.importer.ImportOption
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatCode
-import org.jmolecules.ddd.annotation.Repository
 import org.junit.jupiter.api.Test
 import org.springframework.context.annotation.Configuration
 import org.springframework.modulith.core.ApplicationModules
@@ -16,6 +15,7 @@ import kotlin.io.path.extension
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.readText
+import org.jmolecules.ddd.types.Repository as DddRepository
 
 class SpringModulithArchitectureTest {
     private val modules = ApplicationModules.of(FantazzkApplication::class.java)
@@ -99,7 +99,7 @@ class SpringModulithArchitectureTest {
     }
 
     @Test
-    fun `리포지토리 추상화는 jmolecules repository 역할을 선언한다`() {
+    fun `리포지토리 추상화는 kmolecules repository 타입을 구현한다`() {
         val classes =
             ClassFileImporter()
                 .withImportOption(ImportOption.DoNotIncludeTests())
@@ -108,12 +108,12 @@ class SpringModulithArchitectureTest {
         val repositories =
             classes
                 .filter { it.packageName.contains(".repository") }
-                .filter { it.simpleName.endsWith("Repository") }
-                .filterNot { it.simpleName.endsWith("CrudRepository") }
+                .filter { it.isInterface }
+                .filterNot { it.simpleName.endsWith("JpaStore") }
                 .map { it.reflect() }
 
         assertThat(repositories).isNotEmpty()
-        assertThat(repositories).allMatch { it.isAnnotationPresent(Repository::class.java) }
+        assertThat(repositories).allMatch { DddRepository::class.java.isAssignableFrom(it) }
     }
 
     @Test

@@ -1,9 +1,12 @@
+@file:Suppress("ktlint:standard:no-wildcard-imports")
+
 package com.naminhyeok.fantazzk.room
 
+import com.naminhyeok.fantazzk.room.application.CreateRoom
 import com.naminhyeok.fantazzk.room.application.RoomCreateAttemptExecutor
-import com.naminhyeok.fantazzk.room.application.RoomCreateService
+import com.naminhyeok.fantazzk.room.domain.*
 import com.naminhyeok.fantazzk.room.exception.RoomTemplateNotFoundException
-import com.naminhyeok.fantazzk.room.repository.RoomRepository
+import com.naminhyeok.fantazzk.room.repository.Rooms
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomRepository
 import com.naminhyeok.fantazzk.room.support.InMemoryTemplateCatalog
 import com.naminhyeok.fantazzk.template.TemplateBlueprint
@@ -25,14 +28,14 @@ class RoomCreateServiceTest {
     private lateinit var roomRepo: InMemoryRoomRepository
     private lateinit var templateCatalog: InMemoryTemplateCatalog
     private lateinit var roomCreateAttemptExecutor: RoomCreateAttemptExecutor
-    private lateinit var cut: RoomCreateService
+    private lateinit var cut: CreateRoom
 
     @BeforeEach
     fun setUp() {
         roomRepo = InMemoryRoomRepository()
         templateCatalog = InMemoryTemplateCatalog()
         roomCreateAttemptExecutor = RoomCreateAttemptExecutor(roomRepo)
-        cut = RoomCreateService(roomRepo, templateCatalog, roomCreateAttemptExecutor)
+        cut = CreateRoom(roomRepo, templateCatalog, roomCreateAttemptExecutor)
     }
 
     @Nested
@@ -172,7 +175,7 @@ class RoomCreateServiceTest {
         @Test
         fun `포트에서 템플릿 없음 예외가 오면 방 도메인 예외로 번역한다`() {
             cut =
-                RoomCreateService(
+                CreateRoom(
                     roomRepo,
                     object : TemplateCatalog {
                         override fun getTemplateBlueprint(templateId: Long): TemplateBlueprint {
@@ -190,7 +193,7 @@ class RoomCreateServiceTest {
         @Test
         fun `포트에서 유효하지 않은 템플릿 예외가 오면 생성 불가 상태로 번역한다`() {
             cut =
-                RoomCreateService(
+                CreateRoom(
                     roomRepo,
                     object : TemplateCatalog {
                         override fun getTemplateBlueprint(templateId: Long): TemplateBlueprint {
@@ -213,7 +216,7 @@ class RoomCreateServiceTest {
             val retryingRoomRepo = DuplicateOnceWithDistinctRetryRoomRepository()
             addAuctionTemplate(templateId = 1L)
             cut =
-                RoomCreateService(
+                CreateRoom(
                     retryingRoomRepo,
                     templateCatalog,
                     RoomCreateAttemptExecutor(retryingRoomRepo),
@@ -233,7 +236,7 @@ class RoomCreateServiceTest {
             val retryingRoomRepo = DuplicateOnceWithDataIntegrityRetryRoomRepository()
             addAuctionTemplate(templateId = 1L)
             cut =
-                RoomCreateService(
+                CreateRoom(
                     retryingRoomRepo,
                     templateCatalog,
                     RoomCreateAttemptExecutor(retryingRoomRepo),
@@ -253,7 +256,7 @@ class RoomCreateServiceTest {
             val alwaysExistingCodeRoomRepository = AlwaysExistingCodeRoomRepository()
             addAuctionTemplate(templateId = 1L)
             cut =
-                RoomCreateService(
+                CreateRoom(
                     alwaysExistingCodeRoomRepository,
                     templateCatalog,
                     RoomCreateAttemptExecutor(alwaysExistingCodeRoomRepository),
@@ -271,7 +274,7 @@ class RoomCreateServiceTest {
             val alwaysDuplicateRoomRepo = AlwaysDuplicateRoomRepository()
             addAuctionTemplate(templateId = 1L)
             cut =
-                RoomCreateService(
+                CreateRoom(
                     alwaysDuplicateRoomRepo,
                     templateCatalog,
                     RoomCreateAttemptExecutor(alwaysDuplicateRoomRepo),
@@ -299,7 +302,7 @@ class RoomCreateServiceTest {
         )
     }
 
-    private class DuplicateOnceWithDistinctRetryRoomRepository : RoomRepository {
+    private class DuplicateOnceWithDistinctRetryRoomRepository : Rooms {
         private val delegate = InMemoryRoomRepository()
         var saveAttempts: Int = 0
         val attemptedCodes = mutableListOf<String>()
@@ -321,7 +324,7 @@ class RoomCreateServiceTest {
         override fun findById(roomId: RoomId): Room? = delegate.findById(roomId)
     }
 
-    private class AlwaysDuplicateRoomRepository : RoomRepository {
+    private class AlwaysDuplicateRoomRepository : Rooms {
         var saveAttempts: Int = 0
 
         override fun save(room: Room): Room {
@@ -334,7 +337,7 @@ class RoomCreateServiceTest {
         override fun findById(roomId: RoomId): Room? = null
     }
 
-    private class DuplicateOnceWithDataIntegrityRetryRoomRepository : RoomRepository {
+    private class DuplicateOnceWithDataIntegrityRetryRoomRepository : Rooms {
         private val delegate = InMemoryRoomRepository()
         var saveAttempts: Int = 0
         val attemptedCodes = mutableListOf<String>()
@@ -372,7 +375,7 @@ class RoomCreateServiceTest {
         override fun findById(roomId: RoomId): Room? = delegate.findById(roomId)
     }
 
-    private class AlwaysExistingCodeRoomRepository : RoomRepository {
+    private class AlwaysExistingCodeRoomRepository : Rooms {
         var findByCodeAttempts: Int = 0
         var saveAttempts: Int = 0
 

@@ -1,4 +1,4 @@
-package com.naminhyeok.fantazzk.room
+package com.naminhyeok.fantazzk.room.domain
 
 data class AuctionRound(
     val round: Int,

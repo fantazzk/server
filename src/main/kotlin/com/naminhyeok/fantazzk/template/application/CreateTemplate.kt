@@ -2,7 +2,7 @@ package com.naminhyeok.fantazzk.template.application
 
 import com.naminhyeok.fantazzk.template.domain.DraftOrderStrategy
 import com.naminhyeok.fantazzk.template.domain.Template
-import com.naminhyeok.fantazzk.template.repository.TemplateRepository
+import com.naminhyeok.fantazzk.template.repository.Templates
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 
@@ -30,8 +30,8 @@ sealed interface CreateTemplateCommand {
 }
 
 @Component
-class TemplateCreateService(
-    private val templateRepository: TemplateRepository,
+class CreateTemplate(
+    private val templateRepository: Templates,
 ) {
     @Transactional
     fun create(command: CreateTemplateCommand): Template {

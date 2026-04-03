@@ -1,9 +1,9 @@
 package com.naminhyeok.fantazzk.room.application
 
-import com.naminhyeok.fantazzk.room.AuctionOutcome
-import com.naminhyeok.fantazzk.room.RoomBid
+import com.naminhyeok.fantazzk.room.domain.AuctionOutcome
+import com.naminhyeok.fantazzk.room.domain.RoomBid
 import com.naminhyeok.fantazzk.room.exception.RoomException
-import com.naminhyeok.fantazzk.room.repository.RoomRepository
+import com.naminhyeok.fantazzk.room.repository.Rooms
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 
@@ -14,7 +14,7 @@ data class AuctionSettleResult(
 
 @Component
 class AuctionService(
-    private val roomRepository: RoomRepository,
+    private val roomRepository: Rooms,
 ) {
     @Transactional
     fun placeBid(

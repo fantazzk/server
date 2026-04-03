@@ -1,9 +1,9 @@
 package com.naminhyeok.fantazzk.template.web
 
 import com.naminhyeok.fantazzk.template.TemplateId
+import com.naminhyeok.fantazzk.template.application.CreateTemplate
 import com.naminhyeok.fantazzk.template.application.CreateTemplateCommand
-import com.naminhyeok.fantazzk.template.application.TemplateCreateService
-import com.naminhyeok.fantazzk.template.application.TemplateFinder
+import com.naminhyeok.fantazzk.template.application.FindTemplates
 import com.naminhyeok.fantazzk.template.domain.TeamBuildingMode
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
@@ -27,8 +27,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse as SwaggerApiResponse
 @RestController
 @RequestMapping("/api/v1/templates")
 class TemplateApiController(
-    private val templateCreateService: TemplateCreateService,
-    private val templateFinder: TemplateFinder,
+    private val templateCreateService: CreateTemplate,
+    private val templateFinder: FindTemplates,
 ) {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)

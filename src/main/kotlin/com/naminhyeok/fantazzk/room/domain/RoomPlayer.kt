@@ -1,4 +1,4 @@
-package com.naminhyeok.fantazzk.room
+package com.naminhyeok.fantazzk.room.domain
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity

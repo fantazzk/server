@@ -4,7 +4,7 @@ import com.naminhyeok.fantazzk.template.TemplateId
 import com.naminhyeok.fantazzk.template.domain.Template
 import com.naminhyeok.fantazzk.template.domain.TemplatePlayer
 import com.naminhyeok.fantazzk.template.exception.TemplateException
-import com.naminhyeok.fantazzk.template.repository.TemplateRepository
+import com.naminhyeok.fantazzk.template.repository.Templates
 import org.springframework.dao.InvalidDataAccessApiUsageException
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
@@ -15,8 +15,8 @@ data class TemplateDetail(
 )
 
 @Component
-class TemplateFinder(
-    private val templateRepository: TemplateRepository,
+class FindTemplates(
+    private val templateRepository: Templates,
 ) {
     @Transactional(readOnly = true)
     fun getDetail(templateId: TemplateId): TemplateDetail {

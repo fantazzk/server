@@ -1,13 +1,13 @@
 package com.naminhyeok.fantazzk.room.support
 
-import com.naminhyeok.fantazzk.room.Room
-import com.naminhyeok.fantazzk.room.RoomId
-import com.naminhyeok.fantazzk.room.repository.RoomRepository
+import com.naminhyeok.fantazzk.room.domain.Room
+import com.naminhyeok.fantazzk.room.domain.RoomId
+import com.naminhyeok.fantazzk.room.repository.Rooms
 import com.naminhyeok.fantazzk.template.TemplateBlueprint
 import com.naminhyeok.fantazzk.template.TemplateCatalog
 import com.naminhyeok.fantazzk.template.TemplateCatalogException
 
-class InMemoryRoomRepository : RoomRepository {
+class InMemoryRoomRepository : Rooms {
     private val store = mutableMapOf<Long, Room>()
     private var roomSeq = 1L
     private var playerSeq = 1L

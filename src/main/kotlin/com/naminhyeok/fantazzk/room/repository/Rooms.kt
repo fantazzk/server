@@ -1,14 +1,13 @@
 package com.naminhyeok.fantazzk.room.repository
 
-import com.naminhyeok.fantazzk.room.Room
-import com.naminhyeok.fantazzk.room.RoomId
-import org.jmolecules.ddd.annotation.Repository
+import com.naminhyeok.fantazzk.room.domain.Room
+import com.naminhyeok.fantazzk.room.domain.RoomId
+import org.jmolecules.ddd.types.Repository
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 
-@Repository
-interface RoomRepository {
+interface Rooms : Repository<Room, RoomId> {
     fun save(room: Room): Room
 
     fun findByCode(code: String): Room?
@@ -25,7 +24,7 @@ internal interface RoomJpaStore : JpaRepository<Room, Long> {
 @Component
 class RoomRepositoryAdapter internal constructor(
     private val store: RoomJpaStore,
-) : RoomRepository {
+) : Rooms {
     @Transactional
     override fun save(room: Room): Room = store.save(room)
 

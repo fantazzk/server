@@ -1,7 +1,7 @@
 package com.naminhyeok.fantazzk.room.web
 
-import com.naminhyeok.fantazzk.room.Room
-import com.naminhyeok.fantazzk.room.RoomStatus
+import com.naminhyeok.fantazzk.room.domain.Room
+import com.naminhyeok.fantazzk.room.domain.RoomStatus
 import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.Schema
 

@@ -23,7 +23,7 @@ import org.springframework.test.context.TestConstructor
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
 class TemplateRepositoryIntegrationTest(
-    private val cut: TemplateRepository,
+    private val cut: Templates,
     private val jdbcTemplate: JdbcTemplate,
 ) {
     @Test

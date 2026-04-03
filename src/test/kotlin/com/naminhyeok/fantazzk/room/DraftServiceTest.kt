@@ -1,6 +1,9 @@
+@file:Suppress("ktlint:standard:no-wildcard-imports")
+
 package com.naminhyeok.fantazzk.room
 
-import com.naminhyeok.fantazzk.room.application.DraftService
+import com.naminhyeok.fantazzk.room.application.PickDraft
+import com.naminhyeok.fantazzk.room.domain.*
 import com.naminhyeok.fantazzk.room.exception.RoomException
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomRepository
 import org.assertj.core.api.Assertions.assertThat
@@ -11,7 +14,7 @@ import org.junit.jupiter.api.Test
 
 class DraftServiceTest {
     private lateinit var roomRepo: InMemoryRoomRepository
-    private lateinit var cut: DraftService
+    private lateinit var cut: PickDraft
 
     private lateinit var roomCode: String
     private var roomId: Long = 0L
@@ -19,7 +22,7 @@ class DraftServiceTest {
     @BeforeEach
     fun setUp() {
         roomRepo = InMemoryRoomRepository()
-        cut = DraftService(roomRepo)
+        cut = PickDraft(roomRepo)
 
         val room =
             roomRepo.save(

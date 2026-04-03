@@ -1,12 +1,15 @@
+@file:Suppress("ktlint:standard:no-wildcard-imports")
+
 package com.naminhyeok.fantazzk.room
 
 import com.naminhyeok.fantazzk.room.application.AuctionService
 import com.naminhyeok.fantazzk.room.application.AuctionSettleResult
-import com.naminhyeok.fantazzk.room.application.DraftService
-import com.naminhyeok.fantazzk.room.application.RoomCreateService
-import com.naminhyeok.fantazzk.room.application.RoomFinder
-import com.naminhyeok.fantazzk.room.application.RoomJoinService
-import com.naminhyeok.fantazzk.room.application.RoomStartService
+import com.naminhyeok.fantazzk.room.application.CreateRoom
+import com.naminhyeok.fantazzk.room.application.GetRoom
+import com.naminhyeok.fantazzk.room.application.JoinRoom
+import com.naminhyeok.fantazzk.room.application.PickDraft
+import com.naminhyeok.fantazzk.room.application.StartRoom
+import com.naminhyeok.fantazzk.room.domain.*
 import com.naminhyeok.fantazzk.room.exception.RoomException
 import com.naminhyeok.fantazzk.room.exception.RoomTemplateNotFoundException
 import com.naminhyeok.fantazzk.room.web.RoomApiController
@@ -24,12 +27,12 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import java.time.Instant
 
 class RoomApiControllerTest {
-    private val roomCreateService: RoomCreateService = mockk()
-    private val roomFinder: RoomFinder = mockk()
-    private val roomJoinService: RoomJoinService = mockk()
-    private val roomStartService: RoomStartService = mockk()
+    private val roomCreateService: CreateRoom = mockk()
+    private val roomFinder: GetRoom = mockk()
+    private val roomJoinService: JoinRoom = mockk()
+    private val roomStartService: StartRoom = mockk()
     private val auctionService: AuctionService = mockk()
-    private val draftService: DraftService = mockk()
+    private val draftService: PickDraft = mockk()
 
     private val now = Instant.now()
 

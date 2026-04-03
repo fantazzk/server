@@ -1,12 +1,12 @@
 package com.naminhyeok.fantazzk.template
 
+import com.naminhyeok.fantazzk.template.application.CreateTemplate
 import com.naminhyeok.fantazzk.template.application.CreateTemplateCommand
-import com.naminhyeok.fantazzk.template.application.TemplateCreateService
-import com.naminhyeok.fantazzk.template.application.TemplateFinder
+import com.naminhyeok.fantazzk.template.application.FindTemplates
 import com.naminhyeok.fantazzk.template.domain.DraftOrderStrategy
 import com.naminhyeok.fantazzk.template.domain.Template
 import com.naminhyeok.fantazzk.template.exception.TemplateException
-import com.naminhyeok.fantazzk.template.repository.TemplateRepository
+import com.naminhyeok.fantazzk.template.repository.Templates
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
@@ -20,16 +20,16 @@ import org.springframework.modulith.test.ApplicationModuleTest
 )
 class TemplateModuleIntegrationTest {
     @Autowired
-    lateinit var templateCreateService: TemplateCreateService
+    lateinit var templateCreateService: CreateTemplate
 
     @Autowired
     lateinit var templateCatalog: TemplateCatalog
 
     @Autowired
-    lateinit var templateFinder: TemplateFinder
+    lateinit var templateFinder: FindTemplates
 
     @Autowired
-    lateinit var templateRepository: TemplateRepository
+    lateinit var templateRepository: Templates
 
     @Autowired
     lateinit var jdbcTemplate: JdbcTemplate
