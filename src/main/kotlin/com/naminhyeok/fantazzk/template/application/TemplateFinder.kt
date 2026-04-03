@@ -6,7 +6,7 @@ import com.naminhyeok.fantazzk.template.domain.TemplatePlayer
 import com.naminhyeok.fantazzk.template.exception.TemplateException
 import com.naminhyeok.fantazzk.template.repository.TemplateRepository
 import org.springframework.dao.InvalidDataAccessApiUsageException
-import org.springframework.stereotype.Service
+import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 
 data class TemplateDetail(
@@ -14,8 +14,7 @@ data class TemplateDetail(
     val players: List<TemplatePlayer>,
 )
 
-@org.jmolecules.ddd.annotation.Service
-@Service
+@Component
 class TemplateFinder(
     private val templateRepository: TemplateRepository,
 ) {

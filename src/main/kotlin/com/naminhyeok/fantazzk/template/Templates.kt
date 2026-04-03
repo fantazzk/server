@@ -1,8 +1,16 @@
 package com.naminhyeok.fantazzk.template
 
+import org.jmolecules.ddd.types.Identifier
+
 interface TemplateCatalog {
     fun getTemplateBlueprint(templateId: Long): TemplateBlueprint
+
+    fun get(templateId: TemplateId): TemplateBlueprint = getTemplateBlueprint(templateId.value)
 }
+
+data class TemplateId(
+    val value: Long,
+) : Identifier
 
 data class TemplateBlueprint(
     val templateId: Long,

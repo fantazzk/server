@@ -1,7 +1,7 @@
 package com.naminhyeok.fantazzk.template.web
 
-import com.naminhyeok.fantazzk.template.DraftOrderStrategy
-import com.naminhyeok.fantazzk.template.TeamBuildingMode
+import com.naminhyeok.fantazzk.template.domain.DraftOrderStrategy
+import com.naminhyeok.fantazzk.template.domain.TeamBuildingMode
 import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.Schema
 

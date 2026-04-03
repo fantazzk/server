@@ -1,9 +1,9 @@
 package com.naminhyeok.fantazzk.template.application
 
-import com.naminhyeok.fantazzk.template.DraftOrderStrategy
+import com.naminhyeok.fantazzk.template.domain.DraftOrderStrategy
 import com.naminhyeok.fantazzk.template.domain.Template
 import com.naminhyeok.fantazzk.template.repository.TemplateRepository
-import org.springframework.stereotype.Service
+import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 
 sealed interface CreateTemplateCommand {
@@ -29,8 +29,7 @@ sealed interface CreateTemplateCommand {
     ) : CreateTemplateCommand
 }
 
-@org.jmolecules.ddd.annotation.Service
-@Service
+@Component
 class TemplateCreateService(
     private val templateRepository: TemplateRepository,
 ) {
