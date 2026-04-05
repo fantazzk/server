@@ -114,4 +114,8 @@ class TemplatePlayer(
 
 data class TemplatePlayerId(
     val value: Long,
-) : Identifier
+) : Identifier {
+    init {
+        require(value > 0) { "TemplatePlayerId는 1 이상이어야 합니다" }
+    }
+}

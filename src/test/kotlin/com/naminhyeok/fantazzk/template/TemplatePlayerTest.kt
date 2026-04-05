@@ -9,6 +9,13 @@ import java.time.Instant
 
 class TemplatePlayerTest {
     @Test
+    fun `TemplatePlayerId는 1 이상이어야 한다`() {
+        assertThatThrownBy { TemplatePlayerId(0L) }
+            .isInstanceOf(IllegalArgumentException::class.java)
+            .hasMessage("TemplatePlayerId는 1 이상이어야 합니다")
+    }
+
+    @Test
     fun `저장된 템플릿 선수는 강타입 식별자와 소속 템플릿을 노출한다`() {
         val createdAt = Instant.parse("2025-01-01T00:00:00Z")
         val updatedAt = Instant.parse("2025-01-02T00:00:00Z")

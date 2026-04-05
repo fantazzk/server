@@ -128,6 +128,19 @@ class RoomApiControllerTest {
         }
 
         @Test
+        fun `templateId가 0 이하면 400을 반환한다`() {
+            mockMvc.post("/api/v1/rooms") {
+                contentType = MediaType.APPLICATION_JSON
+                content = """{"templateId": 0, "hostNickname": "호스트"}"""
+            }.andExpect {
+                status { isBadRequest() }
+                jsonPath("$.resultType") { value("ERROR") }
+                jsonPath("$.error.errorCode") { value("BAD_REQUEST") }
+                jsonPath("$.error.reason") { value("TemplateId는 1 이상이어야 합니다") }
+            }
+        }
+
+        @Test
         fun `본문이 없으면 400을 반환한다`() {
             mockMvc.post("/api/v1/rooms") {
                 contentType = MediaType.APPLICATION_JSON
