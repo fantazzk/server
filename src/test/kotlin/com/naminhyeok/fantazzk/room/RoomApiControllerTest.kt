@@ -15,6 +15,7 @@ import com.naminhyeok.fantazzk.room.exception.RoomException
 import com.naminhyeok.fantazzk.room.exception.RoomTemplateNotFoundException
 import com.naminhyeok.fantazzk.room.web.RoomApiController
 import com.naminhyeok.fantazzk.room.web.RoomExceptionHandler
+import com.naminhyeok.fantazzk.template.TemplateId
 import io.mockk.every
 import io.mockk.justRun
 import io.mockk.mockk
@@ -95,7 +96,7 @@ class RoomApiControllerTest {
         @Test
         fun `유효한 요청으로 방을 생성하면 요청 본문을 서비스 인자로 매핑하고 201을 반환한다`() {
             val room = room("NEW001")
-            every { roomCreateService.create(1L, "호스트") } returns room
+            every { roomCreateService.create(TemplateId(1L), "호스트") } returns room
 
             mockMvc.post("/api/v1/rooms") {
                 contentType = MediaType.APPLICATION_JSON
@@ -113,7 +114,7 @@ class RoomApiControllerTest {
 
         @Test
         fun `템플릿이 없으면 404를 반환한다`() {
-            every { roomCreateService.create(999L, "호스트") } throws RoomTemplateNotFoundException()
+            every { roomCreateService.create(TemplateId(999L), "호스트") } throws RoomTemplateNotFoundException()
 
             mockMvc.post("/api/v1/rooms") {
                 contentType = MediaType.APPLICATION_JSON

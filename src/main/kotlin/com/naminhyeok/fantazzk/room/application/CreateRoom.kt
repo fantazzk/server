@@ -20,11 +20,6 @@ class CreateRoom(
     private val templateCatalog: TemplateCatalog,
     private val roomCreateAttemptExecutor: RoomCreateAttemptExecutor,
 ) {
-    internal fun create(
-        templateId: Long,
-        hostNickname: String,
-    ): Room = create(TemplateId(templateId), hostNickname)
-
     fun create(
         templateId: TemplateId,
         hostNickname: String,
