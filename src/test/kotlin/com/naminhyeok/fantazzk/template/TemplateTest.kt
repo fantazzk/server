@@ -142,8 +142,8 @@ class TemplateTest {
 
             val players =
                 listOf(
-                    TemplatePlayer(templateId = 1L, name = "선수B", displayOrder = 1),
-                    TemplatePlayer(templateId = 1L, name = "선수A", displayOrder = 0),
+                    TemplatePlayer(templateId = TemplateId(1L), name = "선수B", displayOrder = 1),
+                    TemplatePlayer(templateId = TemplateId(1L), name = "선수A", displayOrder = 0),
                 )
 
             assertThatCode { template.requireValidRoster(players) }.doesNotThrowAnyException()
@@ -160,11 +160,43 @@ class TemplateTest {
                     playerNames = listOf("선수1", "선수2"),
                 )
 
-            val players = listOf(TemplatePlayer(templateId = 1L, name = "선수A", displayOrder = 0))
+            val players = listOf(TemplatePlayer(templateId = TemplateId(1L), name = "선수A", displayOrder = 0))
 
             assertThatThrownBy { template.requireValidRoster(players) }
                 .isInstanceOf(IllegalArgumentException::class.java)
                 .hasMessage("선수 수는 정확히 2명이어야 합니다")
+        }
+
+        @Test
+        fun `requireValidRoster는 다른 템플릿에 속한 선수가 섞이면 예외를 던진다`() {
+            val template =
+                Template.createAuction(
+                    name = "경매전",
+                    teamCount = 2,
+                    teamSize = 2,
+                    budget = 300,
+                    playerNames = listOf("선수1", "선수2"),
+                ).assignId(TemplateId(1L))
+
+            val players =
+                listOf(
+                    TemplatePlayer(
+                        templatePlayerId = TemplatePlayerId(10L),
+                        templateId = TemplateId(1L),
+                        name = "선수A",
+                        displayOrder = 0,
+                    ),
+                    TemplatePlayer(
+                        templatePlayerId = TemplatePlayerId(11L),
+                        templateId = TemplateId(2L),
+                        name = "선수B",
+                        displayOrder = 1,
+                    ),
+                )
+
+            assertThatThrownBy { template.requireValidRoster(players) }
+                .isInstanceOf(IllegalArgumentException::class.java)
+                .hasMessage("선수는 동일한 템플릿에 속해야 합니다")
         }
     }
 

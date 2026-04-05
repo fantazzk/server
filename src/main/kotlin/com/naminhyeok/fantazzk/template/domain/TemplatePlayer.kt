@@ -1,5 +1,6 @@
 package com.naminhyeok.fantazzk.template.domain
 
+import com.naminhyeok.fantazzk.template.TemplateId
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
@@ -46,8 +47,24 @@ class TemplatePlayer(
         createdAt: Instant = Instant.now(),
         updatedAt: Instant = Instant.now(),
     ) : this(
-        persistentId = templatePlayerId.takeIf { it > 0L },
-        template = Template.reference(templateId),
+        templatePlayerId = TemplatePlayerId(templatePlayerId),
+        templateId = TemplateId(templateId),
+        name = name,
+        displayOrder = displayOrder,
+        createdAt = createdAt,
+        updatedAt = updatedAt,
+    )
+
+    constructor(
+        templatePlayerId: TemplatePlayerId = TemplatePlayerId(0L),
+        templateId: TemplateId,
+        name: String,
+        displayOrder: Int,
+        createdAt: Instant = Instant.now(),
+        updatedAt: Instant = Instant.now(),
+    ) : this(
+        persistentId = templatePlayerId.value.takeIf { it > 0L },
+        template = Template.reference(templateId.value),
         name = name,
         displayOrder = displayOrder,
         createdAt = createdAt,
@@ -61,7 +78,22 @@ class TemplatePlayer(
         createdAt: Instant = Instant.now(),
         updatedAt: Instant = Instant.now(),
     ) : this(
-        templatePlayerId = 0L,
+        templatePlayerId = TemplatePlayerId(0L),
+        templateId = TemplateId(templateId),
+        name = name,
+        displayOrder = displayOrder,
+        createdAt = createdAt,
+        updatedAt = updatedAt,
+    )
+
+    constructor(
+        templateId: TemplateId,
+        name: String,
+        displayOrder: Int,
+        createdAt: Instant = Instant.now(),
+        updatedAt: Instant = Instant.now(),
+    ) : this(
+        templatePlayerId = TemplatePlayerId(0L),
         templateId = templateId,
         name = name,
         displayOrder = displayOrder,

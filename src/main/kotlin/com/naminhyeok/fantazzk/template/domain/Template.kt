@@ -71,6 +71,11 @@ class Template protected constructor(
     fun players(): List<TemplatePlayer> = persistentPlayers.toList().also(::requireValidRoster)
 
     fun requireValidRoster(players: List<TemplatePlayer>) {
+        persistentId?.let { templateId ->
+            require(players.all { it.templateId == templateId }) {
+                "선수는 동일한 템플릿에 속해야 합니다"
+            }
+        }
         val orderedPlayerNames = players.sortedBy { it.displayOrder }.map { it.name }
         TemplateRoster.exactlyRequired(orderedPlayerNames, configuration.requiredPlayerCount)
     }

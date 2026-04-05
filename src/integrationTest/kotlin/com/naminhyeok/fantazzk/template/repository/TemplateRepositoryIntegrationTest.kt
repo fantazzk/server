@@ -44,9 +44,11 @@ class TemplateRepositoryIntegrationTest(
                 ),
             )
 
-        assertThat(saved.id.value).isGreaterThan(0)
+        val savedId = saved.id
 
-        val found = requireNotNull(cut.findById(saved.id))
+        assertThat(savedId.value).isGreaterThan(0)
+
+        val found = requireNotNull(cut.findById(savedId))
 
         assertThat(found.mode).isEqualTo(TeamBuildingMode.AUCTION)
         assertThat(found.budget).isEqualTo(300)
@@ -65,10 +67,12 @@ class TemplateRepositoryIntegrationTest(
                 ),
             )
 
-        val found = requireNotNull(cut.findById(saved.id))
+        val savedId = saved.id
+        val found = requireNotNull(cut.findById(savedId))
 
+        assertThat(found.id).isEqualTo(savedId)
         assertThat(found.players().map { it.id.value }).allMatch { it > 0L }
-        assertThat(found.players().map { it.templateId }).containsOnly(found.id.value)
+        assertThat(found.players().map { it.templateId }).containsOnly(savedId.value)
         assertThat(found.players().map { it.name }).containsExactly("선수2", "선수1")
     }
 
