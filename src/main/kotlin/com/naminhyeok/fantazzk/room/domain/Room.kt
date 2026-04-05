@@ -311,6 +311,8 @@ class Room protected constructor(
 
     internal fun assignId(roomId: RoomId): Room = apply { persistentId = roomId.value }
 
+    internal fun persistedIdOrNull(): RoomId? = persistentId?.let(::RoomId)
+
     internal fun detachCopy(): Room =
         Room(
             roomId = roomId,
@@ -589,12 +591,6 @@ fun Room.isInProgress(): Boolean = status == RoomStatus.IN_PROGRESS
 fun Room.isAuction(): Boolean = mode == TeamBuildingMode.AUCTION
 
 fun Room.isDraft(): Boolean = mode == TeamBuildingMode.DRAFT
-
-enum class RoomStatus {
-    WAITING,
-    IN_PROGRESS,
-    COMPLETED,
-}
 
 val Room.configuration: TeamBuildingConfiguration
     get() = TeamBuildingConfiguration.from(this)

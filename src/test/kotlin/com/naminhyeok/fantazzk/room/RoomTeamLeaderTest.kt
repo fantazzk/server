@@ -9,18 +9,18 @@ import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.time.Instant
+import kotlin.reflect.full.memberProperties
 
 class RoomTeamLeaderTest {
     @Nested
     inner class `생성 계약` {
         @Test
-        fun `새 팀장은 기본 식별자와 예산 기본값을 가진다`() {
+        fun `새 팀장은 저장 전 internal entity 식별자 없이 생성된다`() {
             val beforeCreate = Instant.now()
-            val leader = RoomTeamLeader(roomId = 1L, teamLeaderId = "leader-1", nickname = "팀장")
+            val leader = RoomTeamLeader(teamLeaderId = "leader-1", nickname = "팀장")
             val afterCreate = Instant.now()
 
-            assertThat(leader.roomTeamLeaderId).isZero()
-            assertThat(leader.roomId).isEqualTo(1L)
+            assertThat(readEntityId(leader)).isNull()
             assertThat(leader.teamLeaderId).isEqualTo("leader-1")
             assertThat(leader.nickname).isEqualTo("팀장")
             assertThat(leader.remainingBudget).isNull()
@@ -51,6 +51,7 @@ class RoomTeamLeaderTest {
             assertThat(leader.remainingBudget).isEqualTo(120)
             assertThat(leader.createdAt).isEqualTo(createdAt)
             assertThat(leader.updatedAt).isEqualTo(updatedAt)
+            assertThat(readEntityId(leader).toString()).isEqualTo("RoomTeamLeaderId(value=3)")
         }
     }
 
@@ -147,4 +148,10 @@ class RoomTeamLeaderTest {
 
     private fun leader(remainingBudget: Int?) =
         RoomTeamLeader(roomId = 1L, teamLeaderId = "leader-1", nickname = "팀장", remainingBudget = remainingBudget)
+
+    private fun readEntityId(leader: RoomTeamLeader): Any? =
+        RoomTeamLeader::class.memberProperties
+            .singleOrNull { it.name == "id" }
+            ?.getter
+            ?.call(leader)
 }

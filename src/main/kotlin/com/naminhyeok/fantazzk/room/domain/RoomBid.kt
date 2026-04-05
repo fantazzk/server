@@ -9,6 +9,7 @@ import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
+import org.jmolecules.ddd.types.Identifier
 import java.time.Instant
 
 @Entity
@@ -17,7 +18,7 @@ class RoomBid protected constructor(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    var roomBidId: Long = 0L,
+    private var persistentId: Long? = null,
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "room_id", nullable = false)
     private var room: Room? = null,
@@ -32,17 +33,17 @@ class RoomBid protected constructor(
     @Column(name = "updated_at", nullable = false)
     val updatedAt: Instant = Instant.now(),
 ) {
-    constructor(
-        roomBidId: Long = 0L,
-        roomId: Long,
+    internal constructor(
+        roomBidId: Long? = null,
+        roomId: Long?,
         round: Int,
         teamLeaderId: String,
         amount: Int,
         createdAt: Instant = Instant.now(),
         updatedAt: Instant = Instant.now(),
     ) : this(
-        roomBidId = roomBidId,
-        room = roomId.takeIf { it != 0L }?.let(Room::reference),
+        roomBidId = roomBidId?.takeIf { it != 0L }?.let(::RoomBidId),
+        roomId = roomId?.takeIf { it != 0L }?.let(::RoomId),
         round = round,
         teamLeaderId = teamLeaderId,
         amount = amount,
@@ -51,14 +52,32 @@ class RoomBid protected constructor(
     )
 
     constructor(
-        roomId: Long = 0L,
+        roomBidId: RoomBidId? = null,
+        roomId: RoomId? = null,
         round: Int,
         teamLeaderId: String,
         amount: Int,
         createdAt: Instant = Instant.now(),
         updatedAt: Instant = Instant.now(),
     ) : this(
-        roomBidId = 0L,
+        persistentId = roomBidId?.value,
+        room = roomId?.let { Room.reference(it.value) },
+        round = round,
+        teamLeaderId = teamLeaderId,
+        amount = amount,
+        createdAt = createdAt,
+        updatedAt = updatedAt,
+    )
+
+    internal constructor(
+        roomId: Long? = null,
+        round: Int,
+        teamLeaderId: String,
+        amount: Int,
+        createdAt: Instant = Instant.now(),
+        updatedAt: Instant = Instant.now(),
+    ) : this(
+        roomBidId = null,
         roomId = roomId,
         round = round,
         teamLeaderId = teamLeaderId,
@@ -67,17 +86,21 @@ class RoomBid protected constructor(
         updatedAt = updatedAt,
     )
 
-    val roomId: Long
+    val id: RoomBidId?
+        get() = persistentId?.let(::RoomBidId)
+
+    internal val roomBidId: Long
+        get() = persistentId ?: 0L
+
+    internal val roomId: Long
         get() = room?.roomId ?: 0L
 
-    internal fun attach(room: Room) {
-        this.room = room
-    }
+    internal fun attach(room: Room): RoomBid = apply { this.room = room }
 
     internal fun detachCopy(): RoomBid =
         RoomBid(
-            roomBidId = roomBidId,
-            roomId = roomId,
+            roomBidId = id,
+            roomId = room?.persistedIdOrNull(),
             round = round,
             teamLeaderId = teamLeaderId,
             amount = amount,
@@ -85,7 +108,7 @@ class RoomBid protected constructor(
             updatedAt = updatedAt,
         )
 
-    fun copy(
+    internal fun copy(
         roomBidId: Long = this.roomBidId,
         roomId: Long = this.roomId,
         round: Int = this.round,
@@ -95,7 +118,7 @@ class RoomBid protected constructor(
         updatedAt: Instant = this.updatedAt,
     ): RoomBid =
         RoomBid(
-            roomBidId = roomBidId,
+            roomBidId = roomBidId.takeIf { it != 0L },
             roomId = roomId,
             round = round,
             teamLeaderId = teamLeaderId,
@@ -104,3 +127,7 @@ class RoomBid protected constructor(
             updatedAt = updatedAt,
         )
 }
+
+data class RoomBidId(
+    val value: Long,
+) : Identifier

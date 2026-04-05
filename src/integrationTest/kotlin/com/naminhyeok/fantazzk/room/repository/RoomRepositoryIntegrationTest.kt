@@ -20,6 +20,7 @@ import org.springframework.context.annotation.Import
 import org.springframework.dao.InvalidDataAccessApiUsageException
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.test.context.TestConstructor
+import kotlin.reflect.full.memberProperties
 
 @ImportAutoConfiguration(
     LiquibaseAutoConfiguration::class,
@@ -125,23 +126,23 @@ class RoomRepositoryIntegrationTest(
                     currentAuctionRound = 2,
                     players =
                         listOf(
-                            RoomPlayer(roomId = 0L, name = "선수1", displayOrder = 0),
-                            RoomPlayer(roomId = 0L, name = "선수2", displayOrder = 1),
+                            RoomPlayer(name = "선수1", displayOrder = 0),
+                            RoomPlayer(name = "선수2", displayOrder = 1),
                         ),
                     leaders =
                         listOf(
-                            RoomTeamLeader(roomId = 0L, teamLeaderId = "leader-A", nickname = "팀장A", remainingBudget = 250),
-                            RoomTeamLeader(roomId = 0L, teamLeaderId = "leader-B", nickname = "팀장B", remainingBudget = 300),
+                            RoomTeamLeader(teamLeaderId = "leader-A", nickname = "팀장A", remainingBudget = 250),
+                            RoomTeamLeader(teamLeaderId = "leader-B", nickname = "팀장B", remainingBudget = 300),
                         ),
                     members =
                         listOf(
-                            RoomTeamMember(roomId = 0L, teamLeaderId = "leader-A", playerName = "선수1", assignOrder = 0),
+                            RoomTeamMember(teamLeaderId = "leader-A", playerName = "선수1", assignOrder = 0),
                         ),
                     bids =
                         listOf(
-                            RoomBid(roomId = 0L, round = 1, teamLeaderId = "leader-A", amount = 90),
-                            RoomBid(roomId = 0L, round = 2, teamLeaderId = "leader-A", amount = 120),
-                            RoomBid(roomId = 0L, round = 2, teamLeaderId = "leader-B", amount = 150),
+                            RoomBid(round = 1, teamLeaderId = "leader-A", amount = 90),
+                            RoomBid(round = 2, teamLeaderId = "leader-A", amount = 120),
+                            RoomBid(round = 2, teamLeaderId = "leader-B", amount = 150),
                         ),
                 ),
             )
@@ -156,19 +157,25 @@ class RoomRepositoryIntegrationTest(
             assertThat(found.players).hasSize(2)
             assertThat(found.players.map { it.name to it.displayOrder })
                 .containsExactly("선수1" to 0, "선수2" to 1)
+            assertThat(entityIdValue(found.players.first())).isPositive()
 
             assertThat(found.leaders).hasSize(2)
             assertThat(found.leaders.map { it.teamLeaderId to it.remainingBudget })
                 .containsExactlyInAnyOrder("leader-A" to 250, "leader-B" to 300)
+            assertThat(entityIdValue(found.leaders.first())).isPositive()
 
             assertThat(found.members).hasSize(1)
             assertThat(found.members.single().playerName).isEqualTo("선수1")
             assertThat(found.members.single().teamLeaderId).isEqualTo("leader-A")
+            assertThat(entityIdValue(found.members.single())).isPositive()
 
             assertThat(found.bids).hasSize(2)
             assertThat(found.bids.map { it.teamLeaderId to it.amount })
                 .containsExactlyInAnyOrder("leader-A" to 120, "leader-B" to 150)
             assertThat(found.bids.map { it.round }).containsOnly(2)
+            assertThat(found.bids).allSatisfy { bid ->
+                assertThat(entityIdValue(bid)).isPositive()
+            }
         }
 
         val totalBidRows =
@@ -270,5 +277,18 @@ class RoomRepositoryIntegrationTest(
         assertThat(found.currentTurnIndex).isEqualTo(3)
         assertThat(found.budget).isNull()
         assertThat(found.currentAuctionRound).isNull()
+    }
+
+    private fun entityIdValue(entity: Any): Long? {
+        val identifier =
+            entity::class.memberProperties
+                .singleOrNull { it.name == "id" }
+                ?.getter
+                ?.call(entity) ?: return null
+
+        return identifier::class.memberProperties
+            .single { it.name == "value" }
+            .getter
+            .call(identifier) as Long
     }
 }

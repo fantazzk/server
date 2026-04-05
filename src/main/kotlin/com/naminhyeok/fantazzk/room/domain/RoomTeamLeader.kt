@@ -9,6 +9,7 @@ import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
+import org.jmolecules.ddd.types.Identifier
 import java.time.Instant
 
 @Entity
@@ -17,7 +18,7 @@ class RoomTeamLeader protected constructor(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    var roomTeamLeaderId: Long = 0L,
+    private var persistentId: Long? = null,
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "room_id", nullable = false)
     private var room: Room? = null,
@@ -32,17 +33,17 @@ class RoomTeamLeader protected constructor(
     @Column(name = "updated_at", nullable = false)
     val updatedAt: Instant = Instant.now(),
 ) {
-    constructor(
-        roomTeamLeaderId: Long = 0L,
-        roomId: Long,
+    internal constructor(
+        roomTeamLeaderId: Long? = null,
+        roomId: Long?,
         teamLeaderId: String,
         nickname: String,
         remainingBudget: Int? = null,
         createdAt: Instant = Instant.now(),
         updatedAt: Instant = Instant.now(),
     ) : this(
-        roomTeamLeaderId = roomTeamLeaderId,
-        room = roomId.takeIf { it != 0L }?.let(Room::reference),
+        roomTeamLeaderId = roomTeamLeaderId?.takeIf { it != 0L }?.let(::RoomTeamLeaderId),
+        roomId = roomId?.takeIf { it != 0L }?.let(::RoomId),
         teamLeaderId = teamLeaderId,
         nickname = nickname,
         remainingBudget = remainingBudget,
@@ -51,14 +52,32 @@ class RoomTeamLeader protected constructor(
     )
 
     constructor(
-        roomId: Long = 0L,
+        roomTeamLeaderId: RoomTeamLeaderId? = null,
+        roomId: RoomId? = null,
         teamLeaderId: String,
         nickname: String,
         remainingBudget: Int? = null,
         createdAt: Instant = Instant.now(),
         updatedAt: Instant = Instant.now(),
     ) : this(
-        roomTeamLeaderId = 0L,
+        persistentId = roomTeamLeaderId?.value,
+        room = roomId?.let { Room.reference(it.value) },
+        teamLeaderId = teamLeaderId,
+        nickname = nickname,
+        remainingBudget = remainingBudget,
+        createdAt = createdAt,
+        updatedAt = updatedAt,
+    )
+
+    internal constructor(
+        roomId: Long? = null,
+        teamLeaderId: String,
+        nickname: String,
+        remainingBudget: Int? = null,
+        createdAt: Instant = Instant.now(),
+        updatedAt: Instant = Instant.now(),
+    ) : this(
+        roomTeamLeaderId = null,
         roomId = roomId,
         teamLeaderId = teamLeaderId,
         nickname = nickname,
@@ -67,7 +86,13 @@ class RoomTeamLeader protected constructor(
         updatedAt = updatedAt,
     )
 
-    val roomId: Long
+    val id: RoomTeamLeaderId?
+        get() = persistentId?.let(::RoomTeamLeaderId)
+
+    internal val roomTeamLeaderId: Long
+        get() = persistentId ?: 0L
+
+    internal val roomId: Long
         get() = room?.roomId ?: 0L
 
     fun requireCanBid(amount: Int) {
@@ -81,14 +106,12 @@ class RoomTeamLeader protected constructor(
 
     private fun budgetState(): BudgetState = BudgetState.requireFrom(remainingBudget)
 
-    internal fun attach(room: Room) {
-        this.room = room
-    }
+    internal fun attach(room: Room): RoomTeamLeader = apply { this.room = room }
 
     internal fun detachCopy(): RoomTeamLeader =
         RoomTeamLeader(
-            roomTeamLeaderId = roomTeamLeaderId,
-            roomId = roomId,
+            roomTeamLeaderId = id,
+            roomId = room?.persistedIdOrNull(),
             teamLeaderId = teamLeaderId,
             nickname = nickname,
             remainingBudget = remainingBudget,
@@ -96,7 +119,7 @@ class RoomTeamLeader protected constructor(
             updatedAt = updatedAt,
         )
 
-    fun copy(
+    internal fun copy(
         roomTeamLeaderId: Long = this.roomTeamLeaderId,
         roomId: Long = this.roomId,
         teamLeaderId: String = this.teamLeaderId,
@@ -106,7 +129,7 @@ class RoomTeamLeader protected constructor(
         updatedAt: Instant = this.updatedAt,
     ): RoomTeamLeader =
         RoomTeamLeader(
-            roomTeamLeaderId = roomTeamLeaderId,
+            roomTeamLeaderId = roomTeamLeaderId.takeIf { it != 0L },
             roomId = roomId,
             teamLeaderId = teamLeaderId,
             nickname = nickname,
@@ -117,3 +140,7 @@ class RoomTeamLeader protected constructor(
 }
 
 fun RoomTeamLeader.validateBudget(amount: Int) = requireCanBid(amount)
+
+data class RoomTeamLeaderId(
+    val value: Long,
+) : Identifier

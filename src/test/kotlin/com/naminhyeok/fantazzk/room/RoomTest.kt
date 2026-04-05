@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
 import java.time.Instant
+import kotlin.reflect.full.memberProperties
 
 class RoomTest {
     @Nested
@@ -237,6 +238,19 @@ class RoomTest {
 
             assertThat(room.id).isEqualTo(RoomId(42L))
         }
+
+        @Test
+        fun `Room은 전달받은 자식 엔티티를 내부 복사본으로 보관하면서 식별자를 유지한다`() {
+            val originalPlayer = RoomPlayer(roomPlayerId = 7L, roomId = 42L, name = "선수1", displayOrder = 0)
+            val room = room(roomId = 42L).copy(players = listOf(originalPlayer))
+
+            originalPlayer.assign()
+
+            val storedPlayer = room.players.single()
+            assertThat(storedPlayer).isNotSameAs(originalPlayer)
+            assertThat(storedPlayer.status).isEqualTo(PlayerStatus.AVAILABLE)
+            assertThat(readEntityId(storedPlayer).toString()).isEqualTo("RoomPlayerId(value=7)")
+        }
     }
 
     @Nested
@@ -438,4 +452,10 @@ class RoomTest {
         createdAt = createdAt,
         updatedAt = updatedAt,
     )
+
+    private fun readEntityId(entity: Any): Any? =
+        entity::class.memberProperties
+            .singleOrNull { it.name == "id" }
+            ?.getter
+            ?.call(entity)
 }

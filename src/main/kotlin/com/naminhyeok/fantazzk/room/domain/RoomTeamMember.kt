@@ -9,6 +9,7 @@ import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
+import org.jmolecules.ddd.types.Identifier
 import java.time.Instant
 
 @Entity
@@ -17,7 +18,7 @@ class RoomTeamMember protected constructor(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    var roomTeamMemberId: Long = 0L,
+    private var persistentId: Long? = null,
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "room_id", nullable = false)
     private var room: Room? = null,
@@ -32,17 +33,17 @@ class RoomTeamMember protected constructor(
     @Column(name = "updated_at", nullable = false)
     val updatedAt: Instant = Instant.now(),
 ) {
-    constructor(
-        roomTeamMemberId: Long = 0L,
-        roomId: Long,
+    internal constructor(
+        roomTeamMemberId: Long? = null,
+        roomId: Long?,
         teamLeaderId: String,
         playerName: String,
         assignOrder: Int,
         createdAt: Instant = Instant.now(),
         updatedAt: Instant = Instant.now(),
     ) : this(
-        roomTeamMemberId = roomTeamMemberId,
-        room = roomId.takeIf { it != 0L }?.let(Room::reference),
+        roomTeamMemberId = roomTeamMemberId?.takeIf { it != 0L }?.let(::RoomTeamMemberId),
+        roomId = roomId?.takeIf { it != 0L }?.let(::RoomId),
         teamLeaderId = teamLeaderId,
         playerName = playerName,
         assignOrder = assignOrder,
@@ -51,14 +52,32 @@ class RoomTeamMember protected constructor(
     )
 
     constructor(
-        roomId: Long = 0L,
+        roomTeamMemberId: RoomTeamMemberId? = null,
+        roomId: RoomId? = null,
         teamLeaderId: String,
         playerName: String,
         assignOrder: Int,
         createdAt: Instant = Instant.now(),
         updatedAt: Instant = Instant.now(),
     ) : this(
-        roomTeamMemberId = 0L,
+        persistentId = roomTeamMemberId?.value,
+        room = roomId?.let { Room.reference(it.value) },
+        teamLeaderId = teamLeaderId,
+        playerName = playerName,
+        assignOrder = assignOrder,
+        createdAt = createdAt,
+        updatedAt = updatedAt,
+    )
+
+    internal constructor(
+        roomId: Long? = null,
+        teamLeaderId: String,
+        playerName: String,
+        assignOrder: Int,
+        createdAt: Instant = Instant.now(),
+        updatedAt: Instant = Instant.now(),
+    ) : this(
+        roomTeamMemberId = null,
         roomId = roomId,
         teamLeaderId = teamLeaderId,
         playerName = playerName,
@@ -67,17 +86,21 @@ class RoomTeamMember protected constructor(
         updatedAt = updatedAt,
     )
 
-    val roomId: Long
+    val id: RoomTeamMemberId?
+        get() = persistentId?.let(::RoomTeamMemberId)
+
+    internal val roomTeamMemberId: Long
+        get() = persistentId ?: 0L
+
+    internal val roomId: Long
         get() = room?.roomId ?: 0L
 
-    internal fun attach(room: Room) {
-        this.room = room
-    }
+    internal fun attach(room: Room): RoomTeamMember = apply { this.room = room }
 
     internal fun detachCopy(): RoomTeamMember =
         RoomTeamMember(
-            roomTeamMemberId = roomTeamMemberId,
-            roomId = roomId,
+            roomTeamMemberId = id,
+            roomId = room?.persistedIdOrNull(),
             teamLeaderId = teamLeaderId,
             playerName = playerName,
             assignOrder = assignOrder,
@@ -85,7 +108,7 @@ class RoomTeamMember protected constructor(
             updatedAt = updatedAt,
         )
 
-    fun copy(
+    internal fun copy(
         roomTeamMemberId: Long = this.roomTeamMemberId,
         roomId: Long = this.roomId,
         teamLeaderId: String = this.teamLeaderId,
@@ -95,7 +118,7 @@ class RoomTeamMember protected constructor(
         updatedAt: Instant = this.updatedAt,
     ): RoomTeamMember =
         RoomTeamMember(
-            roomTeamMemberId = roomTeamMemberId,
+            roomTeamMemberId = roomTeamMemberId.takeIf { it != 0L },
             roomId = roomId,
             teamLeaderId = teamLeaderId,
             playerName = playerName,
@@ -104,3 +127,7 @@ class RoomTeamMember protected constructor(
             updatedAt = updatedAt,
         )
 }
+
+data class RoomTeamMemberId(
+    val value: Long,
+) : Identifier

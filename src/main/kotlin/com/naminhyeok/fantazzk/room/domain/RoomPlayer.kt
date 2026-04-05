@@ -11,6 +11,7 @@ import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
+import org.jmolecules.ddd.types.Identifier
 import java.time.Instant
 
 @Entity
@@ -19,7 +20,7 @@ class RoomPlayer protected constructor(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    var roomPlayerId: Long = 0L,
+    private var persistentId: Long? = null,
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "room_id", nullable = false)
     private var room: Room? = null,
@@ -35,17 +36,17 @@ class RoomPlayer protected constructor(
     @Column(name = "updated_at", nullable = false)
     val updatedAt: Instant = Instant.now(),
 ) {
-    constructor(
-        roomPlayerId: Long = 0L,
-        roomId: Long,
+    internal constructor(
+        roomPlayerId: Long? = null,
+        roomId: Long?,
         name: String,
         status: PlayerStatus = PlayerStatus.AVAILABLE,
         displayOrder: Int,
         createdAt: Instant = Instant.now(),
         updatedAt: Instant = Instant.now(),
     ) : this(
-        roomPlayerId = roomPlayerId,
-        room = roomId.takeIf { it != 0L }?.let(Room::reference),
+        roomPlayerId = roomPlayerId?.takeIf { it != 0L }?.let(::RoomPlayerId),
+        roomId = roomId?.takeIf { it != 0L }?.let(::RoomId),
         name = name,
         status = status,
         displayOrder = displayOrder,
@@ -54,14 +55,32 @@ class RoomPlayer protected constructor(
     )
 
     constructor(
-        roomId: Long = 0L,
+        roomPlayerId: RoomPlayerId? = null,
+        roomId: RoomId? = null,
         name: String,
         status: PlayerStatus = PlayerStatus.AVAILABLE,
         displayOrder: Int,
         createdAt: Instant = Instant.now(),
         updatedAt: Instant = Instant.now(),
     ) : this(
-        roomPlayerId = 0L,
+        persistentId = roomPlayerId?.value,
+        room = roomId?.let { Room.reference(it.value) },
+        name = name,
+        status = status,
+        displayOrder = displayOrder,
+        createdAt = createdAt,
+        updatedAt = updatedAt,
+    )
+
+    internal constructor(
+        roomId: Long? = null,
+        name: String,
+        status: PlayerStatus = PlayerStatus.AVAILABLE,
+        displayOrder: Int,
+        createdAt: Instant = Instant.now(),
+        updatedAt: Instant = Instant.now(),
+    ) : this(
+        roomPlayerId = null,
         roomId = roomId,
         name = name,
         status = status,
@@ -70,7 +89,13 @@ class RoomPlayer protected constructor(
         updatedAt = updatedAt,
     )
 
-    val roomId: Long
+    val id: RoomPlayerId?
+        get() = persistentId?.let(::RoomPlayerId)
+
+    internal val roomPlayerId: Long
+        get() = persistentId ?: 0L
+
+    internal val roomId: Long
         get() = room?.roomId ?: 0L
 
     fun assign(): RoomPlayer {
@@ -87,14 +112,12 @@ class RoomPlayer protected constructor(
         return this
     }
 
-    internal fun attach(room: Room) {
-        this.room = room
-    }
+    internal fun attach(room: Room): RoomPlayer = apply { this.room = room }
 
     internal fun detachCopy(): RoomPlayer =
         RoomPlayer(
-            roomPlayerId = roomPlayerId,
-            roomId = roomId,
+            roomPlayerId = id,
+            roomId = room?.persistedIdOrNull(),
             name = name,
             status = status,
             displayOrder = displayOrder,
@@ -102,7 +125,7 @@ class RoomPlayer protected constructor(
             updatedAt = updatedAt,
         )
 
-    fun copy(
+    internal fun copy(
         roomPlayerId: Long = this.roomPlayerId,
         roomId: Long = this.roomId,
         name: String = this.name,
@@ -112,7 +135,7 @@ class RoomPlayer protected constructor(
         updatedAt: Instant = this.updatedAt,
     ): RoomPlayer =
         RoomPlayer(
-            roomPlayerId = roomPlayerId,
+            roomPlayerId = roomPlayerId.takeIf { it != 0L },
             roomId = roomId,
             name = name,
             status = status,
@@ -128,3 +151,7 @@ enum class PlayerStatus {
     AVAILABLE,
     ASSIGNED,
 }
+
+data class RoomPlayerId(
+    val value: Long,
+) : Identifier

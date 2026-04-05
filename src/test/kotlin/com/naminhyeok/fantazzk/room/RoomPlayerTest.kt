@@ -10,23 +10,30 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
 import java.time.Instant
+import kotlin.reflect.full.memberProperties
 
 class RoomPlayerTest {
     @Nested
     inner class `생성 계약` {
         @Test
-        fun `새 선수는 기본 식별자와 상태를 가진다`() {
+        fun `새 선수는 저장 전 internal entity 식별자 없이 생성된다`() {
             val beforeCreate = Instant.now()
-            val player = RoomPlayer(roomId = 1L, name = "선수1", displayOrder = 0)
+            val player = RoomPlayer(name = "선수1", displayOrder = 0)
             val afterCreate = Instant.now()
 
-            assertThat(player.roomPlayerId).isZero()
-            assertThat(player.roomId).isEqualTo(1L)
+            assertThat(readEntityId(player)).isNull()
             assertThat(player.name).isEqualTo("선수1")
             assertThat(player.status).isEqualTo(PlayerStatus.AVAILABLE)
             assertThat(player.displayOrder).isZero()
             assertThat(player.createdAt).isBetween(beforeCreate, afterCreate)
             assertThat(player.updatedAt).isBetween(beforeCreate, afterCreate)
+        }
+
+        @Test
+        fun `저장된 선수는 typed internal entity 식별자를 노출한다`() {
+            val player = RoomPlayer(roomPlayerId = 7L, roomId = 1L, name = "선수1", displayOrder = 0)
+
+            assertThat(readEntityId(player).toString()).isEqualTo("RoomPlayerId(value=7)")
         }
     }
 
@@ -98,4 +105,10 @@ class RoomPlayerTest {
                 .hasMessageContaining("선수를 뒤로 보낼 수 없습니다")
         }
     }
+
+    private fun readEntityId(player: RoomPlayer): Any? =
+        RoomPlayer::class.memberProperties
+            .singleOrNull { it.name == "id" }
+            ?.getter
+            ?.call(player)
 }
