@@ -71,8 +71,8 @@ class Template protected constructor(
     fun players(): List<TemplatePlayer> = persistentPlayers.toList().also(::requireValidRoster)
 
     fun requireValidRoster(players: List<TemplatePlayer>) {
-        persistentId?.let { templateId ->
-            require(players.all { it.templateId == templateId }) {
+        persistedIdOrNull()?.let { templateId ->
+            require(players.all { it.belongsTo(templateId) }) {
                 "선수는 동일한 템플릿에 속해야 합니다"
             }
         }
@@ -81,6 +81,8 @@ class Template protected constructor(
     }
 
     internal fun assignId(templateId: TemplateId): Template = apply { persistentId = templateId.value }
+
+    internal fun persistedIdOrNull(): TemplateId? = persistentId?.let(::TemplateId)
 
     @PostLoad
     private fun validateLoadedState() {

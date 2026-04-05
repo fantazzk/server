@@ -34,20 +34,20 @@ class TemplatePlayer(
     val updatedAt: Instant = Instant.now(),
 ) : DomainEntity<Template, TemplatePlayerId> {
     override val id: TemplatePlayerId
-        get() = TemplatePlayerId(persistentId ?: 0L)
+        get() =
+            TemplatePlayerId(
+                requireNotNull(persistentId) { "TemplatePlayer id는 저장 후에만 사용할 수 있습니다" },
+            )
 
-    val templatePlayerId: Long
-        get() = persistentId ?: 0L
-
-    constructor(
-        templatePlayerId: Long = 0L,
+    internal constructor(
+        templatePlayerId: Long? = null,
         templateId: Long,
         name: String,
         displayOrder: Int,
         createdAt: Instant = Instant.now(),
         updatedAt: Instant = Instant.now(),
     ) : this(
-        templatePlayerId = TemplatePlayerId(templatePlayerId),
+        templatePlayerId = templatePlayerId?.let(::TemplatePlayerId),
         templateId = TemplateId(templateId),
         name = name,
         displayOrder = displayOrder,
@@ -56,14 +56,14 @@ class TemplatePlayer(
     )
 
     constructor(
-        templatePlayerId: TemplatePlayerId = TemplatePlayerId(0L),
+        templatePlayerId: TemplatePlayerId? = null,
         templateId: TemplateId,
         name: String,
         displayOrder: Int,
         createdAt: Instant = Instant.now(),
         updatedAt: Instant = Instant.now(),
     ) : this(
-        persistentId = templatePlayerId.value.takeIf { it > 0L },
+        persistentId = templatePlayerId?.value,
         template = Template.reference(templateId.value),
         name = name,
         displayOrder = displayOrder,
@@ -71,14 +71,14 @@ class TemplatePlayer(
         updatedAt = updatedAt,
     )
 
-    constructor(
+    internal constructor(
         templateId: Long,
         name: String,
         displayOrder: Int,
         createdAt: Instant = Instant.now(),
         updatedAt: Instant = Instant.now(),
     ) : this(
-        templatePlayerId = TemplatePlayerId(0L),
+        templatePlayerId = null,
         templateId = TemplateId(templateId),
         name = name,
         displayOrder = displayOrder,
@@ -93,7 +93,7 @@ class TemplatePlayer(
         createdAt: Instant = Instant.now(),
         updatedAt: Instant = Instant.now(),
     ) : this(
-        templatePlayerId = TemplatePlayerId(0L),
+        templatePlayerId = null,
         templateId = templateId,
         name = name,
         displayOrder = displayOrder,
@@ -101,8 +101,10 @@ class TemplatePlayer(
         updatedAt = updatedAt,
     )
 
-    val templateId: Long
-        get() = template?.templateId ?: 0L
+    val templateId: TemplateId?
+        get() = template?.persistedIdOrNull()
+
+    internal fun belongsTo(templateId: TemplateId): Boolean = this.templateId == templateId
 
     internal fun attach(template: Template): TemplatePlayer =
         apply {

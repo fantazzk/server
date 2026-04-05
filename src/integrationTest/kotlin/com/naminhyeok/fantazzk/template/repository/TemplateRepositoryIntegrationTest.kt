@@ -72,7 +72,7 @@ class TemplateRepositoryIntegrationTest(
 
         assertThat(found.id).isEqualTo(savedId)
         assertThat(found.players().map { it.id.value }).allMatch { it > 0L }
-        assertThat(found.players().map { it.templateId }).containsOnly(savedId.value)
+        assertThat(found.players().map { it.templateId }).containsOnly(savedId)
         assertThat(found.players().map { it.name }).containsExactly("선수2", "선수1")
     }
 

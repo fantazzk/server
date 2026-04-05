@@ -230,8 +230,10 @@ class TemplateTest {
             val player = template.players().first()
 
             assertThat(player).isInstanceOf(Entity::class.java)
-            assertThat(player.id).isEqualTo(TemplatePlayerId(0L))
-            assertThat(player.templateId).isEqualTo(template.id.value)
+            assertThatThrownBy { player.id }
+                .isInstanceOf(IllegalArgumentException::class.java)
+                .hasMessage("TemplatePlayer id는 저장 후에만 사용할 수 있습니다")
+            assertThat(player.templateId).isEqualTo(template.id)
         }
     }
 }
