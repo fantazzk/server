@@ -44,11 +44,11 @@ class TemplateRepositoryIntegrationTest(
                 ),
             )
 
-        assertThat(saved.templateId).isGreaterThan(0)
+        assertThat(saved.id.value).isGreaterThan(0)
 
-        val found = cut.findById(TemplateId(saved.templateId))
-        assertThat(found).isNotNull
-        assertThat(found!!.mode).isEqualTo(TeamBuildingMode.AUCTION)
+        val found = requireNotNull(cut.findById(saved.id))
+
+        assertThat(found.mode).isEqualTo(TeamBuildingMode.AUCTION)
         assertThat(found.budget).isEqualTo(300)
     }
 
@@ -65,10 +65,11 @@ class TemplateRepositoryIntegrationTest(
                 ),
             )
 
-        val found = cut.findById(saved.id)
+        val found = requireNotNull(cut.findById(saved.id))
 
-        assertThat(found).isNotNull
-        assertThat(found!!.players().map { it.name }).containsExactly("선수2", "선수1")
+        assertThat(found.players().map { it.id.value }).allMatch { it > 0L }
+        assertThat(found.players().map { it.templateId }).containsOnly(found.id.value)
+        assertThat(found.players().map { it.name }).containsExactly("선수2", "선수1")
     }
 
     @Test
@@ -84,10 +85,9 @@ class TemplateRepositoryIntegrationTest(
                 ),
             )
 
-        val found = cut.findById(TemplateId(saved.templateId))
+        val found = requireNotNull(cut.findById(saved.id))
 
-        assertThat(found).isNotNull
-        assertThat(found!!.configuration)
+        assertThat(found.configuration)
             .isEqualTo(TemplateConfiguration.draft(teamCount = 2, teamSize = 2, strategy = DraftOrderStrategy.SNAKE))
     }
 
@@ -166,10 +166,9 @@ class TemplateRepositoryIntegrationTest(
                 ),
             )
 
-        val found = cut.findById(saved.id)
+        val found = requireNotNull(cut.findById(saved.id))
 
-        assertThat(found).isNotNull
-        assertThat(found!!.players().map { it.name }).containsExactly("선수2", "선수1")
+        assertThat(found.players().map { it.name }).containsExactly("선수2", "선수1")
     }
 
     @Test

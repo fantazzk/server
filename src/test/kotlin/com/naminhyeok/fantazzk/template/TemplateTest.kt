@@ -5,9 +5,11 @@ import com.naminhyeok.fantazzk.template.domain.TeamBuildingMode
 import com.naminhyeok.fantazzk.template.domain.Template
 import com.naminhyeok.fantazzk.template.domain.TemplateConfiguration
 import com.naminhyeok.fantazzk.template.domain.TemplatePlayer
+import com.naminhyeok.fantazzk.template.domain.TemplatePlayerId
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatCode
 import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.jmolecules.ddd.types.Entity
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
@@ -180,6 +182,24 @@ class TemplateTest {
                 ).assignId(TemplateId(42L))
 
             assertThat(template.id).isEqualTo(TemplateId(42L))
+        }
+
+        @Test
+        fun `TemplatePlayer는 Template aggregate 에 속한 jMolecules entity 이다`() {
+            val template =
+                Template.createAuction(
+                    name = "테스트",
+                    teamCount = 2,
+                    teamSize = 2,
+                    budget = 300,
+                    playerNames = listOf("선수1", "선수2"),
+                ).assignId(TemplateId(42L))
+
+            val player = template.players().first()
+
+            assertThat(player).isInstanceOf(Entity::class.java)
+            assertThat(player.id).isEqualTo(TemplatePlayerId(0L))
+            assertThat(player.templateId).isEqualTo(template.id.value)
         }
     }
 }
