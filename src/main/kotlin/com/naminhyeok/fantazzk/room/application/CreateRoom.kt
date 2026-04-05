@@ -11,10 +11,12 @@ import com.naminhyeok.fantazzk.template.TemplateId
 import com.naminhyeok.fantazzk.template.TemplateMode
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.dao.DuplicateKeyException
-import org.springframework.stereotype.Component
 import java.util.UUID
+import org.jmolecules.ddd.annotation.Service as DddService
+import org.springframework.stereotype.Service as SpringService
 
-@Component
+@DddService
+@SpringService
 class CreateRoom(
     private val roomRepository: Rooms,
     private val templateCatalog: TemplateCatalog,

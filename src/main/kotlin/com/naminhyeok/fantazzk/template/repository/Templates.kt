@@ -4,7 +4,9 @@ import com.naminhyeok.fantazzk.template.TemplateId
 import com.naminhyeok.fantazzk.template.domain.Template
 import org.jmolecules.ddd.types.Repository
 import org.springframework.data.jpa.repository.JpaRepository
+import org.jmolecules.ddd.annotation.Repository as DddRepository
 
+@DddRepository
 interface Templates : Repository<Template, TemplateId> {
     fun save(template: Template): Template
 

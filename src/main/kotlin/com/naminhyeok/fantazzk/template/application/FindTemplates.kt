@@ -6,15 +6,17 @@ import com.naminhyeok.fantazzk.template.domain.TemplatePlayer
 import com.naminhyeok.fantazzk.template.exception.TemplateException
 import com.naminhyeok.fantazzk.template.repository.Templates
 import org.springframework.dao.InvalidDataAccessApiUsageException
-import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
+import org.jmolecules.ddd.annotation.Service as DddService
+import org.springframework.stereotype.Service as SpringService
 
 data class TemplateDetail(
     val template: Template,
     val players: List<TemplatePlayer>,
 )
 
-@Component
+@DddService
+@SpringService
 class FindTemplates(
     private val templateRepository: Templates,
 ) {

@@ -4,9 +4,11 @@ import com.naminhyeok.fantazzk.room.domain.Room
 import com.naminhyeok.fantazzk.room.domain.RoomId
 import org.jmolecules.ddd.types.Repository
 import org.springframework.data.jpa.repository.JpaRepository
-import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
+import org.jmolecules.ddd.annotation.Repository as DddRepository
+import org.springframework.stereotype.Repository as SpringRepository
 
+@DddRepository
 interface Rooms : Repository<Room, RoomId> {
     fun save(room: Room): Room
 
@@ -21,7 +23,7 @@ internal interface RoomJpaStore : JpaRepository<Room, Long> {
     fun findByPersistentId(roomId: Long): Room?
 }
 
-@Component
+@SpringRepository
 class RoomRepositoryAdapter internal constructor(
     private val store: RoomJpaStore,
 ) : Rooms {

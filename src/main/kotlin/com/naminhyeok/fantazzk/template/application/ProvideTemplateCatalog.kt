@@ -8,9 +8,11 @@ import com.naminhyeok.fantazzk.template.TemplateId
 import com.naminhyeok.fantazzk.template.TemplateMode
 import com.naminhyeok.fantazzk.template.TemplatePlayerBlueprint
 import com.naminhyeok.fantazzk.template.exception.TemplateException
-import org.springframework.stereotype.Component
+import org.jmolecules.ddd.annotation.Service as DddService
+import org.springframework.stereotype.Service as SpringService
 
-@Component
+@DddService
+@SpringService
 internal class ProvideTemplateCatalog(
     private val templateFinder: FindTemplates,
 ) : TemplateCatalog {
