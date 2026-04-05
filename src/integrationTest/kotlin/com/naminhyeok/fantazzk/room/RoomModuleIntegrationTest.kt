@@ -13,6 +13,7 @@ import com.naminhyeok.fantazzk.room.domain.*
 import com.naminhyeok.fantazzk.template.TemplateBlueprint
 import com.naminhyeok.fantazzk.template.TemplateCatalog
 import com.naminhyeok.fantazzk.template.TemplateDraftOrderStrategy
+import com.naminhyeok.fantazzk.template.TemplateId
 import com.naminhyeok.fantazzk.template.TemplateMode
 import com.naminhyeok.fantazzk.template.TemplatePlayerBlueprint
 import com.ninjasquad.springmockk.MockkBean
@@ -63,9 +64,9 @@ class RoomModuleIntegrationTest {
 
     @Test
     fun `방 생성은 대기 상태와 호스트 팀장을 갖는 방을 만든다`() {
-        every { templateCatalog.getTemplateBlueprint(1L) } returns
+        every { templateCatalog.getTemplateBlueprint(TemplateId(1L)) } returns
             TemplateBlueprint(
-                templateId = 1L,
+                templateId = TemplateId(1L),
                 mode = TemplateMode.AUCTION,
                 teamCount = 2,
                 teamSize = 2,
@@ -78,7 +79,7 @@ class RoomModuleIntegrationTest {
                     ),
             )
 
-        val room = roomCreateService.create(1L, "호스트")
+        val room = roomCreateService.create(TemplateId(1L), "호스트")
 
         assertThat(room.status).isEqualTo(RoomStatus.WAITING)
         assertThat(room.leaders.map { it.nickname }).containsExactly("호스트")
@@ -86,9 +87,9 @@ class RoomModuleIntegrationTest {
 
     @Test
     fun `방 생성 후 애그리거트 조회 서비스로 즉시 조회할 수 있다`() {
-        every { templateCatalog.getTemplateBlueprint(1L) } returns
+        every { templateCatalog.getTemplateBlueprint(TemplateId(1L)) } returns
             TemplateBlueprint(
-                templateId = 1L,
+                templateId = TemplateId(1L),
                 mode = TemplateMode.AUCTION,
                 teamCount = 2,
                 teamSize = 2,
@@ -101,7 +102,7 @@ class RoomModuleIntegrationTest {
                     ),
             )
 
-        val createdRoom = roomCreateService.create(1L, "호스트")
+        val createdRoom = roomCreateService.create(TemplateId(1L), "호스트")
 
         val foundRoom = roomFinder.get(createdRoom.code)
 
@@ -112,9 +113,9 @@ class RoomModuleIntegrationTest {
 
     @Test
     fun `방 참가 서비스는 JPA 저장소에 팀장 추가를 반영한다`() {
-        every { templateCatalog.getTemplateBlueprint(1L) } returns
+        every { templateCatalog.getTemplateBlueprint(TemplateId(1L)) } returns
             TemplateBlueprint(
-                templateId = 1L,
+                templateId = TemplateId(1L),
                 mode = TemplateMode.AUCTION,
                 teamCount = 2,
                 teamSize = 2,
@@ -127,7 +128,7 @@ class RoomModuleIntegrationTest {
                     ),
             )
 
-        val createdRoom = roomCreateService.create(1L, "호스트")
+        val createdRoom = roomCreateService.create(TemplateId(1L), "호스트")
 
         roomJoinService.join(createdRoom.code, "게스트")
 
@@ -137,9 +138,9 @@ class RoomModuleIntegrationTest {
 
     @Test
     fun `경매 입찰과 정산 서비스는 JPA 연관관계 변경을 영속화한다`() {
-        every { templateCatalog.getTemplateBlueprint(1L) } returns
+        every { templateCatalog.getTemplateBlueprint(TemplateId(1L)) } returns
             TemplateBlueprint(
-                templateId = 1L,
+                templateId = TemplateId(1L),
                 mode = TemplateMode.AUCTION,
                 teamCount = 2,
                 teamSize = 2,
@@ -152,7 +153,7 @@ class RoomModuleIntegrationTest {
                     ),
             )
 
-        val createdRoom = roomCreateService.create(1L, "호스트")
+        val createdRoom = roomCreateService.create(TemplateId(1L), "호스트")
         val guestLeader = roomJoinService.join(createdRoom.code, "게스트")
         roomStartService.start(createdRoom.code)
 
@@ -167,9 +168,9 @@ class RoomModuleIntegrationTest {
 
     @Test
     fun `드래프트 지명 서비스는 JPA 연관관계 변경을 영속화한다`() {
-        every { templateCatalog.getTemplateBlueprint(2L) } returns
+        every { templateCatalog.getTemplateBlueprint(TemplateId(2L)) } returns
             TemplateBlueprint(
-                templateId = 2L,
+                templateId = TemplateId(2L),
                 mode = TemplateMode.DRAFT,
                 teamCount = 2,
                 teamSize = 2,
@@ -182,7 +183,7 @@ class RoomModuleIntegrationTest {
                     ),
             )
 
-        val createdRoom = roomCreateService.create(2L, "호스트")
+        val createdRoom = roomCreateService.create(TemplateId(2L), "호스트")
         val hostLeaderId = roomFinder.get(createdRoom.code).leaders.single().teamLeaderId
         roomJoinService.join(createdRoom.code, "게스트")
         roomStartService.start(createdRoom.code)

@@ -196,7 +196,7 @@ class TemplateModuleIntegrationTest {
                 ),
             )
 
-        val blueprint = templateCatalog.getTemplateBlueprint(template.templateId)
+        val blueprint = templateCatalog.getTemplateBlueprint(template.id)
 
         assertThat(blueprint.mode).isEqualTo(TemplateMode.DRAFT)
         assertThat(blueprint.teamCount).isEqualTo(2)
@@ -207,7 +207,7 @@ class TemplateModuleIntegrationTest {
 
     @Test
     fun `템플릿 목록 계약은 존재하지 않는 템플릿을 찾을 수 없음 예외로 변환한다`() {
-        assertThatThrownBy { templateCatalog.getTemplateBlueprint(999_999L) }
+        assertThatThrownBy { templateCatalog.getTemplateBlueprint(TemplateId(999_999L)) }
             .isInstanceOf(TemplateCatalogException.NotFound::class.java)
     }
 
@@ -240,7 +240,7 @@ class TemplateModuleIntegrationTest {
         )
 
         try {
-            assertThatThrownBy { templateCatalog.getTemplateBlueprint(templateId) }
+            assertThatThrownBy { templateCatalog.getTemplateBlueprint(TemplateId(templateId)) }
                 .isInstanceOf(TemplateCatalogException.Invalid::class.java)
         } finally {
             jdbcTemplate.update("delete from template_player where template_id = ?", templateId)

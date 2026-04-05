@@ -26,7 +26,7 @@ class CreateRoom(
     ): Room {
         val template =
             try {
-                templateCatalog.get(templateId).toRoomTemplateSpec()
+                templateCatalog.getTemplateBlueprint(templateId).toRoomTemplateSpec()
             } catch (_: TemplateCatalogException.NotFound) {
                 throw RoomTemplateNotFoundException()
             } catch (_: TemplateCatalogException.Invalid) {

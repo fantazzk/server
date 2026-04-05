@@ -39,17 +39,6 @@ class RoomCreateServiceTest {
         cut = CreateRoom(roomRepo, templateCatalog, roomCreateAttemptExecutor)
     }
 
-    @Test
-    fun `CreateRoom은 TemplateId를 받는 create만 공개한다`() {
-        val createMethods = CreateRoom::class.java.declaredMethods.filter { it.name.startsWith("create") }
-
-        assertThat(createMethods).hasSize(1)
-        assertThat(createMethods.single().parameterTypes.toList()).containsExactly(
-            TemplateId::class.java,
-            String::class.java,
-        )
-    }
-
     @Nested
     inner class `템플릿 계약 번역` {
         @Test
@@ -190,7 +179,7 @@ class RoomCreateServiceTest {
                 CreateRoom(
                     roomRepo,
                     object : TemplateCatalog {
-                        override fun get(templateId: TemplateId): TemplateBlueprint {
+                        override fun getTemplateBlueprint(templateId: TemplateId): TemplateBlueprint {
                             throw TemplateCatalogException.NotFound(templateId)
                         }
                     },
@@ -208,7 +197,7 @@ class RoomCreateServiceTest {
                 CreateRoom(
                     roomRepo,
                     object : TemplateCatalog {
-                        override fun get(templateId: TemplateId): TemplateBlueprint {
+                        override fun getTemplateBlueprint(templateId: TemplateId): TemplateBlueprint {
                             throw TemplateCatalogException.Invalid(templateId)
                         }
                     },

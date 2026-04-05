@@ -91,6 +91,6 @@ class InMemoryTemplateCatalog : TemplateCatalog {
         templates[templateId] = snapshot
     }
 
-    override fun get(templateId: TemplateId): TemplateBlueprint =
+    override fun getTemplateBlueprint(templateId: TemplateId): TemplateBlueprint =
         templates[templateId] ?: throw TemplateCatalogException.NotFound(templateId)
 }

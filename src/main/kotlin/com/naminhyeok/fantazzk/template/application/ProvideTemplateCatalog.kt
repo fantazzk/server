@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component
 internal class ProvideTemplateCatalog(
     private val templateFinder: FindTemplates,
 ) : TemplateCatalog {
-    override fun get(templateId: TemplateId): TemplateBlueprint =
+    override fun getTemplateBlueprint(templateId: TemplateId): TemplateBlueprint =
         try {
             val detail = templateFinder.getDetail(templateId)
             TemplateBlueprint(
