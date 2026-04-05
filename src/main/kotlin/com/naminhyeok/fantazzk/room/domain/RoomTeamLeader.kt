@@ -143,4 +143,8 @@ fun RoomTeamLeader.validateBudget(amount: Int) = requireCanBid(amount)
 
 data class RoomTeamLeaderId(
     val value: Long,
-) : Identifier
+) : Identifier {
+    init {
+        require(value > 0L) { "RoomTeamLeaderId는 0보다 커야 합니다" }
+    }
+}

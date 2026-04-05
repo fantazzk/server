@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
 import java.time.Instant
-import kotlin.reflect.full.memberProperties
 
 class RoomPlayerTest {
     @Nested
@@ -21,7 +20,7 @@ class RoomPlayerTest {
             val player = RoomPlayer(name = "선수1", displayOrder = 0)
             val afterCreate = Instant.now()
 
-            assertThat(readEntityId(player)).isNull()
+            assertThat(player.id).isNull()
             assertThat(player.name).isEqualTo("선수1")
             assertThat(player.status).isEqualTo(PlayerStatus.AVAILABLE)
             assertThat(player.displayOrder).isZero()
@@ -33,7 +32,14 @@ class RoomPlayerTest {
         fun `저장된 선수는 typed internal entity 식별자를 노출한다`() {
             val player = RoomPlayer(roomPlayerId = 7L, roomId = 1L, name = "선수1", displayOrder = 0)
 
-            assertThat(readEntityId(player).toString()).isEqualTo("RoomPlayerId(value=7)")
+            assertThat(player.id).isEqualTo(RoomPlayerId(7L))
+        }
+
+        @Test
+        fun `public typed 생성자는 0 값 선수 식별자를 허용하지 않는다`() {
+            assertThatThrownBy {
+                RoomPlayer(roomPlayerId = RoomPlayerId(0L), name = "선수1", displayOrder = 0)
+            }.isInstanceOf(IllegalArgumentException::class.java)
         }
     }
 
@@ -105,10 +111,4 @@ class RoomPlayerTest {
                 .hasMessageContaining("선수를 뒤로 보낼 수 없습니다")
         }
     }
-
-    private fun readEntityId(player: RoomPlayer): Any? =
-        RoomPlayer::class.memberProperties
-            .singleOrNull { it.name == "id" }
-            ?.getter
-            ?.call(player)
 }

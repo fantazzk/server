@@ -4,10 +4,10 @@ package com.naminhyeok.fantazzk.room
 
 import com.naminhyeok.fantazzk.room.domain.*
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.time.Instant
-import kotlin.reflect.full.memberProperties
 
 class RoomBidTest {
     @Nested
@@ -18,7 +18,7 @@ class RoomBidTest {
             val bid = RoomBid(round = 2, teamLeaderId = "leader-1", amount = 40)
             val afterCreate = Instant.now()
 
-            assertThat(readEntityId(bid)).isNull()
+            assertThat(bid.id).isNull()
             assertThat(bid.round).isEqualTo(2)
             assertThat(bid.teamLeaderId).isEqualTo("leader-1")
             assertThat(bid.amount).isEqualTo(40)
@@ -41,7 +41,7 @@ class RoomBidTest {
                     updatedAt = updatedAt,
                 )
 
-            assertThat(readEntityId(bid).toString()).isEqualTo("RoomBidId(value=4)")
+            assertThat(bid.id).isEqualTo(RoomBidId(4L))
             assertThat(bid.roomId).isEqualTo(2L)
             assertThat(bid.round).isEqualTo(3)
             assertThat(bid.teamLeaderId).isEqualTo("leader-2")
@@ -49,11 +49,12 @@ class RoomBidTest {
             assertThat(bid.createdAt).isEqualTo(createdAt)
             assertThat(bid.updatedAt).isEqualTo(updatedAt)
         }
-    }
 
-    private fun readEntityId(bid: RoomBid): Any? =
-        RoomBid::class.memberProperties
-            .singleOrNull { it.name == "id" }
-            ?.getter
-            ?.call(bid)
+        @Test
+        fun `public typed 생성자는 0 값 입찰 식별자를 허용하지 않는다`() {
+            assertThatThrownBy {
+                RoomBid(roomBidId = RoomBidId(0L), round = 2, teamLeaderId = "leader-1", amount = 40)
+            }.isInstanceOf(IllegalArgumentException::class.java)
+        }
+    }
 }

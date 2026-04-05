@@ -4,10 +4,10 @@ package com.naminhyeok.fantazzk.room
 
 import com.naminhyeok.fantazzk.room.domain.*
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.time.Instant
-import kotlin.reflect.full.memberProperties
 
 class RoomTeamMemberTest {
     @Nested
@@ -18,7 +18,7 @@ class RoomTeamMemberTest {
             val member = RoomTeamMember(teamLeaderId = "leader-1", playerName = "선수1", assignOrder = 0)
             val afterCreate = Instant.now()
 
-            assertThat(readEntityId(member)).isNull()
+            assertThat(member.id).isNull()
             assertThat(member.teamLeaderId).isEqualTo("leader-1")
             assertThat(member.playerName).isEqualTo("선수1")
             assertThat(member.assignOrder).isZero()
@@ -41,7 +41,7 @@ class RoomTeamMemberTest {
                     updatedAt = updatedAt,
                 )
 
-            assertThat(readEntityId(member).toString()).isEqualTo("RoomTeamMemberId(value=6)")
+            assertThat(member.id).isEqualTo(RoomTeamMemberId(6L))
             assertThat(member.roomId).isEqualTo(3L)
             assertThat(member.teamLeaderId).isEqualTo("leader-3")
             assertThat(member.playerName).isEqualTo("선수6")
@@ -49,11 +49,17 @@ class RoomTeamMemberTest {
             assertThat(member.createdAt).isEqualTo(createdAt)
             assertThat(member.updatedAt).isEqualTo(updatedAt)
         }
-    }
 
-    private fun readEntityId(member: RoomTeamMember): Any? =
-        RoomTeamMember::class.memberProperties
-            .singleOrNull { it.name == "id" }
-            ?.getter
-            ?.call(member)
+        @Test
+        fun `public typed 생성자는 0 값 팀 멤버 식별자를 허용하지 않는다`() {
+            assertThatThrownBy {
+                RoomTeamMember(
+                    roomTeamMemberId = RoomTeamMemberId(0L),
+                    teamLeaderId = "leader-1",
+                    playerName = "선수1",
+                    assignOrder = 0,
+                )
+            }.isInstanceOf(IllegalArgumentException::class.java)
+        }
+    }
 }

@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
 import java.time.Instant
-import kotlin.reflect.full.memberProperties
 
 class RoomTest {
     @Nested
@@ -249,7 +248,7 @@ class RoomTest {
             val storedPlayer = room.players.single()
             assertThat(storedPlayer).isNotSameAs(originalPlayer)
             assertThat(storedPlayer.status).isEqualTo(PlayerStatus.AVAILABLE)
-            assertThat(readEntityId(storedPlayer).toString()).isEqualTo("RoomPlayerId(value=7)")
+            assertThat(storedPlayer.id).isEqualTo(RoomPlayerId(7L))
         }
     }
 
@@ -452,10 +451,4 @@ class RoomTest {
         createdAt = createdAt,
         updatedAt = updatedAt,
     )
-
-    private fun readEntityId(entity: Any): Any? =
-        entity::class.memberProperties
-            .singleOrNull { it.name == "id" }
-            ?.getter
-            ?.call(entity)
 }

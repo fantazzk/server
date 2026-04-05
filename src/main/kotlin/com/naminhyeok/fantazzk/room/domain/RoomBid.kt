@@ -130,4 +130,8 @@ class RoomBid protected constructor(
 
 data class RoomBidId(
     val value: Long,
-) : Identifier
+) : Identifier {
+    init {
+        require(value > 0L) { "RoomBidId는 0보다 커야 합니다" }
+    }
+}

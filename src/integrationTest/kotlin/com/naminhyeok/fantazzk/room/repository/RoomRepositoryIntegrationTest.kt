@@ -9,6 +9,7 @@ import com.naminhyeok.fantazzk.room.domain.RoomStatus
 import com.naminhyeok.fantazzk.room.domain.RoomTeamLeader
 import com.naminhyeok.fantazzk.room.domain.RoomTeamMember
 import com.naminhyeok.fantazzk.room.domain.TeamBuildingMode
+import jakarta.persistence.EntityManager
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
@@ -20,7 +21,6 @@ import org.springframework.context.annotation.Import
 import org.springframework.dao.InvalidDataAccessApiUsageException
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.test.context.TestConstructor
-import kotlin.reflect.full.memberProperties
 
 @ImportAutoConfiguration(
     LiquibaseAutoConfiguration::class,
@@ -32,6 +32,7 @@ import kotlin.reflect.full.memberProperties
 class RoomRepositoryIntegrationTest(
     private val cut: Rooms,
     private val jdbcTemplate: JdbcTemplate,
+    private val entityManager: EntityManager,
 ) {
     @Test
     fun `방을 저장하고 코드로 조회할 수 있다`() {
@@ -147,34 +148,48 @@ class RoomRepositoryIntegrationTest(
                 ),
             )
 
+        entityManager.flush()
+        entityManager.clear()
+
         val foundByCode = cut.findByCode("RMCH01")
+        entityManager.clear()
         val foundById = cut.findById(RoomId(saved.roomId))
 
         assertThat(foundByCode).isNotNull
         assertThat(foundById).isNotNull
+        assertThat(foundByCode).isNotSameAs(saved)
+        assertThat(foundById).isNotSameAs(saved)
 
         listOf(foundByCode!!, foundById!!).forEach { found ->
             assertThat(found.players).hasSize(2)
             assertThat(found.players.map { it.name to it.displayOrder })
                 .containsExactly("선수1" to 0, "선수2" to 1)
-            assertThat(entityIdValue(found.players.first())).isPositive()
+            assertThat(found.players.map { it.id }).allSatisfy { id ->
+                assertThat(id).isNotNull
+                assertThat(id!!.value).isPositive()
+            }
 
             assertThat(found.leaders).hasSize(2)
             assertThat(found.leaders.map { it.teamLeaderId to it.remainingBudget })
                 .containsExactlyInAnyOrder("leader-A" to 250, "leader-B" to 300)
-            assertThat(entityIdValue(found.leaders.first())).isPositive()
+            assertThat(found.leaders.map { it.id }).allSatisfy { id ->
+                assertThat(id).isNotNull
+                assertThat(id!!.value).isPositive()
+            }
 
             assertThat(found.members).hasSize(1)
             assertThat(found.members.single().playerName).isEqualTo("선수1")
             assertThat(found.members.single().teamLeaderId).isEqualTo("leader-A")
-            assertThat(entityIdValue(found.members.single())).isPositive()
+            assertThat(found.members.single().id).isNotNull
+            assertThat(found.members.single().id!!.value).isPositive()
 
             assertThat(found.bids).hasSize(2)
             assertThat(found.bids.map { it.teamLeaderId to it.amount })
                 .containsExactlyInAnyOrder("leader-A" to 120, "leader-B" to 150)
             assertThat(found.bids.map { it.round }).containsOnly(2)
-            assertThat(found.bids).allSatisfy { bid ->
-                assertThat(entityIdValue(bid)).isPositive()
+            assertThat(found.bids.map { it.id }).allSatisfy { id ->
+                assertThat(id).isNotNull
+                assertThat(id!!.value).isPositive()
             }
         }
 
@@ -277,18 +292,5 @@ class RoomRepositoryIntegrationTest(
         assertThat(found.currentTurnIndex).isEqualTo(3)
         assertThat(found.budget).isNull()
         assertThat(found.currentAuctionRound).isNull()
-    }
-
-    private fun entityIdValue(entity: Any): Long? {
-        val identifier =
-            entity::class.memberProperties
-                .singleOrNull { it.name == "id" }
-                ?.getter
-                ?.call(entity) ?: return null
-
-        return identifier::class.memberProperties
-            .single { it.name == "value" }
-            .getter
-            .call(identifier) as Long
     }
 }

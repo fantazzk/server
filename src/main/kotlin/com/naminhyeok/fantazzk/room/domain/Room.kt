@@ -52,13 +52,13 @@ class Room protected constructor(
     @OrderBy("displayOrder ASC")
     private val persistentPlayers: MutableList<RoomPlayer> = mutableListOf(),
     @OneToMany(mappedBy = "room", cascade = [CascadeType.ALL], orphanRemoval = true)
-    @OrderBy("roomTeamLeaderId ASC")
+    @OrderBy("persistentId ASC")
     private val persistentLeaders: MutableList<RoomTeamLeader> = mutableListOf(),
     @OneToMany(mappedBy = "room", cascade = [CascadeType.ALL], orphanRemoval = true)
     @OrderBy("assignOrder ASC")
     private val persistentMembers: MutableList<RoomTeamMember> = mutableListOf(),
     @OneToMany(mappedBy = "room", cascade = [CascadeType.ALL])
-    @OrderBy("roomBidId ASC")
+    @OrderBy("persistentId ASC")
     private val persistentBids: MutableList<RoomBid> = mutableListOf(),
     @Column(name = "created_at", nullable = false)
     val createdAt: Instant = Instant.now(),

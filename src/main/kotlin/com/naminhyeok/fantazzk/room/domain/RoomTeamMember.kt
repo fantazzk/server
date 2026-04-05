@@ -130,4 +130,8 @@ class RoomTeamMember protected constructor(
 
 data class RoomTeamMemberId(
     val value: Long,
-) : Identifier
+) : Identifier {
+    init {
+        require(value > 0L) { "RoomTeamMemberId는 0보다 커야 합니다" }
+    }
+}

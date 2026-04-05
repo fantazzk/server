@@ -154,4 +154,8 @@ enum class PlayerStatus {
 
 data class RoomPlayerId(
     val value: Long,
-) : Identifier
+) : Identifier {
+    init {
+        require(value > 0L) { "RoomPlayerId는 0보다 커야 합니다" }
+    }
+}

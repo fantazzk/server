@@ -9,7 +9,6 @@ import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.time.Instant
-import kotlin.reflect.full.memberProperties
 
 class RoomTeamLeaderTest {
     @Nested
@@ -20,7 +19,7 @@ class RoomTeamLeaderTest {
             val leader = RoomTeamLeader(teamLeaderId = "leader-1", nickname = "팀장")
             val afterCreate = Instant.now()
 
-            assertThat(readEntityId(leader)).isNull()
+            assertThat(leader.id).isNull()
             assertThat(leader.teamLeaderId).isEqualTo("leader-1")
             assertThat(leader.nickname).isEqualTo("팀장")
             assertThat(leader.remainingBudget).isNull()
@@ -51,7 +50,14 @@ class RoomTeamLeaderTest {
             assertThat(leader.remainingBudget).isEqualTo(120)
             assertThat(leader.createdAt).isEqualTo(createdAt)
             assertThat(leader.updatedAt).isEqualTo(updatedAt)
-            assertThat(readEntityId(leader).toString()).isEqualTo("RoomTeamLeaderId(value=3)")
+            assertThat(leader.id).isEqualTo(RoomTeamLeaderId(3L))
+        }
+
+        @Test
+        fun `public typed 생성자는 0 값 팀장 식별자를 허용하지 않는다`() {
+            assertThatThrownBy {
+                RoomTeamLeader(roomTeamLeaderId = RoomTeamLeaderId(0L), teamLeaderId = "leader-1", nickname = "팀장")
+            }.isInstanceOf(IllegalArgumentException::class.java)
         }
     }
 
@@ -148,10 +154,4 @@ class RoomTeamLeaderTest {
 
     private fun leader(remainingBudget: Int?) =
         RoomTeamLeader(roomId = 1L, teamLeaderId = "leader-1", nickname = "팀장", remainingBudget = remainingBudget)
-
-    private fun readEntityId(leader: RoomTeamLeader): Any? =
-        RoomTeamLeader::class.memberProperties
-            .singleOrNull { it.name == "id" }
-            ?.getter
-            ?.call(leader)
 }
