@@ -9,3 +9,8 @@ data class TemplateBlueprint(
     val draftOrderStrategy: TemplateDraftOrderStrategy?,
     val players: List<TemplatePlayerBlueprint>,
 )
+
+data class TemplatePlayerBlueprint(
+    val name: String,
+    val displayOrder: Int,
+)
