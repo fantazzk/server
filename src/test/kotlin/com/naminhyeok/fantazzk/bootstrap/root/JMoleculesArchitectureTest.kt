@@ -1,6 +1,7 @@
 package com.naminhyeok.fantazzk.bootstrap.root
 
 import com.naminhyeok.fantazzk.room.application.CreateRoom
+import com.naminhyeok.fantazzk.room.repository.RoomRepositoryAdapter
 import com.naminhyeok.fantazzk.room.repository.Rooms
 import com.naminhyeok.fantazzk.template.application.CreateTemplate
 import com.naminhyeok.fantazzk.template.application.FindTemplates
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.Test
 import org.jmolecules.ddd.annotation.Repository as DddRepository
 import org.jmolecules.ddd.annotation.Service as DddService
 import org.jmolecules.ddd.types.Repository as DddRepositoryType
+import org.springframework.stereotype.Repository as SpringRepository
 
 class JMoleculesArchitectureTest {
     @Test
@@ -38,5 +40,10 @@ class JMoleculesArchitectureTest {
         assertThat(repositoryContracts)
             .allMatch { it.isAnnotationPresent(DddRepository::class.java) }
             .allMatch { DddRepositoryType::class.java.isAssignableFrom(it) }
+    }
+
+    @Test
+    fun `room repository adapter 는 spring repository stereotype 을 추가하지 않는다`() {
+        assertThat(RoomRepositoryAdapter::class.java.isAnnotationPresent(SpringRepository::class.java)).isFalse()
     }
 }
