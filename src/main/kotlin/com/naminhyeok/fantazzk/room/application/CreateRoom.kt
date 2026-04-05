@@ -7,6 +7,7 @@ import com.naminhyeok.fantazzk.template.TemplateBlueprint
 import com.naminhyeok.fantazzk.template.TemplateCatalog
 import com.naminhyeok.fantazzk.template.TemplateCatalogException
 import com.naminhyeok.fantazzk.template.TemplateDraftOrderStrategy
+import com.naminhyeok.fantazzk.template.TemplateId
 import com.naminhyeok.fantazzk.template.TemplateMode
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.dao.DuplicateKeyException
@@ -19,13 +20,18 @@ class CreateRoom(
     private val templateCatalog: TemplateCatalog,
     private val roomCreateAttemptExecutor: RoomCreateAttemptExecutor,
 ) {
-    fun create(
+    internal fun create(
         templateId: Long,
+        hostNickname: String,
+    ): Room = create(TemplateId(templateId), hostNickname)
+
+    fun create(
+        templateId: TemplateId,
         hostNickname: String,
     ): Room {
         val template =
             try {
-                templateCatalog.getTemplateBlueprint(templateId).toRoomTemplateSpec()
+                templateCatalog.get(templateId).toRoomTemplateSpec()
             } catch (_: TemplateCatalogException.NotFound) {
                 throw RoomTemplateNotFoundException()
             } catch (_: TemplateCatalogException.Invalid) {
