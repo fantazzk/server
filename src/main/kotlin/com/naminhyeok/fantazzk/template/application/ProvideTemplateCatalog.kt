@@ -20,22 +20,20 @@ internal class ProvideTemplateCatalog(
         try {
             val detail = templateFinder.getDetail(templateId)
             TemplateBlueprint(
-                templateId = templateId,
-                mode = TemplateMode.valueOf(detail.template.mode.name),
-                teamCount = detail.template.teamCount,
-                teamSize = detail.template.teamSize,
-                budget = detail.template.budget,
-                draftOrderStrategy =
-                    detail.template.draftOrderStrategy?.let {
-                        TemplateDraftOrderStrategy.valueOf(it.name)
-                    },
-                players =
-                    detail.players.map {
-                        TemplatePlayerBlueprint(
-                            name = it.name,
-                            displayOrder = it.displayOrder,
-                        )
-                    },
+                templateId,
+                TemplateMode.valueOf(detail.template.mode.name),
+                detail.template.teamCount,
+                detail.template.teamSize,
+                detail.template.budget,
+                detail.template.draftOrderStrategy?.let {
+                    TemplateDraftOrderStrategy.valueOf(it.name)
+                },
+                detail.players.map {
+                    TemplatePlayerBlueprint(
+                        it.name,
+                        it.displayOrder,
+                    )
+                },
             )
         } catch (_: TemplateException.TemplateNotFoundException) {
             throw TemplateCatalogException.NotFound(templateId)

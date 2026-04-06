@@ -66,17 +66,16 @@ class RoomModuleIntegrationTest {
     fun `방 생성은 대기 상태와 호스트 팀장을 갖는 방을 만든다`() {
         every { templateCatalog.getTemplateBlueprint(TemplateId(1L)) } returns
             TemplateBlueprint(
-                templateId = TemplateId(1L),
-                mode = TemplateMode.AUCTION,
-                teamCount = 2,
-                teamSize = 2,
-                budget = 300,
-                draftOrderStrategy = null,
-                players =
-                    listOf(
-                        TemplatePlayerBlueprint(name = "선수1", displayOrder = 0),
-                        TemplatePlayerBlueprint(name = "선수2", displayOrder = 1),
-                    ),
+                TemplateId(1L),
+                TemplateMode.AUCTION,
+                2,
+                2,
+                300,
+                null,
+                listOf(
+                    TemplatePlayerBlueprint("선수1", 0),
+                    TemplatePlayerBlueprint("선수2", 1),
+                ),
             )
 
         val room = roomCreateService.create(TemplateId(1L), "호스트")
@@ -89,17 +88,16 @@ class RoomModuleIntegrationTest {
     fun `방 생성 후 애그리거트 조회 서비스로 즉시 조회할 수 있다`() {
         every { templateCatalog.getTemplateBlueprint(TemplateId(1L)) } returns
             TemplateBlueprint(
-                templateId = TemplateId(1L),
-                mode = TemplateMode.AUCTION,
-                teamCount = 2,
-                teamSize = 2,
-                budget = 300,
-                draftOrderStrategy = null,
-                players =
-                    listOf(
-                        TemplatePlayerBlueprint(name = "선수1", displayOrder = 0),
-                        TemplatePlayerBlueprint(name = "선수2", displayOrder = 1),
-                    ),
+                TemplateId(1L),
+                TemplateMode.AUCTION,
+                2,
+                2,
+                300,
+                null,
+                listOf(
+                    TemplatePlayerBlueprint("선수1", 0),
+                    TemplatePlayerBlueprint("선수2", 1),
+                ),
             )
 
         val createdRoom = roomCreateService.create(TemplateId(1L), "호스트")
@@ -115,17 +113,16 @@ class RoomModuleIntegrationTest {
     fun `방 참가 서비스는 JPA 저장소에 팀장 추가를 반영한다`() {
         every { templateCatalog.getTemplateBlueprint(TemplateId(1L)) } returns
             TemplateBlueprint(
-                templateId = TemplateId(1L),
-                mode = TemplateMode.AUCTION,
-                teamCount = 2,
-                teamSize = 2,
-                budget = 300,
-                draftOrderStrategy = null,
-                players =
-                    listOf(
-                        TemplatePlayerBlueprint(name = "선수1", displayOrder = 0),
-                        TemplatePlayerBlueprint(name = "선수2", displayOrder = 1),
-                    ),
+                TemplateId(1L),
+                TemplateMode.AUCTION,
+                2,
+                2,
+                300,
+                null,
+                listOf(
+                    TemplatePlayerBlueprint("선수1", 0),
+                    TemplatePlayerBlueprint("선수2", 1),
+                ),
             )
 
         val createdRoom = roomCreateService.create(TemplateId(1L), "호스트")
@@ -140,17 +137,16 @@ class RoomModuleIntegrationTest {
     fun `경매 입찰과 정산 서비스는 JPA 연관관계 변경을 영속화한다`() {
         every { templateCatalog.getTemplateBlueprint(TemplateId(1L)) } returns
             TemplateBlueprint(
-                templateId = TemplateId(1L),
-                mode = TemplateMode.AUCTION,
-                teamCount = 2,
-                teamSize = 2,
-                budget = 300,
-                draftOrderStrategy = null,
-                players =
-                    listOf(
-                        TemplatePlayerBlueprint(name = "선수1", displayOrder = 0),
-                        TemplatePlayerBlueprint(name = "선수2", displayOrder = 1),
-                    ),
+                TemplateId(1L),
+                TemplateMode.AUCTION,
+                2,
+                2,
+                300,
+                null,
+                listOf(
+                    TemplatePlayerBlueprint("선수1", 0),
+                    TemplatePlayerBlueprint("선수2", 1),
+                ),
             )
 
         val createdRoom = roomCreateService.create(TemplateId(1L), "호스트")
@@ -170,17 +166,16 @@ class RoomModuleIntegrationTest {
     fun `드래프트 지명 서비스는 JPA 연관관계 변경을 영속화한다`() {
         every { templateCatalog.getTemplateBlueprint(TemplateId(2L)) } returns
             TemplateBlueprint(
-                templateId = TemplateId(2L),
-                mode = TemplateMode.DRAFT,
-                teamCount = 2,
-                teamSize = 2,
-                budget = null,
-                draftOrderStrategy = TemplateDraftOrderStrategy.SNAKE,
-                players =
-                    listOf(
-                        TemplatePlayerBlueprint(name = "선수1", displayOrder = 0),
-                        TemplatePlayerBlueprint(name = "선수2", displayOrder = 1),
-                    ),
+                TemplateId(2L),
+                TemplateMode.DRAFT,
+                2,
+                2,
+                null,
+                TemplateDraftOrderStrategy.SNAKE,
+                listOf(
+                    TemplatePlayerBlueprint("선수1", 0),
+                    TemplatePlayerBlueprint("선수2", 1),
+                ),
             )
 
         val createdRoom = roomCreateService.create(TemplateId(2L), "호스트")

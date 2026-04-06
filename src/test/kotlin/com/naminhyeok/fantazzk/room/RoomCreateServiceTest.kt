@@ -46,13 +46,13 @@ class RoomCreateServiceTest {
             templateCatalog.addTemplate(
                 TemplateId(1L),
                 TemplateBlueprint(
-                    templateId = TemplateId(1L),
-                    mode = TemplateMode.AUCTION,
-                    teamCount = 2,
-                    teamSize = 2,
-                    budget = 300,
-                    draftOrderStrategy = null,
-                    players = listOf(TemplatePlayerBlueprint("선수1", 0), TemplatePlayerBlueprint("선수2", 1)),
+                    TemplateId(1L),
+                    TemplateMode.AUCTION,
+                    2,
+                    2,
+                    300,
+                    null,
+                    listOf(TemplatePlayerBlueprint("선수1", 0), TemplatePlayerBlueprint("선수2", 1)),
                 ),
             )
 
@@ -84,13 +84,13 @@ class RoomCreateServiceTest {
             templateCatalog.addTemplate(
                 TemplateId(2L),
                 TemplateBlueprint(
-                    templateId = TemplateId(2L),
-                    mode = TemplateMode.DRAFT,
-                    teamCount = 2,
-                    teamSize = 2,
-                    budget = null,
-                    draftOrderStrategy = TemplateDraftOrderStrategy.SNAKE,
-                    players = listOf(TemplatePlayerBlueprint("선수1", 0), TemplatePlayerBlueprint("선수2", 1)),
+                    TemplateId(2L),
+                    TemplateMode.DRAFT,
+                    2,
+                    2,
+                    null,
+                    TemplateDraftOrderStrategy.SNAKE,
+                    listOf(TemplatePlayerBlueprint("선수1", 0), TemplatePlayerBlueprint("선수2", 1)),
                 ),
             )
 
@@ -143,18 +143,17 @@ class RoomCreateServiceTest {
             templateCatalog.addTemplate(
                 TemplateId(1L),
                 TemplateBlueprint(
-                    templateId = TemplateId(1L),
-                    mode = TemplateMode.AUCTION,
-                    teamCount = 2,
-                    teamSize = 2,
-                    budget = 300,
-                    draftOrderStrategy = null,
-                    players =
-                        listOf(
-                            TemplatePlayerBlueprint("선수A", 2),
-                            TemplatePlayerBlueprint("선수B", 0),
-                            TemplatePlayerBlueprint("선수C", 1),
-                        ),
+                    TemplateId(1L),
+                    TemplateMode.AUCTION,
+                    2,
+                    2,
+                    300,
+                    null,
+                    listOf(
+                        TemplatePlayerBlueprint("선수A", 2),
+                        TemplatePlayerBlueprint("선수B", 0),
+                        TemplatePlayerBlueprint("선수C", 1),
+                    ),
                 ),
             )
 
@@ -292,13 +291,13 @@ class RoomCreateServiceTest {
         templateCatalog.addTemplate(
             templateId,
             TemplateBlueprint(
-                templateId = templateId,
-                mode = TemplateMode.AUCTION,
-                teamCount = 2,
-                teamSize = 2,
-                budget = 300,
-                draftOrderStrategy = null,
-                players = emptyList(),
+                templateId,
+                TemplateMode.AUCTION,
+                2,
+                2,
+                300,
+                null,
+                emptyList(),
             ),
         )
     }
