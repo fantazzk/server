@@ -14,7 +14,7 @@ public final class TemplateId implements Identifier {
     }
 
     public TemplateId(long value) {
-        this(new UUID(0L, value));
+        this(fromLegacyLong(value));
     }
 
     public UUID getValue() {
@@ -35,6 +35,13 @@ public final class TemplateId implements Identifier {
 
     public static TemplateId newId() {
         return new TemplateId(UUID.randomUUID());
+    }
+
+    private static UUID fromLegacyLong(long value) {
+        if (value <= 0L) {
+            throw new IllegalArgumentException("TemplateId는 1 이상이어야 합니다");
+        }
+        return new UUID(0L, value);
     }
 
     @Override
