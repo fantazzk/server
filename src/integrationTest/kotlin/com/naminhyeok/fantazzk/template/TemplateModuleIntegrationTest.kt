@@ -178,7 +178,7 @@ class TemplateModuleIntegrationTest {
                 ),
             )
 
-        val detail = templateFinder.getDetail(TemplateId(template.templateId))
+        val detail = templateFinder.getDetail(template.id)
 
         assertThat(detail.players.map { it.name }).containsExactly("선수3", "선수1", "선수2", "선수4")
     }
@@ -207,7 +207,7 @@ class TemplateModuleIntegrationTest {
 
     @Test
     fun `템플릿 목록 계약은 존재하지 않는 템플릿을 찾을 수 없음 예외로 변환한다`() {
-        assertThatThrownBy { templateCatalog.getTemplateBlueprint(TemplateId(999_999L)) }
+        assertThatThrownBy { templateCatalog.getTemplateBlueprint(TemplateId.of(999_999L)) }
             .isInstanceOf(TemplateCatalogException.NotFound::class.java)
     }
 
@@ -240,7 +240,7 @@ class TemplateModuleIntegrationTest {
         )
 
         try {
-            assertThatThrownBy { templateCatalog.getTemplateBlueprint(TemplateId(templateId)) }
+            assertThatThrownBy { templateCatalog.getTemplateBlueprint(TemplateId.of(templateId)) }
                 .isInstanceOf(TemplateCatalogException.Invalid::class.java)
         } finally {
             jdbcTemplate.update("delete from template_player where template_id = ?", templateId)

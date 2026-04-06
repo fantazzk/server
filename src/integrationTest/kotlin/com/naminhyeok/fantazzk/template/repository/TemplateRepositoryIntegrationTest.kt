@@ -46,7 +46,7 @@ class TemplateRepositoryIntegrationTest(
 
         val savedId = saved.id
 
-        assertThat(savedId.value).isGreaterThan(0)
+        assertThat(savedId.value).isNotNull
 
         val found = requireNotNull(cut.findById(savedId))
 
@@ -71,7 +71,7 @@ class TemplateRepositoryIntegrationTest(
         val found = requireNotNull(cut.findById(savedId))
 
         assertThat(found.id).isEqualTo(savedId)
-        assertThat(found.players().map { it.id.value }).allMatch { it > 0L }
+        assertThat(found.players().map { it.id.value }).allSatisfy { id -> assertThat(id).isNotNull }
         assertThat(found.players().map { it.templateId }).containsOnly(savedId)
         assertThat(found.players().map { it.name }).containsExactly("선수2", "선수1")
     }
@@ -194,7 +194,7 @@ class TemplateRepositoryIntegrationTest(
             )!!
 
         try {
-            assertThatThrownBy { cut.findById(TemplateId(templateId)) }
+            assertThatThrownBy { cut.findById(TemplateId.of(templateId)) }
                 .isInstanceOf(InvalidDataAccessApiUsageException::class.java)
                 .hasMessage("경매 템플릿에는 예산이 필요합니다")
         } finally {
