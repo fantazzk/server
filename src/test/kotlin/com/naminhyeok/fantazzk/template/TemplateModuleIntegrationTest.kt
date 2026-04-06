@@ -13,12 +13,14 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.modulith.test.ApplicationModuleTest
+import org.springframework.test.context.ActiveProfiles
 import java.util.UUID
 
 @ApplicationModuleTest(
     module = "template",
     verifyAutomatically = false,
 )
+@ActiveProfiles("test")
 class TemplateModuleIntegrationTest {
     @Autowired
     lateinit var templateCreateService: CreateTemplate

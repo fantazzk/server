@@ -22,11 +22,13 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.modulith.test.ApplicationModuleTest
+import org.springframework.test.context.ActiveProfiles
 
 @ApplicationModuleTest(
     module = "room",
     verifyAutomatically = false,
 )
+@ActiveProfiles("test")
 class RoomModuleIntegrationTest {
     @MockkBean(relaxed = true)
     lateinit var templateCatalog: TemplateCatalog

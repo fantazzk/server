@@ -13,14 +13,14 @@ import com.naminhyeok.fantazzk.room.application.StartRoom
 import com.naminhyeok.fantazzk.room.domain.*
 import com.naminhyeok.fantazzk.room.exception.RoomException
 import com.naminhyeok.fantazzk.room.exception.RoomTemplateNotFoundException
-import com.naminhyeok.fantazzk.template.TemplateId
-import com.naminhyeok.fantazzk.room.web.RoomApiController
-import com.naminhyeok.fantazzk.room.web.RoomExceptionHandler
 import com.naminhyeok.fantazzk.room.support.bidFixture
 import com.naminhyeok.fantazzk.room.support.copyRoom
 import com.naminhyeok.fantazzk.room.support.leaderFixture
 import com.naminhyeok.fantazzk.room.support.memberFixture
 import com.naminhyeok.fantazzk.room.support.roomFixture
+import com.naminhyeok.fantazzk.room.web.RoomApiController
+import com.naminhyeok.fantazzk.room.web.RoomExceptionHandler
+import com.naminhyeok.fantazzk.template.TemplateId
 import io.mockk.every
 import io.mockk.justRun
 import io.mockk.mockk

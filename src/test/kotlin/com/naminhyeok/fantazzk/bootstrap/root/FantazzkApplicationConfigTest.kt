@@ -3,6 +3,8 @@ package com.naminhyeok.fantazzk.bootstrap.root
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.yaml.snakeyaml.Yaml
+import java.nio.file.Path
+import kotlin.io.path.readText
 
 class FantazzkApplicationConfigTest {
     @Test
@@ -60,13 +62,10 @@ class FantazzkApplicationConfigTest {
     }
 
     private fun readYamlDocuments(): List<Map<*, *>> =
-        checkNotNull(javaClass.classLoader.getResourceAsStream("application.yml"))
-            .use { inputStream ->
-                Yaml()
-                    .loadAll(inputStream)
-                    .filterIsInstance<Map<*, *>>()
-                    .toList()
-            }
+        Yaml()
+            .loadAll(Path.of("src/main/resources/application.yml").readText())
+            .filterIsInstance<Map<*, *>>()
+            .toList()
 
     private fun nestedValue(
         document: Map<*, *>,

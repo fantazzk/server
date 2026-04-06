@@ -13,8 +13,12 @@ fun RoomId(value: RoomId): RoomId = value
 
 internal fun legacyRoomId(value: Long): RoomId = RoomId.from(stableUuid("room", value))
 
-internal fun stableUuid(prefix: String, value: Long): UUID =
-    UUID.nameUUIDFromBytes("$prefix:$value".toByteArray(StandardCharsets.UTF_8))
+internal fun stableUuid(
+    prefix: String,
+    value: Long,
+): UUID =
+    UUID
+        .nameUUIDFromBytes("$prefix:$value".toByteArray(StandardCharsets.UTF_8))
 
 fun roomPlayerId(value: Long): RoomPlayerId = RoomPlayerId.from(stableUuid("room-player", value))
 

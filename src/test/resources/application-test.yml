@@ -5,3 +5,12 @@ spring:
     password: test
   liquibase:
     change-log: classpath:/db/changelog/db.changelog-master.yaml
+    default-schema: public
+
+sentry:
+  enabled: false
+  dsn: ${SENTRY_DSN:}
+
+swagger:
+  username: false
+  password: false

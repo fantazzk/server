@@ -1,4 +1,3 @@
-import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
@@ -57,22 +56,6 @@ configure<KotlinJvmProjectExtension> {
     }
 }
 
-val integrationTestSourceSet =
-    sourceSets.create("integrationTest") {
-        kotlin.srcDir("src/integrationTest/kotlin")
-        resources.srcDir("src/integrationTest/resources")
-        compileClasspath += sourceSets.main.get().output + configurations.testRuntimeClasspath.get()
-        runtimeClasspath += output + compileClasspath
-    }
-
-val integrationTestImplementation by configurations.getting {
-    extendsFrom(configurations.implementation.get(), configurations.testImplementation.get())
-}
-
-val integrationTestRuntimeOnly by configurations.getting {
-    extendsFrom(configurations.runtimeOnly.get(), configurations.testRuntimeOnly.get())
-}
-
 dependencies {
     implementation(enforcedPlatform(SpringBootPlugin.BOM_COORDINATES))
     implementation(platform("org.springframework.boot:spring-boot-dependencies:4.0.3"))
@@ -111,17 +94,11 @@ dependencies {
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test")
     testImplementation(libs.mockk)
     testImplementation(libs.springmockk)
-
-    integrationTestImplementation(sourceSets.main.get().output)
-    integrationTestImplementation(enforcedPlatform(SpringBootPlugin.BOM_COORDINATES))
-    integrationTestImplementation("org.springframework.boot:spring-boot-starter-test")
-    integrationTestImplementation("org.springframework.boot:spring-boot-data-jpa-test")
-    integrationTestImplementation("org.springframework.boot:spring-boot-jdbc-test")
-    integrationTestImplementation("org.springframework.modulith:spring-modulith-starter-test")
-    integrationTestImplementation("org.springframework.boot:spring-boot-restclient")
-    integrationTestImplementation("org.springframework.boot:spring-boot-resttestclient")
-    integrationTestImplementation("org.testcontainers:testcontainers-postgresql")
-    integrationTestRuntimeOnly("org.postgresql:postgresql")
+    testImplementation("org.springframework.boot:spring-boot-data-jpa-test")
+    testImplementation("org.springframework.boot:spring-boot-jdbc-test")
+    testImplementation("org.springframework.boot:spring-boot-restclient")
+    testImplementation("org.springframework.boot:spring-boot-resttestclient")
+    testImplementation("org.testcontainers:testcontainers-postgresql")
 }
 
 byteBuddy {
@@ -141,26 +118,4 @@ tasks.withType<Test>().configureEach {
         events = mutableSetOf(TestLogEvent.FAILED)
         exceptionFormat = TestExceptionFormat.FULL
     }
-}
-
-val integrationTest =
-    tasks.register<Test>("integrationTest") {
-        description = "Runs integration tests."
-        group = LifecycleBasePlugin.VERIFICATION_GROUP
-        testClassesDirs = integrationTestSourceSet.output.classesDirs
-        classpath = integrationTestSourceSet.runtimeClasspath
-        shouldRunAfter(tasks.test)
-        useJUnitPlatform()
-        testLogging {
-            events = mutableSetOf(TestLogEvent.FAILED)
-            exceptionFormat = TestExceptionFormat.FULL
-        }
-    }
-
-tasks.check {
-    dependsOn(integrationTest)
-}
-
-tasks.named<Copy>("processIntegrationTestResources") {
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }

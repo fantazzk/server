@@ -1,9 +1,10 @@
 package com.naminhyeok.fantazzk.bootstrap.root
 
-import com.naminhyeok.fantazzk.FantazzkApplication
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatCode
 import org.junit.jupiter.api.Test
+import java.nio.file.Path
+import kotlin.io.path.readText
 
 class FantazzkSentryStructureTest {
     @Test
@@ -15,14 +16,9 @@ class FantazzkSentryStructureTest {
 
     @Test
     fun `루트 애플리케이션 설정이 프로필별 센트리 dsn 과 환경값을 선언한다`() {
-        val yaml =
-            FantazzkApplication::class.java.classLoader
-                .getResourceAsStream("application.yml")
-                ?.bufferedReader()
-                ?.readText()
+        val yaml = Path.of("src/main/resources/application.yml").readText()
 
         assertThat(yaml)
-            .isNotNull()
             .contains("sentry:")
             .contains("dsn: \${SENTRY_DSN:}")
             .contains("environment: dev")

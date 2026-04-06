@@ -143,12 +143,21 @@ class LegacyArchitectureConventionsTest {
     }
 
     @Test
-    fun `빌드 설정은 JPA 전환 이후 메인 JDBC starter 와 불필요한 data jdbc 테스트 슬라이스를 제거한다`() {
+    fun `빌드 설정은 별도 integrationTest 소스셋 없이 단일 test 소스셋에 필요한 테스트 의존성을 둔다`() {
         val buildScript = Path.of("build.gradle.kts").readText()
 
         assertThat(buildScript).doesNotContain("implementation(\"org.springframework.boot:spring-boot-starter-data-jdbc\")")
-        assertThat(buildScript).doesNotContain("integrationTestImplementation(\"org.springframework.boot:spring-boot-data-jdbc-test\")")
-        assertThat(buildScript).contains("integrationTestImplementation(\"org.springframework.boot:spring-boot-jdbc-test\")")
+        assertThat(buildScript).doesNotContain("sourceSets.create(\"integrationTest\")")
+        assertThat(buildScript).doesNotContain("src/integrationTest")
+        assertThat(buildScript).doesNotContain("integrationTestImplementation(")
+        assertThat(buildScript).doesNotContain("integrationTestRuntimeOnly(")
+        assertThat(buildScript).doesNotContain("tasks.register<Test>(\"integrationTest\")")
+        assertThat(buildScript).doesNotContain("processIntegrationTestResources")
+        assertThat(buildScript).contains("testImplementation(\"org.springframework.boot:spring-boot-data-jpa-test\")")
+        assertThat(buildScript).contains("testImplementation(\"org.springframework.boot:spring-boot-jdbc-test\")")
+        assertThat(buildScript).contains("testImplementation(\"org.springframework.boot:spring-boot-restclient\")")
+        assertThat(buildScript).contains("testImplementation(\"org.springframework.boot:spring-boot-resttestclient\")")
+        assertThat(buildScript).contains("testImplementation(\"org.testcontainers:testcontainers-postgresql\")")
     }
 
     @Test

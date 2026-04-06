@@ -139,15 +139,39 @@ class RoomAggregateRootTest {
                 roomId = RoomId(11L),
                 status = RoomStatus.IN_PROGRESS,
                 currentTurnIndex = 1,
-                players = listOf(playerFixture(roomPlayerId = roomPlayerId(1L), roomId = RoomId(11L), name = "선수2", displayOrder = 1)),
+                players =
+                    listOf(
+                        playerFixture(
+                            roomPlayerId = roomPlayerId(1L),
+                            roomId = RoomId(11L),
+                            name = "선수2",
+                            displayOrder = 1,
+                        ),
+                    ),
                 leaders =
                     listOf(
-                        leaderFixture(roomTeamLeaderId = roomTeamLeaderId(1L), roomId = RoomId(11L), teamLeaderId = "leader-A", nickname = "A"),
-                        leaderFixture(roomTeamLeaderId = roomTeamLeaderId(2L), roomId = RoomId(11L), teamLeaderId = "leader-B", nickname = "B"),
+                        leaderFixture(
+                            roomTeamLeaderId = roomTeamLeaderId(1L),
+                            roomId = RoomId(11L),
+                            teamLeaderId = "leader-A",
+                            nickname = "A",
+                        ),
+                        leaderFixture(
+                            roomTeamLeaderId = roomTeamLeaderId(2L),
+                            roomId = RoomId(11L),
+                            teamLeaderId = "leader-B",
+                            nickname = "B",
+                        ),
                     ),
                 members =
                     listOf(
-                        memberFixture(roomTeamMemberId = roomTeamMemberId(1L), roomId = RoomId(11L), teamLeaderId = "leader-A", playerName = "선수1", assignOrder = 0),
+                        memberFixture(
+                            roomTeamMemberId = roomTeamMemberId(1L),
+                            roomId = RoomId(11L),
+                            teamLeaderId = "leader-A",
+                            playerName = "선수1",
+                            assignOrder = 0,
+                        ),
                     ),
             )
 

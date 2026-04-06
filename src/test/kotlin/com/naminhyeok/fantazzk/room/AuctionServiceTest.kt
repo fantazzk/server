@@ -6,9 +6,9 @@ import com.naminhyeok.fantazzk.room.application.PlaceBid
 import com.naminhyeok.fantazzk.room.application.SettleAuction
 import com.naminhyeok.fantazzk.room.domain.*
 import com.naminhyeok.fantazzk.room.exception.RoomException
+import com.naminhyeok.fantazzk.room.support.InMemoryRoomRepository
 import com.naminhyeok.fantazzk.room.support.bidFixture
 import com.naminhyeok.fantazzk.room.support.copyRoom
-import com.naminhyeok.fantazzk.room.support.InMemoryRoomRepository
 import com.naminhyeok.fantazzk.room.support.leaderFixture
 import com.naminhyeok.fantazzk.room.support.playerFixture
 import com.naminhyeok.fantazzk.room.support.roomFixture

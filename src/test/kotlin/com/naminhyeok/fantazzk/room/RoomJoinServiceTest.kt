@@ -5,8 +5,8 @@ package com.naminhyeok.fantazzk.room
 import com.naminhyeok.fantazzk.room.application.JoinRoom
 import com.naminhyeok.fantazzk.room.domain.*
 import com.naminhyeok.fantazzk.room.exception.RoomException
-import com.naminhyeok.fantazzk.room.support.copyRoom
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomRepository
+import com.naminhyeok.fantazzk.room.support.copyRoom
 import com.naminhyeok.fantazzk.room.support.leaderFixture
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -82,8 +82,8 @@ class RoomJoinServiceTest {
                 ).let {
                     copyRoom(
                         it,
-                    roomId = roomId,
-                    leaders = currentRoom().leaders,
+                        roomId = roomId,
+                        leaders = currentRoom().leaders,
                     )
                 }
             }
@@ -115,9 +115,9 @@ class RoomJoinServiceTest {
                 ).let {
                     copyRoom(
                         it,
-                    roomId = roomId,
-                    status = status,
-                    leaders = currentRoom().leaders,
+                        roomId = roomId,
+                        status = status,
+                        leaders = currentRoom().leaders,
                     )
                 }
             }

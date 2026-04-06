@@ -6,25 +6,28 @@ import org.springframework.boot.resttestclient.TestRestTemplate
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.HttpStatus
+import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.TestConstructor
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureTestRestTemplate
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
-class FantazzkSmokeTest(
+@ActiveProfiles("production", "test")
+class FantazzkApplicationSmokeTest(
     private val restTemplate: TestRestTemplate,
 ) {
     @Test
-    fun `Swagger UI가 접근 가능하다`() {
-        restTemplate.getForEntity("/swagger-ui/index.html", String::class.java).also {
+    fun `프로덕션에서 헬스 probe는 열려 있고 loggers는 노출되지 않는다`() {
+        restTemplate.getForEntity("/actuator/health/liveness", Any::class.java).also {
             assertThat(it.statusCode).isEqualTo(HttpStatus.OK)
         }
-    }
 
-    @Test
-    fun `API 문서 엔드포인트가 응답한다`() {
-        restTemplate.getForEntity("/v3/api-docs", String::class.java).also {
+        restTemplate.getForEntity("/actuator/health/readiness", Any::class.java).also {
             assertThat(it.statusCode).isEqualTo(HttpStatus.OK)
+        }
+
+        restTemplate.getForEntity("/actuator/loggers", Any::class.java).also {
+            assertThat(it.statusCode).isEqualTo(HttpStatus.NOT_FOUND)
         }
     }
 }

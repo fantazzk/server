@@ -81,7 +81,13 @@ class TemplateTest {
         @Test
         fun `picksPerTeam은 teamSize에서 1을 뺀 값이다`() {
             val template =
-                Template.createDraft("드래프트전", 2, 5, DraftOrderStrategy.SNAKE, listOf("선수1", "선수2", "선수3", "선수4", "선수5", "선수6", "선수7", "선수8"))
+                Template.createDraft(
+                    "드래프트전",
+                    2,
+                    5,
+                    DraftOrderStrategy.SNAKE,
+                    listOf("선수1", "선수2", "선수3", "선수4", "선수5", "선수6", "선수7", "선수8"),
+                )
 
             assertThat(template.picksPerTeam).isEqualTo(4)
         }

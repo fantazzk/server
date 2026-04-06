@@ -106,14 +106,20 @@ class SpringModulithMigrationTest {
     }
 
     @Test
-    fun `현재 목표 구조는 루트 Liquibase 마스터만 사용한다`() {
+    fun `현재 목표 구조는 루트 Liquibase 마스터와 test 전용 profile override 를 사용한다`() {
         val rootMasterPath = "classpath:/db/changelog/db.changelog-master.yaml"
         val mainApplication = Path.of("src/main/resources/application.yml").readText()
-        val integrationApplication = Path.of("src/integrationTest/resources/application.yml").readText()
+        val testApplication = Path.of("src/test/resources/application-test.yml")
+        val teamBuildingMaster = Path.of("src/main/resources/db/changelog/team-building/db.changelog-master.yaml").readText()
 
         assertThat(mainApplication).contains("change-log: $rootMasterPath")
-        assertThat(integrationApplication).contains("change-log: $rootMasterPath")
-        assertThat(integrationApplication).doesNotContain("classpath:/db/changelog/team-building/db.changelog-master.yaml")
+        assertThat(mainApplication).contains("on-profile: test")
+        assertThat(testApplication).exists()
+        assertThat(testApplication.readText()).contains("change-log: $rootMasterPath")
+        assertThat(testApplication.readText()).contains("url: jdbc:tc:postgresql:16:///test")
+        assertThat(Path.of("src/test/resources/application.yml")).doesNotExist()
+        assertThat(Path.of("src/integrationTest")).doesNotExist()
+        assertThat(teamBuildingMaster).contains("db.changelog-add-audit-columns.yaml")
     }
 
     @Test
@@ -161,94 +167,24 @@ class SpringModulithMigrationTest {
     }
 
     @Test
-    fun `현재 목표 구조는 초기 스키마와 감사 컬럼 changeSet 의 역할을 분리한다`() {
+    fun `현재 목표 구조는 UUID 기반 초기 스키마를 권위 원천으로 두고 감사 컬럼 changeSet 은 no-op 으로 유지한다`() {
         val initialSchema = Path.of("src/main/resources/db/changelog/team-building/initial_schema.sql").readText()
         val auditColumns = Path.of("src/main/resources/db/changelog/team-building/add_audit_columns.sql").readText()
-        val templateUpdatedAtInInitialSchema =
-            """
-            template
-            (
-                id                    BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-                name                  VARCHAR(255) NOT NULL,
-                mode                  VARCHAR(20)  NOT NULL,
-                team_count            INT          NOT NULL,
-                team_size             INT          NOT NULL,
-                budget                INT,
-                draft_order_strategy  VARCHAR(20),
-                created_at            TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                updated_at
-            """.trimIndent()
-        val templatePlayerAuditColumnsInInitialSchema =
-            """
-            template_player
-            (
-                id            BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-                template_id   BIGINT       NOT NULL,
-                name          VARCHAR(255) NOT NULL,
-                display_order INT          NOT NULL,
-                created_at
-            """.trimIndent()
-        val roomPlayerAuditColumnsInInitialSchema =
-            """
-            room_player
-            (
-                id            BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-                room_id       BIGINT       NOT NULL,
-                name          VARCHAR(255) NOT NULL,
-                status        VARCHAR(20)  NOT NULL,
-                display_order INT          NOT NULL,
-                created_at
-            """.trimIndent()
-        val roomTeamLeaderAuditColumnsInInitialSchema =
-            """
-            room_team_leader
-            (
-                id               BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-                room_id          BIGINT       NOT NULL,
-                team_leader_id   VARCHAR(36)  NOT NULL,
-                nickname         VARCHAR(255) NOT NULL,
-                remaining_budget INT,
-                created_at
-            """.trimIndent()
-        val roomTeamMemberAuditColumnsInInitialSchema =
-            """
-            room_team_member
-            (
-                id             BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-                room_id        BIGINT       NOT NULL,
-                team_leader_id VARCHAR(36)  NOT NULL,
-                player_name    VARCHAR(255) NOT NULL,
-                assign_order   INT          NOT NULL,
-                created_at
-            """.trimIndent()
-        val roomBidUpdatedAtInInitialSchema =
-            """
-            room_bid
-            (
-                id             BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-                room_id        BIGINT      NOT NULL,
-                round          INT         NOT NULL,
-                team_leader_id VARCHAR(36) NOT NULL,
-                amount         INT         NOT NULL,
-                created_at     TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                updated_at
-            """.trimIndent()
+        val nonBlankAuditLines = auditColumns.lineSequence().filter(String::isNotBlank).toList()
 
-        assertThat(initialSchema).contains("created_at            TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP")
-        assertThat(initialSchema).doesNotContain(templateUpdatedAtInInitialSchema)
-        assertThat(initialSchema).doesNotContain(templatePlayerAuditColumnsInInitialSchema)
-        assertThat(initialSchema).doesNotContain(roomPlayerAuditColumnsInInitialSchema)
-        assertThat(initialSchema).doesNotContain(roomTeamLeaderAuditColumnsInInitialSchema)
-        assertThat(initialSchema).doesNotContain(roomTeamMemberAuditColumnsInInitialSchema)
-        assertThat(initialSchema).doesNotContain(roomBidUpdatedAtInInitialSchema)
-        assertThat(auditColumns).contains("ADD COLUMN updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;")
-        assertThat(auditColumns).contains("ADD COLUMN created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,")
-        assertThat(auditColumns).contains("-- template: updated_at 추가")
-        assertThat(auditColumns).contains("-- template_player: created_at, updated_at 추가")
-        assertThat(auditColumns).contains("-- room_player: created_at, updated_at 추가")
-        assertThat(auditColumns).contains("-- room_team_leader: created_at, updated_at 추가")
-        assertThat(auditColumns).contains("-- room_team_member: created_at, updated_at 추가")
-        assertThat(auditColumns).contains("-- room_bid: updated_at 추가")
+        assertThat(Regex("""\bUUID PRIMARY KEY\b""").findAll(initialSchema).count()).isEqualTo(7)
+        assertThat(Regex("""\bcreated_at\b""").findAll(initialSchema).count()).isEqualTo(7)
+        assertThat(Regex("""\bupdated_at\b""").findAll(initialSchema).count()).isEqualTo(7)
+        assertThat(initialSchema).doesNotContain("BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY")
+        assertThat(initialSchema).contains("CREATE TABLE template")
+        assertThat(initialSchema).contains("CREATE TABLE room")
+
+        assertThat(nonBlankAuditLines).isNotEmpty()
+        assertThat(nonBlankAuditLines).allMatch { it.trim().startsWith("--") }
+        assertThat(auditColumns).contains("Audit columns are part of initial_schema.sql on the clean-rewrite branch.")
+        assertThat(auditColumns).contains("Keep this changeSet as a no-op")
+        assertThat(auditColumns).doesNotContain("ALTER TABLE")
+        assertThat(auditColumns).doesNotContain("ADD COLUMN")
         assertThat(auditColumns).doesNotContain("IF NOT EXISTS")
     }
 
@@ -291,7 +227,10 @@ class SpringModulithMigrationTest {
         assertThat(mismatches).isEmpty()
     }
 
-    private fun readMainSource(packageName: String, simpleName: String): String =
+    private fun readMainSource(
+        packageName: String,
+        simpleName: String,
+    ): String =
         mainSourceRoots()
             .asSequence()
             .flatMap { sourceRoot ->
@@ -313,7 +252,10 @@ class SpringModulithMigrationTest {
         } else {
             Files.walk(sourceRoot).use { paths ->
                 paths
-                    .filter { Files.isRegularFile(it) && (it.fileName.toString().endsWith(".kt") || it.fileName.toString().endsWith(".java")) }
+                    .filter {
+                        Files.isRegularFile(it) &&
+                            (it.fileName.toString().endsWith(".kt") || it.fileName.toString().endsWith(".java"))
+                    }
                     .toList()
                     .mapNotNull { path ->
                         val packageName =

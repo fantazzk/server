@@ -12,22 +12,21 @@ import org.springframework.test.context.TestConstructor
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureTestRestTemplate
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
-@ActiveProfiles("production")
-class FantazzkApplicationSmokeTest(
+@ActiveProfiles("test")
+class FantazzkSmokeTest(
     private val restTemplate: TestRestTemplate,
 ) {
     @Test
-    fun `프로덕션에서 헬스 probe는 열려 있고 loggers는 노출되지 않는다`() {
-        restTemplate.getForEntity("/actuator/health/liveness", Any::class.java).also {
+    fun `Swagger UI가 접근 가능하다`() {
+        restTemplate.getForEntity("/swagger-ui/index.html", String::class.java).also {
             assertThat(it.statusCode).isEqualTo(HttpStatus.OK)
         }
+    }
 
-        restTemplate.getForEntity("/actuator/health/readiness", Any::class.java).also {
+    @Test
+    fun `API 문서 엔드포인트가 응답한다`() {
+        restTemplate.getForEntity("/v3/api-docs", String::class.java).also {
             assertThat(it.statusCode).isEqualTo(HttpStatus.OK)
-        }
-
-        restTemplate.getForEntity("/actuator/loggers", Any::class.java).also {
-            assertThat(it.statusCode).isEqualTo(HttpStatus.NOT_FOUND)
         }
     }
 }
