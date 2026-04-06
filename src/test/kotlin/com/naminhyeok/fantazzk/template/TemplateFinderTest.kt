@@ -25,9 +25,9 @@ class TemplateFinderTest {
 
     @Test
     fun `존재하지 않는 ID로 상세 조회하면 예외가 발생한다`() {
-        every { templateRepo.findById(TemplateId(999L)) } returns null
+        every { templateRepo.findById(templateId(999)) } returns null
 
-        assertThatThrownBy { cut.getDetail(TemplateId(999L)) }
+        assertThatThrownBy { cut.getDetail(templateId(999)) }
             .isInstanceOf(TemplateException.TemplateNotFoundException::class.java)
     }
 
@@ -35,20 +35,8 @@ class TemplateFinderTest {
     fun `목록 조회는 저장된 템플릿을 반환한다`() {
         every { templateRepo.findAll() } returns
             listOf(
-                Template.createAuction(
-                    name = "첫째",
-                    teamCount = 2,
-                    teamSize = 2,
-                    budget = 300,
-                    playerNames = listOf("선수1", "선수2"),
-                ).assignId(TemplateId(1L)),
-                Template.createDraft(
-                    name = "둘째",
-                    teamCount = 2,
-                    teamSize = 2,
-                    strategy = DraftOrderStrategy.SNAKE,
-                    playerNames = listOf("선수1", "선수2"),
-                ).assignId(TemplateId(2L)),
+                Template.createAuction("첫째", 2, 2, 300, listOf("선수1", "선수2")).assignId(templateId(1)),
+                Template.createDraft("둘째", 2, 2, DraftOrderStrategy.SNAKE, listOf("선수1", "선수2")).assignId(templateId(2)),
             )
 
         val all = cut.list()
@@ -58,16 +46,10 @@ class TemplateFinderTest {
     @Test
     fun `상세 조회는 템플릿과 선수 목록을 함께 반환한다`() {
         val template =
-            Template.createAuction(
-                name = "첫째",
-                teamCount = 2,
-                teamSize = 2,
-                budget = 300,
-                playerNames = listOf("선수1", "선수2"),
-            ).assignId(TemplateId(1L))
-        every { templateRepo.findById(TemplateId(template.templateId)) } returns template
+            Template.createAuction("첫째", 2, 2, 300, listOf("선수1", "선수2")).assignId(templateId(1))
+        every { templateRepo.findById(template.templateId) } returns template
 
-        val detail = cut.getDetail(TemplateId(template.templateId))
+        val detail = cut.getDetail(template.templateId)
 
         assertThat(detail.template.templateId).isEqualTo(template.templateId)
         assertThat(detail.players.map { it.name }).containsExactly("선수1", "선수2")
@@ -75,9 +57,13 @@ class TemplateFinderTest {
 
     @Test
     fun `상세 조회는 저장소가 유효하지 않은 aggregate를 로드하면 템플릿 invalid 예외를 던진다`() {
-        every { templateRepo.findById(TemplateId(1L)) } throws InvalidDataAccessApiUsageException("선수 수는 정확히 2명이어야 합니다")
+        every { templateRepo.findById(templateId(1)) } throws InvalidDataAccessApiUsageException("선수 수는 정확히 2명이어야 합니다")
 
-        assertThatThrownBy { cut.getDetail(TemplateId(1L)) }
+        assertThatThrownBy { cut.getDetail(templateId(1)) }
             .isInstanceOf(TemplateException.TemplateInvalidException::class.java)
     }
+
+    private fun templateId(number: Long): TemplateId = TemplateId.from(templateIdText(number))
+
+    private fun templateIdText(number: Long): String = "00000000-0000-0000-0000-${number.toString().padStart(12, '0')}"
 }

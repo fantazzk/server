@@ -13,6 +13,7 @@ import com.naminhyeok.fantazzk.room.application.StartRoom
 import com.naminhyeok.fantazzk.room.domain.*
 import com.naminhyeok.fantazzk.room.exception.RoomException
 import com.naminhyeok.fantazzk.room.exception.RoomTemplateNotFoundException
+import com.naminhyeok.fantazzk.template.TemplateId
 import com.naminhyeok.fantazzk.room.web.RoomApiController
 import com.naminhyeok.fantazzk.room.web.RoomExceptionHandler
 import io.mockk.every
@@ -95,11 +96,11 @@ class RoomApiControllerTest {
         @Test
         fun `유효한 요청으로 방을 생성하면 요청 본문을 서비스 인자로 매핑하고 201을 반환한다`() {
             val room = room("NEW001")
-            every { roomCreateService.create(1L, "호스트") } returns room
+            every { roomCreateService.create(templateId(1), "호스트") } returns room
 
             mockMvc.post("/api/v1/rooms") {
                 contentType = MediaType.APPLICATION_JSON
-                content = """{"templateId": 1, "hostNickname": "호스트"}"""
+                content = """{"templateId": "${templateIdText(1)}", "hostNickname": "호스트"}"""
             }.andExpect {
                 status { isCreated() }
                 jsonPath("$.resultType") { value("SUCCESS") }
@@ -113,11 +114,11 @@ class RoomApiControllerTest {
 
         @Test
         fun `템플릿이 없으면 404를 반환한다`() {
-            every { roomCreateService.create(999L, "호스트") } throws RoomTemplateNotFoundException()
+            every { roomCreateService.create(templateId(999), "호스트") } throws RoomTemplateNotFoundException()
 
             mockMvc.post("/api/v1/rooms") {
                 contentType = MediaType.APPLICATION_JSON
-                content = """{"templateId": 999, "hostNickname": "호스트"}"""
+                content = """{"templateId": "${templateIdText(999)}", "hostNickname": "호스트"}"""
             }.andExpect {
                 status { isNotFound() }
                 jsonPath("$.resultType") { value("ERROR") }
@@ -371,4 +372,8 @@ class RoomApiControllerTest {
             createdAt = now,
             updatedAt = now,
         )
+
+    private fun templateId(number: Long): TemplateId = TemplateId.from(templateIdText(number))
+
+    private fun templateIdText(number: Long): String = "00000000-0000-0000-0000-${number.toString().padStart(12, '0')}"
 }

@@ -38,22 +38,10 @@ class CreateTemplate(
         val template =
             when (command) {
                 is CreateTemplateCommand.Auction ->
-                    Template.createAuction(
-                        name = command.name,
-                        teamCount = command.teamCount,
-                        teamSize = command.teamSize,
-                        budget = command.budget,
-                        playerNames = command.playerNames,
-                    )
+                    Template.createAuction(command.name, command.teamCount, command.teamSize, command.budget, command.playerNames)
 
                 is CreateTemplateCommand.Draft ->
-                    Template.createDraft(
-                        name = command.name,
-                        teamCount = command.teamCount,
-                        teamSize = command.teamSize,
-                        strategy = command.strategy,
-                        playerNames = command.playerNames,
-                    )
+                    Template.createDraft(command.name, command.teamCount, command.teamSize, command.strategy, command.playerNames)
             }
         return templateRepository.save(template)
     }

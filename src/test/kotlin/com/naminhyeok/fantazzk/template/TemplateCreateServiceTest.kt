@@ -21,7 +21,7 @@ class TemplateCreateServiceTest {
     fun setUp() {
         templateRepo = mockk()
         every { templateRepo.save(any<Template>()) } answers {
-            firstArg<Template>().takeUnless { it.templateId == 0L } ?: firstArg<Template>().assignId(TemplateId(1L))
+            firstArg<Template>().assignId(templateId(1))
         }
         cut = CreateTemplate(templateRepo)
     }
@@ -41,7 +41,7 @@ class TemplateCreateServiceTest {
 
         assertThat(template.name).isEqualTo("경매전")
         assertThat(template.configuration)
-            .isEqualTo(TemplateConfiguration.auction(teamCount = 2, teamSize = 2, budget = 500))
+            .isEqualTo(TemplateConfiguration.auction(2, 2, 500))
 
         val players = template.players()
         assertThat(players.map { it.name }).containsExactly("선수A", "선수B")
@@ -62,8 +62,8 @@ class TemplateCreateServiceTest {
             )
 
         assertThat(template.configuration)
-            .isEqualTo(TemplateConfiguration.draft(teamCount = 2, teamSize = 2, strategy = DraftOrderStrategy.SNAKE))
-        assertThat(template.budget).isNull()
+            .isEqualTo(TemplateConfiguration.draft(2, 2, DraftOrderStrategy.SNAKE))
+        assertThat(template.configuration.budget).isNull()
     }
 
     @Test
@@ -81,4 +81,8 @@ class TemplateCreateServiceTest {
         }.isInstanceOf(IllegalArgumentException::class.java)
             .hasMessage("선수 수는 정확히 2명이어야 합니다")
     }
+
+    private fun templateId(number: Long): TemplateId = TemplateId.from(templateIdText(number))
+
+    private fun templateIdText(number: Long): String = "00000000-0000-0000-0000-${number.toString().padStart(12, '0')}"
 }

@@ -6,6 +6,7 @@ import com.naminhyeok.fantazzk.room.repository.Rooms
 import com.naminhyeok.fantazzk.template.TemplateBlueprint
 import com.naminhyeok.fantazzk.template.TemplateCatalog
 import com.naminhyeok.fantazzk.template.TemplateCatalogException
+import com.naminhyeok.fantazzk.template.TemplateId
 
 class InMemoryRoomRepository : Rooms {
     private val store = mutableMapOf<Long, Room>()
@@ -81,15 +82,15 @@ class InMemoryRoomRepository : Rooms {
 }
 
 class InMemoryTemplateCatalog : TemplateCatalog {
-    private val templates = mutableMapOf<Long, TemplateBlueprint>()
+    private val templates = mutableMapOf<TemplateId, TemplateBlueprint>()
 
     fun addTemplate(
-        templateId: Long,
+        templateId: TemplateId,
         snapshot: TemplateBlueprint,
     ) {
         templates[templateId] = snapshot
     }
 
-    override fun getTemplateBlueprint(templateId: Long): TemplateBlueprint =
+    override fun getTemplateBlueprint(templateId: TemplateId): TemplateBlueprint =
         templates[templateId] ?: throw TemplateCatalogException.NotFound(templateId)
 }

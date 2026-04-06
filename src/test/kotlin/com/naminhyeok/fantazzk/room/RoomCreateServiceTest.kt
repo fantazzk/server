@@ -13,6 +13,7 @@ import com.naminhyeok.fantazzk.template.TemplateBlueprint
 import com.naminhyeok.fantazzk.template.TemplateCatalog
 import com.naminhyeok.fantazzk.template.TemplateCatalogException
 import com.naminhyeok.fantazzk.template.TemplateDraftOrderStrategy
+import com.naminhyeok.fantazzk.template.TemplateId
 import com.naminhyeok.fantazzk.template.TemplateMode
 import com.naminhyeok.fantazzk.template.TemplatePlayerBlueprint
 import org.assertj.core.api.Assertions.assertThat
@@ -43,19 +44,19 @@ class RoomCreateServiceTest {
         @Test
         fun `경매 템플릿으로 방을 생성하면 경매 필드만 채워진다`() {
             templateCatalog.addTemplate(
-                1L,
+                templateId(1),
                 TemplateBlueprint(
-                    templateId = 1L,
-                    mode = TemplateMode.AUCTION,
-                    teamCount = 2,
-                    teamSize = 2,
-                    budget = 300,
-                    draftOrderStrategy = null,
-                    players = listOf(TemplatePlayerBlueprint("선수1", 0), TemplatePlayerBlueprint("선수2", 1)),
+                    templateId(1),
+                    TemplateMode.AUCTION,
+                    2,
+                    2,
+                    300,
+                    null,
+                    listOf(TemplatePlayerBlueprint("선수1", 0), TemplatePlayerBlueprint("선수2", 1)),
                 ),
             )
 
-            val room = cut.create(1L, "호스트")
+            val room = cut.create(templateId(1), "호스트")
             val leader = room.leaders.single()
 
             assertThat(room.status).isEqualTo(RoomStatus.WAITING)
@@ -81,19 +82,19 @@ class RoomCreateServiceTest {
         @Test
         fun `드래프트 템플릿으로 방을 생성하면 드래프트 필드만 채워진다`() {
             templateCatalog.addTemplate(
-                2L,
+                templateId(2),
                 TemplateBlueprint(
-                    templateId = 2L,
-                    mode = TemplateMode.DRAFT,
-                    teamCount = 2,
-                    teamSize = 2,
-                    budget = null,
-                    draftOrderStrategy = TemplateDraftOrderStrategy.SNAKE,
-                    players = listOf(TemplatePlayerBlueprint("선수1", 0), TemplatePlayerBlueprint("선수2", 1)),
+                    templateId(2),
+                    TemplateMode.DRAFT,
+                    2,
+                    2,
+                    null,
+                    TemplateDraftOrderStrategy.SNAKE,
+                    listOf(TemplatePlayerBlueprint("선수1", 0), TemplatePlayerBlueprint("선수2", 1)),
                 ),
             )
 
-            val room = cut.create(2L, "호스트")
+            val room = cut.create(templateId(2), "호스트")
             val leader = room.leaders.single()
 
             assertThat(room.mode).isEqualTo(TeamBuildingMode.DRAFT)
@@ -117,9 +118,9 @@ class RoomCreateServiceTest {
     inner class `생성 시 초기화 계약` {
         @RepeatedTest(10)
         fun `방 생성 시 6자리 영대문자와 숫자 코드가 발급된다`() {
-            addAuctionTemplate(templateId = 1L)
+            addAuctionTemplate(templateId(1))
 
-            val room = cut.create(1L, "호스트")
+            val room = cut.create(templateId(1), "호스트")
 
             assertThat(room.code).hasSize(6)
             assertThat(room.code).matches("[A-Z0-9]{6}")
@@ -127,9 +128,9 @@ class RoomCreateServiceTest {
 
         @Test
         fun `방 생성 시 호스트가 첫 번째 팀장으로 등록된다`() {
-            addAuctionTemplate(templateId = 1L)
+            addAuctionTemplate(templateId(1))
 
-            val room = cut.create(1L, "호스트닉네임")
+            val room = cut.create(templateId(1), "호스트닉네임")
 
             val leaders = room.leaders
             assertThat(leaders).hasSize(1)
@@ -140,24 +141,23 @@ class RoomCreateServiceTest {
         @Test
         fun `방 생성 시 템플릿 선수 목록이 표시 순서와 상태를 유지한 채 복사된다`() {
             templateCatalog.addTemplate(
-                1L,
+                templateId(1),
                 TemplateBlueprint(
-                    templateId = 1L,
-                    mode = TemplateMode.AUCTION,
-                    teamCount = 2,
-                    teamSize = 2,
-                    budget = 300,
-                    draftOrderStrategy = null,
-                    players =
-                        listOf(
-                            TemplatePlayerBlueprint("선수A", 2),
-                            TemplatePlayerBlueprint("선수B", 0),
-                            TemplatePlayerBlueprint("선수C", 1),
-                        ),
+                    templateId(1),
+                    TemplateMode.AUCTION,
+                    2,
+                    2,
+                    300,
+                    null,
+                    listOf(
+                        TemplatePlayerBlueprint("선수A", 2),
+                        TemplatePlayerBlueprint("선수B", 0),
+                        TemplatePlayerBlueprint("선수C", 1),
+                    ),
                 ),
             )
 
-            val room = cut.create(1L, "호스트")
+            val room = cut.create(templateId(1), "호스트")
             val roomPlayers = room.players
 
             assertThat(roomPlayers).hasSize(3)
@@ -178,14 +178,14 @@ class RoomCreateServiceTest {
                 CreateRoom(
                     roomRepo,
                     object : TemplateCatalog {
-                        override fun getTemplateBlueprint(templateId: Long): TemplateBlueprint {
+                        override fun getTemplateBlueprint(templateId: TemplateId): TemplateBlueprint {
                             throw TemplateCatalogException.NotFound(templateId)
                         }
                     },
                     roomCreateAttemptExecutor,
                 )
 
-            assertThatThrownBy { cut.create(999L, "호스트") }
+            assertThatThrownBy { cut.create(templateId(999), "호스트") }
                 .isInstanceOf(RoomTemplateNotFoundException::class.java)
                 .hasMessage("템플릿을 찾을 수 없습니다")
         }
@@ -196,14 +196,14 @@ class RoomCreateServiceTest {
                 CreateRoom(
                     roomRepo,
                     object : TemplateCatalog {
-                        override fun getTemplateBlueprint(templateId: Long): TemplateBlueprint {
+                        override fun getTemplateBlueprint(templateId: TemplateId): TemplateBlueprint {
                             throw TemplateCatalogException.Invalid(templateId)
                         }
                     },
                     roomCreateAttemptExecutor,
                 )
 
-            assertThatThrownBy { cut.create(999L, "호스트") }
+            assertThatThrownBy { cut.create(templateId(999), "호스트") }
                 .isInstanceOf(IllegalStateException::class.java)
                 .hasMessage("유효하지 않은 템플릿입니다")
         }
@@ -214,7 +214,7 @@ class RoomCreateServiceTest {
         @Test
         fun `저장 시 코드 중복이 발생하면 다른 코드로 재시도한다`() {
             val retryingRoomRepo = DuplicateOnceWithDistinctRetryRoomRepository()
-            addAuctionTemplate(templateId = 1L)
+            addAuctionTemplate(templateId(1))
             cut =
                 CreateRoom(
                     retryingRoomRepo,
@@ -222,7 +222,7 @@ class RoomCreateServiceTest {
                     RoomCreateAttemptExecutor(retryingRoomRepo),
                 )
 
-            val room = cut.create(1L, "호스트")
+            val room = cut.create(templateId(1), "호스트")
 
             assertThat(room.roomId).isPositive()
             assertThat(retryingRoomRepo.saveAttempts).isEqualTo(2)
@@ -234,7 +234,7 @@ class RoomCreateServiceTest {
         @Test
         fun `JPA 저장소에서 무결성 예외가 발생해도 다른 코드로 재시도한다`() {
             val retryingRoomRepo = DuplicateOnceWithDataIntegrityRetryRoomRepository()
-            addAuctionTemplate(templateId = 1L)
+            addAuctionTemplate(templateId(1))
             cut =
                 CreateRoom(
                     retryingRoomRepo,
@@ -242,7 +242,7 @@ class RoomCreateServiceTest {
                     RoomCreateAttemptExecutor(retryingRoomRepo),
                 )
 
-            val room = cut.create(1L, "호스트")
+            val room = cut.create(templateId(1), "호스트")
 
             assertThat(room.roomId).isPositive()
             assertThat(retryingRoomRepo.saveAttempts).isEqualTo(2)
@@ -254,7 +254,7 @@ class RoomCreateServiceTest {
         @Test
         fun `조회 단계에서 계속 충돌하는 코드만 생성되면 최대 횟수까지만 재시도한다`() {
             val alwaysExistingCodeRoomRepository = AlwaysExistingCodeRoomRepository()
-            addAuctionTemplate(templateId = 1L)
+            addAuctionTemplate(templateId(1))
             cut =
                 CreateRoom(
                     alwaysExistingCodeRoomRepository,
@@ -262,7 +262,7 @@ class RoomCreateServiceTest {
                     RoomCreateAttemptExecutor(alwaysExistingCodeRoomRepository),
                 )
 
-            assertThatThrownBy { cut.create(1L, "호스트") }
+            assertThatThrownBy { cut.create(templateId(1), "호스트") }
                 .isInstanceOf(IllegalStateException::class.java)
                 .hasMessage("방 코드를 생성할 수 없습니다")
             assertThat(alwaysExistingCodeRoomRepository.findByCodeAttempts).isEqualTo(5)
@@ -272,7 +272,7 @@ class RoomCreateServiceTest {
         @Test
         fun `저장 시 코드 중복이 계속 발생하면 최대 횟수 이후 생성에 실패한다`() {
             val alwaysDuplicateRoomRepo = AlwaysDuplicateRoomRepository()
-            addAuctionTemplate(templateId = 1L)
+            addAuctionTemplate(templateId(1))
             cut =
                 CreateRoom(
                     alwaysDuplicateRoomRepo,
@@ -280,27 +280,31 @@ class RoomCreateServiceTest {
                     RoomCreateAttemptExecutor(alwaysDuplicateRoomRepo),
                 )
 
-            assertThatThrownBy { cut.create(1L, "호스트") }
+            assertThatThrownBy { cut.create(templateId(1), "호스트") }
                 .isInstanceOf(IllegalStateException::class.java)
                 .hasMessage("방 코드를 생성할 수 없습니다")
             assertThat(alwaysDuplicateRoomRepo.saveAttempts).isEqualTo(5)
         }
     }
 
-    private fun addAuctionTemplate(templateId: Long) {
+    private fun addAuctionTemplate(templateId: TemplateId) {
         templateCatalog.addTemplate(
             templateId,
             TemplateBlueprint(
-                templateId = templateId,
-                mode = TemplateMode.AUCTION,
-                teamCount = 2,
-                teamSize = 2,
-                budget = 300,
-                draftOrderStrategy = null,
-                players = emptyList(),
+                templateId,
+                TemplateMode.AUCTION,
+                2,
+                2,
+                300,
+                null,
+                emptyList(),
             ),
         )
     }
+
+    private fun templateId(number: Long): TemplateId = TemplateId.from(templateIdText(number))
+
+    private fun templateIdText(number: Long): String = "00000000-0000-0000-0000-${number.toString().padStart(12, '0')}"
 
     private class DuplicateOnceWithDistinctRetryRoomRepository : Rooms {
         private val delegate = InMemoryRoomRepository()

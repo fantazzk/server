@@ -13,7 +13,7 @@ internal object TemplateOpenApiDocs {
             "- playerNames 의 순서가 템플릿 선수의 displayOrder 로 저장됩니다."
 
     const val GET_DESCRIPTION =
-        "템플릿 ID로 상세 정보를 조회합니다.\n" +
+        "템플릿 UUID로 상세 정보를 조회합니다.\n" +
             "- success.players 에 템플릿에 속한 선수 목록이 포함됩니다.\n" +
             "- players.displayOrder 로 저장 순서를 확인할 수 있습니다."
 
@@ -22,7 +22,7 @@ internal object TemplateOpenApiDocs {
             "- 목록 조회에서는 기본 메타데이터를 중심으로 반환합니다.\n" +
             "- success 는 TemplateResponse 배열입니다."
 
-    const val TEMPLATE_ID_PARAMETER = "조회할 템플릿의 ID 입니다."
+    const val TEMPLATE_ID_PARAMETER = "조회할 템플릿의 UUID 입니다."
 
     const val CREATE_AUCTION_TEMPLATE_REQUEST_EXAMPLE =
         """
@@ -55,7 +55,7 @@ internal object TemplateOpenApiDocs {
         {
           "resultType":"SUCCESS",
           "success":{
-            "id":1,
+            "id":"123e4567-e89b-12d3-a456-426614174000",
             "name":"주말 풋살 경매전",
             "mode":"AUCTION",
             "teamCount":2,
@@ -73,7 +73,7 @@ internal object TemplateOpenApiDocs {
         {
           "resultType":"SUCCESS",
           "success":{
-            "id":1,
+            "id":"123e4567-e89b-12d3-a456-426614174001",
             "name":"사내 리그 드래프트전",
             "mode":"DRAFT",
             "teamCount":2,
@@ -94,8 +94,8 @@ internal object TemplateOpenApiDocs {
         {
           "resultType":"SUCCESS",
           "success":[
-            {"id":1,"name":"주말 풋살 경매전","mode":"AUCTION","teamCount":2,"teamSize":2,"budget":300,"draftOrderStrategy":null,"players":null},
-            {"id":2,"name":"사내 리그 드래프트전","mode":"DRAFT","teamCount":2,"teamSize":2,"budget":null,"draftOrderStrategy":"SNAKE","players":null}
+            {"id":"123e4567-e89b-12d3-a456-426614174000","name":"주말 풋살 경매전","mode":"AUCTION","teamCount":2,"teamSize":2,"budget":300,"draftOrderStrategy":null,"players":null},
+            {"id":"123e4567-e89b-12d3-a456-426614174001","name":"사내 리그 드래프트전","mode":"DRAFT","teamCount":2,"teamSize":2,"budget":null,"draftOrderStrategy":"SNAKE","players":null}
           ],
           "error":null
         }

@@ -7,6 +7,7 @@ import com.naminhyeok.fantazzk.template.TemplateBlueprint
 import com.naminhyeok.fantazzk.template.TemplateCatalog
 import com.naminhyeok.fantazzk.template.TemplateCatalogException
 import com.naminhyeok.fantazzk.template.TemplateDraftOrderStrategy
+import com.naminhyeok.fantazzk.template.TemplateId
 import com.naminhyeok.fantazzk.template.TemplateMode
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.dao.DuplicateKeyException
@@ -20,7 +21,7 @@ class CreateRoom(
     private val roomCreateAttemptExecutor: RoomCreateAttemptExecutor,
 ) {
     fun create(
-        templateId: Long,
+        templateId: TemplateId,
         hostNickname: String,
     ): Room {
         val template =

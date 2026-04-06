@@ -13,6 +13,7 @@ import com.naminhyeok.fantazzk.room.application.StartRoom
 import com.naminhyeok.fantazzk.room.domain.*
 import com.naminhyeok.fantazzk.room.repository.Rooms
 import com.naminhyeok.fantazzk.room.web.RoomApiController
+import com.naminhyeok.fantazzk.template.TemplateId
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
@@ -70,7 +71,7 @@ class RoomStructureTransitionTest {
 
     @Test
     fun `방 생성 재시도는 외부 서비스와 개별 시도 트랜잭션으로 분리한다`() {
-        val createMethod = CreateRoom::class.java.getMethod("create", Long::class.javaPrimitiveType, String::class.java)
+        val createMethod = CreateRoom::class.java.getMethod("create", TemplateId::class.java, String::class.java)
         val attemptMethod = RoomCreateAttemptExecutor::class.java.getMethod("create", Room::class.java)
 
         assertThat(createMethod.isAnnotationPresent(Transactional::class.java)).isFalse()

@@ -7,6 +7,7 @@ import com.naminhyeok.fantazzk.room.application.PickDraft
 import com.naminhyeok.fantazzk.room.application.PlaceBid
 import com.naminhyeok.fantazzk.room.application.SettleAuction
 import com.naminhyeok.fantazzk.room.application.StartRoom
+import com.naminhyeok.fantazzk.template.TemplateId
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
@@ -92,7 +93,7 @@ class RoomApiController(
         )
         @RequestBody request: CreateRoomRequest,
     ): ApiResponse<RoomResponse> {
-        val room = roomCreateService.create(request.templateId, request.hostNickname)
+        val room = roomCreateService.create(TemplateId.from(request.templateId), request.hostNickname)
         return ApiResponse.success(RoomResponse.from(room))
     }
 

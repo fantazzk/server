@@ -92,8 +92,8 @@ class SpringModulithMigrationTest {
 
     @Test
     fun `현재 목표 구조는 aggregate 내부 로컬 이벤트 큐를 유지하지 않는다`() {
-        val roomSource = Path.of("src/main/kotlin/com/naminhyeok/fantazzk/room/domain/Room.kt").readText()
-        val templateSource = Path.of("src/main/kotlin/com/naminhyeok/fantazzk/template/domain/Template.kt").readText()
+        val roomSource = readMainSource("com.naminhyeok.fantazzk.room.domain", "Room")
+        val templateSource = readMainSource("com.naminhyeok.fantazzk.template.domain", "Template")
 
         listOf("pendingEvents", "drainEvents(", "recordCreated(", "restorePendingEvents(", "registerEvent(", "registerEvents(")
             .forEach { marker ->
@@ -284,18 +284,43 @@ class SpringModulithMigrationTest {
 
     @Test
     fun `현재 목표 구조는 소스 파일 경로와 패키지 선언을 일치시킨다`() {
-        val sourceRoot = Path.of("src/main/kotlin/com/naminhyeok/fantazzk")
-
         val mismatches =
+            mainSourceRoots()
+                .flatMap(::findPackageMismatches)
+
+        assertThat(mismatches).isEmpty()
+    }
+
+    private fun readMainSource(packageName: String, simpleName: String): String =
+        mainSourceRoots()
+            .asSequence()
+            .flatMap { sourceRoot ->
+                val relativeParent =
+                    packageName
+                        .split('.')
+                        .drop(3)
+                        .fold(Path.of("")) { acc, segment -> acc.resolve(segment) }
+                sequenceOf("kt", "java").map { extension ->
+                    sourceRoot.resolve(relativeParent).resolve("$simpleName.$extension")
+                }
+            }.firstOrNull(Files::exists)
+            ?.readText()
+            ?: error("소스 파일을 찾을 수 없습니다: $packageName.$simpleName")
+
+    private fun findPackageMismatches(sourceRoot: Path): List<String> =
+        if (!sourceRoot.exists()) {
+            emptyList()
+        } else {
             Files.walk(sourceRoot).use { paths ->
                 paths
-                    .filter { Files.isRegularFile(it) && it.fileName.toString().endsWith(".kt") }
+                    .filter { Files.isRegularFile(it) && (it.fileName.toString().endsWith(".kt") || it.fileName.toString().endsWith(".java")) }
                     .toList()
                     .mapNotNull { path ->
                         val packageName =
                             path.readLines()
                                 .firstOrNull { it.startsWith("package ") }
                                 ?.removePrefix("package ")
+                                ?.removeSuffix(";")
                                 ?: return@mapNotNull null
 
                         val expectedParent =
@@ -312,7 +337,11 @@ class SpringModulithMigrationTest {
                         }
                     }.toList()
             }
+        }
 
-        assertThat(mismatches).isEmpty()
-    }
+    private fun mainSourceRoots(): List<Path> =
+        listOf(
+            Path.of("src/main/kotlin/com/naminhyeok/fantazzk"),
+            Path.of("src/main/java/com/naminhyeok/fantazzk"),
+        )
 }
