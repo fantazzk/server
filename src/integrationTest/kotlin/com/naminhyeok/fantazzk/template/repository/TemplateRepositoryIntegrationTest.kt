@@ -15,6 +15,7 @@ import org.springframework.boot.liquibase.autoconfigure.LiquibaseAutoConfigurati
 import org.springframework.dao.InvalidDataAccessApiUsageException
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.test.context.TestConstructor
+import java.util.UUID
 
 @ImportAutoConfiguration(
     LiquibaseAutoConfiguration::class,
@@ -31,22 +32,21 @@ class TemplateRepositoryIntegrationTest(
         val saved =
             cut.save(
                 Template.createAuction(
-                    name = "테스트 경매",
-                    teamCount = 5,
-                    teamSize = 5,
-                    budget = 300,
-                    playerNames =
-                        listOf(
-                            "선수1", "선수2", "선수3", "선수4", "선수5", "선수6", "선수7", "선수8",
-                            "선수9", "선수10", "선수11", "선수12", "선수13", "선수14", "선수15", "선수16",
-                            "선수17", "선수18", "선수19", "선수20",
-                        ),
+                    "테스트 경매",
+                    5,
+                    5,
+                    300,
+                    listOf(
+                        "선수1", "선수2", "선수3", "선수4", "선수5", "선수6", "선수7", "선수8",
+                        "선수9", "선수10", "선수11", "선수12", "선수13", "선수14", "선수15", "선수16",
+                        "선수17", "선수18", "선수19", "선수20",
+                    ),
                 ),
             )
 
-        assertThat(saved.templateId).isGreaterThan(0)
+        assertThat(saved.templateId).isNotNull
 
-        val found = cut.findById(TemplateId(saved.templateId))
+        val found = cut.findById(saved.templateId)
         assertThat(found).isNotNull
         assertThat(found!!.mode).isEqualTo(TeamBuildingMode.AUCTION)
         assertThat(found.budget).isEqualTo(300)
@@ -57,11 +57,11 @@ class TemplateRepositoryIntegrationTest(
         val saved =
             cut.save(
                 Template.createAuction(
-                    name = "통합 템플릿",
-                    teamCount = 2,
-                    teamSize = 2,
-                    budget = 300,
-                    playerNames = listOf("선수2", "선수1"),
+                    "통합 템플릿",
+                    2,
+                    2,
+                    300,
+                    listOf("선수2", "선수1"),
                 ),
             )
 
@@ -76,39 +76,39 @@ class TemplateRepositoryIntegrationTest(
         val saved =
             cut.save(
                 Template.createDraft(
-                    name = "드래프트",
-                    teamCount = 2,
-                    teamSize = 2,
-                    strategy = DraftOrderStrategy.SNAKE,
-                    playerNames = listOf("선수1", "선수2"),
+                    "드래프트",
+                    2,
+                    2,
+                    DraftOrderStrategy.SNAKE,
+                    listOf("선수1", "선수2"),
                 ),
             )
 
-        val found = cut.findById(TemplateId(saved.templateId))
+        val found = cut.findById(saved.templateId)
 
         assertThat(found).isNotNull
         assertThat(found!!.configuration)
-            .isEqualTo(TemplateConfiguration.draft(teamCount = 2, teamSize = 2, strategy = DraftOrderStrategy.SNAKE))
+            .isEqualTo(TemplateConfiguration.draft(2, 2, DraftOrderStrategy.SNAKE))
     }
 
     @Test
     fun `전체 템플릿 목록을 조회할 수 있다`() {
         cut.save(
             Template.createAuction(
-                name = "첫째",
-                teamCount = 2,
-                teamSize = 2,
-                budget = 300,
-                playerNames = listOf("선수1", "선수2"),
+                "첫째",
+                2,
+                2,
+                300,
+                listOf("선수1", "선수2"),
             ),
         )
         cut.save(
             Template.createDraft(
-                name = "둘째",
-                teamCount = 2,
-                teamSize = 2,
-                strategy = DraftOrderStrategy.SNAKE,
-                playerNames = listOf("선수1", "선수2"),
+                "둘째",
+                2,
+                2,
+                DraftOrderStrategy.SNAKE,
+                listOf("선수1", "선수2"),
             ),
         )
 
@@ -121,28 +121,27 @@ class TemplateRepositoryIntegrationTest(
     fun `전체 템플릿 목록 조회는 유효하지 않은 row를 만나면 즉시 실패한다`() {
         cut.save(
             Template.createAuction(
-                name = "정상 템플릿",
-                teamCount = 2,
-                teamSize = 2,
-                budget = 300,
-                playerNames = listOf("선수1", "선수2"),
+                "정상 템플릿",
+                2,
+                2,
+                300,
+                listOf("선수1", "선수2"),
             ),
         )
-        val invalidTemplateId =
-            jdbcTemplate.queryForObject(
-                """
-                insert into template (name, mode, team_count, team_size, budget, draft_order_strategy)
-                values (?, ?, ?, ?, ?, ?)
-                returning id
-                """.trimIndent(),
-                Long::class.java,
-                "유효하지 않은 템플릿",
-                "AUCTION",
-                2,
-                2,
-                null,
-                null,
-            )!!
+        val invalidTemplateId = UUID.randomUUID()
+        jdbcTemplate.update(
+            """
+            insert into template (id, name, mode, team_count, team_size, budget, draft_order_strategy)
+            values (?, ?, ?, ?, ?, ?, ?)
+            """.trimIndent(),
+            invalidTemplateId,
+            "유효하지 않은 템플릿",
+            "AUCTION",
+            2,
+            2,
+            null,
+            null,
+        )
 
         try {
             assertThatThrownBy { cut.findAll() }
@@ -158,11 +157,11 @@ class TemplateRepositoryIntegrationTest(
         val saved =
             cut.save(
                 Template.createAuction(
-                    name = "드래프트",
-                    teamCount = 2,
-                    teamSize = 2,
-                    budget = 300,
-                    playerNames = listOf("선수2", "선수1"),
+                    "드래프트",
+                    2,
+                    2,
+                    300,
+                    listOf("선수2", "선수1"),
                 ),
             )
 
@@ -174,21 +173,20 @@ class TemplateRepositoryIntegrationTest(
 
     @Test
     fun `유효하지 않은 row는 조회 시 즉시 실패한다`() {
-        val templateId =
-            jdbcTemplate.queryForObject(
-                """
-                insert into template (name, mode, team_count, team_size, budget, draft_order_strategy)
-                values (?, ?, ?, ?, ?, ?)
-                returning id
-                """.trimIndent(),
-                Long::class.java,
-                "레거시 경매 템플릿",
-                "AUCTION",
-                2,
-                2,
-                null,
-                null,
-            )!!
+        val templateId = UUID.randomUUID()
+        jdbcTemplate.update(
+            """
+            insert into template (id, name, mode, team_count, team_size, budget, draft_order_strategy)
+            values (?, ?, ?, ?, ?, ?, ?)
+            """.trimIndent(),
+            templateId,
+            "레거시 경매 템플릿",
+            "AUCTION",
+            2,
+            2,
+            null,
+            null,
+        )
 
         try {
             assertThatThrownBy { cut.findById(TemplateId(templateId)) }

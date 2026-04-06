@@ -3,6 +3,7 @@ package com.naminhyeok.fantazzk.bootstrap.root
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatCode
 import org.junit.jupiter.api.Test
 import org.springframework.boot.resttestclient.TestRestTemplate
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate
@@ -42,8 +43,8 @@ class RoomAcceptanceTest(
 
         assertThat(createTemplateResponse.statusCode).isEqualTo(HttpStatus.CREATED)
         val createdTemplate = successBodyOf(createTemplateResponse)
-        val templateId = createdTemplate.path("id").asLong()
-        assertThat(templateId).isGreaterThan(0L)
+        val templateId = createdTemplate.path("id").asText()
+        assertThatCode { UUID.fromString(templateId) }.doesNotThrowAnyException()
         assertThat(createdTemplate.path("name").asText()).isEqualTo("경매 템플릿 $suffix")
         assertThat(createdTemplate.path("mode").asText()).isEqualTo("AUCTION")
         assertThat(createdTemplate.path("teamCount").asInt()).isEqualTo(2)

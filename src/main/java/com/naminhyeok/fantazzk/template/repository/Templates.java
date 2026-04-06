@@ -7,7 +7,9 @@ import java.util.UUID;
 import org.jmolecules.ddd.annotation.Repository;
 import org.springframework.lang.Nullable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.repository.NoRepositoryBean;
 
+@NoRepositoryBean
 @Repository
 public interface Templates extends org.jmolecules.ddd.types.Repository<Template, TemplateId> {
     Template save(Template template);
