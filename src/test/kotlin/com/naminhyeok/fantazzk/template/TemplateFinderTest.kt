@@ -36,19 +36,15 @@ class TemplateFinderTest {
     fun `목록 조회는 저장된 템플릿을 반환한다`() {
         every { templateRepo.findAll() } returns
             listOf(
-                Template.createAuction(
-                    name = "첫째",
-                    teamCount = 2,
-                    teamSize = 2,
-                    budget = 300,
-                    playerNames = listOf("선수1", "선수2"),
+            Template.createAuction(
+                    "첫째", 2, 2, 300, listOf("선수1", "선수2"),
                 ),
                 Template.createDraft(
-                    name = "둘째",
-                    teamCount = 2,
-                    teamSize = 2,
-                    strategy = DraftOrderStrategy.SNAKE,
-                    playerNames = listOf("선수1", "선수2"),
+                    "둘째",
+                    2,
+                    2,
+                    DraftOrderStrategy.SNAKE,
+                    listOf("선수1", "선수2"),
                 ),
             )
 
@@ -59,13 +55,7 @@ class TemplateFinderTest {
     @Test
     fun `상세 조회는 템플릿과 선수 목록을 함께 반환한다`() {
         val template =
-            Template.createAuction(
-                name = "첫째",
-                teamCount = 2,
-                teamSize = 2,
-                budget = 300,
-                playerNames = listOf("선수1", "선수2"),
-            )
+            Template.createAuction("첫째", 2, 2, 300, listOf("선수1", "선수2"))
         every { templateRepo.findById(template.id) } returns template
 
         val detail = cut.getDetail(template.id)

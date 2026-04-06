@@ -21,6 +21,7 @@ class TemplateRoster private constructor(
     fun playerNames(): List<String> = names.toList()
 
     companion object {
+        @JvmStatic
         fun exactlyRequired(
             playerNames: List<String>,
             requiredPlayerCount: Int,
@@ -97,6 +98,7 @@ class TemplateConfiguration protected constructor(
             ")"
 
     companion object {
+        @JvmStatic
         fun auction(
             teamCount: Int,
             teamSize: Int,
@@ -109,6 +111,7 @@ class TemplateConfiguration protected constructor(
                 budget = budget,
             )
 
+        @JvmStatic
         fun draft(
             teamCount: Int,
             teamSize: Int,
@@ -121,6 +124,7 @@ class TemplateConfiguration protected constructor(
                 draftOrderStrategy = strategy,
             )
 
+        @JvmStatic
         fun from(
             mode: TeamBuildingMode,
             teamCount: Int,

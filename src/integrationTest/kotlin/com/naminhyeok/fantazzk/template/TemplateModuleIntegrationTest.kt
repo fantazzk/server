@@ -97,11 +97,11 @@ class TemplateModuleIntegrationTest {
     fun `템플릿 조회 서비스 목록 조회는 유효하지 않은 행을 템플릿 유효성 예외로 변환한다`() {
         templateRepository.save(
             Template.createAuction(
-                name = "정상 템플릿",
-                teamCount = 2,
-                teamSize = 2,
-                budget = 300,
-                playerNames = listOf("선수1", "선수2"),
+                "정상 템플릿",
+                2,
+                2,
+                300,
+                listOf("선수1", "선수2"),
             ),
         )
         val invalidTemplateId =
@@ -170,11 +170,11 @@ class TemplateModuleIntegrationTest {
         val template =
             templateRepository.save(
                 Template.createDraft(
-                    name = "순서 검증",
-                    teamCount = 2,
-                    teamSize = 3,
-                    strategy = DraftOrderStrategy.SNAKE,
-                    playerNames = listOf("선수3", "선수1", "선수2", "선수4"),
+                    "순서 검증",
+                    2,
+                    3,
+                    DraftOrderStrategy.SNAKE,
+                    listOf("선수3", "선수1", "선수2", "선수4"),
                 ),
             )
 
@@ -188,11 +188,11 @@ class TemplateModuleIntegrationTest {
         val template =
             templateRepository.save(
                 Template.createDraft(
-                    name = "snapshot 검증",
-                    teamCount = 2,
-                    teamSize = 3,
-                    strategy = DraftOrderStrategy.FIXED,
-                    playerNames = listOf("선수4", "선수1", "선수3", "선수2"),
+                    "snapshot 검증",
+                    2,
+                    3,
+                    DraftOrderStrategy.FIXED,
+                    listOf("선수4", "선수1", "선수3", "선수2"),
                 ),
             )
 

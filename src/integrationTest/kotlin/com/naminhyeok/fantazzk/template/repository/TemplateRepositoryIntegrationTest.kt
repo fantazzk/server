@@ -31,16 +31,15 @@ class TemplateRepositoryIntegrationTest(
         val saved =
             cut.save(
                 Template.createAuction(
-                    name = "테스트 경매",
-                    teamCount = 5,
-                    teamSize = 5,
-                    budget = 300,
-                    playerNames =
-                        listOf(
-                            "선수1", "선수2", "선수3", "선수4", "선수5", "선수6", "선수7", "선수8",
-                            "선수9", "선수10", "선수11", "선수12", "선수13", "선수14", "선수15", "선수16",
-                            "선수17", "선수18", "선수19", "선수20",
-                        ),
+                    "테스트 경매",
+                    5,
+                    5,
+                    300,
+                    listOf(
+                        "선수1", "선수2", "선수3", "선수4", "선수5", "선수6", "선수7", "선수8",
+                        "선수9", "선수10", "선수11", "선수12", "선수13", "선수14", "선수15", "선수16",
+                        "선수17", "선수18", "선수19", "선수20",
+                    ),
                 ),
             )
 
@@ -59,11 +58,11 @@ class TemplateRepositoryIntegrationTest(
         val saved =
             cut.save(
                 Template.createAuction(
-                    name = "통합 템플릿",
-                    teamCount = 2,
-                    teamSize = 2,
-                    budget = 300,
-                    playerNames = listOf("선수2", "선수1"),
+                    "통합 템플릿",
+                    2,
+                    2,
+                    300,
+                    listOf("선수2", "선수1"),
                 ),
             )
 
@@ -81,11 +80,11 @@ class TemplateRepositoryIntegrationTest(
         val saved =
             cut.save(
                 Template.createDraft(
-                    name = "드래프트",
-                    teamCount = 2,
-                    teamSize = 2,
-                    strategy = DraftOrderStrategy.SNAKE,
-                    playerNames = listOf("선수1", "선수2"),
+                    "드래프트",
+                    2,
+                    2,
+                    DraftOrderStrategy.SNAKE,
+                    listOf("선수1", "선수2"),
                 ),
             )
 
@@ -99,20 +98,20 @@ class TemplateRepositoryIntegrationTest(
     fun `전체 템플릿 목록을 조회할 수 있다`() {
         cut.save(
             Template.createAuction(
-                name = "첫째",
-                teamCount = 2,
-                teamSize = 2,
-                budget = 300,
-                playerNames = listOf("선수1", "선수2"),
+                "첫째",
+                2,
+                2,
+                300,
+                listOf("선수1", "선수2"),
             ),
         )
         cut.save(
             Template.createDraft(
-                name = "둘째",
-                teamCount = 2,
-                teamSize = 2,
-                strategy = DraftOrderStrategy.SNAKE,
-                playerNames = listOf("선수1", "선수2"),
+                "둘째",
+                2,
+                2,
+                DraftOrderStrategy.SNAKE,
+                listOf("선수1", "선수2"),
             ),
         )
 
@@ -125,11 +124,11 @@ class TemplateRepositoryIntegrationTest(
     fun `전체 템플릿 목록 조회는 유효하지 않은 row를 만나면 즉시 실패한다`() {
         cut.save(
             Template.createAuction(
-                name = "정상 템플릿",
-                teamCount = 2,
-                teamSize = 2,
-                budget = 300,
-                playerNames = listOf("선수1", "선수2"),
+                "정상 템플릿",
+                2,
+                2,
+                300,
+                listOf("선수1", "선수2"),
             ),
         )
         val invalidTemplateId =
@@ -162,11 +161,11 @@ class TemplateRepositoryIntegrationTest(
         val saved =
             cut.save(
                 Template.createAuction(
-                    name = "드래프트",
-                    teamCount = 2,
-                    teamSize = 2,
-                    budget = 300,
-                    playerNames = listOf("선수2", "선수1"),
+                    "드래프트",
+                    2,
+                    2,
+                    300,
+                    listOf("선수2", "선수1"),
                 ),
             )
 

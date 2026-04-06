@@ -138,16 +138,16 @@ class TemplateApiControllerTest {
             val players =
                 listOf(
                     TemplatePlayer(
-                        templatePlayerId = TemplatePlayerId.of("00000000-0000-0000-0000-000000000011"),
-                        templateId = template.id,
-                        name = "선수1",
-                        displayOrder = 0,
+                        TemplatePlayerId.of("00000000-0000-0000-0000-000000000011"),
+                        template.id,
+                        "선수1",
+                        0,
                     ),
                     TemplatePlayer(
-                        templatePlayerId = TemplatePlayerId.of("00000000-0000-0000-0000-000000000012"),
-                        templateId = template.id,
-                        name = "선수2",
-                        displayOrder = 1,
+                        TemplatePlayerId.of("00000000-0000-0000-0000-000000000012"),
+                        template.id,
+                        "선수2",
+                        1,
                     ),
                 )
             every { templateFinder.getDetail(template.id) } returns TemplateDetail(template, players)
@@ -194,11 +194,5 @@ class TemplateApiControllerTest {
     }
 
     private fun template() =
-        Template.createAuction(
-            name = "경매전",
-            teamCount = 2,
-            teamSize = 2,
-            budget = 300,
-            playerNames = listOf("선수1", "선수2"),
-        )
+        Template.createAuction("경매전", 2, 2, 300, listOf("선수1", "선수2"))
 }

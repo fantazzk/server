@@ -19,13 +19,7 @@ class TemplateTest {
         @Test
         fun `Template createAuction은 입력한 선수 순서를 displayOrder로 보관한다`() {
             val template =
-                Template.createAuction(
-                    name = "통합 템플릿",
-                    teamCount = 2,
-                    teamSize = 2,
-                    budget = 300,
-                    playerNames = listOf("선수2", "선수1"),
-                )
+                Template.createAuction("통합 템플릿", 2, 2, 300, listOf("선수2", "선수1"))
 
             assertThat(template.players().map { it.name }).containsExactly("선수2", "선수1")
             assertThat(template.players().map { it.displayOrder }).containsExactly(0, 1)
@@ -34,13 +28,7 @@ class TemplateTest {
         @Test
         fun `Template createAuction은 필요한 선수 수를 정확히 강제한다`() {
             assertThatThrownBy {
-                Template.createAuction(
-                    name = "통합 템플릿",
-                    teamCount = 2,
-                    teamSize = 2,
-                    budget = 300,
-                    playerNames = listOf("선수1"),
-                )
+                Template.createAuction("통합 템플릿", 2, 2, 300, listOf("선수1"))
             }.isInstanceOf(IllegalArgumentException::class.java)
                 .hasMessage("선수 수는 정확히 2명이어야 합니다")
         }
@@ -48,13 +36,7 @@ class TemplateTest {
         @Test
         fun `Template createAuction은 강타입 설정을 flat 필드로 노출한다`() {
             val template =
-                Template.createAuction(
-                    name = "경매전",
-                    teamCount = 2,
-                    teamSize = 3,
-                    budget = 300,
-                    playerNames = listOf("선수1", "선수2", "선수3", "선수4"),
-                )
+                Template.createAuction("경매전", 2, 3, 300, listOf("선수1", "선수2", "선수3", "선수4"))
 
             assertThat(template.id).isNotNull
             assertThat(template.name).isEqualTo("경매전")
@@ -68,13 +50,7 @@ class TemplateTest {
         @Test
         fun `템플릿은 생성 시각과 수정 시각을 노출한다`() {
             val template =
-                Template.createDraft(
-                    name = "드래프트전",
-                    teamCount = 2,
-                    teamSize = 2,
-                    strategy = DraftOrderStrategy.FIXED,
-                    playerNames = listOf("선수1", "선수2"),
-                )
+                Template.createDraft("드래프트전", 2, 2, DraftOrderStrategy.FIXED, listOf("선수1", "선수2"))
 
             assertThat(template.id).isNotNull
             assertThat(template.createdAt).isNotNull()
@@ -88,13 +64,7 @@ class TemplateTest {
         @Test
         fun `경매 템플릿 configuration은 강타입 설정을 복원한다`() {
             val template =
-                Template.createAuction(
-                    name = "경매전",
-                    teamCount = 2,
-                    teamSize = 3,
-                    budget = 300,
-                    playerNames = listOf("선수1", "선수2", "선수3", "선수4"),
-                )
+                Template.createAuction("경매전", 2, 3, 300, listOf("선수1", "선수2", "선수3", "선수4"))
 
             assertThat(template.configuration)
                 .isEqualTo(TemplateConfiguration.auction(teamCount = 2, teamSize = 3, budget = 300))
@@ -103,13 +73,7 @@ class TemplateTest {
         @Test
         fun `드래프트 템플릿 configuration은 강타입 설정을 복원한다`() {
             val template =
-                Template.createDraft(
-                    name = "드래프트전",
-                    teamCount = 2,
-                    teamSize = 2,
-                    strategy = DraftOrderStrategy.SNAKE,
-                    playerNames = listOf("선수1", "선수2"),
-                )
+                Template.createDraft("드래프트전", 2, 2, DraftOrderStrategy.SNAKE, listOf("선수1", "선수2"))
 
             assertThat(template.configuration)
                 .isEqualTo(TemplateConfiguration.draft(teamCount = 2, teamSize = 2, strategy = DraftOrderStrategy.SNAKE))
@@ -118,13 +82,7 @@ class TemplateTest {
         @Test
         fun `picksPerTeam은 teamSize에서 1을 뺀 값이다`() {
             val template =
-                Template.createDraft(
-                    name = "드래프트전",
-                    teamCount = 2,
-                    teamSize = 5,
-                    strategy = DraftOrderStrategy.SNAKE,
-                    playerNames = listOf("선수1", "선수2", "선수3", "선수4", "선수5", "선수6", "선수7", "선수8"),
-                )
+                Template.createDraft("드래프트전", 2, 5, DraftOrderStrategy.SNAKE, listOf("선수1", "선수2", "선수3", "선수4", "선수5", "선수6", "선수7", "선수8"))
 
             assertThat(template.picksPerTeam).isEqualTo(4)
         }
@@ -132,18 +90,12 @@ class TemplateTest {
         @Test
         fun `requireValidRoster는 exact player count를 만족하면 통과한다`() {
             val template =
-                Template.createAuction(
-                    name = "경매전",
-                    teamCount = 2,
-                    teamSize = 2,
-                    budget = 300,
-                    playerNames = listOf("선수1", "선수2"),
-                )
+                Template.createAuction("경매전", 2, 2, 300, listOf("선수1", "선수2"))
 
             val players =
                 listOf(
-                    TemplatePlayer(templateId = template.id, name = "선수B", displayOrder = 1),
-                    TemplatePlayer(templateId = template.id, name = "선수A", displayOrder = 0),
+                    TemplatePlayer(template.id, "선수B", 1),
+                    TemplatePlayer(template.id, "선수A", 0),
                 )
 
             assertThatCode { template.requireValidRoster(players) }.doesNotThrowAnyException()
@@ -153,14 +105,14 @@ class TemplateTest {
         fun `requireValidRoster는 exact player count를 만족하지 않으면 예외를 던진다`() {
             val template =
                 Template.createAuction(
-                    name = "경매전",
-                    teamCount = 2,
-                    teamSize = 2,
-                    budget = 300,
-                    playerNames = listOf("선수1", "선수2"),
+                    "경매전",
+                    2,
+                    2,
+                    300,
+                    listOf("선수1", "선수2"),
                 )
 
-            val players = listOf(TemplatePlayer(templateId = template.id, name = "선수A", displayOrder = 0))
+            val players = listOf(TemplatePlayer(template.id, "선수A", 0))
 
             assertThatThrownBy { template.requireValidRoster(players) }
                 .isInstanceOf(IllegalArgumentException::class.java)
@@ -171,27 +123,27 @@ class TemplateTest {
         fun `requireValidRoster는 다른 템플릿에 속한 선수가 섞이면 예외를 던진다`() {
             val template =
                 Template.createAuction(
-                    name = "경매전",
-                    teamCount = 2,
-                    teamSize = 2,
-                    budget = 300,
-                    playerNames = listOf("선수1", "선수2"),
+                    "경매전",
+                    2,
+                    2,
+                    300,
+                    listOf("선수1", "선수2"),
                 )
             val otherTemplateId = TemplateId.of("00000000-0000-0000-0000-000000000002")
 
             val players =
                 listOf(
                     TemplatePlayer(
-                        templatePlayerId = TemplatePlayerId.of("00000000-0000-0000-0000-000000000010"),
-                        templateId = template.id,
-                        name = "선수A",
-                        displayOrder = 0,
+                        TemplatePlayerId.of("00000000-0000-0000-0000-000000000010"),
+                        template.id,
+                        "선수A",
+                        0,
                     ),
                     TemplatePlayer(
-                        templatePlayerId = TemplatePlayerId.of("00000000-0000-0000-0000-000000000011"),
-                        templateId = otherTemplateId,
-                        name = "선수B",
-                        displayOrder = 1,
+                        TemplatePlayerId.of("00000000-0000-0000-0000-000000000011"),
+                        otherTemplateId,
+                        "선수B",
+                        1,
                     ),
                 )
 
@@ -206,13 +158,7 @@ class TemplateTest {
         @Test
         fun `Template id는 TemplateId를 반환한다`() {
             val template =
-                Template.createAuction(
-                    name = "테스트",
-                    teamCount = 2,
-                    teamSize = 2,
-                    budget = 300,
-                    playerNames = listOf("선수1", "선수2"),
-                )
+                Template.createAuction("테스트", 2, 2, 300, listOf("선수1", "선수2"))
 
             assertThat(template.id).isNotNull
         }
@@ -220,13 +166,7 @@ class TemplateTest {
         @Test
         fun `TemplatePlayer는 Template aggregate 에 속한 jMolecules entity 이다`() {
             val template =
-                Template.createAuction(
-                    name = "테스트",
-                    teamCount = 2,
-                    teamSize = 2,
-                    budget = 300,
-                    playerNames = listOf("선수1", "선수2"),
-                )
+                Template.createAuction("테스트", 2, 2, 300, listOf("선수1", "선수2"))
 
             val player = template.players().first()
 

@@ -23,12 +23,12 @@ class TemplatePlayerTest {
 
         val player =
             TemplatePlayer(
-                templatePlayerId = playerId,
-                templateId = templateId,
-                name = "선수1",
-                displayOrder = 2,
-                createdAt = createdAt,
-                updatedAt = updatedAt,
+                playerId,
+                templateId,
+                "선수1",
+                2,
+                createdAt,
+                updatedAt,
             )
 
         assertThat(player.id).isEqualTo(playerId)
@@ -45,9 +45,9 @@ class TemplatePlayerTest {
 
         val player =
             TemplatePlayer(
-                templateId = templateId,
-                name = "선수1",
-                displayOrder = 2,
+                templateId,
+                "선수1",
+                2,
             )
 
         assertThat(player.id).isNotNull

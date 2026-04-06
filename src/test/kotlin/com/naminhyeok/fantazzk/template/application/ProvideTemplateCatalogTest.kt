@@ -21,13 +21,7 @@ class ProvideTemplateCatalogTest {
     @Test
     fun `TemplateId를 그대로 finder에 전달하고 blueprint로 변환한다`() {
         val template =
-            Template.createDraft(
-                name = "드래프트 템플릿",
-                teamCount = 2,
-                teamSize = 3,
-                strategy = DraftOrderStrategy.SNAKE,
-                playerNames = listOf("선수1", "선수2", "선수3", "선수4"),
-            )
+            Template.createDraft("드래프트 템플릿", 2, 3, DraftOrderStrategy.SNAKE, listOf("선수1", "선수2", "선수3", "선수4"))
         val templateId = template.id
         every { templateFinder.getDetail(templateId) } returns TemplateDetail(template, template.players())
 
