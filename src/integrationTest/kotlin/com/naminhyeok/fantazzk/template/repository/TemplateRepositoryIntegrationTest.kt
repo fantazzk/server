@@ -91,7 +91,7 @@ class TemplateRepositoryIntegrationTest(
         val found = requireNotNull(cut.findById(saved.id))
 
         assertThat(found.configuration)
-            .isEqualTo(TemplateConfiguration.draft(teamCount = 2, teamSize = 2, strategy = DraftOrderStrategy.SNAKE))
+            .isEqualTo(TemplateConfiguration.draft(2, 2, DraftOrderStrategy.SNAKE))
     }
 
     @Test

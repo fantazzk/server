@@ -29,17 +29,17 @@ class TemplateCreateServiceTest {
         val template =
             cut.create(
                 CreateTemplateCommand.Auction(
-                    name = "경매전",
-                    teamCount = 2,
-                    teamSize = 2,
-                    budget = 500,
-                    playerNames = listOf("선수A", "선수B"),
+                    "경매전",
+                    2,
+                    2,
+                    500,
+                    listOf("선수A", "선수B"),
                 ),
             )
 
         assertThat(template.name).isEqualTo("경매전")
         assertThat(template.configuration)
-            .isEqualTo(TemplateConfiguration.auction(teamCount = 2, teamSize = 2, budget = 500))
+            .isEqualTo(TemplateConfiguration.auction(2, 2, 500))
 
         val players = template.players()
         assertThat(players.map { it.name }).containsExactly("선수A", "선수B")
@@ -51,17 +51,18 @@ class TemplateCreateServiceTest {
         val template =
             cut.create(
                 CreateTemplateCommand.Draft(
-                    name = "드래프트전",
-                    teamCount = 2,
-                    teamSize = 2,
-                    strategy = DraftOrderStrategy.SNAKE,
-                    playerNames = listOf("선수1", "선수2"),
+                    "드래프트전",
+                    2,
+                    2,
+                    DraftOrderStrategy.SNAKE,
+                    listOf("선수1", "선수2"),
                 ),
             )
 
         assertThat(template.configuration)
-            .isEqualTo(TemplateConfiguration.draft(teamCount = 2, teamSize = 2, strategy = DraftOrderStrategy.SNAKE))
-        assertThat(template.budget).isNull()
+            .isEqualTo(TemplateConfiguration.draft(2, 2, DraftOrderStrategy.SNAKE))
+        val budget: Int? = template.budget
+        assertThat(budget).isNull()
     }
 
     @Test
@@ -69,11 +70,11 @@ class TemplateCreateServiceTest {
         assertThatThrownBy {
             cut.create(
                 CreateTemplateCommand.Auction(
-                    name = "실패",
-                    teamCount = 2,
-                    teamSize = 2,
-                    budget = 300,
-                    playerNames = listOf("선수1"),
+                    "실패",
+                    2,
+                    2,
+                    300,
+                    listOf("선수1"),
                 ),
             )
         }.isInstanceOf(IllegalArgumentException::class.java)

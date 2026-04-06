@@ -45,11 +45,11 @@ class TemplateModuleIntegrationTest {
         val created =
             templateCreateService.create(
                 CreateTemplateCommand.Auction(
-                    name = "모듈 테스트 템플릿",
-                    teamCount = 2,
-                    teamSize = 2,
-                    budget = 300,
-                    playerNames = listOf("선수1", "선수2"),
+                    "모듈 테스트 템플릿",
+                    2,
+                    2,
+                    300,
+                    listOf("선수1", "선수2"),
                 ),
             )
 
@@ -63,11 +63,11 @@ class TemplateModuleIntegrationTest {
     fun `템플릿 생성 이후 목록 조회에서 새 템플릿을 바로 조회할 수 있다`() {
         templateCreateService.create(
             CreateTemplateCommand.Auction(
-                name = "프로젝션 템플릿",
-                teamCount = 2,
-                teamSize = 2,
-                budget = 300,
-                playerNames = listOf("선수1", "선수2"),
+                "프로젝션 템플릿",
+                2,
+                2,
+                300,
+                listOf("선수1", "선수2"),
             ),
         )
 
@@ -80,11 +80,11 @@ class TemplateModuleIntegrationTest {
         val created =
             templateCreateService.create(
                 CreateTemplateCommand.Auction(
-                    name = "집약 루트",
-                    teamCount = 2,
-                    teamSize = 2,
-                    budget = 300,
-                    playerNames = listOf("선수1", "선수2"),
+                    "집약 루트",
+                    2,
+                    2,
+                    300,
+                    listOf("선수1", "선수2"),
                 ),
             )
 

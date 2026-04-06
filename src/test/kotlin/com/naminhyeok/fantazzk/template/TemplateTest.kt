@@ -44,7 +44,8 @@ class TemplateTest {
             assertThat(template.teamCount).isEqualTo(2)
             assertThat(template.teamSize).isEqualTo(3)
             assertThat(template.budget).isEqualTo(300)
-            assertThat(template.draftOrderStrategy).isNull()
+            val draftOrderStrategy: DraftOrderStrategy? = template.draftOrderStrategy
+            assertThat(draftOrderStrategy).isNull()
         }
 
         @Test
@@ -67,7 +68,7 @@ class TemplateTest {
                 Template.createAuction("경매전", 2, 3, 300, listOf("선수1", "선수2", "선수3", "선수4"))
 
             assertThat(template.configuration)
-                .isEqualTo(TemplateConfiguration.auction(teamCount = 2, teamSize = 3, budget = 300))
+                .isEqualTo(TemplateConfiguration.auction(2, 3, 300))
         }
 
         @Test
@@ -76,7 +77,7 @@ class TemplateTest {
                 Template.createDraft("드래프트전", 2, 2, DraftOrderStrategy.SNAKE, listOf("선수1", "선수2"))
 
             assertThat(template.configuration)
-                .isEqualTo(TemplateConfiguration.draft(teamCount = 2, teamSize = 2, strategy = DraftOrderStrategy.SNAKE))
+                .isEqualTo(TemplateConfiguration.draft(2, 2, DraftOrderStrategy.SNAKE))
         }
 
         @Test
