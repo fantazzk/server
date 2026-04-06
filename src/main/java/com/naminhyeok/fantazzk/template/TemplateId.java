@@ -1,20 +1,26 @@
 package com.naminhyeok.fantazzk.template;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Embeddable;
+import java.io.Serial;
+import java.io.Serializable;
 import java.util.Objects;
 import java.util.UUID;
-
 import org.jmolecules.ddd.types.Identifier;
 
-public final class TemplateId implements Identifier {
+@Embeddable
+public final class TemplateId implements Identifier, Serializable {
 
-    private final UUID value;
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    @Column(name = "id", nullable = false, updatable = false)
+    private UUID value;
+
+    protected TemplateId() {}
 
     public TemplateId(UUID value) {
         this.value = Objects.requireNonNull(value, "value must not be null");
-    }
-
-    public TemplateId(long value) {
-        this(fromLegacyLong(value));
     }
 
     public UUID getValue() {
@@ -29,19 +35,8 @@ public final class TemplateId implements Identifier {
         return new TemplateId(value);
     }
 
-    public static TemplateId of(long value) {
-        return new TemplateId(value);
-    }
-
     public static TemplateId newId() {
         return new TemplateId(UUID.randomUUID());
-    }
-
-    private static UUID fromLegacyLong(long value) {
-        if (value <= 0L) {
-            throw new IllegalArgumentException("TemplateId는 1 이상이어야 합니다");
-        }
-        return new UUID(0L, value);
     }
 
     @Override

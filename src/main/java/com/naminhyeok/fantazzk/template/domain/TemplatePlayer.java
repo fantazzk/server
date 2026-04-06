@@ -3,7 +3,7 @@ package com.naminhyeok.fantazzk.template.domain;
 import com.naminhyeok.fantazzk.template.TemplateId;
 import jakarta.persistence.Column;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.Id;
+import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -15,8 +15,7 @@ import org.springframework.lang.Nullable;
 @Table(name = "template_player")
 public class TemplatePlayer implements org.jmolecules.ddd.types.Entity<Template, TemplatePlayerId> {
 
-    @Id
-    @Column(name = "id", nullable = false, updatable = false)
+    @EmbeddedId
     private TemplatePlayerId id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

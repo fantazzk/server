@@ -11,6 +11,8 @@ import com.naminhyeok.fantazzk.template.exception.TemplateException;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@org.jmolecules.ddd.annotation.Service
+@org.springframework.stereotype.Service
 class ProvideTemplateCatalog implements TemplateCatalog {
     private final FindTemplates templateFinder;
 

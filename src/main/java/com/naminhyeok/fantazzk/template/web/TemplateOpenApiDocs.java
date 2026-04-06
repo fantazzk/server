@@ -55,7 +55,7 @@ final class TemplateOpenApiDocs {
         {
           "resultType":"SUCCESS",
           "success":{
-            "id":1,
+            "id":"00000000-0000-0000-0000-000000000001",
             "name":"주말 풋살 경매전",
             "mode":"AUCTION",
             "teamCount":2,
@@ -73,7 +73,7 @@ final class TemplateOpenApiDocs {
         {
           "resultType":"SUCCESS",
           "success":{
-            "id":1,
+            "id":"00000000-0000-0000-0000-000000000002",
             "name":"사내 리그 드래프트전",
             "mode":"DRAFT",
             "teamCount":2,
@@ -94,8 +94,8 @@ final class TemplateOpenApiDocs {
         {
           "resultType":"SUCCESS",
           "success":[
-            {"id":1,"name":"주말 풋살 경매전","mode":"AUCTION","teamCount":2,"teamSize":2,"budget":300,"draftOrderStrategy":null,"players":null},
-            {"id":2,"name":"사내 리그 드래프트전","mode":"DRAFT","teamCount":2,"teamSize":2,"budget":null,"draftOrderStrategy":"SNAKE","players":null}
+            {"id":"00000000-0000-0000-0000-000000000001","name":"주말 풋살 경매전","mode":"AUCTION","teamCount":2,"teamSize":2,"budget":300,"draftOrderStrategy":null,"players":null},
+            {"id":"00000000-0000-0000-0000-000000000002","name":"사내 리그 드래프트전","mode":"DRAFT","teamCount":2,"teamSize":2,"budget":null,"draftOrderStrategy":"SNAKE","players":null}
           ],
           "error":null
         }

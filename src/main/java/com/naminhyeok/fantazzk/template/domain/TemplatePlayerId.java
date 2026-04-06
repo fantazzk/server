@@ -1,12 +1,23 @@
 package com.naminhyeok.fantazzk.template.domain;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Embeddable;
+import java.io.Serial;
+import java.io.Serializable;
 import java.util.Objects;
 import java.util.UUID;
 import org.jmolecules.ddd.types.Identifier;
 
-public final class TemplatePlayerId implements Identifier {
+@Embeddable
+public final class TemplatePlayerId implements Identifier, Serializable {
 
-    private final UUID value;
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    @Column(name = "id", nullable = false, updatable = false)
+    private UUID value;
+
+    protected TemplatePlayerId() {}
 
     public TemplatePlayerId(UUID value) {
         this.value = Objects.requireNonNull(value, "value must not be null");

@@ -47,7 +47,8 @@ internal object RoomOpenApiDocs {
     const val ROOM_CODE_PARAMETER = "조회 또는 진행할 6자리 방 코드입니다."
     const val TEAM_LEADER_ID_PARAMETER = "RoomResponse.teamLeaders[].id 로 받은 팀장 식별자입니다."
 
-    const val CREATE_ROOM_REQUEST_EXAMPLE = """{"templateId":1,"hostNickname":"호스트"}"""
+    const val CREATE_ROOM_REQUEST_EXAMPLE =
+        """{"templateId":"00000000-0000-0000-0000-000000000001","hostNickname":"호스트"}"""
     const val JOIN_ROOM_REQUEST_EXAMPLE = """{"nickname":"참가자"}"""
     const val PLACE_BID_REQUEST_EXAMPLE = """{"teamLeaderId":"leader-02","amount":120}"""
     const val PICK_REQUEST_EXAMPLE = """{"teamLeaderId":"leader-01","playerName":"김민수"}"""

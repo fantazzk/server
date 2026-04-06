@@ -5,7 +5,7 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
+import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.PostLoad;
@@ -24,8 +24,7 @@ import org.springframework.lang.Nullable;
 @Table(name = "template")
 public class Template implements AggregateRoot<Template, TemplateId> {
 
-    @Id
-    @Column(name = "id", nullable = false, updatable = false)
+    @EmbeddedId
     private TemplateId id;
 
     @Column(name = "name", nullable = false)
@@ -75,10 +74,6 @@ public class Template implements AggregateRoot<Template, TemplateId> {
 
     protected Template(String name, TemplateConfiguration configuration) {
         this(TemplateId.newId(), name, configuration, new ArrayList<>(), Instant.now(), Instant.now());
-    }
-
-    public UUID getTemplateId() {
-        return id.getValue();
     }
 
     public TemplateId getId() {

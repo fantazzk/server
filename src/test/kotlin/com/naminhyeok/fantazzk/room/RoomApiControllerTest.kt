@@ -59,7 +59,7 @@ class RoomApiControllerTest {
     inner class `방 조회` {
         @Test
         fun `존재하는 방을 조회하면 200과 방 정보를 반환한다`() {
-            val room = room("ABC123")
+            val room = roomFixture("ABC123")
             every { roomFinder.get("ABC123") } returns room
 
             mockMvc.get("/api/v1/rooms/ABC123")
@@ -95,12 +95,12 @@ class RoomApiControllerTest {
     inner class `방 생성` {
         @Test
         fun `유효한 요청으로 방을 생성하면 요청 본문을 서비스 인자로 매핑하고 201을 반환한다`() {
-            val room = room("NEW001")
-            every { roomCreateService.create(TemplateId(1L), "호스트") } returns room
+            val room = roomFixture("NEW001")
+            every { roomCreateService.create(templateId(1), "호스트") } returns room
 
             mockMvc.post("/api/v1/rooms") {
                 contentType = MediaType.APPLICATION_JSON
-                content = """{"templateId": 1, "hostNickname": "호스트"}"""
+                content = """{"templateId": "00000000-0000-0000-0000-000000000001", "hostNickname": "호스트"}"""
             }.andExpect {
                 status { isCreated() }
                 jsonPath("$.resultType") { value("SUCCESS") }
@@ -114,11 +114,11 @@ class RoomApiControllerTest {
 
         @Test
         fun `템플릿이 없으면 404를 반환한다`() {
-            every { roomCreateService.create(TemplateId(999L), "호스트") } throws RoomTemplateNotFoundException()
+            every { roomCreateService.create(templateId(999), "호스트") } throws RoomTemplateNotFoundException()
 
             mockMvc.post("/api/v1/rooms") {
                 contentType = MediaType.APPLICATION_JSON
-                content = """{"templateId": 999, "hostNickname": "호스트"}"""
+                content = """{"templateId": "00000000-0000-0000-0000-000000000999", "hostNickname": "호스트"}"""
             }.andExpect {
                 status { isNotFound() }
                 jsonPath("$.resultType") { value("ERROR") }
@@ -128,15 +128,15 @@ class RoomApiControllerTest {
         }
 
         @Test
-        fun `templateId가 0 이하면 400을 반환한다`() {
+        fun `templateId가 UUID 형식이 아니면 400을 반환한다`() {
             mockMvc.post("/api/v1/rooms") {
                 contentType = MediaType.APPLICATION_JSON
-                content = """{"templateId": 0, "hostNickname": "호스트"}"""
+                content = """{"templateId": "not-a-uuid", "hostNickname": "호스트"}"""
             }.andExpect {
                 status { isBadRequest() }
                 jsonPath("$.resultType") { value("ERROR") }
                 jsonPath("$.error.errorCode") { value("BAD_REQUEST") }
-                jsonPath("$.error.reason") { value("TemplateId는 1 이상이어야 합니다") }
+                jsonPath("$.error.reason") { value("Invalid UUID string: not-a-uuid") }
             }
         }
 
@@ -156,7 +156,7 @@ class RoomApiControllerTest {
     inner class `방 참가` {
         @Test
         fun `유효한 요청으로 참가하면 경로와 본문 값을 서비스 인자로 매핑한다`() {
-            val room = room("JOIN01")
+            val room = roomFixture("JOIN01")
             val leader = leader(room.roomId)
             every { roomJoinService.join("JOIN01", "참가자") } returns leader
             every { roomFinder.get("JOIN01") } returns room
@@ -217,7 +217,7 @@ class RoomApiControllerTest {
     inner class `방 시작` {
         @Test
         fun `성공적으로 시작하면 경로 값을 서비스 인자로 매핑하고 200을 반환한다`() {
-            val room = room("START1", status = RoomStatus.IN_PROGRESS)
+            val room = roomFixture("START1", status = RoomStatus.IN_PROGRESS)
             justRun { roomStartService.start("START1") }
             every { roomFinder.get("START1") } returns room.copy(leaders = emptyList())
 
@@ -246,7 +246,7 @@ class RoomApiControllerTest {
     inner class `입찰` {
         @Test
         fun `성공적으로 입찰하면 200과 방 정보를 반환한다`() {
-            val room = room("BID001")
+            val room = roomFixture("BID001")
             val bid =
                 RoomBid(
                     1L,
@@ -290,7 +290,7 @@ class RoomApiControllerTest {
     inner class `정산` {
         @Test
         fun `성공적으로 정산하면 200과 방 정보를 반환한다`() {
-            val room = room("SET001")
+            val room = roomFixture("SET001")
             every { settleAuction.settle("SET001") } returns AuctionSettleResult("선수1", AuctionOutcome.SOLD)
             every { roomFinder.get("SET001") } returns room.copy(leaders = emptyList())
 
@@ -319,7 +319,7 @@ class RoomApiControllerTest {
     inner class `드래프트 픽` {
         @Test
         fun `성공적으로 픽하면 200과 방 정보를 반환한다`() {
-            val room = room("PICK01")
+            val room = roomFixture("PICK01")
             val member =
                 RoomTeamMember(
                     1L,
@@ -358,10 +358,10 @@ class RoomApiControllerTest {
         }
     }
 
-    private fun room(
+    private fun roomFixture(
         code: String,
         status: RoomStatus = RoomStatus.WAITING,
-    ) = Room(
+    ) = com.naminhyeok.fantazzk.room.roomFixture(
         roomId = 1L,
         code = code,
         hostId = "host",
@@ -385,4 +385,7 @@ class RoomApiControllerTest {
             now,
             now,
         )
+
+    private fun templateId(value: Int): TemplateId =
+        TemplateId.of("00000000-0000-0000-0000-${value.toString().padStart(12, '0')}")
 }

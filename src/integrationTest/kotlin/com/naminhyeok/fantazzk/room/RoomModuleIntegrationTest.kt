@@ -64,9 +64,9 @@ class RoomModuleIntegrationTest {
 
     @Test
     fun `방 생성은 대기 상태와 호스트 팀장을 갖는 방을 만든다`() {
-        every { templateCatalog.getTemplateBlueprint(TemplateId(1L)) } returns
+        every { templateCatalog.getTemplateBlueprint(templateId(1)) } returns
             TemplateBlueprint(
-                TemplateId(1L),
+                templateId(1),
                 TemplateMode.AUCTION,
                 2,
                 2,
@@ -78,7 +78,7 @@ class RoomModuleIntegrationTest {
                 ),
             )
 
-        val room = roomCreateService.create(TemplateId(1L), "호스트")
+        val room = roomCreateService.create(templateId(1), "호스트")
 
         assertThat(room.status).isEqualTo(RoomStatus.WAITING)
         assertThat(room.leaders.map { it.nickname }).containsExactly("호스트")
@@ -86,9 +86,9 @@ class RoomModuleIntegrationTest {
 
     @Test
     fun `방 생성 후 애그리거트 조회 서비스로 즉시 조회할 수 있다`() {
-        every { templateCatalog.getTemplateBlueprint(TemplateId(1L)) } returns
+        every { templateCatalog.getTemplateBlueprint(templateId(1)) } returns
             TemplateBlueprint(
-                TemplateId(1L),
+                templateId(1),
                 TemplateMode.AUCTION,
                 2,
                 2,
@@ -100,7 +100,7 @@ class RoomModuleIntegrationTest {
                 ),
             )
 
-        val createdRoom = roomCreateService.create(TemplateId(1L), "호스트")
+        val createdRoom = roomCreateService.create(templateId(1), "호스트")
 
         val foundRoom = roomFinder.get(createdRoom.code)
 
@@ -111,9 +111,9 @@ class RoomModuleIntegrationTest {
 
     @Test
     fun `방 참가 서비스는 JPA 저장소에 팀장 추가를 반영한다`() {
-        every { templateCatalog.getTemplateBlueprint(TemplateId(1L)) } returns
+        every { templateCatalog.getTemplateBlueprint(templateId(1)) } returns
             TemplateBlueprint(
-                TemplateId(1L),
+                templateId(1),
                 TemplateMode.AUCTION,
                 2,
                 2,
@@ -125,7 +125,7 @@ class RoomModuleIntegrationTest {
                 ),
             )
 
-        val createdRoom = roomCreateService.create(TemplateId(1L), "호스트")
+        val createdRoom = roomCreateService.create(templateId(1), "호스트")
 
         roomJoinService.join(createdRoom.code, "게스트")
 
@@ -135,9 +135,9 @@ class RoomModuleIntegrationTest {
 
     @Test
     fun `경매 입찰과 정산 서비스는 JPA 연관관계 변경을 영속화한다`() {
-        every { templateCatalog.getTemplateBlueprint(TemplateId(1L)) } returns
+        every { templateCatalog.getTemplateBlueprint(templateId(1)) } returns
             TemplateBlueprint(
-                TemplateId(1L),
+                templateId(1),
                 TemplateMode.AUCTION,
                 2,
                 2,
@@ -149,7 +149,7 @@ class RoomModuleIntegrationTest {
                 ),
             )
 
-        val createdRoom = roomCreateService.create(TemplateId(1L), "호스트")
+        val createdRoom = roomCreateService.create(templateId(1), "호스트")
         val guestLeader = roomJoinService.join(createdRoom.code, "게스트")
         roomStartService.start(createdRoom.code)
 
@@ -164,9 +164,9 @@ class RoomModuleIntegrationTest {
 
     @Test
     fun `드래프트 지명 서비스는 JPA 연관관계 변경을 영속화한다`() {
-        every { templateCatalog.getTemplateBlueprint(TemplateId(2L)) } returns
+        every { templateCatalog.getTemplateBlueprint(templateId(2)) } returns
             TemplateBlueprint(
-                TemplateId(2L),
+                templateId(2),
                 TemplateMode.DRAFT,
                 2,
                 2,
@@ -178,7 +178,7 @@ class RoomModuleIntegrationTest {
                 ),
             )
 
-        val createdRoom = roomCreateService.create(TemplateId(2L), "호스트")
+        val createdRoom = roomCreateService.create(templateId(2), "호스트")
         val hostLeaderId = roomFinder.get(createdRoom.code).leaders.single().teamLeaderId
         roomJoinService.join(createdRoom.code, "게스트")
         roomStartService.start(createdRoom.code)
@@ -191,4 +191,7 @@ class RoomModuleIntegrationTest {
         assertThat(foundRoom.players.single { it.name == "선수1" }.status).isEqualTo(PlayerStatus.ASSIGNED)
         assertThat(foundRoom.currentTurnIndex).isEqualTo(1)
     }
+
+    private fun templateId(value: Int): TemplateId =
+        TemplateId.of("00000000-0000-0000-0000-${value.toString().padStart(12, '0')}")
 }

@@ -1,6 +1,6 @@
 CREATE TABLE template
 (
-    id                    BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id                    UUID         PRIMARY KEY,
     name                  VARCHAR(255) NOT NULL,
     mode                  VARCHAR(20)  NOT NULL,
     team_count            INT          NOT NULL,
@@ -12,8 +12,8 @@ CREATE TABLE template
 
 CREATE TABLE template_player
 (
-    id            BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    template_id   BIGINT       NOT NULL,
+    id            UUID         PRIMARY KEY,
+    template_id   UUID         NOT NULL,
     name          VARCHAR(255) NOT NULL,
     display_order INT          NOT NULL,
     CONSTRAINT fk_template_player_template FOREIGN KEY (template_id) REFERENCES template (id)

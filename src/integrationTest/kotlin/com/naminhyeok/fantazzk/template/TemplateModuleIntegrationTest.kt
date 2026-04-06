@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.modulith.test.ApplicationModuleTest
+import java.util.UUID
 
 @ApplicationModuleTest(
     module = "template",
@@ -104,21 +105,20 @@ class TemplateModuleIntegrationTest {
                 listOf("선수1", "선수2"),
             ),
         )
-        val invalidTemplateId =
-            jdbcTemplate.queryForObject(
-                """
-                insert into template (name, mode, team_count, team_size, budget, draft_order_strategy)
-                values (?, ?, ?, ?, ?, ?)
-                returning id
-                """.trimIndent(),
-                Long::class.java,
-                "유효하지 않은 템플릿",
-                "AUCTION",
-                2,
-                2,
-                null,
-                null,
-            )!!
+        val invalidTemplateId = UUID.fromString("00000000-0000-0000-0000-00000000e001")
+        jdbcTemplate.update(
+            """
+            insert into template (id, name, mode, team_count, team_size, budget, draft_order_strategy)
+            values (?, ?, ?, ?, ?, ?, ?)
+            """.trimIndent(),
+            invalidTemplateId,
+            "유효하지 않은 템플릿",
+            "AUCTION",
+            2,
+            2,
+            null,
+            null,
+        )
 
         try {
             assertThatThrownBy { templateFinder.list() }
@@ -130,27 +130,27 @@ class TemplateModuleIntegrationTest {
 
     @Test
     fun `템플릿 조회 서비스 목록 조회는 선수 구성이 불완전한 행을 템플릿 유효성 예외로 변환한다`() {
-        val templateId =
-            jdbcTemplate.queryForObject(
-                """
-                insert into template (name, mode, team_count, team_size, budget, draft_order_strategy)
-                values (?, ?, ?, ?, ?, ?)
-                returning id
-                """.trimIndent(),
-                Long::class.java,
-                "선수 구성 누락 템플릿",
-                "AUCTION",
-                2,
-                2,
-                300,
-                null,
-            )!!
+        val templateId = UUID.fromString("00000000-0000-0000-0000-00000000e002")
+        jdbcTemplate.update(
+            """
+            insert into template (id, name, mode, team_count, team_size, budget, draft_order_strategy)
+            values (?, ?, ?, ?, ?, ?, ?)
+            """.trimIndent(),
+            templateId,
+            "선수 구성 누락 템플릿",
+            "AUCTION",
+            2,
+            2,
+            300,
+            null,
+        )
 
         jdbcTemplate.update(
             """
-            insert into template_player (template_id, name, display_order)
-            values (?, ?, ?)
+            insert into template_player (id, template_id, name, display_order)
+            values (?, ?, ?, ?)
             """.trimIndent(),
+            UUID.fromString("00000000-0000-0000-0000-00000000e102"),
             templateId,
             "선수1",
             0,
@@ -207,44 +207,47 @@ class TemplateModuleIntegrationTest {
 
     @Test
     fun `템플릿 목록 계약은 존재하지 않는 템플릿을 찾을 수 없음 예외로 변환한다`() {
-        assertThatThrownBy { templateCatalog.getTemplateBlueprint(TemplateId.of(999_999L)) }
+        assertThatThrownBy { templateCatalog.getTemplateBlueprint(templateId(999_999)) }
             .isInstanceOf(TemplateCatalogException.NotFound::class.java)
     }
 
     @Test
     fun `템플릿 목록 계약은 유효하지 않은 선수 구성을 유효성 예외로 변환한다`() {
-        val templateId =
-            jdbcTemplate.queryForObject(
-                """
-                insert into template (name, mode, team_count, team_size, budget, draft_order_strategy)
-                values (?, ?, ?, ?, ?, ?)
-                returning id
-                """.trimIndent(),
-                Long::class.java,
-                "유효하지 않은 템플릿",
-                "AUCTION",
-                2,
-                2,
-                300,
-                null,
-            )!!
+        val templateId = UUID.fromString("00000000-0000-0000-0000-00000000e003")
+        jdbcTemplate.update(
+            """
+            insert into template (id, name, mode, team_count, team_size, budget, draft_order_strategy)
+            values (?, ?, ?, ?, ?, ?, ?)
+            """.trimIndent(),
+            templateId,
+            "유효하지 않은 템플릿",
+            "AUCTION",
+            2,
+            2,
+            300,
+            null,
+        )
 
         jdbcTemplate.update(
             """
-            insert into template_player (template_id, name, display_order)
-            values (?, ?, ?)
+            insert into template_player (id, template_id, name, display_order)
+            values (?, ?, ?, ?)
             """.trimIndent(),
+            UUID.fromString("00000000-0000-0000-0000-00000000e103"),
             templateId,
             "선수1",
             0,
         )
 
         try {
-            assertThatThrownBy { templateCatalog.getTemplateBlueprint(TemplateId.of(templateId)) }
+            assertThatThrownBy { templateCatalog.getTemplateBlueprint(TemplateId.of(templateId.toString())) }
                 .isInstanceOf(TemplateCatalogException.Invalid::class.java)
         } finally {
             jdbcTemplate.update("delete from template_player where template_id = ?", templateId)
             jdbcTemplate.update("delete from template where id = ?", templateId)
         }
     }
+
+    private fun templateId(value: Long): TemplateId =
+        TemplateId.of("00000000-0000-0000-0000-${value.toString(16).padStart(12, '0')}")
 }

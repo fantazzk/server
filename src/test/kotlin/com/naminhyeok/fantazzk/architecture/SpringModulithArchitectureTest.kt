@@ -99,7 +99,7 @@ class SpringModulithArchitectureTest {
     }
 
     @Test
-    fun `리포지토리 추상화는 kmolecules repository 타입을 구현한다`() {
+    fun `리포지토리 추상화는 jmolecules repository 타입을 구현한다`() {
         val classes =
             ClassFileImporter()
                 .withImportOption(ImportOption.DoNotIncludeTests())
@@ -114,6 +114,10 @@ class SpringModulithArchitectureTest {
 
         assertThat(repositories).isNotEmpty()
         assertThat(repositories).allMatch { DddRepository::class.java.isAssignableFrom(it) }
+
+        val buildScript = Path.of("build.gradle.kts").readText()
+        assertThat(buildScript).contains("org.jmolecules:jmolecules-ddd")
+        assertThat(buildScript).doesNotContain("org.jmolecules:kmolecules-ddd")
     }
 
     @Test

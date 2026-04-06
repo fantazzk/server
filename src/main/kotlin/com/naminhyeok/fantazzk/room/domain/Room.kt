@@ -108,8 +108,7 @@ class Room protected constructor(
         registerBids(bids)
     }
 
-    override val id: RoomId
-        get() = RoomId(requireNotNull(persistentId))
+    override fun getId(): RoomId = RoomId(requireNotNull(persistentId))
 
     val roomId: Long
         get() = persistentId ?: 0L

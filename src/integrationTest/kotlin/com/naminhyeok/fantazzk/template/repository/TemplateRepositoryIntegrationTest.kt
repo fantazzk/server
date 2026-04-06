@@ -12,13 +12,16 @@ import org.springframework.boot.autoconfigure.ImportAutoConfiguration
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest
 import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase
 import org.springframework.boot.liquibase.autoconfigure.LiquibaseAutoConfiguration
+import org.springframework.context.annotation.Import
 import org.springframework.dao.InvalidDataAccessApiUsageException
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.test.context.TestConstructor
+import java.util.UUID
 
 @ImportAutoConfiguration(
     LiquibaseAutoConfiguration::class,
 )
+@Import(TemplateRepositoryAdapter::class)
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
@@ -131,21 +134,20 @@ class TemplateRepositoryIntegrationTest(
                 listOf("선수1", "선수2"),
             ),
         )
-        val invalidTemplateId =
-            jdbcTemplate.queryForObject(
-                """
-                insert into template (name, mode, team_count, team_size, budget, draft_order_strategy)
-                values (?, ?, ?, ?, ?, ?)
-                returning id
-                """.trimIndent(),
-                Long::class.java,
-                "유효하지 않은 템플릿",
-                "AUCTION",
-                2,
-                2,
-                null,
-                null,
-            )!!
+        val invalidTemplateId = UUID.fromString("00000000-0000-0000-0000-00000000f001")
+        jdbcTemplate.update(
+            """
+            insert into template (id, name, mode, team_count, team_size, budget, draft_order_strategy)
+            values (?, ?, ?, ?, ?, ?, ?)
+            """.trimIndent(),
+            invalidTemplateId,
+            "유효하지 않은 템플릿",
+            "AUCTION",
+            2,
+            2,
+            null,
+            null,
+        )
 
         try {
             assertThatThrownBy { cut.findAll() }
@@ -176,24 +178,23 @@ class TemplateRepositoryIntegrationTest(
 
     @Test
     fun `유효하지 않은 row는 조회 시 즉시 실패한다`() {
-        val templateId =
-            jdbcTemplate.queryForObject(
-                """
-                insert into template (name, mode, team_count, team_size, budget, draft_order_strategy)
-                values (?, ?, ?, ?, ?, ?)
-                returning id
-                """.trimIndent(),
-                Long::class.java,
-                "레거시 경매 템플릿",
-                "AUCTION",
-                2,
-                2,
-                null,
-                null,
-            )!!
+        val templateId = UUID.fromString("00000000-0000-0000-0000-00000000f002")
+        jdbcTemplate.update(
+            """
+            insert into template (id, name, mode, team_count, team_size, budget, draft_order_strategy)
+            values (?, ?, ?, ?, ?, ?, ?)
+            """.trimIndent(),
+            templateId,
+            "레거시 경매 템플릿",
+            "AUCTION",
+            2,
+            2,
+            null,
+            null,
+        )
 
         try {
-            assertThatThrownBy { cut.findById(TemplateId.of(templateId)) }
+            assertThatThrownBy { cut.findById(TemplateId.of(templateId.toString())) }
                 .isInstanceOf(InvalidDataAccessApiUsageException::class.java)
                 .hasMessage("경매 템플릿에는 예산이 필요합니다")
         } finally {

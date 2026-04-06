@@ -93,7 +93,7 @@ class RoomApiController(
         )
         @RequestBody request: CreateRoomRequest,
     ): ApiResponse<RoomResponse> {
-        val room = roomCreateService.create(TemplateId(request.templateId), request.hostNickname)
+        val room = roomCreateService.create(TemplateId.of(request.templateId), request.hostNickname)
         return ApiResponse.success(RoomResponse.from(room))
     }
 
