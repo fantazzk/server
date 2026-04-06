@@ -17,7 +17,7 @@ import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.readText
 import org.jmolecules.ddd.types.Repository as DddRepository
 
-class SpringModulithArchitectureTest {
+class LegacyArchitectureConventionsTest {
     private val modules = ApplicationModules.of(FantazzkApplication::class.java)
 
     @Test
