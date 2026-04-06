@@ -1,3 +1,9 @@
+import org.gradle.api.tasks.Copy
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+import org.gradle.api.tasks.testing.logging.TestLogEvent
+import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
+import org.springframework.boot.gradle.plugin.SpringBootPlugin
+
 buildscript {
     repositories {
         mavenCentral()
@@ -19,20 +25,62 @@ plugins {
     java
     `java-library`
     alias(libs.plugins.spring.boot)
+    alias(libs.plugins.ktlint)
+    alias(libs.plugins.detekt)
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlin.jpa)
+    alias(libs.plugins.kotlin.spring)
     id("net.bytebuddy.byte-buddy-gradle-plugin") version "1.17.8"
 }
 
 group = findProperty("group") ?: group
 version = findProperty("version") ?: version
 
+repositories {
+    mavenCentral()
+}
+
 java {
     sourceCompatibility = JavaVersion.VERSION_25
     targetCompatibility = JavaVersion.VERSION_25
 }
 
+configure<KotlinJvmProjectExtension> {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_25)
+        freeCompilerArgs =
+            listOf(
+                "-Xjsr305=strict",
+                "-opt-in=kotlin.RequiresOptIn",
+                "-Xemit-jvm-type-annotations",
+            )
+    }
+}
+
+val integrationTestSourceSet =
+    sourceSets.create("integrationTest") {
+        kotlin.srcDir("src/integrationTest/kotlin")
+        resources.srcDir("src/integrationTest/resources")
+        compileClasspath += sourceSets.main.get().output + configurations.testRuntimeClasspath.get()
+        runtimeClasspath += output + compileClasspath
+    }
+
+val integrationTestImplementation by configurations.getting {
+    extendsFrom(configurations.implementation.get(), configurations.testImplementation.get())
+}
+
+val integrationTestRuntimeOnly by configurations.getting {
+    extendsFrom(configurations.runtimeOnly.get(), configurations.testRuntimeOnly.get())
+}
+
 dependencies {
+    implementation(enforcedPlatform(SpringBootPlugin.BOM_COORDINATES))
     implementation(platform("org.springframework.boot:spring-boot-dependencies:4.0.3"))
     implementation(platform("org.springframework.modulith:spring-modulith-bom:2.0.5"))
+    implementation(enforcedPlatform(libs.kotlin.bom))
+    implementation(enforcedPlatform(libs.kotlinx.coroutine.bom))
+    implementation(kotlin("reflect"))
+    implementation(kotlin("stdlib"))
     implementation("org.springframework.boot:spring-boot-starter")
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
@@ -43,16 +91,37 @@ dependencies {
     implementation("org.springframework.modulith:spring-modulith-starter-jpa")
     implementation("org.springframework.modulith:spring-modulith-starter-insight")
     implementation("org.jmolecules:jmolecules-ddd:2.0.1")
+    implementation("org.jmolecules:kmolecules-ddd:2.0.1")
     implementation("org.jmolecules.integrations:jmolecules-jpa:1.6.0")
     implementation("org.jmolecules:jmolecules-layered-architecture:2.0.1")
     implementation("org.jmolecules.integrations:jmolecules-spring:1.6.0")
     implementation("org.jmolecules.integrations:jmolecules-jackson:1.6.0")
+    implementation("org.springframework:spring-tx")
+    implementation("tools.jackson.module:jackson-module-kotlin")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.6")
+    implementation("io.sentry:sentry-spring-boot-4-starter:8.37.1")
+    implementation("io.micrometer:micrometer-tracing-bridge-otel")
     runtimeOnly("org.postgresql:postgresql")
 
+    testImplementation(enforcedPlatform(SpringBootPlugin.BOM_COORDINATES))
     testImplementation(platform("org.springframework.boot:spring-boot-dependencies:4.0.3"))
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.modulith:spring-modulith-starter-test")
     testImplementation("com.tngtech.archunit:archunit-junit5:1.4.1")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test")
+    testImplementation(libs.mockk)
+    testImplementation(libs.springmockk)
+
+    integrationTestImplementation(sourceSets.main.get().output)
+    integrationTestImplementation(enforcedPlatform(SpringBootPlugin.BOM_COORDINATES))
+    integrationTestImplementation("org.springframework.boot:spring-boot-starter-test")
+    integrationTestImplementation("org.springframework.boot:spring-boot-data-jpa-test")
+    integrationTestImplementation("org.springframework.boot:spring-boot-jdbc-test")
+    integrationTestImplementation("org.springframework.modulith:spring-modulith-starter-test")
+    integrationTestImplementation("org.springframework.boot:spring-boot-restclient")
+    integrationTestImplementation("org.springframework.boot:spring-boot-resttestclient")
+    integrationTestImplementation("org.testcontainers:testcontainers-postgresql")
+    integrationTestRuntimeOnly("org.postgresql:postgresql")
 }
 
 byteBuddy {
@@ -68,4 +137,30 @@ tasks.withType<net.bytebuddy.build.gradle.ByteBuddyTask>().configureEach {
 
 tasks.withType<Test>().configureEach {
     useJUnitPlatform()
+    testLogging {
+        events = mutableSetOf(TestLogEvent.FAILED)
+        exceptionFormat = TestExceptionFormat.FULL
+    }
+}
+
+val integrationTest =
+    tasks.register<Test>("integrationTest") {
+        description = "Runs integration tests."
+        group = LifecycleBasePlugin.VERIFICATION_GROUP
+        testClassesDirs = integrationTestSourceSet.output.classesDirs
+        classpath = integrationTestSourceSet.runtimeClasspath
+        shouldRunAfter(tasks.test)
+        useJUnitPlatform()
+        testLogging {
+            events = mutableSetOf(TestLogEvent.FAILED)
+            exceptionFormat = TestExceptionFormat.FULL
+        }
+    }
+
+tasks.check {
+    dependsOn(integrationTest)
+}
+
+tasks.named<Copy>("processIntegrationTestResources") {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
