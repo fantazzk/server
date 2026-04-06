@@ -67,9 +67,9 @@ class RoomCreateServiceTest {
             assertThat(room.currentTurnIndex).isNull()
             assertThat(room.configuration).isEqualTo(
                 TeamBuildingConfiguration.Auction(
-                    teamCount = 2,
-                    teamSize = 2,
-                    budget = 300,
+                    2,
+                    2,
+                    300,
                 ),
             )
             assertThat(room.progress).isEqualTo(RoomProgress.Waiting)
@@ -104,9 +104,9 @@ class RoomCreateServiceTest {
             assertThat(room.currentTurnIndex).isNull()
             assertThat(room.configuration).isEqualTo(
                 TeamBuildingConfiguration.Draft(
-                    teamCount = 2,
-                    teamSize = 2,
-                    strategy = DraftOrderStrategy.SNAKE,
+                    2,
+                    2,
+                    DraftOrderStrategy.SNAKE,
                 ),
             )
             assertThat(room.progress).isEqualTo(RoomProgress.Waiting)
@@ -118,7 +118,7 @@ class RoomCreateServiceTest {
     inner class `생성 시 초기화 계약` {
         @RepeatedTest(10)
         fun `방 생성 시 6자리 영대문자와 숫자 코드가 발급된다`() {
-            addAuctionTemplate(templateId = TemplateId(1L))
+            addAuctionTemplate(TemplateId(1L))
 
             val room = cut.create(TemplateId(1L), "호스트")
 
@@ -128,7 +128,7 @@ class RoomCreateServiceTest {
 
         @Test
         fun `방 생성 시 호스트가 첫 번째 팀장으로 등록된다`() {
-            addAuctionTemplate(templateId = TemplateId(1L))
+            addAuctionTemplate(TemplateId(1L))
 
             val room = cut.create(TemplateId(1L), "호스트닉네임")
 
@@ -214,7 +214,7 @@ class RoomCreateServiceTest {
         @Test
         fun `저장 시 코드 중복이 발생하면 다른 코드로 재시도한다`() {
             val retryingRoomRepo = DuplicateOnceWithDistinctRetryRoomRepository()
-            addAuctionTemplate(templateId = TemplateId(1L))
+            addAuctionTemplate(TemplateId(1L))
             cut =
                 CreateRoom(
                     retryingRoomRepo,
@@ -234,7 +234,7 @@ class RoomCreateServiceTest {
         @Test
         fun `JPA 저장소에서 무결성 예외가 발생해도 다른 코드로 재시도한다`() {
             val retryingRoomRepo = DuplicateOnceWithDataIntegrityRetryRoomRepository()
-            addAuctionTemplate(templateId = TemplateId(1L))
+            addAuctionTemplate(TemplateId(1L))
             cut =
                 CreateRoom(
                     retryingRoomRepo,
@@ -254,7 +254,7 @@ class RoomCreateServiceTest {
         @Test
         fun `조회 단계에서 계속 충돌하는 코드만 생성되면 최대 횟수까지만 재시도한다`() {
             val alwaysExistingCodeRoomRepository = AlwaysExistingCodeRoomRepository()
-            addAuctionTemplate(templateId = TemplateId(1L))
+            addAuctionTemplate(TemplateId(1L))
             cut =
                 CreateRoom(
                     alwaysExistingCodeRoomRepository,
@@ -272,7 +272,7 @@ class RoomCreateServiceTest {
         @Test
         fun `저장 시 코드 중복이 계속 발생하면 최대 횟수 이후 생성에 실패한다`() {
             val alwaysDuplicateRoomRepo = AlwaysDuplicateRoomRepository()
-            addAuctionTemplate(templateId = TemplateId(1L))
+            addAuctionTemplate(TemplateId(1L))
             cut =
                 CreateRoom(
                     alwaysDuplicateRoomRepo,

@@ -234,7 +234,7 @@ class Room protected constructor(
         leader.requireCanBid(amount)
 
         val highest = bids.maxByOrNull { it.amount }
-        AuctionRound(round = currentRound, highestBid = highest).requireHigherBid(amount)
+        AuctionRound(currentRound, highest).requireHigherBid(amount)
 
         addBid(
             RoomBid(
@@ -259,10 +259,10 @@ class Room protected constructor(
         val assignedCountAfterSettlement = members.size + 1
         val totalRequired = teamCount * picksPerTeam
         val settlement =
-            AuctionRound(round = currentRound, highestBid = highest).settle(
-                playerName = target.name,
-                assignedCountAfterSettlement = assignedCountAfterSettlement,
-                totalRequired = totalRequired,
+            AuctionRound(currentRound, highest).settle(
+                target.name,
+                assignedCountAfterSettlement,
+                totalRequired,
             )
 
         return if (settlement.outcome == AuctionOutcome.SOLD) {
@@ -282,12 +282,8 @@ class Room protected constructor(
         val turnIndex = requireCurrentTurnIndex()
         val strategy = requireNotNull(draftOrderStrategy) { "드래프트 모드에는 순서 전략이 필요합니다" }
         val draftBoard =
-            DraftBoard(
-                teamLeaderIds = leaders.map { it.teamLeaderId },
-                strategy = strategy,
-                picksPerTeam = picksPerTeam,
-            )
-        draftBoard.requireTurnOwner(turnIndex = turnIndex, teamLeaderId = teamLeaderId)
+            DraftBoard(leaders.map { it.teamLeaderId }, strategy, picksPerTeam)
+        draftBoard.requireTurnOwner(turnIndex, teamLeaderId)
 
         leaders.firstOrNull { it.teamLeaderId == teamLeaderId } ?: throw RoomException.TeamLeaderNotFoundException()
 
@@ -295,8 +291,8 @@ class Room protected constructor(
         requireNotNull(target) { "선수 '$playerName'은(는) 선택할 수 없습니다" }
 
         val assignedCount = members.size
-        val settlement = draftBoard.settlePick(turnIndex = turnIndex, assignedCountAfterPick = assignedCount + 1)
-        advanceDraftTurn(nextTurnIndex = settlement.nextTurnIndex, completed = settlement.completed)
+        val settlement = draftBoard.settlePick(turnIndex, assignedCount + 1)
+        advanceDraftTurn(nextTurnIndex = settlement.nextTurnIndex(), completed = settlement.completed())
         target.assign()
         addMember(
             RoomTeamMember(
@@ -466,9 +462,9 @@ class Room protected constructor(
         val winner = leaders.firstOrNull { it.teamLeaderId == winningBid.teamLeaderId } ?: throw RoomException.TeamLeaderNotFoundException()
 
         val leaderMemberCount = members.count { it.teamLeaderId == winningBid.teamLeaderId }
-        AuctionRound(round = winningBid.round, highestBid = winningBid).requireRosterCapacity(
-            currentMemberCount = leaderMemberCount,
-            picksPerTeam = picksPerTeam,
+        AuctionRound(winningBid.round, winningBid).requireRosterCapacity(
+            leaderMemberCount,
+            picksPerTeam,
         )
 
         val assignedCount = members.size

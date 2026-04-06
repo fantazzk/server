@@ -21,7 +21,7 @@ class ApiResponseTest {
     inner class `에러 응답` {
         @Test
         fun `에러 정보를 담아 ERROR 타입으로 반환한다`() {
-            val cut = ApiResponse.error(404, "NOT_FOUND", "찾을 수 없습니다")
+            val cut = ApiResponse.error(404, "NOT_FOUND", "찾을 수 없습니다", null)
             val error = requireNotNull(cut.error)
 
             assertThat(cut.resultType).isEqualTo(ApiResponse.ResultType.ERROR)

@@ -14,12 +14,7 @@ class RoomDomainPoliciesTest {
     inner class `드래프트 보드 정책` {
         @Test
         fun `드래프트 보드는 선언된 구성값을 그대로 노출한다`() {
-            val board =
-                DraftBoard(
-                    teamLeaderIds = listOf("A", "B", "C"),
-                    strategy = DraftOrderStrategy.SNAKE,
-                    picksPerTeam = 2,
-                )
+            val board = DraftBoard(listOf("A", "B", "C"), DraftOrderStrategy.SNAKE, 2)
 
             assertThat(board.teamLeaderIds).containsExactly("A", "B", "C")
             assertThat(board.strategy).isEqualTo(DraftOrderStrategy.SNAKE)
@@ -29,24 +24,16 @@ class RoomDomainPoliciesTest {
         @Test
         fun `SNAKE 전략은 짝수 라운드에서 역순으로 다음 픽 팀장을 계산한다`() {
             val board =
-                DraftBoard(
-                    teamLeaderIds = listOf("A", "B", "C"),
-                    strategy = DraftOrderStrategy.SNAKE,
-                    picksPerTeam = 2,
-                )
+                DraftBoard(listOf("A", "B", "C"), DraftOrderStrategy.SNAKE, 2)
 
             assertThat(board.pickOrder()).containsExactly("A", "B", "C", "C", "B", "A")
-            assertThat(board.currentTeamLeader(turnIndex = 4)).isEqualTo("B")
+            assertThat(board.currentTeamLeader(4)).isEqualTo("B")
         }
 
         @Test
         fun `FIXED 전략은 매 라운드 같은 순서를 유지한다`() {
             val board =
-                DraftBoard(
-                    teamLeaderIds = listOf("A", "B"),
-                    strategy = DraftOrderStrategy.FIXED,
-                    picksPerTeam = 3,
-                )
+                DraftBoard(listOf("A", "B"), DraftOrderStrategy.FIXED, 3)
 
             assertThat(board.pickOrder()).containsExactly("A", "B", "A", "B", "A", "B")
         }
@@ -54,13 +41,9 @@ class RoomDomainPoliciesTest {
         @Test
         fun `현재 턴이 전체 픽 수를 넘기면 더 이상 팀장을 조회할 수 없다`() {
             val board =
-                DraftBoard(
-                    teamLeaderIds = listOf("A", "B"),
-                    strategy = DraftOrderStrategy.FIXED,
-                    picksPerTeam = 1,
-                )
+                DraftBoard(listOf("A", "B"), DraftOrderStrategy.FIXED, 1)
 
-            assertThatThrownBy { board.currentTeamLeader(turnIndex = 2) }
+            assertThatThrownBy { board.currentTeamLeader(2) }
                 .isInstanceOf(IllegalStateException::class.java)
                 .hasMessageContaining("드래프트가 이미 종료되었습니다")
         }
@@ -68,13 +51,9 @@ class RoomDomainPoliciesTest {
         @Test
         fun `현재 턴은 음수일 수 없다`() {
             val board =
-                DraftBoard(
-                    teamLeaderIds = listOf("A", "B"),
-                    strategy = DraftOrderStrategy.FIXED,
-                    picksPerTeam = 1,
-                )
+                DraftBoard(listOf("A", "B"), DraftOrderStrategy.FIXED, 1)
 
-            assertThatThrownBy { board.currentTeamLeader(turnIndex = -1) }
+            assertThatThrownBy { board.currentTeamLeader(-1) }
                 .isInstanceOf(IllegalArgumentException::class.java)
                 .hasMessageContaining("드래프트 턴은 0 이상이어야 합니다")
         }
@@ -82,13 +61,9 @@ class RoomDomainPoliciesTest {
         @Test
         fun `현재 턴이 아닌 팀장은 픽할 수 없다`() {
             val board =
-                DraftBoard(
-                    teamLeaderIds = listOf("A", "B"),
-                    strategy = DraftOrderStrategy.SNAKE,
-                    picksPerTeam = 2,
-                )
+                DraftBoard(listOf("A", "B"), DraftOrderStrategy.SNAKE, 2)
 
-            assertThatThrownBy { board.requireTurnOwner(turnIndex = 1, teamLeaderId = "A") }
+            assertThatThrownBy { board.requireTurnOwner(1, "A") }
                 .isInstanceOf(IllegalStateException::class.java)
                 .hasMessageContaining("현재 턴이 아닙니다")
         }
@@ -96,25 +71,17 @@ class RoomDomainPoliciesTest {
         @Test
         fun `현재 턴 팀장은 픽 소유권 검증을 통과한다`() {
             val board =
-                DraftBoard(
-                    teamLeaderIds = listOf("A", "B"),
-                    strategy = DraftOrderStrategy.SNAKE,
-                    picksPerTeam = 2,
-                )
+                DraftBoard(listOf("A", "B"), DraftOrderStrategy.SNAKE, 2)
 
-            assertThatCode { board.requireTurnOwner(turnIndex = 1, teamLeaderId = "B") }.doesNotThrowAnyException()
+            assertThatCode { board.requireTurnOwner(1, "B") }.doesNotThrowAnyException()
         }
 
         @Test
         fun `픽 정산 정책은 다음 턴과 방 완료 여부를 함께 계산한다`() {
             val board =
-                DraftBoard(
-                    teamLeaderIds = listOf("A", "B"),
-                    strategy = DraftOrderStrategy.SNAKE,
-                    picksPerTeam = 2,
-                )
+                DraftBoard(listOf("A", "B"), DraftOrderStrategy.SNAKE, 2)
 
-            val settlement = board.settlePick(turnIndex = 2, assignedCountAfterPick = 4)
+            val settlement = board.settlePick(2, 4)
 
             assertThat(settlement.nextTurnIndex).isEqualTo(3)
             assertThat(settlement.completed).isTrue()
@@ -123,13 +90,9 @@ class RoomDomainPoliciesTest {
         @Test
         fun `픽 정산 정책은 아직 남은 픽이 있으면 완료되지 않는다`() {
             val board =
-                DraftBoard(
-                    teamLeaderIds = listOf("A", "B"),
-                    strategy = DraftOrderStrategy.FIXED,
-                    picksPerTeam = 2,
-                )
+                DraftBoard(listOf("A", "B"), DraftOrderStrategy.FIXED, 2)
 
-            val settlement = board.settlePick(turnIndex = 0, assignedCountAfterPick = 1)
+            val settlement = board.settlePick(0, 1)
 
             assertThat(settlement.nextTurnIndex).isEqualTo(1)
             assertThat(settlement.completed).isFalse()
@@ -140,11 +103,11 @@ class RoomDomainPoliciesTest {
     inner class `경매 라운드 정책` {
         @Test
         fun `경매 라운드는 1 이상이어야 하고 기본값으로 최고 입찰이 비어 있다`() {
-            val round = AuctionRound(round = 1)
+            val round = AuctionRound(1)
 
-            assertThat(round.round).isEqualTo(1)
-            assertThat(round.highestBid).isNull()
-            assertThatThrownBy { AuctionRound(round = 0) }
+            assertThat(round.round()).isEqualTo(1)
+            assertThat(round.highestBid()).isNull()
+            assertThatThrownBy { AuctionRound(0) }
                 .isInstanceOf(IllegalArgumentException::class.java)
                 .hasMessageContaining("경매 라운드는 1 이상이어야 합니다")
         }
@@ -153,28 +116,28 @@ class RoomDomainPoliciesTest {
         fun `현재 최고가보다 낮거나 같은 금액은 입찰할 수 없다`() {
             val round =
                 AuctionRound(
-                    round = 3,
-                    highestBid = RoomBid(roomId = 1L, round = 3, teamLeaderId = "leader-A", amount = 100),
+                    3,
+                    RoomBid(roomId = 1L, round = 3, teamLeaderId = "leader-A", amount = 100),
                 )
 
-            assertThatThrownBy { round.requireHigherBid(amount = 100) }
+            assertThatThrownBy { round.requireHigherBid(100) }
                 .isInstanceOf(IllegalArgumentException::class.java)
                 .hasMessageContaining("현재 최고가보다 높아야 합니다")
         }
 
         @Test
         fun `최고 입찰이 없으면 첫 입찰을 허용한다`() {
-            val round = AuctionRound(round = 1)
+            val round = AuctionRound(1)
 
-            assertThatCode { round.requireHigherBid(amount = 1) }.doesNotThrowAnyException()
+            assertThatCode { round.requireHigherBid(1) }.doesNotThrowAnyException()
         }
 
         @Test
         fun `최고 입찰이 있으면 낙찰 정산 정책을 만든다`() {
             val winningBid = RoomBid(roomId = 1L, round = 3, teamLeaderId = "leader-B", amount = 150)
-            val round = AuctionRound(round = 3, highestBid = winningBid)
+            val round = AuctionRound(3, winningBid)
 
-            val settlement = round.settle(playerName = "선수1", assignedCountAfterSettlement = 4, totalRequired = 4)
+            val settlement = round.settle("선수1", 4, 4)
 
             assertThat(settlement.playerName).isEqualTo("선수1")
             assertThat(settlement.outcome).isEqualTo(AuctionOutcome.SOLD)
@@ -186,9 +149,9 @@ class RoomDomainPoliciesTest {
         @Test
         fun `최고 입찰이 있어도 아직 정원이 남아 있으면 방은 계속 진행된다`() {
             val winningBid = RoomBid(roomId = 1L, round = 2, teamLeaderId = "leader-A", amount = 90)
-            val round = AuctionRound(round = 2, highestBid = winningBid)
+            val round = AuctionRound(2, winningBid)
 
-            val settlement = round.settle(playerName = "선수2", assignedCountAfterSettlement = 2, totalRequired = 4)
+            val settlement = round.settle("선수2", 2, 4)
 
             assertThat(settlement.outcome).isEqualTo(AuctionOutcome.SOLD)
             assertThat(settlement.completed).isFalse()
@@ -197,9 +160,9 @@ class RoomDomainPoliciesTest {
 
         @Test
         fun `최고 입찰이 없으면 유찰 정산 정책을 만든다`() {
-            val round = AuctionRound(round = 3, highestBid = null)
+            val round = AuctionRound(3, null)
 
-            val settlement = round.settle(playerName = "선수1", assignedCountAfterSettlement = 1, totalRequired = 4)
+            val settlement = round.settle("선수1", 1, 4)
 
             assertThat(settlement.playerName).isEqualTo("선수1")
             assertThat(settlement.outcome).isEqualTo(AuctionOutcome.PASSED)
@@ -210,18 +173,18 @@ class RoomDomainPoliciesTest {
 
         @Test
         fun `낙찰 팀의 정원이 가득 차면 더 이상 선수를 배정할 수 없다`() {
-            val round = AuctionRound(round = 3, highestBid = RoomBid(roomId = 1L, round = 3, teamLeaderId = "leader-B", amount = 150))
+            val round = AuctionRound(3, RoomBid(roomId = 1L, round = 3, teamLeaderId = "leader-B", amount = 150))
 
-            assertThatThrownBy { round.requireRosterCapacity(currentMemberCount = 2, picksPerTeam = 2) }
+            assertThatThrownBy { round.requireRosterCapacity(2, 2) }
                 .isInstanceOf(IllegalStateException::class.java)
                 .hasMessageContaining("팀장의 팀원 정원이 가득 찼습니다")
         }
 
         @Test
         fun `정원이 남아 있으면 선수를 배정할 수 있다`() {
-            val round = AuctionRound(round = 3, highestBid = RoomBid(roomId = 1L, round = 3, teamLeaderId = "leader-B", amount = 150))
+            val round = AuctionRound(3, RoomBid(roomId = 1L, round = 3, teamLeaderId = "leader-B", amount = 150))
 
-            assertThatCode { round.requireRosterCapacity(currentMemberCount = 1, picksPerTeam = 2) }.doesNotThrowAnyException()
+            assertThatCode { round.requireRosterCapacity(1, 2) }.doesNotThrowAnyException()
         }
     }
 
@@ -270,11 +233,7 @@ class RoomDomainPoliciesTest {
             assertThat(room.budget).isEqualTo(300)
             assertThat(room.draftOrderStrategy).isNull()
             assertThat(room.configuration).isEqualTo(
-                TeamBuildingConfiguration.Auction(
-                    teamCount = 2,
-                    teamSize = 3,
-                    budget = 300,
-                ),
+                TeamBuildingConfiguration.Auction(2, 3, 300),
             )
             assertThat(room.progress).isEqualTo(RoomProgress.Waiting)
         }
@@ -295,11 +254,7 @@ class RoomDomainPoliciesTest {
             assertThat(room.budget).isNull()
             assertThat(room.draftOrderStrategy).isEqualTo(DraftOrderStrategy.SNAKE)
             assertThat(room.configuration).isEqualTo(
-                TeamBuildingConfiguration.Draft(
-                    teamCount = 2,
-                    teamSize = 3,
-                    strategy = DraftOrderStrategy.SNAKE,
-                ),
+                TeamBuildingConfiguration.Draft(2, 3, DraftOrderStrategy.SNAKE),
             )
             assertThat(room.progress).isEqualTo(RoomProgress.Waiting)
         }
@@ -312,11 +267,11 @@ class RoomDomainPoliciesTest {
             val auction = auctionRoom().configuration as TeamBuildingConfiguration.Auction
             val draft = draftRoom().configuration as TeamBuildingConfiguration.Draft
 
-            assertThat(auction.mode).isEqualTo(TeamBuildingMode.AUCTION)
+            assertThat(auction.mode()).isEqualTo(TeamBuildingMode.AUCTION)
             assertThat(auction.teamCount).isEqualTo(2)
             assertThat(auction.teamSize).isEqualTo(3)
             assertThat(auction.budget).isEqualTo(300)
-            assertThat(draft.mode).isEqualTo(TeamBuildingMode.DRAFT)
+            assertThat(draft.mode()).isEqualTo(TeamBuildingMode.DRAFT)
             assertThat(draft.teamCount).isEqualTo(2)
             assertThat(draft.teamSize).isEqualTo(3)
             assertThat(draft.strategy).isEqualTo(DraftOrderStrategy.SNAKE)
@@ -363,12 +318,12 @@ class RoomDomainPoliciesTest {
                 )
             val completed = RoomProgress.from(auctionRoom(status = RoomStatus.COMPLETED))
 
-            assertThat(waiting.status).isEqualTo(RoomStatus.WAITING)
+            assertThat(waiting.status()).isEqualTo(RoomStatus.WAITING)
             assertThat((auction as RoomProgress.Auction).currentRound).isEqualTo(2)
-            assertThat(auction.status).isEqualTo(RoomStatus.IN_PROGRESS)
+            assertThat(auction.status()).isEqualTo(RoomStatus.IN_PROGRESS)
             assertThat((draft as RoomProgress.Draft).currentTurnIndex).isEqualTo(1)
-            assertThat(draft.status).isEqualTo(RoomStatus.IN_PROGRESS)
-            assertThat(completed.status).isEqualTo(RoomStatus.COMPLETED)
+            assertThat(draft.status()).isEqualTo(RoomStatus.IN_PROGRESS)
+            assertThat(completed.status()).isEqualTo(RoomStatus.COMPLETED)
         }
 
         @Test
@@ -466,7 +421,7 @@ class RoomDomainPoliciesTest {
             assertThat(started.status).isEqualTo(RoomStatus.IN_PROGRESS)
             assertThat(started.currentAuctionRound).isEqualTo(1)
             assertThat(started.currentTurnIndex).isNull()
-            assertThat(started.progress).isEqualTo(RoomProgress.Auction(currentRound = 1))
+            assertThat(started.progress).isEqualTo(RoomProgress.Auction(1))
         }
 
         @Test
@@ -482,7 +437,7 @@ class RoomDomainPoliciesTest {
             assertThat(started.status).isEqualTo(RoomStatus.IN_PROGRESS)
             assertThat(started.currentTurnIndex).isEqualTo(0)
             assertThat(started.currentAuctionRound).isNull()
-            assertThat(started.progress).isEqualTo(RoomProgress.Draft(currentTurnIndex = 0))
+            assertThat(started.progress).isEqualTo(RoomProgress.Draft(0))
         }
 
         @Test

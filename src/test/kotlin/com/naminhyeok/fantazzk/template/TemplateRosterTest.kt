@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test
 class TemplateRosterTest {
     @Test
     fun `일급 컬렉션은 exact player count를 만족하면 입력 순서를 유지한다`() {
-        val roster = TemplateRoster.exactlyRequired(listOf("선수B", "선수A"), requiredPlayerCount = 2)
+        val roster = TemplateRoster.exactlyRequired(listOf("선수B", "선수A"), 2)
 
         assertThat(roster.playerNames()).containsExactly("선수B", "선수A")
     }
@@ -16,14 +16,14 @@ class TemplateRosterTest {
     @Test
     fun `일급 컬렉션은 exact player count를 강제한다`() {
         assertThatThrownBy {
-            TemplateRoster.exactlyRequired(listOf("선수1"), requiredPlayerCount = 2)
+            TemplateRoster.exactlyRequired(listOf("선수1"), 2)
         }.isInstanceOf(IllegalArgumentException::class.java)
             .hasMessage("선수 수는 정확히 2명이어야 합니다")
     }
 
     @Test
     fun `일급 컬렉션은 playerNames 조회 시 입력 순서를 유지한다`() {
-        val roster = TemplateRoster.exactlyRequired(listOf("선수B", "선수A"), requiredPlayerCount = 2)
+        val roster = TemplateRoster.exactlyRequired(listOf("선수B", "선수A"), 2)
 
         assertThat(roster.playerNames()).containsExactly("선수B", "선수A")
     }

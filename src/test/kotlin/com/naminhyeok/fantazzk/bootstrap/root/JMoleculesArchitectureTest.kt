@@ -5,7 +5,6 @@ import com.naminhyeok.fantazzk.room.repository.RoomRepositoryAdapter
 import com.naminhyeok.fantazzk.room.repository.Rooms
 import com.naminhyeok.fantazzk.template.application.CreateTemplate
 import com.naminhyeok.fantazzk.template.application.FindTemplates
-import com.naminhyeok.fantazzk.template.application.ProvideTemplateCatalog
 import com.naminhyeok.fantazzk.template.repository.Templates
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -18,12 +17,11 @@ class JMoleculesArchitectureTest {
     @Test
     fun `애플리케이션 서비스는 jMolecules service stereotype 으로 역할을 드러낸다`() {
         val applicationServices =
-            listOf(
-                CreateTemplate::class.java,
-                FindTemplates::class.java,
-                ProvideTemplateCatalog::class.java,
-                CreateRoom::class.java,
-            )
+                listOf(
+                    CreateTemplate::class.java,
+                    FindTemplates::class.java,
+                    CreateRoom::class.java,
+                )
 
         assertThat(applicationServices)
             .allMatch { it.isAnnotationPresent(DddService::class.java) }

@@ -177,11 +177,7 @@ class RoomTest {
             val room = room(mode = TeamBuildingMode.AUCTION, budget = 300)
 
             assertThat(room.configuration).isEqualTo(
-                TeamBuildingConfiguration.Auction(
-                    teamCount = 2,
-                    teamSize = 3,
-                    budget = 300,
-                ),
+                TeamBuildingConfiguration.Auction(2, 3, 300),
             )
         }
 
@@ -190,11 +186,7 @@ class RoomTest {
             val room = room(mode = TeamBuildingMode.DRAFT, draftOrderStrategy = DraftOrderStrategy.SNAKE)
 
             assertThat(room.configuration).isEqualTo(
-                TeamBuildingConfiguration.Draft(
-                    teamCount = 2,
-                    teamSize = 3,
-                    strategy = DraftOrderStrategy.SNAKE,
-                ),
+                TeamBuildingConfiguration.Draft(2, 3, DraftOrderStrategy.SNAKE),
             )
         }
 
@@ -213,7 +205,7 @@ class RoomTest {
                     currentAuctionRound = 2,
                 )
 
-            assertThat(room.progress).isEqualTo(RoomProgress.Auction(currentRound = 2))
+            assertThat(room.progress).isEqualTo(RoomProgress.Auction(2))
         }
 
         @Test

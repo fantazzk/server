@@ -39,11 +39,11 @@ class TemplateApiControllerTest {
             every {
                 templateCreateService.create(
                     CreateTemplateCommand.Auction(
-                        name = "경매전",
-                        teamCount = 2,
-                        teamSize = 2,
-                        budget = 300,
-                        playerNames = listOf("선수1", "선수2"),
+                        "경매전",
+                        2,
+                        2,
+                        300,
+                        listOf("선수1", "선수2"),
                     ),
                 )
             } returns template
@@ -75,11 +75,11 @@ class TemplateApiControllerTest {
             every {
                 templateCreateService.create(
                     CreateTemplateCommand.Auction(
-                        name = "실패",
-                        teamCount = 2,
-                        teamSize = 2,
-                        budget = 300,
-                        playerNames = listOf("선수1"),
+                        "실패",
+                        2,
+                        2,
+                        300,
+                        listOf("선수1"),
                     ),
                 )
             } throws IllegalArgumentException("선수 수는 정확히 2명이어야 합니다")
