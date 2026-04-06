@@ -1,27 +1,3 @@
--- template: updated_at 추가
-ALTER TABLE template
-    ADD COLUMN updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
-
--- template_player: created_at, updated_at 추가
-ALTER TABLE template_player
-    ADD COLUMN created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    ADD COLUMN updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
-
--- room_player: created_at, updated_at 추가
-ALTER TABLE room_player
-    ADD COLUMN created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    ADD COLUMN updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
-
--- room_team_leader: created_at, updated_at 추가
-ALTER TABLE room_team_leader
-    ADD COLUMN created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    ADD COLUMN updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
-
--- room_team_member: created_at, updated_at 추가
-ALTER TABLE room_team_member
-    ADD COLUMN created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    ADD COLUMN updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
-
--- room_bid: updated_at 추가
-ALTER TABLE room_bid
-    ADD COLUMN updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+-- Audit columns are part of initial_schema.sql on the clean-rewrite branch.
+-- Keep this changeSet as a no-op so fresh installs can apply the historical
+-- sequence without trying to add already-present columns.

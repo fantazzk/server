@@ -1,20 +1,71 @@
 package com.naminhyeok.fantazzk.room.domain;
 
 import com.naminhyeok.fantazzk.room.RoomId;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.Objects;
+import java.util.UUID;
+import org.springframework.lang.Nullable;
 
-public final class RoomPlayer {
-    private final RoomPlayerId roomPlayerId;
-    private final RoomId roomId;
-    private final String name;
+@Entity
+@Table(name = "room_player")
+public class RoomPlayer {
+    @Id
+    @Column(name = "id", nullable = false, updatable = false)
+    private UUID persistentId;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "room_id", nullable = false)
+    private Room room;
+
+    @Column(name = "name", nullable = false)
+    private String name;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
     private PlayerStatus status;
+
+    @Column(name = "display_order", nullable = false)
     private int displayOrder;
-    private final Instant createdAt;
-    private final Instant updatedAt;
+
+    @Column(name = "created_at", nullable = false)
+    private Instant createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    private Instant updatedAt;
+
+    protected RoomPlayer() {
+        this(null, Room.reference(RoomId.random()), "placeholder", PlayerStatus.AVAILABLE, 0, Instant.now(), Instant.now());
+    }
 
     private RoomPlayer(
-            RoomPlayerId roomPlayerId,
+            @Nullable RoomPlayerId roomPlayerId,
+            Room room,
+            String name,
+            PlayerStatus status,
+            int displayOrder,
+            Instant createdAt,
+            Instant updatedAt
+    ) {
+        this.persistentId = roomPlayerId == null ? UUID.randomUUID() : roomPlayerId.getValue();
+        this.room = Objects.requireNonNull(room, "room");
+        this.name = requireText(name, "선수 이름은 비어 있을 수 없습니다");
+        this.status = Objects.requireNonNull(status, "status");
+        this.displayOrder = displayOrder;
+        this.createdAt = Objects.requireNonNull(createdAt, "createdAt");
+        this.updatedAt = Objects.requireNonNull(updatedAt, "updatedAt");
+    }
+
+    private RoomPlayer(
+            @Nullable RoomPlayerId roomPlayerId,
             RoomId roomId,
             String name,
             PlayerStatus status,
@@ -22,13 +73,7 @@ public final class RoomPlayer {
             Instant createdAt,
             Instant updatedAt
     ) {
-        this.roomPlayerId = roomPlayerId == null ? RoomPlayerId.random() : roomPlayerId;
-        this.roomId = Objects.requireNonNull(roomId, "roomId");
-        this.name = requireText(name, "선수 이름은 비어 있을 수 없습니다");
-        this.status = Objects.requireNonNull(status, "status");
-        this.displayOrder = displayOrder;
-        this.createdAt = Objects.requireNonNull(createdAt, "createdAt");
-        this.updatedAt = Objects.requireNonNull(updatedAt, "updatedAt");
+        this(roomPlayerId, Room.reference(roomId), name, status, displayOrder, createdAt, updatedAt);
     }
 
     public static RoomPlayer create(RoomId roomId, String name, int displayOrder) {
@@ -37,7 +82,7 @@ public final class RoomPlayer {
     }
 
     public static RoomPlayer restore(
-            RoomPlayerId roomPlayerId,
+            @Nullable RoomPlayerId roomPlayerId,
             RoomId roomId,
             String name,
             PlayerStatus status,
@@ -67,15 +112,15 @@ public final class RoomPlayer {
     }
 
     public RoomPlayer copy() {
-        return restore(roomPlayerId, roomId, name, status, displayOrder, createdAt, updatedAt);
+        return restore(getRoomPlayerId(), getRoomId(), name, status, displayOrder, createdAt, updatedAt);
     }
 
     public RoomPlayerId getRoomPlayerId() {
-        return roomPlayerId;
+        return RoomPlayerId.from(Objects.requireNonNull(persistentId, "roomPlayerId is not assigned"));
     }
 
     public RoomId getRoomId() {
-        return roomId;
+        return room.getRoomId();
     }
 
     public String getName() {
@@ -98,6 +143,10 @@ public final class RoomPlayer {
         return updatedAt;
     }
 
+    void attach(Room room) {
+        this.room = Objects.requireNonNull(room, "room");
+    }
+
     @Override
     public boolean equals(Object other) {
         if (this == other) {
@@ -107,8 +156,8 @@ public final class RoomPlayer {
             return false;
         }
         return displayOrder == roomPlayer.displayOrder
-                && roomPlayerId.equals(roomPlayer.roomPlayerId)
-                && roomId.equals(roomPlayer.roomId)
+                && getRoomPlayerId().equals(roomPlayer.getRoomPlayerId())
+                && getRoomId().equals(roomPlayer.getRoomId())
                 && name.equals(roomPlayer.name)
                 && status == roomPlayer.status
                 && createdAt.equals(roomPlayer.createdAt)
@@ -117,7 +166,7 @@ public final class RoomPlayer {
 
     @Override
     public int hashCode() {
-        return Objects.hash(roomPlayerId, roomId, name, status, displayOrder, createdAt, updatedAt);
+        return Objects.hash(getRoomPlayerId(), getRoomId(), name, status, displayOrder, createdAt, updatedAt);
     }
 
     private static String requireText(String value, String message) {

@@ -1,15 +1,17 @@
 package com.naminhyeok.fantazzk.room.repository
 
+import com.naminhyeok.fantazzk.room.RoomId
 import com.naminhyeok.fantazzk.room.domain.DraftOrderStrategy
+import com.naminhyeok.fantazzk.room.domain.PlayerStatus
 import com.naminhyeok.fantazzk.room.domain.Room
 import com.naminhyeok.fantazzk.room.domain.RoomBid
-import com.naminhyeok.fantazzk.room.domain.RoomId
 import com.naminhyeok.fantazzk.room.domain.RoomPlayer
 import com.naminhyeok.fantazzk.room.domain.RoomStatus
 import com.naminhyeok.fantazzk.room.domain.RoomTeamLeader
 import com.naminhyeok.fantazzk.room.domain.RoomTeamMember
 import com.naminhyeok.fantazzk.room.domain.TeamBuildingMode
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatCode
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration
@@ -20,6 +22,8 @@ import org.springframework.context.annotation.Import
 import org.springframework.dao.InvalidDataAccessApiUsageException
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.test.context.TestConstructor
+import java.time.Instant
+import java.util.UUID
 
 @ImportAutoConfiguration(
     LiquibaseAutoConfiguration::class,
@@ -34,20 +38,9 @@ class RoomRepositoryIntegrationTest(
 ) {
     @Test
     fun `방을 저장하고 코드로 조회할 수 있다`() {
-        val saved =
-            cut.save(
-                Room(
-                    code = "RM0001",
-                    hostId = "host",
-                    status = RoomStatus.WAITING,
-                    mode = TeamBuildingMode.AUCTION,
-                    teamCount = 2,
-                    teamSize = 2,
-                    budget = 300,
-                ),
-            )
+        val saved = cut.save(auctionRoom(code = "RM0001"))
 
-        assertThat(saved.roomId).isGreaterThan(0)
+        assertThatCode { UUID.fromString(saved.roomId.toString()) }.doesNotThrowAnyException()
 
         val found = cut.findByCode("RM0001")
         assertThat(found).isNotNull
@@ -59,19 +52,15 @@ class RoomRepositoryIntegrationTest(
     fun `방을 저장하고 ID로 조회할 수 있다`() {
         val saved =
             cut.save(
-                Room(
+                draftRoom(
                     code = "RM0002",
-                    hostId = "host",
-                    status = RoomStatus.WAITING,
-                    mode = TeamBuildingMode.DRAFT,
                     teamCount = 3,
                     teamSize = 4,
-                    draftOrderStrategy = DraftOrderStrategy.SNAKE,
                     currentTurnIndex = 0,
                 ),
             )
 
-        val found = cut.findById(RoomId(saved.roomId))
+        val found = cut.findById(saved.roomId)
         assertThat(found).isNotNull
         assertThat(found!!.draftOrderStrategy).isEqualTo(DraftOrderStrategy.SNAKE)
         assertThat(found.currentTurnIndex).isEqualTo(0)
@@ -84,25 +73,14 @@ class RoomRepositoryIntegrationTest(
 
     @Test
     fun `존재하지 않는 방 ID는 조회하면 null을 반환한다`() {
-        assertThat(cut.findById(RoomId(Long.MAX_VALUE))).isNull()
+        assertThat(cut.findById(RoomId.from(UUID.randomUUID()))).isNull()
     }
 
     @Test
     fun `경매 방을 저장하면 nullable 드래프트 필드는 null로 유지된다`() {
-        val saved =
-            cut.save(
-                Room(
-                    code = "RM0003",
-                    hostId = "host",
-                    status = RoomStatus.WAITING,
-                    mode = TeamBuildingMode.AUCTION,
-                    teamCount = 2,
-                    teamSize = 2,
-                    budget = 300,
-                ),
-            )
+        val saved = cut.save(auctionRoom(code = "RM0003"))
 
-        val found = cut.findById(RoomId(saved.roomId))
+        val found = cut.findById(saved.roomId)
         assertThat(found).isNotNull
         assertThat(found!!.budget).isEqualTo(300)
         assertThat(found.draftOrderStrategy).isNull()
@@ -112,42 +90,39 @@ class RoomRepositoryIntegrationTest(
 
     @Test
     fun `aggregate 를 저장하면 코드와 ID 조회 모두 자식 컬렉션까지 재수화한다`() {
+        val roomId = RoomId.random()
         val saved =
             cut.save(
-                Room(
+                auctionRoom(
+                    roomId = roomId,
                     code = "RMCH01",
-                    hostId = "host",
                     status = RoomStatus.IN_PROGRESS,
-                    mode = TeamBuildingMode.AUCTION,
-                    teamCount = 2,
-                    teamSize = 3,
-                    budget = 300,
                     currentAuctionRound = 2,
                     players =
                         listOf(
-                            RoomPlayer(roomId = 0L, name = "선수1", displayOrder = 0),
-                            RoomPlayer(roomId = 0L, name = "선수2", displayOrder = 1),
+                            roomPlayer(roomId, "선수1", 0),
+                            roomPlayer(roomId, "선수2", 1),
                         ),
                     leaders =
                         listOf(
-                            RoomTeamLeader(roomId = 0L, teamLeaderId = "leader-A", nickname = "팀장A", remainingBudget = 250),
-                            RoomTeamLeader(roomId = 0L, teamLeaderId = "leader-B", nickname = "팀장B", remainingBudget = 300),
+                            roomTeamLeader(roomId, "leader-A", "팀장A", remainingBudget = 250),
+                            roomTeamLeader(roomId, "leader-B", "팀장B", remainingBudget = 300),
                         ),
                     members =
                         listOf(
-                            RoomTeamMember(roomId = 0L, teamLeaderId = "leader-A", playerName = "선수1", assignOrder = 0),
+                            roomTeamMember(roomId, "leader-A", "선수1", assignOrder = 0),
                         ),
                     bids =
                         listOf(
-                            RoomBid(roomId = 0L, round = 1, teamLeaderId = "leader-A", amount = 90),
-                            RoomBid(roomId = 0L, round = 2, teamLeaderId = "leader-A", amount = 120),
-                            RoomBid(roomId = 0L, round = 2, teamLeaderId = "leader-B", amount = 150),
+                            roomBid(roomId, round = 1, teamLeaderId = "leader-A", amount = 90),
+                            roomBid(roomId, round = 2, teamLeaderId = "leader-A", amount = 120),
+                            roomBid(roomId, round = 2, teamLeaderId = "leader-B", amount = 150),
                         ),
                 ),
             )
 
         val foundByCode = cut.findByCode("RMCH01")
-        val foundById = cut.findById(RoomId(saved.roomId))
+        val foundById = cut.findById(saved.roomId)
 
         assertThat(foundByCode).isNotNull
         assertThat(foundById).isNotNull
@@ -175,21 +150,23 @@ class RoomRepositoryIntegrationTest(
             jdbcTemplate.queryForObject(
                 "select count(*) from room_bid where room_id = ?",
                 Int::class.java,
-                saved.roomId,
+                saved.roomId.value,
             )
         assertThat(totalBidRows).isEqualTo(3)
     }
 
     @Test
     fun `드래프트 방 조회는 모드와 맞지 않는 budget row를 허용하지 않는다`() {
+        val roomId = UUID.randomUUID()
         jdbcTemplate.update(
             """
             INSERT INTO room (
-                code, host_id, status, mode, team_count, team_size,
+                id, code, host_id, status, mode, team_count, team_size,
                 budget, draft_order_strategy, current_turn_index, current_auction_round,
                 created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """.trimIndent(),
+            roomId,
             "RM0005",
             "host",
             RoomStatus.WAITING.name,
@@ -211,14 +188,16 @@ class RoomRepositoryIntegrationTest(
 
     @Test
     fun `경매 방 조회는 모드와 맞지 않는 draft strategy row를 허용하지 않는다`() {
+        val roomId = UUID.randomUUID()
         jdbcTemplate.update(
             """
             INSERT INTO room (
-                code, host_id, status, mode, team_count, team_size,
+                id, code, host_id, status, mode, team_count, team_size,
                 budget, draft_order_strategy, current_turn_index, current_auction_round,
                 created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """.trimIndent(),
+            roomId,
             "RM0006",
             "host",
             RoomStatus.IN_PROGRESS.name,
@@ -233,8 +212,8 @@ class RoomRepositoryIntegrationTest(
             java.sql.Timestamp.from(java.time.Instant.parse("2025-01-01T00:00:00Z")),
         )
 
-        val roomId = jdbcTemplate.queryForObject("SELECT id FROM room WHERE code = ?", Long::class.java, "RM0006")!!
-        assertThatThrownBy { cut.findById(RoomId(roomId)) }
+        val storedRoomId = jdbcTemplate.queryForObject("SELECT id FROM room WHERE code = ?", UUID::class.java, "RM0006")!!
+        assertThatThrownBy { cut.findById(RoomId.from(storedRoomId)) }
             .isInstanceOf(InvalidDataAccessApiUsageException::class.java)
             .hasMessage("경매 방에는 드래프트 순서 전략이 있으면 안 됩니다")
     }
@@ -243,20 +222,15 @@ class RoomRepositoryIntegrationTest(
     fun `방을 업데이트하면 변경한 필드가 그대로 반영된다`() {
         val saved =
             cut.save(
-                Room(
+                draftRoom(
                     code = "RM0004",
-                    hostId = "host",
-                    status = RoomStatus.WAITING,
-                    mode = TeamBuildingMode.DRAFT,
-                    teamCount = 2,
-                    teamSize = 2,
-                    draftOrderStrategy = DraftOrderStrategy.SNAKE,
                     currentTurnIndex = 0,
                 ),
             )
 
         val updated =
-            saved.copy(
+            copyRoom(
+                saved,
                 status = RoomStatus.IN_PROGRESS,
                 draftOrderStrategy = DraftOrderStrategy.FIXED,
                 currentTurnIndex = 3,
@@ -270,5 +244,168 @@ class RoomRepositoryIntegrationTest(
         assertThat(found.currentTurnIndex).isEqualTo(3)
         assertThat(found.budget).isNull()
         assertThat(found.currentAuctionRound).isNull()
+    }
+
+    private fun auctionRoom(
+        roomId: RoomId = RoomId.random(),
+        code: String,
+        hostId: String = "host",
+        status: RoomStatus = RoomStatus.WAITING,
+        teamCount: Int = 2,
+        teamSize: Int = 2,
+        budget: Int = 300,
+        currentAuctionRound: Int? = null,
+        players: List<RoomPlayer> = emptyList(),
+        leaders: List<RoomTeamLeader> = emptyList(),
+        members: List<RoomTeamMember> = emptyList(),
+        bids: List<RoomBid> = emptyList(),
+    ): Room =
+        Room.restore(
+            roomId,
+            code,
+            hostId,
+            status,
+            TeamBuildingMode.AUCTION,
+            teamCount,
+            teamSize,
+            budget,
+            null,
+            null,
+            currentAuctionRound,
+            players,
+            leaders,
+            members,
+            bids,
+            FIXED_INSTANT,
+            FIXED_INSTANT,
+        )
+
+    private fun draftRoom(
+        roomId: RoomId = RoomId.random(),
+        code: String,
+        hostId: String = "host",
+        status: RoomStatus = RoomStatus.WAITING,
+        teamCount: Int = 2,
+        teamSize: Int = 2,
+        draftOrderStrategy: DraftOrderStrategy = DraftOrderStrategy.SNAKE,
+        currentTurnIndex: Int? = null,
+        players: List<RoomPlayer> = emptyList(),
+        leaders: List<RoomTeamLeader> = emptyList(),
+        members: List<RoomTeamMember> = emptyList(),
+        bids: List<RoomBid> = emptyList(),
+    ): Room =
+        Room.restore(
+            roomId,
+            code,
+            hostId,
+            status,
+            TeamBuildingMode.DRAFT,
+            teamCount,
+            teamSize,
+            null,
+            draftOrderStrategy,
+            currentTurnIndex,
+            null,
+            players,
+            leaders,
+            members,
+            bids,
+            FIXED_INSTANT,
+            FIXED_INSTANT,
+        )
+
+    private fun copyRoom(
+        room: Room,
+        status: RoomStatus = room.status,
+        draftOrderStrategy: DraftOrderStrategy? = room.draftOrderStrategy,
+        currentTurnIndex: Int? = room.currentTurnIndex,
+        currentAuctionRound: Int? = room.currentAuctionRound,
+    ): Room =
+        Room.restore(
+            room.roomId,
+            room.code,
+            room.hostId,
+            status,
+            room.mode,
+            room.teamCount,
+            room.teamSize,
+            room.budget,
+            draftOrderStrategy,
+            currentTurnIndex,
+            currentAuctionRound,
+            room.players.map(RoomPlayer::copy),
+            room.leaders.map(RoomTeamLeader::copy),
+            room.members.map(RoomTeamMember::copy),
+            room.bidHistory().map(RoomBid::copy),
+            room.createdAt,
+            room.updatedAt,
+        )
+
+    private fun roomPlayer(
+        roomId: RoomId,
+        name: String,
+        displayOrder: Int,
+        status: PlayerStatus = PlayerStatus.AVAILABLE,
+    ): RoomPlayer =
+        RoomPlayer.restore(
+            null,
+            roomId,
+            name,
+            status,
+            displayOrder,
+            FIXED_INSTANT,
+            FIXED_INSTANT,
+        )
+
+    private fun roomTeamLeader(
+        roomId: RoomId,
+        teamLeaderId: String,
+        nickname: String,
+        remainingBudget: Int?,
+    ): RoomTeamLeader =
+        RoomTeamLeader.restore(
+            null,
+            roomId,
+            teamLeaderId,
+            nickname,
+            remainingBudget,
+            FIXED_INSTANT,
+            FIXED_INSTANT,
+        )
+
+    private fun roomTeamMember(
+        roomId: RoomId,
+        teamLeaderId: String,
+        playerName: String,
+        assignOrder: Int,
+    ): RoomTeamMember =
+        RoomTeamMember.restore(
+            null,
+            roomId,
+            teamLeaderId,
+            playerName,
+            assignOrder,
+            FIXED_INSTANT,
+            FIXED_INSTANT,
+        )
+
+    private fun roomBid(
+        roomId: RoomId,
+        round: Int,
+        teamLeaderId: String,
+        amount: Int,
+    ): RoomBid =
+        RoomBid.restore(
+            null,
+            roomId,
+            round,
+            teamLeaderId,
+            amount,
+            FIXED_INSTANT,
+            FIXED_INSTANT,
+        )
+
+    companion object {
+        private val FIXED_INSTANT: Instant = Instant.parse("2025-01-01T00:00:00Z")
     }
 }

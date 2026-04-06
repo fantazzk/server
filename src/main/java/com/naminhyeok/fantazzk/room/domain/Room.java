@@ -4,6 +4,16 @@ import com.naminhyeok.fantazzk.room.RoomCode;
 import com.naminhyeok.fantazzk.room.RoomId;
 import com.naminhyeok.fantazzk.room.application.RoomTemplateSpec;
 import com.naminhyeok.fantazzk.room.exception.RoomException;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
+import jakarta.persistence.PostLoad;
+import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -13,24 +23,83 @@ import java.util.UUID;
 import org.jmolecules.ddd.types.AggregateRoot;
 import org.springframework.lang.Nullable;
 
-public final class Room implements AggregateRoot<Room, RoomId> {
-    private final RoomId roomId;
-    private final RoomCode roomCode;
-    private final String hostId;
+@Entity
+@Table(name = "room")
+public class Room implements AggregateRoot<Room, RoomId> {
+    @Id
+    @Column(name = "id", nullable = false, updatable = false)
+    private UUID persistentId;
+
+    @Column(name = "code", nullable = false, unique = true, length = 6)
+    private RoomCode roomCode;
+
+    @Column(name = "host_id", nullable = false, length = 36)
+    private String hostId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 20)
     private RoomStatus status;
-    private final TeamBuildingMode mode;
-    private final int teamCount;
-    private final int teamSize;
-    private final Integer budget;
-    private final DraftOrderStrategy draftOrderStrategy;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "mode", nullable = false, length = 20)
+    private TeamBuildingMode mode;
+
+    @Column(name = "team_count", nullable = false)
+    private int teamCount;
+
+    @Column(name = "team_size", nullable = false)
+    private int teamSize;
+
+    @Column(name = "budget")
+    private Integer budget;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "draft_order_strategy")
+    private DraftOrderStrategy draftOrderStrategy;
+
+    @Column(name = "current_turn_index")
     private Integer currentTurnIndex;
+
+    @Column(name = "current_auction_round")
     private Integer currentAuctionRound;
-    private final List<RoomPlayer> players;
-    private final List<RoomTeamLeader> leaders;
-    private final List<RoomTeamMember> members;
-    private final List<RoomBid> bidHistory;
-    private final Instant createdAt;
-    private final Instant updatedAt;
+
+    @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("displayOrder ASC")
+    private List<RoomPlayer> players = new ArrayList<>();
+
+    @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("createdAt ASC")
+    private List<RoomTeamLeader> leaders = new ArrayList<>();
+
+    @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("assignOrder ASC")
+    private List<RoomTeamMember> members = new ArrayList<>();
+
+    @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("round ASC, createdAt ASC")
+    private List<RoomBid> bidHistory = new ArrayList<>();
+
+    @Column(name = "created_at", nullable = false)
+    private Instant createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    private Instant updatedAt;
+
+    protected Room() {
+        this.persistentId = UUID.randomUUID();
+        this.roomCode = RoomCode.of("ROOM00");
+        this.hostId = "system";
+        this.status = RoomStatus.WAITING;
+        this.mode = TeamBuildingMode.AUCTION;
+        this.teamCount = 1;
+        this.teamSize = 2;
+        this.budget = 1;
+        this.draftOrderStrategy = null;
+        this.currentTurnIndex = null;
+        this.currentAuctionRound = null;
+        this.createdAt = Instant.now();
+        this.updatedAt = Instant.now();
+    }
 
     private Room(
             RoomId roomId,
@@ -51,7 +120,7 @@ public final class Room implements AggregateRoot<Room, RoomId> {
             Instant createdAt,
             Instant updatedAt
     ) {
-        this.roomId = roomId == null ? RoomId.random() : roomId;
+        this.persistentId = roomId == null ? UUID.randomUUID() : roomId.getValue();
         this.roomCode = Objects.requireNonNull(roomCode, "roomCode");
         this.hostId = requireText(hostId, "호스트 식별자는 비어 있을 수 없습니다");
         this.status = Objects.requireNonNull(status, "status");
@@ -62,12 +131,13 @@ public final class Room implements AggregateRoot<Room, RoomId> {
         this.draftOrderStrategy = draftOrderStrategy;
         this.currentTurnIndex = currentTurnIndex;
         this.currentAuctionRound = currentAuctionRound;
-        this.players = copyPlayers(this.roomId, players);
-        this.leaders = copyLeaders(this.roomId, leaders);
-        this.members = copyMembers(this.roomId, members);
-        this.bidHistory = copyBids(this.roomId, bidHistory);
+        this.players = copyPlayers(getRoomId(), players);
+        this.leaders = copyLeaders(getRoomId(), leaders);
+        this.members = copyMembers(getRoomId(), members);
+        this.bidHistory = copyBids(getRoomId(), bidHistory);
         this.createdAt = Objects.requireNonNull(createdAt, "createdAt");
         this.updatedAt = Objects.requireNonNull(updatedAt, "updatedAt");
+        attachGraph();
         validateState();
     }
 
@@ -115,6 +185,27 @@ public final class Room implements AggregateRoot<Room, RoomId> {
                 List.of(),
                 now,
                 now);
+    }
+
+    static Room reference(RoomId roomId) {
+        return new Room(
+                roomId,
+                RoomCode.of("ROOM00"),
+                "system",
+                RoomStatus.WAITING,
+                TeamBuildingMode.AUCTION,
+                1,
+                2,
+                1,
+                null,
+                null,
+                null,
+                List.of(),
+                List.of(),
+                List.of(),
+                List.of(),
+                Instant.now(),
+                Instant.now());
     }
 
     public static Room restore(
@@ -177,9 +268,9 @@ public final class Room implements AggregateRoot<Room, RoomId> {
         room.players.clear();
         spec.getPlayers().stream()
                 .sorted(Comparator.comparingInt(RoomTemplateSpec.Player::getDisplayOrder))
-                .map(player -> RoomPlayer.create(room.roomId, player.getName(), player.getDisplayOrder()))
-                .forEach(room.players::add);
-        room.leaders.add(room.createHostLeader(hostNickname).copy());
+                .map(player -> RoomPlayer.create(room.getRoomId(), player.getName(), player.getDisplayOrder()))
+                .forEach(room::addPlayer);
+        room.addLeader(room.createHostLeader(hostNickname).copy());
         return room;
     }
 
@@ -204,7 +295,7 @@ public final class Room implements AggregateRoot<Room, RoomId> {
 
     public Room join(String nickname, String teamLeaderId) {
         RoomTeamLeader leader = join(teamLeaderId, nickname, leaders.size());
-        leaders.add(leader.copy());
+        addLeader(leader.copy());
         return this;
     }
 
@@ -281,7 +372,7 @@ public final class Room implements AggregateRoot<Room, RoomId> {
 
         RoomBid highest = getBids().stream().max(Comparator.comparingInt(RoomBid::getAmount)).orElse(null);
         new AuctionRound(currentRound, highest).requireHigherBid(amount);
-        bidHistory.add(RoomBid.create(roomId, currentRound, teamLeaderId, amount));
+        addBid(RoomBid.create(getRoomId(), currentRound, teamLeaderId, amount));
         return this;
     }
 
@@ -327,17 +418,17 @@ public final class Room implements AggregateRoot<Room, RoomId> {
         DraftPickSettlement settlement = board.settlePick(turnIndex, assignedCount + 1);
         advanceDraftTurn(settlement.getNextTurnIndex(), settlement.isCompleted());
         target.assign();
-        members.add(RoomTeamMember.create(roomId, teamLeaderId, playerName, assignedCount));
+        addMember(RoomTeamMember.create(getRoomId(), teamLeaderId, playerName, assignedCount));
         return this;
     }
 
     @Override
     public RoomId getId() {
-        return roomId;
+        return getRoomId();
     }
 
     public RoomId getRoomId() {
-        return roomId;
+        return RoomId.from(Objects.requireNonNull(persistentId, "roomId is not assigned"));
     }
 
     public RoomCode getRoomCode() {
@@ -437,7 +528,7 @@ public final class Room implements AggregateRoot<Room, RoomId> {
 
     public Room copy() {
         return restore(
-                roomId,
+                getRoomId(),
                 getCode(),
                 hostId,
                 status,
@@ -456,6 +547,11 @@ public final class Room implements AggregateRoot<Room, RoomId> {
                 updatedAt);
     }
 
+    @PostLoad
+    private void validateLoadedState() {
+        validateState();
+    }
+
     private Room settleSold(RoomPlayer target, AuctionRoundSettlement settlement) {
         RoomBid winningBid = requireNonNullValue(settlement.getWinningBid(), "낙찰 정산에는 최고 입찰이 필요합니다");
         RoomTeamLeader winner = leaders.stream()
@@ -472,7 +568,7 @@ public final class Room implements AggregateRoot<Room, RoomId> {
         advanceAuction(settlement.getNextRound(), settlement.isCompleted());
         target.assign();
         winner.spend(winningBid.getAmount());
-        members.add(RoomTeamMember.create(roomId, winningBid.getTeamLeaderId(), target.getName(), assignedCount));
+        addMember(RoomTeamMember.create(getRoomId(), winningBid.getTeamLeaderId(), target.getName(), assignedCount));
         return this;
     }
 
@@ -488,7 +584,34 @@ public final class Room implements AggregateRoot<Room, RoomId> {
             case AUCTION -> budget;
             case DRAFT -> null;
         };
-        return RoomTeamLeader.create(roomId, teamLeaderId, nickname, remainingBudget);
+        return RoomTeamLeader.create(getRoomId(), teamLeaderId, nickname, remainingBudget);
+    }
+
+    private void addPlayer(RoomPlayer player) {
+        player.attach(this);
+        players.add(player);
+    }
+
+    private void addLeader(RoomTeamLeader leader) {
+        leader.attach(this);
+        leaders.add(leader);
+    }
+
+    private void addMember(RoomTeamMember member) {
+        member.attach(this);
+        members.add(member);
+    }
+
+    private void addBid(RoomBid bid) {
+        bid.attach(this);
+        bidHistory.add(bid);
+    }
+
+    private void attachGraph() {
+        players.forEach(player -> player.attach(this));
+        leaders.forEach(leader -> leader.attach(this));
+        members.forEach(member -> member.attach(this));
+        bidHistory.forEach(bid -> bid.attach(this));
     }
 
     private TeamBuildingMode configurationMode() {

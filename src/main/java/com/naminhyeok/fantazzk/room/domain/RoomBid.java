@@ -1,20 +1,68 @@
 package com.naminhyeok.fantazzk.room.domain;
 
 import com.naminhyeok.fantazzk.room.RoomId;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.Objects;
+import java.util.UUID;
+import org.springframework.lang.Nullable;
 
-public final class RoomBid {
-    private final RoomBidId roomBidId;
-    private final RoomId roomId;
-    private final int round;
-    private final String teamLeaderId;
-    private final int amount;
-    private final Instant createdAt;
-    private final Instant updatedAt;
+@Entity
+@Table(name = "room_bid")
+public class RoomBid {
+    @Id
+    @Column(name = "id", nullable = false, updatable = false)
+    private UUID persistentId;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "room_id", nullable = false)
+    private Room room;
+
+    @Column(name = "round", nullable = false)
+    private int round;
+
+    @Column(name = "team_leader_id", nullable = false, length = 36)
+    private String teamLeaderId;
+
+    @Column(name = "amount", nullable = false)
+    private int amount;
+
+    @Column(name = "created_at", nullable = false)
+    private Instant createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    private Instant updatedAt;
+
+    protected RoomBid() {
+        this(null, Room.reference(RoomId.random()), 1, "leader", 1, Instant.now(), Instant.now());
+    }
 
     private RoomBid(
-            RoomBidId roomBidId,
+            @Nullable RoomBidId roomBidId,
+            Room room,
+            int round,
+            String teamLeaderId,
+            int amount,
+            Instant createdAt,
+            Instant updatedAt
+    ) {
+        this.persistentId = roomBidId == null ? UUID.randomUUID() : roomBidId.getValue();
+        this.room = Objects.requireNonNull(room, "room");
+        this.round = round;
+        this.teamLeaderId = requireText(teamLeaderId, "팀장 식별자는 비어 있을 수 없습니다");
+        this.amount = amount;
+        this.createdAt = Objects.requireNonNull(createdAt, "createdAt");
+        this.updatedAt = Objects.requireNonNull(updatedAt, "updatedAt");
+    }
+
+    private RoomBid(
+            @Nullable RoomBidId roomBidId,
             RoomId roomId,
             int round,
             String teamLeaderId,
@@ -22,13 +70,7 @@ public final class RoomBid {
             Instant createdAt,
             Instant updatedAt
     ) {
-        this.roomBidId = roomBidId == null ? RoomBidId.random() : roomBidId;
-        this.roomId = Objects.requireNonNull(roomId, "roomId");
-        this.round = round;
-        this.teamLeaderId = requireText(teamLeaderId, "팀장 식별자는 비어 있을 수 없습니다");
-        this.amount = amount;
-        this.createdAt = Objects.requireNonNull(createdAt, "createdAt");
-        this.updatedAt = Objects.requireNonNull(updatedAt, "updatedAt");
+        this(roomBidId, Room.reference(roomId), round, teamLeaderId, amount, createdAt, updatedAt);
     }
 
     public static RoomBid create(RoomId roomId, int round, String teamLeaderId, int amount) {
@@ -37,7 +79,7 @@ public final class RoomBid {
     }
 
     public static RoomBid restore(
-            RoomBidId roomBidId,
+            @Nullable RoomBidId roomBidId,
             RoomId roomId,
             int round,
             String teamLeaderId,
@@ -49,15 +91,15 @@ public final class RoomBid {
     }
 
     public RoomBid copy() {
-        return restore(roomBidId, roomId, round, teamLeaderId, amount, createdAt, updatedAt);
+        return restore(getRoomBidId(), getRoomId(), round, teamLeaderId, amount, createdAt, updatedAt);
     }
 
     public RoomBidId getRoomBidId() {
-        return roomBidId;
+        return RoomBidId.from(Objects.requireNonNull(persistentId, "roomBidId is not assigned"));
     }
 
     public RoomId getRoomId() {
-        return roomId;
+        return room.getRoomId();
     }
 
     public int getRound() {
@@ -80,6 +122,10 @@ public final class RoomBid {
         return updatedAt;
     }
 
+    void attach(Room room) {
+        this.room = Objects.requireNonNull(room, "room");
+    }
+
     @Override
     public boolean equals(Object other) {
         if (this == other) {
@@ -90,8 +136,8 @@ public final class RoomBid {
         }
         return round == roomBid.round
                 && amount == roomBid.amount
-                && roomBidId.equals(roomBid.roomBidId)
-                && roomId.equals(roomBid.roomId)
+                && getRoomBidId().equals(roomBid.getRoomBidId())
+                && getRoomId().equals(roomBid.getRoomId())
                 && teamLeaderId.equals(roomBid.teamLeaderId)
                 && createdAt.equals(roomBid.createdAt)
                 && updatedAt.equals(roomBid.updatedAt);
@@ -99,7 +145,7 @@ public final class RoomBid {
 
     @Override
     public int hashCode() {
-        return Objects.hash(roomBidId, roomId, round, teamLeaderId, amount, createdAt, updatedAt);
+        return Objects.hash(getRoomBidId(), getRoomId(), round, teamLeaderId, amount, createdAt, updatedAt);
     }
 
     private static String requireText(String value, String message) {
