@@ -110,7 +110,8 @@ class RoomCreateServiceTest {
                 ),
             )
             assertThat(room.progress).isEqualTo(RoomProgress.Waiting)
-            assertThat(leader.remainingBudget).isNull()
+            val remainingBudget: Int? = leader.remainingBudget
+            assertThat(remainingBudget).isNull()
         }
     }
 

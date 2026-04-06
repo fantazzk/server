@@ -132,12 +132,12 @@ class RoomRepositoryIntegrationTest(
                         ),
                     leaders =
                         listOf(
-                            RoomTeamLeader(teamLeaderId = "leader-A", nickname = "팀장A", remainingBudget = 250),
-                            RoomTeamLeader(teamLeaderId = "leader-B", nickname = "팀장B", remainingBudget = 300),
+                            RoomTeamLeader("leader-A", "팀장A", 250),
+                            RoomTeamLeader("leader-B", "팀장B", 300),
                         ),
                     members =
                         listOf(
-                            RoomTeamMember(teamLeaderId = "leader-A", playerName = "선수1", assignOrder = 0),
+                            RoomTeamMember("leader-A", "선수1", 0),
                         ),
                     bids =
                         listOf(

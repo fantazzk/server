@@ -46,8 +46,8 @@ class AuctionServiceTest {
                         ),
                     leaders =
                         listOf(
-                            RoomTeamLeader(teamLeaderId = "leader-A", nickname = "팀장A", remainingBudget = 300),
-                            RoomTeamLeader(teamLeaderId = "leader-B", nickname = "팀장B", remainingBudget = 300),
+                            RoomTeamLeader("leader-A", "팀장A", 300),
+                            RoomTeamLeader("leader-B", "팀장B", 300),
                         ),
                 ),
             )

@@ -15,7 +15,7 @@ class RoomTeamMemberTest {
         @Test
         fun `새 팀 멤버는 저장 전 internal entity 식별자 없이 생성된다`() {
             val beforeCreate = Instant.now()
-            val member = RoomTeamMember(teamLeaderId = "leader-1", playerName = "선수1", assignOrder = 0)
+            val member = RoomTeamMember(null, "leader-1", "선수1", 0)
             val afterCreate = Instant.now()
 
             assertThat(member.id).isNull()
@@ -32,13 +32,13 @@ class RoomTeamMemberTest {
             val updatedAt = Instant.parse("2025-02-02T00:00:00Z")
             val member =
                 RoomTeamMember(
-                    roomTeamMemberId = 6L,
-                    roomId = 3L,
-                    teamLeaderId = "leader-3",
-                    playerName = "선수6",
-                    assignOrder = 2,
-                    createdAt = createdAt,
-                    updatedAt = updatedAt,
+                    6L,
+                    3L,
+                    "leader-3",
+                    "선수6",
+                    2,
+                    createdAt,
+                    updatedAt,
                 )
 
             assertThat(member.id).isEqualTo(RoomTeamMemberId(6L))
@@ -54,10 +54,13 @@ class RoomTeamMemberTest {
         fun `public typed 생성자는 0 값 팀 멤버 식별자를 허용하지 않는다`() {
             assertThatThrownBy {
                 RoomTeamMember(
-                    roomTeamMemberId = RoomTeamMemberId(0L),
-                    teamLeaderId = "leader-1",
-                    playerName = "선수1",
-                    assignOrder = 0,
+                    RoomTeamMemberId(0L),
+                    null,
+                    "leader-1",
+                    "선수1",
+                    0,
+                    Instant.now(),
+                    Instant.now(),
                 )
             }.isInstanceOf(IllegalArgumentException::class.java)
         }

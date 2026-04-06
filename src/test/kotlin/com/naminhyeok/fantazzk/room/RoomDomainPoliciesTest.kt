@@ -363,7 +363,8 @@ class RoomDomainPoliciesTest {
             assertThat(auctionHostLeader.remainingBudget).isEqualTo(300)
             assertThat(draftHostLeader.teamLeaderId).isEqualTo(draftRoom.hostId)
             assertThat(draftHostLeader.nickname).isEqualTo("호스트")
-            assertThat(draftHostLeader.remainingBudget).isNull()
+            val hostRemainingBudget: Int? = draftHostLeader.remainingBudget
+            assertThat(hostRemainingBudget).isNull()
         }
 
         @Test
@@ -402,7 +403,8 @@ class RoomDomainPoliciesTest {
 
             val leader = room.join(teamLeaderId = "leader-2", nickname = "참가자", currentLeaderCount = 1)
 
-            assertThat(leader.remainingBudget).isNull()
+            val remainingBudget: Int? = leader.remainingBudget
+            assertThat(remainingBudget).isNull()
         }
     }
 

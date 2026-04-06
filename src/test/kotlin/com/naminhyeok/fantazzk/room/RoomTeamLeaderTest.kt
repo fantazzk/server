@@ -14,15 +14,16 @@ class RoomTeamLeaderTest {
     @Nested
     inner class `생성 계약` {
         @Test
-        fun `새 팀장은 저장 전 internal entity 식별자 없이 생성된다`() {
-            val beforeCreate = Instant.now()
-            val leader = RoomTeamLeader(teamLeaderId = "leader-1", nickname = "팀장")
-            val afterCreate = Instant.now()
+    fun `새 팀장은 저장 전 internal entity 식별자 없이 생성된다`() {
+        val beforeCreate = Instant.now()
+            val leader = RoomTeamLeader("leader-1", "팀장")
+        val afterCreate = Instant.now()
 
             assertThat(leader.id).isNull()
             assertThat(leader.teamLeaderId).isEqualTo("leader-1")
             assertThat(leader.nickname).isEqualTo("팀장")
-            assertThat(leader.remainingBudget).isNull()
+            val remainingBudget: Int? = leader.remainingBudget
+            assertThat(remainingBudget).isNull()
             assertThat(leader.createdAt).isBetween(beforeCreate, afterCreate)
             assertThat(leader.updatedAt).isBetween(beforeCreate, afterCreate)
         }
@@ -34,13 +35,13 @@ class RoomTeamLeaderTest {
 
             val leader =
                 RoomTeamLeader(
-                    roomTeamLeaderId = 3L,
-                    roomId = 1L,
-                    teamLeaderId = "leader-1",
-                    nickname = "팀장",
-                    remainingBudget = 120,
-                    createdAt = createdAt,
-                    updatedAt = updatedAt,
+                    3L,
+                    1L,
+                    "leader-1",
+                    "팀장",
+                    120,
+                    createdAt,
+                    updatedAt,
                 )
 
             assertThat(leader.roomTeamLeaderId).isEqualTo(3L)
@@ -56,7 +57,7 @@ class RoomTeamLeaderTest {
         @Test
         fun `public typed 생성자는 0 값 팀장 식별자를 허용하지 않는다`() {
             assertThatThrownBy {
-                RoomTeamLeader(roomTeamLeaderId = RoomTeamLeaderId(0L), teamLeaderId = "leader-1", nickname = "팀장")
+                RoomTeamLeader(RoomTeamLeaderId(0L), null, "leader-1", "팀장", null, Instant.now(), Instant.now())
             }.isInstanceOf(IllegalArgumentException::class.java)
         }
     }
@@ -133,13 +134,13 @@ class RoomTeamLeaderTest {
         fun `팀장은 aggregate에서 예산 규칙을 그대로 따른다`() {
             val leader =
                 RoomTeamLeader(
-                    roomTeamLeaderId = 12L,
-                    roomId = 2L,
-                    teamLeaderId = "leader-12",
-                    nickname = "주장",
-                    remainingBudget = 100,
-                    createdAt = Instant.parse("2025-02-03T00:00:00Z"),
-                    updatedAt = Instant.parse("2025-02-04T00:00:00Z"),
+                    12L,
+                    2L,
+                    "leader-12",
+                    "주장",
+                    100,
+                    Instant.parse("2025-02-03T00:00:00Z"),
+                    Instant.parse("2025-02-04T00:00:00Z"),
                 )
 
             assertThatCode { leader.requireCanBid(60) }.doesNotThrowAnyException()
@@ -153,5 +154,5 @@ class RoomTeamLeaderTest {
     }
 
     private fun leader(remainingBudget: Int?) =
-        RoomTeamLeader(roomId = 1L, teamLeaderId = "leader-1", nickname = "팀장", remainingBudget = remainingBudget)
+        RoomTeamLeader(1L, "leader-1", "팀장", remainingBudget)
 }

@@ -322,13 +322,13 @@ class RoomApiControllerTest {
             val room = room("PICK01")
             val member =
                 RoomTeamMember(
-                    roomTeamMemberId = 1L,
-                    roomId = 1L,
-                    teamLeaderId = "leader-A",
-                    playerName = "선수1",
-                    assignOrder = 0,
-                    createdAt = now,
-                    updatedAt = now,
+                    1L,
+                    1L,
+                    "leader-A",
+                    "선수1",
+                    0,
+                    now,
+                    now,
                 )
             every { draftService.pick("PICK01", "leader-A", "선수1") } returns member
             every { roomFinder.get("PICK01") } returns room.copy(leaders = emptyList())
@@ -377,12 +377,12 @@ class RoomApiControllerTest {
 
     private fun leader(roomId: Long) =
         RoomTeamLeader(
-            roomTeamLeaderId = 1L,
-            roomId = roomId,
-            teamLeaderId = "leader-1",
-            nickname = "참가자",
-            remainingBudget = 300,
-            createdAt = now,
-            updatedAt = now,
+            1L,
+            roomId,
+            "leader-1",
+            "참가자",
+            300,
+            now,
+            now,
         )
 }

@@ -52,9 +52,9 @@ class RoomAggregateRootTest {
             ).copy(
                 roomId = 10L,
                 leaders =
-                    listOf(
-                        RoomTeamLeader(roomId = 10L, teamLeaderId = "host", nickname = "호스트", remainingBudget = 300),
-                        RoomTeamLeader(roomId = 10L, teamLeaderId = "guest", nickname = "게스트", remainingBudget = 300),
+                listOf(
+                        RoomTeamLeader(10L, "host", "호스트", 300),
+                        RoomTeamLeader(10L, "guest", "게스트", 300),
                     ),
             )
 
@@ -84,18 +84,22 @@ class RoomAggregateRootTest {
                 leaders =
                     listOf(
                         RoomTeamLeader(
-                            roomTeamLeaderId = 1L,
-                            roomId = 10L,
-                            teamLeaderId = "leader-A",
-                            nickname = "A",
-                            remainingBudget = 300,
+                            1L,
+                            10L,
+                            "leader-A",
+                            "A",
+                            300,
+                            java.time.Instant.now(),
+                            java.time.Instant.now(),
                         ),
                         RoomTeamLeader(
-                            roomTeamLeaderId = 2L,
-                            roomId = 10L,
-                            teamLeaderId = "leader-B",
-                            nickname = "B",
-                            remainingBudget = 300,
+                            2L,
+                            10L,
+                            "leader-B",
+                            "B",
+                            300,
+                            java.time.Instant.now(),
+                            java.time.Instant.now(),
                         ),
                     ),
                 bids =
@@ -129,13 +133,13 @@ class RoomAggregateRootTest {
                 players = listOf(RoomPlayer(1L, 11L, "선수2", PlayerStatus.AVAILABLE, 1, java.time.Instant.now(), java.time.Instant.now())),
                 leaders =
                     listOf(
-                        RoomTeamLeader(roomTeamLeaderId = 1L, roomId = 11L, teamLeaderId = "leader-A", nickname = "A"),
-                        RoomTeamLeader(roomTeamLeaderId = 2L, roomId = 11L, teamLeaderId = "leader-B", nickname = "B"),
+	                        RoomTeamLeader(1L, 11L, "leader-A", "A"),
+	                        RoomTeamLeader(2L, 11L, "leader-B", "B"),
                     ),
-                members =
-                    listOf(
-                        RoomTeamMember(roomTeamMemberId = 1L, roomId = 11L, teamLeaderId = "leader-A", playerName = "선수1", assignOrder = 0),
-                    ),
+                    members =
+                        listOf(
+	                        RoomTeamMember(1L, 11L, "leader-A", "선수1", 0),
+                        ),
             )
 
         val pickedRoom = room.pick(teamLeaderId = "leader-B", playerName = "선수2")
@@ -164,6 +168,7 @@ class RoomAggregateRootTest {
             )
 
         assertThat(room.draftOrderStrategy).isEqualTo(DraftOrderStrategy.SNAKE)
-        assertThat(room.leaders.single().remainingBudget).isNull()
+        val remainingBudget: Int? = room.leaders.single().remainingBudget
+        assertThat(remainingBudget).isNull()
     }
 }

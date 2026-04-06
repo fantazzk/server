@@ -66,7 +66,7 @@ class RoomValueObjectsTest {
         @Test
         fun `팀 멤버는 기본 식별자와 감사 시각을 가진다`() {
             val beforeCreate = Instant.now()
-            val member = RoomTeamMember(roomId = 1L, teamLeaderId = "leader-1", playerName = "선수1", assignOrder = 0)
+            val member = RoomTeamMember(1L, "leader-1", "선수1", 0)
             val afterCreate = Instant.now()
 
             assertThat(member.roomTeamMemberId).isZero()
@@ -85,13 +85,13 @@ class RoomValueObjectsTest {
 
             val member =
                 RoomTeamMember(
-                    roomTeamMemberId = 6L,
-                    roomId = 3L,
-                    teamLeaderId = "leader-3",
-                    playerName = "선수6",
-                    assignOrder = 2,
-                    createdAt = createdAt,
-                    updatedAt = updatedAt,
+                    6L,
+                    3L,
+                    "leader-3",
+                    "선수6",
+                    2,
+                    createdAt,
+                    updatedAt,
                 )
 
             assertThat(member.roomTeamMemberId).isEqualTo(6L)

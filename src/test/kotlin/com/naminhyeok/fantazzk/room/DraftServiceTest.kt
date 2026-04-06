@@ -42,8 +42,8 @@ class DraftServiceTest {
                         ),
                     leaders =
                         listOf(
-                            RoomTeamLeader(teamLeaderId = "leader-A", nickname = "팀장A"),
-                            RoomTeamLeader(teamLeaderId = "leader-B", nickname = "팀장B"),
+                            RoomTeamLeader("leader-A", "팀장A", null),
+                            RoomTeamLeader("leader-B", "팀장B", null),
                         ),
                 ),
             )

@@ -36,15 +36,25 @@ class InMemoryRoomRepository : Rooms {
                 leaders =
                     room.leaders.map {
                         it.copy(
-                            roomTeamLeaderId = if (it.roomTeamLeaderId == 0L) leaderSeq++ else it.roomTeamLeaderId,
-                            roomId = assignedRoomId,
+                            if (it.roomTeamLeaderId == 0L) leaderSeq++ else it.roomTeamLeaderId,
+                            assignedRoomId,
+                            it.teamLeaderId,
+                            it.nickname,
+                            it.remainingBudget,
+                            it.createdAt,
+                            it.updatedAt,
                         )
                     },
                 members =
                     room.members.map {
                         it.copy(
-                            roomTeamMemberId = if (it.roomTeamMemberId == 0L) memberSeq++ else it.roomTeamMemberId,
-                            roomId = assignedRoomId,
+                            if (it.roomTeamMemberId == 0L) memberSeq++ else it.roomTeamMemberId,
+                            assignedRoomId,
+                            it.teamLeaderId,
+                            it.playerName,
+                            it.assignOrder,
+                            it.createdAt,
+                            it.updatedAt,
                         )
                     },
                 bids =
