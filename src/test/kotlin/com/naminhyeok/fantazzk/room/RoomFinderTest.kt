@@ -6,6 +6,7 @@ import com.naminhyeok.fantazzk.room.application.GetRoom
 import com.naminhyeok.fantazzk.room.domain.*
 import com.naminhyeok.fantazzk.room.exception.RoomException
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomRepository
+import com.naminhyeok.fantazzk.room.support.roomFixture
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
@@ -24,7 +25,7 @@ class RoomFinderTest {
     @Test
     fun `코드로 방 aggregate 를 조회한다`() {
         roomRepo.save(
-            Room(
+            roomFixture(
                 code = "LOOK01",
                 hostId = "host",
                 status = RoomStatus.WAITING,

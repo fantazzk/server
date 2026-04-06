@@ -3,6 +3,8 @@
 package com.naminhyeok.fantazzk.room
 
 import com.naminhyeok.fantazzk.room.domain.*
+import com.naminhyeok.fantazzk.room.support.copyRoom
+import com.naminhyeok.fantazzk.room.support.roomFixture
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Nested
@@ -18,7 +20,7 @@ class RoomTest {
         fun `새 방은 기본 식별자와 선택 속성 기본값을 가진다`() {
             val beforeCreate = Instant.now()
             val room =
-                Room(
+                roomFixture(
                     code = "ROOM00",
                     hostId = "host-0",
                     status = RoomStatus.WAITING,
@@ -29,11 +31,11 @@ class RoomTest {
                 )
             val afterCreate = Instant.now()
 
-            assertThat(room.roomId).isZero()
+            assertThat(room.roomId).isNotNull()
             assertThat(room.budget).isEqualTo(300)
             assertThat(room.draftOrderStrategy).isNull()
-            assertThat(room.currentTurnIndex).isNull()
-            assertThat(room.currentAuctionRound).isNull()
+            assertThat(nullable(room.currentTurnIndex)).isNull()
+            assertThat(nullable(room.currentAuctionRound)).isNull()
             assertThat(room.createdAt).isBetween(beforeCreate, afterCreate)
             assertThat(room.updatedAt).isBetween(beforeCreate, afterCreate)
         }
@@ -60,17 +62,17 @@ class RoomTest {
                     updatedAt = updatedAt,
                 )
 
-            assertThat(room.roomId).isEqualTo(10L)
+            assertThat(room.roomId).isEqualTo(RoomId(10L))
             assertThat(room.code).isEqualTo("ROOM10")
             assertThat(room.hostId).isEqualTo("host-10")
             assertThat(room.status).isEqualTo(RoomStatus.IN_PROGRESS)
             assertThat(room.mode).isEqualTo(TeamBuildingMode.DRAFT)
             assertThat(room.teamCount).isEqualTo(4)
             assertThat(room.teamSize).isEqualTo(5)
-            assertThat(room.budget).isNull()
+            assertThat(nullable(room.budget)).isNull()
             assertThat(room.draftOrderStrategy).isEqualTo(DraftOrderStrategy.FIXED)
             assertThat(room.currentTurnIndex).isEqualTo(2)
-            assertThat(room.currentAuctionRound).isNull()
+            assertThat(nullable(room.currentAuctionRound)).isNull()
             assertThat(room.createdAt).isEqualTo(createdAt)
             assertThat(room.updatedAt).isEqualTo(updatedAt)
         }
@@ -78,7 +80,7 @@ class RoomTest {
         @Test
         fun `경매 방은 예산이 있어야 하고 드래프트 전략은 가질 수 없다`() {
             assertThatThrownBy {
-                Room(
+                roomFixture(
                     code = "ROOM01",
                     hostId = "host-1",
                     status = RoomStatus.WAITING,
@@ -90,7 +92,7 @@ class RoomTest {
             }.isInstanceOf(IllegalArgumentException::class.java)
 
             assertThatThrownBy {
-                Room(
+                roomFixture(
                     code = "ROOM02",
                     hostId = "host-2",
                     status = RoomStatus.WAITING,
@@ -106,7 +108,7 @@ class RoomTest {
         @Test
         fun `드래프트 방은 전략이 있어야 하고 예산은 가질 수 없다`() {
             assertThatThrownBy {
-                Room(
+                roomFixture(
                     code = "ROOM03",
                     hostId = "host-3",
                     status = RoomStatus.WAITING,
@@ -118,7 +120,7 @@ class RoomTest {
             }.isInstanceOf(IllegalArgumentException::class.java)
 
             assertThatThrownBy {
-                Room(
+                roomFixture(
                     code = "ROOM04",
                     hostId = "host-4",
                     status = RoomStatus.WAITING,
@@ -304,8 +306,8 @@ class RoomTest {
                     updatedAt = Instant.parse("2025-02-12T00:00:00Z"),
                 )
 
-            val advanced = room.copy().advanceAuction(nextRound = 3, completed = false)
-            val moved = room.copy().moveAuctionTargetToNextRound(nextRound = 4)
+            val advanced = copyRoom(room).advanceAuction(3, false)
+            val moved = copyRoom(room).moveAuctionTargetToNextRound(4)
 
             assertThat(advanced.currentAuctionRound).isEqualTo(3)
             assertThat(advanced.status).isEqualTo(RoomStatus.IN_PROGRESS)
@@ -332,11 +334,11 @@ class RoomTest {
                     updatedAt = Instant.parse("2025-02-14T00:00:00Z"),
                 )
 
-            val advanced = room.advanceDraftTurn(nextTurnIndex = 2, completed = false)
+            val advanced = room.advanceDraftTurn(2, false)
 
             assertThat(advanced.currentTurnIndex).isEqualTo(2)
             assertThat(advanced.status).isEqualTo(RoomStatus.IN_PROGRESS)
-            assertThat(advanced.currentAuctionRound).isNull()
+            assertThat(nullable(advanced.currentAuctionRound)).isNull()
         }
 
         @Test
@@ -348,7 +350,7 @@ class RoomTest {
                     budget = null,
                     draftOrderStrategy = DraftOrderStrategy.SNAKE,
                     currentTurnIndex = 0,
-                ).advanceAuction(nextRound = 2, completed = false)
+                ).advanceAuction(2, false)
             }
                 .isInstanceOf(IllegalStateException::class.java)
                 .hasMessageContaining("경매 모드가 아닙니다")
@@ -358,7 +360,7 @@ class RoomTest {
                     status = RoomStatus.WAITING,
                     mode = TeamBuildingMode.AUCTION,
                     currentAuctionRound = 1,
-                ).advanceAuction(nextRound = 2, completed = false)
+                ).advanceAuction(2, false)
             }
                 .isInstanceOf(IllegalStateException::class.java)
                 .hasMessageContaining("진행 중인 방에서만 가능합니다")
@@ -370,7 +372,7 @@ class RoomTest {
                     budget = null,
                     draftOrderStrategy = DraftOrderStrategy.SNAKE,
                     currentTurnIndex = 0,
-                ).moveAuctionTargetToNextRound(nextRound = 2)
+                ).moveAuctionTargetToNextRound(2)
             }
                 .isInstanceOf(IllegalStateException::class.java)
                 .hasMessageContaining("경매 모드가 아닙니다")
@@ -380,7 +382,7 @@ class RoomTest {
                     status = RoomStatus.WAITING,
                     mode = TeamBuildingMode.AUCTION,
                     currentAuctionRound = 1,
-                ).moveAuctionTargetToNextRound(nextRound = 2)
+                ).moveAuctionTargetToNextRound(2)
             }
                 .isInstanceOf(IllegalStateException::class.java)
                 .hasMessageContaining("진행 중인 방에서만 가능합니다")
@@ -390,7 +392,7 @@ class RoomTest {
                     status = RoomStatus.IN_PROGRESS,
                     mode = TeamBuildingMode.AUCTION,
                     currentAuctionRound = 1,
-                ).advanceDraftTurn(nextTurnIndex = 1, completed = false)
+                ).advanceDraftTurn(1, false)
             }
                 .isInstanceOf(IllegalStateException::class.java)
                 .hasMessageContaining("드래프트 모드가 아닙니다")
@@ -402,7 +404,7 @@ class RoomTest {
                     budget = null,
                     draftOrderStrategy = DraftOrderStrategy.SNAKE,
                     currentTurnIndex = 0,
-                ).advanceDraftTurn(nextTurnIndex = 1, completed = false)
+                ).advanceDraftTurn(1, false)
             }
                 .isInstanceOf(IllegalStateException::class.java)
                 .hasMessageContaining("진행 중인 방에서만 가능합니다")
@@ -423,8 +425,8 @@ class RoomTest {
         currentAuctionRound: Int? = null,
         createdAt: Instant = Instant.parse("2025-01-01T00:00:00Z"),
         updatedAt: Instant = Instant.parse("2025-01-01T00:00:00Z"),
-    ) = Room(
-        roomId = roomId,
+    ) = roomFixture(
+        roomId = if (roomId == 0L) RoomId.random() else RoomId(roomId),
         code = code,
         hostId = hostId,
         status = status,

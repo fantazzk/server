@@ -16,6 +16,11 @@ import com.naminhyeok.fantazzk.room.exception.RoomTemplateNotFoundException
 import com.naminhyeok.fantazzk.template.TemplateId
 import com.naminhyeok.fantazzk.room.web.RoomApiController
 import com.naminhyeok.fantazzk.room.web.RoomExceptionHandler
+import com.naminhyeok.fantazzk.room.support.bidFixture
+import com.naminhyeok.fantazzk.room.support.copyRoom
+import com.naminhyeok.fantazzk.room.support.leaderFixture
+import com.naminhyeok.fantazzk.room.support.memberFixture
+import com.naminhyeok.fantazzk.room.support.roomFixture
 import io.mockk.every
 import io.mockk.justRun
 import io.mockk.mockk
@@ -206,7 +211,7 @@ class RoomApiControllerTest {
         fun `성공적으로 시작하면 경로 값을 서비스 인자로 매핑하고 200을 반환한다`() {
             val room = room("START1", status = RoomStatus.IN_PROGRESS)
             justRun { roomStartService.start("START1") }
-            every { roomFinder.get("START1") } returns room.copy(leaders = emptyList())
+            every { roomFinder.get("START1") } returns copyRoom(room, leaders = emptyList())
 
             mockMvc.post("/api/v1/rooms/START1/start")
                 .andExpect {
@@ -235,9 +240,9 @@ class RoomApiControllerTest {
         fun `성공적으로 입찰하면 200과 방 정보를 반환한다`() {
             val room = room("BID001")
             val bid =
-                RoomBid(
-                    roomBidId = 1L,
-                    roomId = 1L,
+                bidFixture(
+                    roomBidId = roomBidId(1L),
+                    roomId = RoomId(1L),
                     round = 1,
                     teamLeaderId = "leader-A",
                     amount = 100,
@@ -245,7 +250,7 @@ class RoomApiControllerTest {
                     updatedAt = now,
                 )
             every { placeBid.place("BID001", "leader-A", 100) } returns bid
-            every { roomFinder.get("BID001") } returns room.copy(leaders = emptyList())
+            every { roomFinder.get("BID001") } returns copyRoom(room, leaders = emptyList())
 
             mockMvc.post("/api/v1/rooms/BID001/bid") {
                 contentType = MediaType.APPLICATION_JSON
@@ -279,7 +284,7 @@ class RoomApiControllerTest {
         fun `성공적으로 정산하면 200과 방 정보를 반환한다`() {
             val room = room("SET001")
             every { settleAuction.settle("SET001") } returns AuctionSettleResult("선수1", AuctionOutcome.SOLD)
-            every { roomFinder.get("SET001") } returns room.copy(leaders = emptyList())
+            every { roomFinder.get("SET001") } returns copyRoom(room, leaders = emptyList())
 
             mockMvc.post("/api/v1/rooms/SET001/settle")
                 .andExpect {
@@ -308,9 +313,9 @@ class RoomApiControllerTest {
         fun `성공적으로 픽하면 200과 방 정보를 반환한다`() {
             val room = room("PICK01")
             val member =
-                RoomTeamMember(
-                    roomTeamMemberId = 1L,
-                    roomId = 1L,
+                memberFixture(
+                    roomTeamMemberId = roomTeamMemberId(1L),
+                    roomId = RoomId(1L),
                     teamLeaderId = "leader-A",
                     playerName = "선수1",
                     assignOrder = 0,
@@ -318,7 +323,7 @@ class RoomApiControllerTest {
                     updatedAt = now,
                 )
             every { draftService.pick("PICK01", "leader-A", "선수1") } returns member
-            every { roomFinder.get("PICK01") } returns room.copy(leaders = emptyList())
+            every { roomFinder.get("PICK01") } returns copyRoom(room, leaders = emptyList())
 
             mockMvc.post("/api/v1/rooms/PICK01/pick") {
                 contentType = MediaType.APPLICATION_JSON
@@ -348,8 +353,8 @@ class RoomApiControllerTest {
     private fun room(
         code: String,
         status: RoomStatus = RoomStatus.WAITING,
-    ) = Room(
-        roomId = 1L,
+    ) = roomFixture(
+        roomId = RoomId(1L),
         code = code,
         hostId = "host",
         status = status,
@@ -357,14 +362,14 @@ class RoomApiControllerTest {
         teamCount = 2,
         teamSize = 2,
         budget = 300,
-        leaders = listOf(leader(roomId = 1L)),
+        leaders = listOf(leader(roomId = RoomId(1L))),
         createdAt = now,
         updatedAt = now,
     )
 
-    private fun leader(roomId: Long) =
-        RoomTeamLeader(
-            roomTeamLeaderId = 1L,
+    private fun leader(roomId: RoomId) =
+        leaderFixture(
+            roomTeamLeaderId = roomTeamLeaderId(1L),
             roomId = roomId,
             teamLeaderId = "leader-1",
             nickname = "참가자",

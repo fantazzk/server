@@ -17,7 +17,7 @@ class PickDraft(
         playerName: String,
     ): RoomTeamMember {
         val room = roomRepository.findByCode(code) ?: throw RoomException.RoomNotFoundException()
-        val savedRoom = roomRepository.save(room.pick(teamLeaderId = teamLeaderId, playerName = playerName))
+        val savedRoom = roomRepository.save(room.pick(teamLeaderId, playerName))
         return savedRoom.members.last()
     }
 }

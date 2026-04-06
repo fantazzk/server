@@ -41,10 +41,10 @@ class CreateRoom(
                 try {
                     roomCreateAttemptExecutor.create(
                         Room.createFromTemplate(
-                            code = code,
-                            hostId = hostId,
-                            hostNickname = hostNickname,
-                            spec = template,
+                            code,
+                            hostId,
+                            hostNickname,
+                            template,
                         ),
                     )
                 } catch (_: DuplicateKeyException) {

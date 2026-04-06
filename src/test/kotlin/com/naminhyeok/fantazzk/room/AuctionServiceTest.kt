@@ -6,7 +6,12 @@ import com.naminhyeok.fantazzk.room.application.PlaceBid
 import com.naminhyeok.fantazzk.room.application.SettleAuction
 import com.naminhyeok.fantazzk.room.domain.*
 import com.naminhyeok.fantazzk.room.exception.RoomException
+import com.naminhyeok.fantazzk.room.support.bidFixture
+import com.naminhyeok.fantazzk.room.support.copyRoom
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomRepository
+import com.naminhyeok.fantazzk.room.support.leaderFixture
+import com.naminhyeok.fantazzk.room.support.playerFixture
+import com.naminhyeok.fantazzk.room.support.roomFixture
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
@@ -19,7 +24,7 @@ class AuctionServiceTest {
     private lateinit var settleAuction: SettleAuction
 
     private lateinit var roomCode: String
-    private var roomId: Long = 0L
+    private lateinit var roomId: RoomId
 
     @BeforeEach
     fun setUp() {
@@ -29,7 +34,7 @@ class AuctionServiceTest {
 
         val room =
             roomRepo.save(
-                Room(
+                roomFixture(
                     code = "TEST01",
                     hostId = "host",
                     status = RoomStatus.IN_PROGRESS,
@@ -40,14 +45,14 @@ class AuctionServiceTest {
                     currentAuctionRound = 1,
                     players =
                         listOf(
-                            RoomPlayer(name = "선수1", displayOrder = 0),
-                            RoomPlayer(name = "선수2", displayOrder = 1),
-                            RoomPlayer(name = "선수3", displayOrder = 2),
+                            playerFixture(roomId = RoomId(1L), name = "선수1", displayOrder = 0),
+                            playerFixture(roomId = RoomId(1L), name = "선수2", displayOrder = 1),
+                            playerFixture(roomId = RoomId(1L), name = "선수3", displayOrder = 2),
                         ),
                     leaders =
                         listOf(
-                            RoomTeamLeader(teamLeaderId = "leader-A", nickname = "팀장A", remainingBudget = 300),
-                            RoomTeamLeader(teamLeaderId = "leader-B", nickname = "팀장B", remainingBudget = 300),
+                            leaderFixture(roomId = RoomId(1L), teamLeaderId = "leader-A", nickname = "팀장A", remainingBudget = 300),
+                            leaderFixture(roomId = RoomId(1L), teamLeaderId = "leader-B", nickname = "팀장B", remainingBudget = 300),
                         ),
                 ),
             )
@@ -76,7 +81,7 @@ class AuctionServiceTest {
 
         @Test
         fun `대기 중인 방에는 입찰할 수 없다`() {
-            persistRoom { room -> room.copy(status = RoomStatus.WAITING) }
+            persistRoom { room -> copyRoom(room, status = RoomStatus.WAITING) }
 
             assertThatThrownBy { placeBid.place(roomCode, "leader-A", 100) }
                 .isInstanceOf(IllegalStateException::class.java)
@@ -85,7 +90,7 @@ class AuctionServiceTest {
         @Test
         fun `드래프트 모드에서는 입찰할 수 없다`() {
             persistRoom {
-                Room(
+                roomFixture(
                     roomId = roomId,
                     code = roomCode,
                     hostId = "host",
@@ -138,7 +143,7 @@ class AuctionServiceTest {
 
         @Test
         fun `현재 경매 라운드가 없으면 입찰 기록을 저장하지 않는다`() {
-            persistRoom { room -> room.copy(currentAuctionRound = null, bids = emptyList()) }
+            persistRoom { room -> copyRoom(room, currentAuctionRound = null, bids = emptyList()) }
 
             assertThatThrownBy { placeBid.place(roomCode, "leader-A", 100) }
                 .isInstanceOf(IllegalArgumentException::class.java)
@@ -217,8 +222,20 @@ class AuctionServiceTest {
         @Test
         fun `경매할 선수가 없으면 정산할 수 없다`() {
             persistRoom { room ->
-                room.copy(
-                    players = room.players.map { it.copy(status = PlayerStatus.ASSIGNED) },
+                copyRoom(
+                    room,
+                    players =
+                        room.players.map {
+                            playerFixture(
+                                roomPlayerId = it.roomPlayerId,
+                                roomId = it.roomId,
+                                name = it.name,
+                                status = PlayerStatus.ASSIGNED,
+                                displayOrder = it.displayOrder,
+                                createdAt = it.createdAt,
+                                updatedAt = it.updatedAt,
+                            )
+                        },
                 )
             }
 
@@ -229,9 +246,10 @@ class AuctionServiceTest {
         @Test
         fun `현재 경매 라운드가 없으면 정산 전에 어떤 상태도 변경하지 않는다`() {
             persistRoom {
-                it.copy(
+                copyRoom(
+                    it,
                     currentAuctionRound = null,
-                    bids = listOf(RoomBid(roomId = roomId, round = 1, teamLeaderId = "leader-A", amount = 100)),
+                    bids = listOf(bidFixture(roomId = roomId, round = 1, teamLeaderId = "leader-A", amount = 100)),
                 )
             }
 
@@ -243,7 +261,7 @@ class AuctionServiceTest {
             assertThat(room.players.first { it.name == "선수1" }.status).isEqualTo(PlayerStatus.AVAILABLE)
             assertThat(room.leaders.first { it.teamLeaderId == "leader-A" }.remainingBudget).isEqualTo(300)
             assertThat(room.members).isEmpty()
-            assertThat(room.currentAuctionRound).isNull()
+            assertThat(nullable(room.currentAuctionRound)).isNull()
         }
     }
 

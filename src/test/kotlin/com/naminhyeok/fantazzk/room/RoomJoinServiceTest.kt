@@ -5,7 +5,9 @@ package com.naminhyeok.fantazzk.room
 import com.naminhyeok.fantazzk.room.application.JoinRoom
 import com.naminhyeok.fantazzk.room.domain.*
 import com.naminhyeok.fantazzk.room.exception.RoomException
+import com.naminhyeok.fantazzk.room.support.copyRoom
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomRepository
+import com.naminhyeok.fantazzk.room.support.leaderFixture
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
@@ -20,7 +22,7 @@ class RoomJoinServiceTest {
     private lateinit var cut: JoinRoom
 
     private lateinit var roomCode: String
-    private var roomId: Long = 0L
+    private lateinit var roomId: RoomId
 
     @BeforeEach
     fun setUp() {
@@ -30,19 +32,20 @@ class RoomJoinServiceTest {
         val room =
             roomRepo.save(
                 Room.createAuction(
-                    code = "JOIN01",
-                    hostId = "host",
-                    teamCount = 2,
-                    teamSize = 2,
-                    budget = 300,
+                    "JOIN01",
+                    "host",
+                    2,
+                    2,
+                    300,
                 ),
             )
         roomCode = room.code
         roomId = room.roomId
 
         persistRoom {
-            it.copy(
-                leaders = listOf(RoomTeamLeader(roomId = roomId, teamLeaderId = "host", nickname = "호스트", remainingBudget = 300)),
+            copyRoom(
+                it,
+                leaders = listOf(leaderFixture(roomId = roomId, teamLeaderId = "host", nickname = "호스트", remainingBudget = 300)),
             )
         }
     }
@@ -71,20 +74,23 @@ class RoomJoinServiceTest {
         fun `예산이 없는 방에 참가하면 팀장의 잔여 예산도 비워둔다`() {
             persistRoom {
                 Room.createDraft(
-                    code = roomCode,
-                    hostId = "host",
-                    teamCount = 2,
-                    teamSize = 2,
-                    draftOrderStrategy = DraftOrderStrategy.SNAKE,
-                ).copy(
+                    roomCode,
+                    "host",
+                    2,
+                    2,
+                    DraftOrderStrategy.SNAKE,
+                ).let {
+                    copyRoom(
+                        it,
                     roomId = roomId,
                     leaders = currentRoom().leaders,
-                )
+                    )
+                }
             }
 
             val leader = cut.join(roomCode, "드래프트참가자")
 
-            assertThat(leader.remainingBudget).isNull()
+            assertThat(nullable(leader.remainingBudget)).isNull()
         }
     }
 
@@ -101,16 +107,19 @@ class RoomJoinServiceTest {
         fun `WAITING이 아닌 상태의 방에는 참가할 수 없다`(status: RoomStatus) {
             persistRoom {
                 Room.createAuction(
-                    code = roomCode,
-                    hostId = "host",
-                    teamCount = 2,
-                    teamSize = 2,
-                    budget = 300,
-                ).copy(
+                    roomCode,
+                    "host",
+                    2,
+                    2,
+                    300,
+                ).let {
+                    copyRoom(
+                        it,
                     roomId = roomId,
                     status = status,
                     leaders = currentRoom().leaders,
-                )
+                    )
+                }
             }
 
             assertThatThrownBy { cut.join(roomCode, "참가자") }
@@ -123,10 +132,11 @@ class RoomJoinServiceTest {
         fun `방 정원이 가득 찼거나 초과된 상태면 참가할 수 없다`(additionalLeaders: Int) {
             repeat(additionalLeaders) { index ->
                 persistRoom { room ->
-                    room.copy(
+                    copyRoom(
+                        room,
                         leaders =
                             room.leaders +
-                                RoomTeamLeader(
+                                leaderFixture(
                                     roomId = roomId,
                                     teamLeaderId = "leader-${index + 2}",
                                     nickname = "추가팀장${index + 1}",

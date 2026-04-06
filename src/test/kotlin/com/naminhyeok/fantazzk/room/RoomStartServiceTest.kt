@@ -6,6 +6,8 @@ import com.naminhyeok.fantazzk.room.application.StartRoom
 import com.naminhyeok.fantazzk.room.domain.*
 import com.naminhyeok.fantazzk.room.exception.RoomException
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomRepository
+import com.naminhyeok.fantazzk.room.support.copyRoom
+import com.naminhyeok.fantazzk.room.support.leaderFixture
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
@@ -43,13 +45,16 @@ class RoomStartServiceTest {
         fun `WAITING이 아닌 상태의 방은 시작할 수 없다`(status: RoomStatus) {
             val room =
                 roomRepo.save(
-                    Room.createAuction(
-                        code = "STATE1",
-                        hostId = "host",
-                        teamCount = 2,
-                        teamSize = 2,
-                        budget = 300,
-                    ).copy(status = status),
+                    copyRoom(
+                        Room.createAuction(
+                            "STATE1",
+                            "host",
+                            2,
+                            2,
+                            300,
+                        ),
+                        status = status,
+                    ),
                 )
             fillLeaders(room)
 
@@ -96,7 +101,7 @@ class RoomStartServiceTest {
 
             val started = roomRepo.findByCode(room.code)!!
             assertThat(started.currentAuctionRound).isEqualTo(1)
-            assertThat(started.currentTurnIndex).isNull()
+            assertThat(nullable(started.currentTurnIndex)).isNull()
         }
 
         @Test
@@ -114,7 +119,7 @@ class RoomStartServiceTest {
 
             val started = roomRepo.findByCode(room.code)!!
             assertThat(started.currentTurnIndex).isEqualTo(0)
-            assertThat(started.currentAuctionRound).isNull()
+            assertThat(nullable(started.currentAuctionRound)).isNull()
         }
     }
 
@@ -130,25 +135,28 @@ class RoomStartServiceTest {
             when (mode) {
                 TeamBuildingMode.AUCTION ->
                     Room.createAuction(
-                        code = "START1",
-                        hostId = "host",
-                        teamCount = teamCount,
-                        teamSize = 2,
-                        budget = requireNotNull(budget) { "경매 방에는 예산이 필요합니다" },
+                        "START1",
+                        "host",
+                        teamCount,
+                        2,
+                        requireNotNull(budget) { "경매 방에는 예산이 필요합니다" },
                     )
 
                 TeamBuildingMode.DRAFT ->
                     Room.createDraft(
-                        code = "START1",
-                        hostId = "host",
-                        teamCount = teamCount,
-                        teamSize = 2,
-                        draftOrderStrategy = requireNotNull(draftOrderStrategy) { "드래프트 방에는 순서 전략이 필요합니다" },
+                        "START1",
+                        "host",
+                        teamCount,
+                        2,
+                        requireNotNull(draftOrderStrategy) { "드래프트 방에는 순서 전략이 필요합니다" },
                     )
-            }.copy(
-                currentTurnIndex = currentTurnIndex,
-                currentAuctionRound = currentAuctionRound,
-            ),
+            }.let {
+                copyRoom(
+                    it,
+                    currentTurnIndex = currentTurnIndex,
+                    currentAuctionRound = currentAuctionRound,
+                )
+            },
         )
 
     private fun fillLeaders(room: Room) {
@@ -160,12 +168,13 @@ class RoomStartServiceTest {
         count: Int,
     ) {
         repeat(count) { index ->
-            val current = roomRepo.findById(RoomId(room.roomId))!!
+            val current = roomRepo.findById(room.roomId)!!
             roomRepo.save(
-                current.copy(
+                copyRoom(
+                    current,
                     leaders =
                         current.leaders +
-                            RoomTeamLeader(
+                            leaderFixture(
                                 roomId = room.roomId,
                                 teamLeaderId = "leader-${index + 1}",
                                 nickname = "팀장${index + 1}",

@@ -1,7 +1,7 @@
 package com.naminhyeok.fantazzk.room.repository
 
+import com.naminhyeok.fantazzk.room.RoomId
 import com.naminhyeok.fantazzk.room.domain.Room
-import com.naminhyeok.fantazzk.room.domain.RoomId
 import org.jmolecules.ddd.types.Repository
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Component
@@ -15,10 +15,8 @@ interface Rooms : Repository<Room, RoomId> {
     fun findById(roomId: RoomId): Room?
 }
 
-internal interface RoomJpaStore : JpaRepository<Room, Long> {
+internal interface RoomJpaStore : JpaRepository<Room, RoomId> {
     fun findByCode(code: String): Room?
-
-    fun findByPersistentId(roomId: Long): Room?
 }
 
 @Component
@@ -32,7 +30,7 @@ class RoomRepositoryAdapter internal constructor(
     override fun findByCode(code: String): Room? = store.findByCode(code)?.also(::initializeGraph)
 
     @Transactional(readOnly = true)
-    override fun findById(roomId: RoomId): Room? = store.findByPersistentId(roomId.value)?.also(::initializeGraph)
+    override fun findById(roomId: RoomId): Room? = store.findById(roomId).orElse(null)?.also(::initializeGraph)
 
     private fun initializeGraph(room: Room) {
         room.players.size

@@ -3,6 +3,7 @@
 package com.naminhyeok.fantazzk.room
 
 import com.naminhyeok.fantazzk.room.domain.*
+import com.naminhyeok.fantazzk.room.support.leaderFixture
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatCode
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -16,14 +17,14 @@ class RoomTeamLeaderTest {
         @Test
         fun `새 팀장은 기본 식별자와 예산 기본값을 가진다`() {
             val beforeCreate = Instant.now()
-            val leader = RoomTeamLeader(roomId = 1L, teamLeaderId = "leader-1", nickname = "팀장")
+            val leader = leaderFixture(roomId = RoomId(1L), teamLeaderId = "leader-1", nickname = "팀장")
             val afterCreate = Instant.now()
 
-            assertThat(leader.roomTeamLeaderId).isZero()
-            assertThat(leader.roomId).isEqualTo(1L)
+            assertThat(leader.roomTeamLeaderId).isNotNull()
+            assertThat(leader.roomId).isEqualTo(RoomId(1L))
             assertThat(leader.teamLeaderId).isEqualTo("leader-1")
             assertThat(leader.nickname).isEqualTo("팀장")
-            assertThat(leader.remainingBudget).isNull()
+            assertThat(nullable(leader.remainingBudget)).isNull()
             assertThat(leader.createdAt).isBetween(beforeCreate, afterCreate)
             assertThat(leader.updatedAt).isBetween(beforeCreate, afterCreate)
         }
@@ -34,9 +35,9 @@ class RoomTeamLeaderTest {
             val updatedAt = Instant.parse("2025-01-02T00:00:00Z")
 
             val leader =
-                RoomTeamLeader(
-                    roomTeamLeaderId = 3L,
-                    roomId = 1L,
+                leaderFixture(
+                    roomTeamLeaderId = roomTeamLeaderId(3L),
+                    roomId = RoomId(1L),
                     teamLeaderId = "leader-1",
                     nickname = "팀장",
                     remainingBudget = 120,
@@ -44,8 +45,8 @@ class RoomTeamLeaderTest {
                     updatedAt = updatedAt,
                 )
 
-            assertThat(leader.roomTeamLeaderId).isEqualTo(3L)
-            assertThat(leader.roomId).isEqualTo(1L)
+            assertThat(leader.roomTeamLeaderId).isEqualTo(roomTeamLeaderId(3L))
+            assertThat(leader.roomId).isEqualTo(RoomId(1L))
             assertThat(leader.teamLeaderId).isEqualTo("leader-1")
             assertThat(leader.nickname).isEqualTo("팀장")
             assertThat(leader.remainingBudget).isEqualTo(120)
@@ -125,9 +126,9 @@ class RoomTeamLeaderTest {
         @Test
         fun `팀장은 aggregate에서 예산 규칙을 그대로 따른다`() {
             val leader =
-                RoomTeamLeader(
-                    roomTeamLeaderId = 12L,
-                    roomId = 2L,
+                leaderFixture(
+                    roomTeamLeaderId = roomTeamLeaderId(12L),
+                    roomId = RoomId(2L),
                     teamLeaderId = "leader-12",
                     nickname = "주장",
                     remainingBudget = 100,
@@ -146,5 +147,5 @@ class RoomTeamLeaderTest {
     }
 
     private fun leader(remainingBudget: Int?) =
-        RoomTeamLeader(roomId = 1L, teamLeaderId = "leader-1", nickname = "팀장", remainingBudget = remainingBudget)
+        leaderFixture(roomId = RoomId(1L), teamLeaderId = "leader-1", nickname = "팀장", remainingBudget = remainingBudget)
 }

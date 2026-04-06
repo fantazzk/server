@@ -3,6 +3,8 @@
 package com.naminhyeok.fantazzk.room
 
 import com.naminhyeok.fantazzk.room.domain.*
+import com.naminhyeok.fantazzk.room.support.bidFixture
+import com.naminhyeok.fantazzk.room.support.memberFixture
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Nested
@@ -23,11 +25,11 @@ class RoomValueObjectsTest {
         @Test
         fun `입찰은 기본 식별자와 감사 시각을 가진다`() {
             val beforeCreate = Instant.now()
-            val bid = RoomBid(roomId = 1L, round = 2, teamLeaderId = "leader-1", amount = 40)
+            val bid = bidFixture(roomId = RoomId(1L), round = 2, teamLeaderId = "leader-1", amount = 40)
             val afterCreate = Instant.now()
 
-            assertThat(bid.roomBidId).isZero()
-            assertThat(bid.roomId).isEqualTo(1L)
+            assertThat(bid.roomBidId).isNotNull()
+            assertThat(bid.roomId).isEqualTo(RoomId(1L))
             assertThat(bid.round).isEqualTo(2)
             assertThat(bid.teamLeaderId).isEqualTo("leader-1")
             assertThat(bid.amount).isEqualTo(40)
@@ -41,9 +43,9 @@ class RoomValueObjectsTest {
             val updatedAt = Instant.parse("2025-01-02T00:00:00Z")
 
             val bid =
-                RoomBid(
-                    roomBidId = 4L,
-                    roomId = 2L,
+                bidFixture(
+                    roomBidId = roomBidId(4L),
+                    roomId = RoomId(2L),
                     round = 3,
                     teamLeaderId = "leader-2",
                     amount = 55,
@@ -51,8 +53,8 @@ class RoomValueObjectsTest {
                     updatedAt = updatedAt,
                 )
 
-            assertThat(bid.roomBidId).isEqualTo(4L)
-            assertThat(bid.roomId).isEqualTo(2L)
+            assertThat(bid.roomBidId).isEqualTo(roomBidId(4L))
+            assertThat(bid.roomId).isEqualTo(RoomId(2L))
             assertThat(bid.round).isEqualTo(3)
             assertThat(bid.teamLeaderId).isEqualTo("leader-2")
             assertThat(bid.amount).isEqualTo(55)
@@ -66,11 +68,11 @@ class RoomValueObjectsTest {
         @Test
         fun `팀 멤버는 기본 식별자와 감사 시각을 가진다`() {
             val beforeCreate = Instant.now()
-            val member = RoomTeamMember(roomId = 1L, teamLeaderId = "leader-1", playerName = "선수1", assignOrder = 0)
+            val member = memberFixture(roomId = RoomId(1L), teamLeaderId = "leader-1", playerName = "선수1", assignOrder = 0)
             val afterCreate = Instant.now()
 
-            assertThat(member.roomTeamMemberId).isZero()
-            assertThat(member.roomId).isEqualTo(1L)
+            assertThat(member.roomTeamMemberId).isNotNull()
+            assertThat(member.roomId).isEqualTo(RoomId(1L))
             assertThat(member.teamLeaderId).isEqualTo("leader-1")
             assertThat(member.playerName).isEqualTo("선수1")
             assertThat(member.assignOrder).isZero()
@@ -84,9 +86,9 @@ class RoomValueObjectsTest {
             val updatedAt = Instant.parse("2025-02-02T00:00:00Z")
 
             val member =
-                RoomTeamMember(
-                    roomTeamMemberId = 6L,
-                    roomId = 3L,
+                memberFixture(
+                    roomTeamMemberId = roomTeamMemberId(6L),
+                    roomId = RoomId(3L),
                     teamLeaderId = "leader-3",
                     playerName = "선수6",
                     assignOrder = 2,
@@ -94,8 +96,8 @@ class RoomValueObjectsTest {
                     updatedAt = updatedAt,
                 )
 
-            assertThat(member.roomTeamMemberId).isEqualTo(6L)
-            assertThat(member.roomId).isEqualTo(3L)
+            assertThat(member.roomTeamMemberId).isEqualTo(roomTeamMemberId(6L))
+            assertThat(member.roomId).isEqualTo(RoomId(3L))
             assertThat(member.teamLeaderId).isEqualTo("leader-3")
             assertThat(member.playerName).isEqualTo("선수6")
             assertThat(member.assignOrder).isEqualTo(2)

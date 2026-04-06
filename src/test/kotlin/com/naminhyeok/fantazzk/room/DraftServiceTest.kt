@@ -5,7 +5,11 @@ package com.naminhyeok.fantazzk.room
 import com.naminhyeok.fantazzk.room.application.PickDraft
 import com.naminhyeok.fantazzk.room.domain.*
 import com.naminhyeok.fantazzk.room.exception.RoomException
+import com.naminhyeok.fantazzk.room.support.copyRoom
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomRepository
+import com.naminhyeok.fantazzk.room.support.leaderFixture
+import com.naminhyeok.fantazzk.room.support.playerFixture
+import com.naminhyeok.fantazzk.room.support.roomFixture
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
@@ -17,7 +21,7 @@ class DraftServiceTest {
     private lateinit var cut: PickDraft
 
     private lateinit var roomCode: String
-    private var roomId: Long = 0L
+    private lateinit var roomId: RoomId
 
     @BeforeEach
     fun setUp() {
@@ -26,7 +30,7 @@ class DraftServiceTest {
 
         val room =
             roomRepo.save(
-                Room(
+                roomFixture(
                     code = "DRAFT1",
                     hostId = "host",
                     status = RoomStatus.IN_PROGRESS,
@@ -37,13 +41,13 @@ class DraftServiceTest {
                     currentTurnIndex = 0,
                     players =
                         listOf(
-                            RoomPlayer(name = "선수1", displayOrder = 0),
-                            RoomPlayer(name = "선수2", displayOrder = 1),
+                            playerFixture(roomId = RoomId(1L), name = "선수1", displayOrder = 0),
+                            playerFixture(roomId = RoomId(1L), name = "선수2", displayOrder = 1),
                         ),
                     leaders =
                         listOf(
-                            RoomTeamLeader(teamLeaderId = "leader-A", nickname = "팀장A"),
-                            RoomTeamLeader(teamLeaderId = "leader-B", nickname = "팀장B"),
+                            leaderFixture(roomId = RoomId(1L), teamLeaderId = "leader-A", nickname = "팀장A"),
+                            leaderFixture(roomId = RoomId(1L), teamLeaderId = "leader-B", nickname = "팀장B"),
                         ),
                 ),
             )
@@ -82,7 +86,7 @@ class DraftServiceTest {
 
         @Test
         fun `대기 중인 방에서는 픽할 수 없다`() {
-            persistRoom { room -> room.copy(status = RoomStatus.WAITING) }
+            persistRoom { room -> copyRoom(room, status = RoomStatus.WAITING) }
 
             assertThatThrownBy { cut.pick(roomCode, "leader-A", "선수1") }
                 .isInstanceOf(IllegalStateException::class.java)
@@ -91,7 +95,7 @@ class DraftServiceTest {
         @Test
         fun `경매 모드에서는 픽할 수 없다`() {
             persistRoom {
-                Room(
+                roomFixture(
                     roomId = roomId,
                     code = roomCode,
                     hostId = "host",
@@ -125,7 +129,7 @@ class DraftServiceTest {
 
         @Test
         fun `현재 드래프트 턴이 없으면 픽 전에 어떤 상태도 변경하지 않는다`() {
-            persistRoom { room -> room.copy(currentTurnIndex = null) }
+            persistRoom { room -> copyRoom(room, currentTurnIndex = null) }
 
             assertThatThrownBy { cut.pick(roomCode, "leader-A", "선수1") }
                 .isInstanceOf(IllegalArgumentException::class.java)
@@ -134,7 +138,7 @@ class DraftServiceTest {
             val room = currentRoom()
             assertThat(room.players.first { it.name == "선수1" }.status).isEqualTo(PlayerStatus.AVAILABLE)
             assertThat(room.members).isEmpty()
-            assertThat(room.currentTurnIndex).isNull()
+            assertThat(nullable(room.currentTurnIndex)).isNull()
         }
     }
 
@@ -142,13 +146,13 @@ class DraftServiceTest {
     inner class `픽 순서 전략` {
         @Test
         fun `SNAKE 전략은 홀수 라운드에서 순서가 뒤집힌다`() {
-            val order = DraftBoard(listOf("A", "B"), DraftOrderStrategy.SNAKE, 2).pickOrder()
+            val order = com.naminhyeok.fantazzk.room.domain.DraftBoard(listOf("A", "B"), DraftOrderStrategy.SNAKE, 2).pickOrder()
             assertThat(order).containsExactly("A", "B", "B", "A")
         }
 
         @Test
         fun `FIXED 전략은 매 라운드 동일 순서를 유지한다`() {
-            val order = DraftBoard(listOf("A", "B"), DraftOrderStrategy.FIXED, 2).pickOrder()
+            val order = com.naminhyeok.fantazzk.room.domain.DraftBoard(listOf("A", "B"), DraftOrderStrategy.FIXED, 2).pickOrder()
             assertThat(order).containsExactly("A", "B", "A", "B")
         }
     }

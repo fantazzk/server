@@ -3,6 +3,7 @@
 package com.naminhyeok.fantazzk.room
 
 import com.naminhyeok.fantazzk.room.domain.*
+import com.naminhyeok.fantazzk.room.support.playerFixture
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Nested
@@ -17,11 +18,11 @@ class RoomPlayerTest {
         @Test
         fun `새 선수는 기본 식별자와 상태를 가진다`() {
             val beforeCreate = Instant.now()
-            val player = RoomPlayer(roomId = 1L, name = "선수1", displayOrder = 0)
+            val player = playerFixture(roomId = RoomId(1L), name = "선수1", displayOrder = 0)
             val afterCreate = Instant.now()
 
-            assertThat(player.roomPlayerId).isZero()
-            assertThat(player.roomId).isEqualTo(1L)
+            assertThat(player.roomPlayerId).isNotNull()
+            assertThat(player.roomId).isEqualTo(RoomId(1L))
             assertThat(player.name).isEqualTo("선수1")
             assertThat(player.status).isEqualTo(PlayerStatus.AVAILABLE)
             assertThat(player.displayOrder).isZero()
@@ -35,7 +36,7 @@ class RoomPlayerTest {
         @ParameterizedTest(name = "{0} 상태의 선수 isAvailable 검증")
         @EnumSource(PlayerStatus::class)
         fun `isAvailable은 AVAILABLE 상태에서만 true를 반환한다`(status: PlayerStatus) {
-            val player = RoomPlayer(roomId = 1L, name = "선수1", status = status, displayOrder = 0)
+            val player = playerFixture(roomId = RoomId(1L), name = "선수1", status = status, displayOrder = 0)
             assertThat(player.isAvailable()).isEqualTo(status == PlayerStatus.AVAILABLE)
         }
     }
@@ -44,7 +45,7 @@ class RoomPlayerTest {
     inner class `상태 전이` {
         @Test
         fun `선수를 배정하면 ASSIGNED 상태가 된다`() {
-            val player = RoomPlayer(roomId = 1L, name = "선수1", displayOrder = 0)
+            val player = playerFixture(roomId = RoomId(1L), name = "선수1", displayOrder = 0)
 
             val assigned = player.assign()
 
@@ -54,7 +55,7 @@ class RoomPlayerTest {
 
         @Test
         fun `이미 배정된 선수는 다시 배정할 수 없다`() {
-            val player = RoomPlayer(roomId = 1L, name = "선수1", status = PlayerStatus.ASSIGNED, displayOrder = 0)
+            val player = playerFixture(roomId = RoomId(1L), name = "선수1", status = PlayerStatus.ASSIGNED, displayOrder = 0)
 
             assertThatThrownBy { player.assign() }
                 .isInstanceOf(IllegalStateException::class.java)
@@ -63,7 +64,7 @@ class RoomPlayerTest {
 
         @Test
         fun `선수를 뒤로 보내면 순서만 갱신되고 상태는 유지된다`() {
-            val player = RoomPlayer(roomId = 1L, name = "선수1", displayOrder = 0)
+            val player = playerFixture(roomId = RoomId(1L), name = "선수1", displayOrder = 0)
 
             val moved = player.moveToBack(3)
 
@@ -73,7 +74,7 @@ class RoomPlayerTest {
 
         @Test
         fun `선수는 현재 순서보다 뒤로만 이동할 수 있다`() {
-            val player = RoomPlayer(roomId = 1L, name = "선수1", displayOrder = 3)
+            val player = playerFixture(roomId = RoomId(1L), name = "선수1", displayOrder = 3)
 
             assertThatThrownBy { player.moveToBack(3) }
                 .isInstanceOf(IllegalArgumentException::class.java)
@@ -82,7 +83,7 @@ class RoomPlayerTest {
 
         @Test
         fun `선수는 음수 순서로 이동할 수 없다`() {
-            val player = RoomPlayer(roomId = 1L, name = "선수1", displayOrder = 3)
+            val player = playerFixture(roomId = RoomId(1L), name = "선수1", displayOrder = 3)
 
             assertThatThrownBy { player.moveToBack(-1) }
                 .isInstanceOf(IllegalArgumentException::class.java)
@@ -91,7 +92,7 @@ class RoomPlayerTest {
 
         @Test
         fun `배정된 선수는 뒤로 보낼 수 없다`() {
-            val player = RoomPlayer(roomId = 1L, name = "선수1", status = PlayerStatus.ASSIGNED, displayOrder = 3)
+            val player = playerFixture(roomId = RoomId(1L), name = "선수1", status = PlayerStatus.ASSIGNED, displayOrder = 3)
 
             assertThatThrownBy { player.moveToBack(4) }
                 .isInstanceOf(IllegalStateException::class.java)

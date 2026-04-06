@@ -7,8 +7,10 @@ import com.naminhyeok.fantazzk.room.application.RoomCreateAttemptExecutor
 import com.naminhyeok.fantazzk.room.domain.*
 import com.naminhyeok.fantazzk.room.exception.RoomTemplateNotFoundException
 import com.naminhyeok.fantazzk.room.repository.Rooms
+import com.naminhyeok.fantazzk.room.support.copyRoom
 import com.naminhyeok.fantazzk.room.support.InMemoryRoomRepository
 import com.naminhyeok.fantazzk.room.support.InMemoryTemplateCatalog
+import com.naminhyeok.fantazzk.room.support.roomFixture
 import com.naminhyeok.fantazzk.template.TemplateBlueprint
 import com.naminhyeok.fantazzk.template.TemplateCatalog
 import com.naminhyeok.fantazzk.template.TemplateCatalogException
@@ -63,8 +65,8 @@ class RoomCreateServiceTest {
             assertThat(room.mode).isEqualTo(TeamBuildingMode.AUCTION)
             assertThat(room.budget).isEqualTo(300)
             assertThat(room.draftOrderStrategy).isNull()
-            assertThat(room.currentAuctionRound).isNull()
-            assertThat(room.currentTurnIndex).isNull()
+            assertThat(nullable(room.currentAuctionRound)).isNull()
+            assertThat(nullable(room.currentTurnIndex)).isNull()
             assertThat(room.configuration).isEqualTo(
                 TeamBuildingConfiguration.Auction(
                     teamCount = 2,
@@ -98,10 +100,10 @@ class RoomCreateServiceTest {
             val leader = room.leaders.single()
 
             assertThat(room.mode).isEqualTo(TeamBuildingMode.DRAFT)
-            assertThat(room.budget).isNull()
+            assertThat(nullable(room.budget)).isNull()
             assertThat(room.draftOrderStrategy).isEqualTo(DraftOrderStrategy.SNAKE)
-            assertThat(room.currentAuctionRound).isNull()
-            assertThat(room.currentTurnIndex).isNull()
+            assertThat(nullable(room.currentAuctionRound)).isNull()
+            assertThat(nullable(room.currentTurnIndex)).isNull()
             assertThat(room.configuration).isEqualTo(
                 TeamBuildingConfiguration.Draft(
                     teamCount = 2,
@@ -110,7 +112,7 @@ class RoomCreateServiceTest {
                 ),
             )
             assertThat(room.progress).isEqualTo(RoomProgress.Waiting)
-            assertThat(leader.remainingBudget).isNull()
+            assertThat(nullable(leader.remainingBudget)).isNull()
         }
     }
 
@@ -224,7 +226,7 @@ class RoomCreateServiceTest {
 
             val room = cut.create(templateId(1), "호스트")
 
-            assertThat(room.roomId).isPositive()
+            assertThat(room.roomId).isNotNull()
             assertThat(retryingRoomRepo.saveAttempts).isEqualTo(2)
             assertThat(retryingRoomRepo.attemptedCodes).hasSize(2)
             assertThat(retryingRoomRepo.attemptedCodes.distinct()).hasSize(2)
@@ -244,7 +246,7 @@ class RoomCreateServiceTest {
 
             val room = cut.create(templateId(1), "호스트")
 
-            assertThat(room.roomId).isPositive()
+            assertThat(room.roomId).isNotNull()
             assertThat(retryingRoomRepo.saveAttempts).isEqualTo(2)
             assertThat(retryingRoomRepo.attemptedCodes).hasSize(2)
             assertThat(retryingRoomRepo.attemptedCodes.distinct()).hasSize(2)
@@ -363,8 +365,8 @@ class RoomCreateServiceTest {
         override fun findByCode(code: String): Room? =
             when {
                 collisionVisible && code == collidingCode ->
-                    Room(
-                        roomId = 99L,
+                    roomFixture(
+                        roomId = RoomId(99L),
                         code = code,
                         hostId = "existing",
                         status = RoomStatus.WAITING,
@@ -385,13 +387,13 @@ class RoomCreateServiceTest {
 
         override fun save(room: Room): Room {
             saveAttempts += 1
-            return room.copy(roomId = 1L)
+            return copyRoom(room, roomId = RoomId(1L))
         }
 
         override fun findByCode(code: String): Room {
             findByCodeAttempts += 1
-            return Room(
-                roomId = 1L,
+            return roomFixture(
+                roomId = RoomId(1L),
                 code = code,
                 hostId = "existing-host",
                 status = RoomStatus.WAITING,

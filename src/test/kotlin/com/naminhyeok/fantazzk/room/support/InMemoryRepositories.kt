@@ -1,7 +1,7 @@
 package com.naminhyeok.fantazzk.room.support
 
+import com.naminhyeok.fantazzk.room.RoomId
 import com.naminhyeok.fantazzk.room.domain.Room
-import com.naminhyeok.fantazzk.room.domain.RoomId
 import com.naminhyeok.fantazzk.room.repository.Rooms
 import com.naminhyeok.fantazzk.template.TemplateBlueprint
 import com.naminhyeok.fantazzk.template.TemplateCatalog
@@ -9,75 +9,121 @@ import com.naminhyeok.fantazzk.template.TemplateCatalogException
 import com.naminhyeok.fantazzk.template.TemplateId
 
 class InMemoryRoomRepository : Rooms {
-    private val store = mutableMapOf<Long, Room>()
-    private var roomSeq = 1L
-    private var playerSeq = 1L
-    private var leaderSeq = 1L
-    private var memberSeq = 1L
-    private var bidSeq = 1L
+    private val store = mutableMapOf<RoomId, Room>()
 
     override fun save(room: Room): Room {
-        val assignedRoomId = if (room.roomId == 0L) roomSeq++ else room.roomId
         val savedRoom =
-            room.copy(
-                roomId = assignedRoomId,
+            copyRoom(
+                room,
                 players =
                     room.players.map {
-                        it.copy(
-                            roomPlayerId = if (it.roomPlayerId == 0L) playerSeq++ else it.roomPlayerId,
-                            roomId = assignedRoomId,
+                        playerFixture(
+                            roomPlayerId = it.roomPlayerId,
+                            roomId = room.roomId,
+                            name = it.name,
+                            status = it.status,
+                            displayOrder = it.displayOrder,
+                            createdAt = it.createdAt,
+                            updatedAt = it.updatedAt,
                         )
                     },
                 leaders =
                     room.leaders.map {
-                        it.copy(
-                            roomTeamLeaderId = if (it.roomTeamLeaderId == 0L) leaderSeq++ else it.roomTeamLeaderId,
-                            roomId = assignedRoomId,
+                        leaderFixture(
+                            roomTeamLeaderId = it.roomTeamLeaderId,
+                            roomId = room.roomId,
+                            teamLeaderId = it.teamLeaderId,
+                            nickname = it.nickname,
+                            remainingBudget = it.remainingBudget,
+                            createdAt = it.createdAt,
+                            updatedAt = it.updatedAt,
                         )
                     },
                 members =
                     room.members.map {
-                        it.copy(
-                            roomTeamMemberId = if (it.roomTeamMemberId == 0L) memberSeq++ else it.roomTeamMemberId,
-                            roomId = assignedRoomId,
+                        memberFixture(
+                            roomTeamMemberId = it.roomTeamMemberId,
+                            roomId = room.roomId,
+                            teamLeaderId = it.teamLeaderId,
+                            playerName = it.playerName,
+                            assignOrder = it.assignOrder,
+                            createdAt = it.createdAt,
+                            updatedAt = it.updatedAt,
                         )
                     },
                 bids =
                     room.bidHistory().map {
-                        it.copy(
-                            roomBidId = if (it.roomBidId == 0L) bidSeq++ else it.roomBidId,
-                            roomId = assignedRoomId,
+                        bidFixture(
+                            roomBidId = it.roomBidId,
+                            roomId = room.roomId,
+                            round = it.round,
+                            teamLeaderId = it.teamLeaderId,
+                            amount = it.amount,
+                            createdAt = it.createdAt,
+                            updatedAt = it.updatedAt,
                         )
                     },
             )
 
-        store[assignedRoomId] = savedRoom.snapshot()
+        store[savedRoom.roomId] = savedRoom.snapshot()
         return savedRoom
     }
 
     override fun findByCode(code: String): Room? = store.values.firstOrNull { it.code == code }?.snapshot()
 
-    override fun findById(roomId: RoomId): Room? = store[roomId.value]?.snapshot()
+    override fun findById(roomId: RoomId): Room? = store[roomId]?.snapshot()
 
     private fun Room.snapshot(): Room =
-        Room(
-            roomId = roomId,
-            code = code,
-            hostId = hostId,
-            status = status,
-            mode = mode,
-            teamCount = teamCount,
-            teamSize = teamSize,
-            budget = budget,
-            draftOrderStrategy = draftOrderStrategy,
-            currentTurnIndex = currentTurnIndex,
-            currentAuctionRound = currentAuctionRound,
-            players = players.map { it.copy() },
-            leaders = leaders.map { it.copy() },
-            members = members.map { it.copy() },
-            bids = bidHistory().map { it.copy() },
-            createdAt = createdAt,
-            updatedAt = updatedAt,
+        copyRoom(
+            this,
+            players =
+                players.map {
+                    playerFixture(
+                        roomPlayerId = it.roomPlayerId,
+                        roomId = roomId,
+                        name = it.name,
+                        status = it.status,
+                        displayOrder = it.displayOrder,
+                        createdAt = it.createdAt,
+                        updatedAt = it.updatedAt,
+                    )
+                },
+            leaders =
+                leaders.map {
+                    leaderFixture(
+                        roomTeamLeaderId = it.roomTeamLeaderId,
+                        roomId = roomId,
+                        teamLeaderId = it.teamLeaderId,
+                        nickname = it.nickname,
+                        remainingBudget = it.remainingBudget,
+                        createdAt = it.createdAt,
+                        updatedAt = it.updatedAt,
+                    )
+                },
+            members =
+                members.map {
+                    memberFixture(
+                        roomTeamMemberId = it.roomTeamMemberId,
+                        roomId = roomId,
+                        teamLeaderId = it.teamLeaderId,
+                        playerName = it.playerName,
+                        assignOrder = it.assignOrder,
+                        createdAt = it.createdAt,
+                        updatedAt = it.updatedAt,
+                    )
+                },
+            bids =
+                bidHistory().map {
+                    bidFixture(
+                        roomBidId = it.roomBidId,
+                        roomId = roomId,
+                        round = it.round,
+                        teamLeaderId = it.teamLeaderId,
+                        amount = it.amount,
+                        createdAt = it.createdAt,
+                        updatedAt = it.updatedAt,
+                    )
+                },
         )
 }
 
