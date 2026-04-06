@@ -26,8 +26,10 @@ class JavaRewriteLayoutTest {
     }
 
     @Test
-    void kotlin_module_directories_remain_during_transition() {
-        assertThat(Path.of("src/main/kotlin/com/naminhyeok/fantazzk/template")).exists();
-        assertThat(Path.of("src/main/kotlin/com/naminhyeok/fantazzk/room")).exists();
+    void legacy_module_metadata_types_are_removed() {
+        assertThat(Path.of("src/main/kotlin/com/naminhyeok/fantazzk/template/TemplateModuleMetadata.kt"))
+                .doesNotExist();
+        assertThat(Path.of("src/main/kotlin/com/naminhyeok/fantazzk/room/RoomModuleMetadata.kt"))
+                .doesNotExist();
     }
 }

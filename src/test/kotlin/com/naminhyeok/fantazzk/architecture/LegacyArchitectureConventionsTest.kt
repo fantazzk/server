@@ -109,6 +109,7 @@ class LegacyArchitectureConventionsTest {
             classes
                 .filter { it.packageName.contains(".repository") }
                 .filter { it.isInterface }
+                .filterNot { it.simpleName == "package-info" }
                 .filterNot { it.simpleName.endsWith("JpaStore") }
                 .map { it.reflect() }
 
