@@ -24,8 +24,13 @@ class InMemoryRoomRepository : Rooms {
                 players =
                     room.players.map {
                         it.copy(
-                            roomPlayerId = if (it.roomPlayerId == 0L) playerSeq++ else it.roomPlayerId,
-                            roomId = assignedRoomId,
+                            if (it.roomPlayerId == 0L) playerSeq++ else it.roomPlayerId,
+                            assignedRoomId,
+                            it.name,
+                            it.status,
+                            it.displayOrder,
+                            it.createdAt,
+                            it.updatedAt,
                         )
                     },
                 leaders =
@@ -45,8 +50,13 @@ class InMemoryRoomRepository : Rooms {
                 bids =
                     room.bidHistory().map {
                         it.copy(
-                            roomBidId = if (it.roomBidId == 0L) bidSeq++ else it.roomBidId,
-                            roomId = assignedRoomId,
+                            if (it.roomBidId == 0L) bidSeq++ else it.roomBidId,
+                            assignedRoomId,
+                            it.round,
+                            it.teamLeaderId,
+                            it.amount,
+                            it.createdAt,
+                            it.updatedAt,
                         )
                     },
             )

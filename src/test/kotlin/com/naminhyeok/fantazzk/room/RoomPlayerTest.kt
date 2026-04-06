@@ -17,7 +17,7 @@ class RoomPlayerTest {
         @Test
         fun `새 선수는 저장 전 internal entity 식별자 없이 생성된다`() {
             val beforeCreate = Instant.now()
-            val player = RoomPlayer(name = "선수1", displayOrder = 0)
+            val player = RoomPlayer("선수1", 0)
             val afterCreate = Instant.now()
 
             assertThat(player.id).isNull()
@@ -30,7 +30,7 @@ class RoomPlayerTest {
 
         @Test
         fun `저장된 선수는 typed internal entity 식별자를 노출한다`() {
-            val player = RoomPlayer(roomPlayerId = 7L, roomId = 1L, name = "선수1", displayOrder = 0)
+            val player = RoomPlayer(7L, 1L, "선수1", PlayerStatus.AVAILABLE, 0, Instant.now(), Instant.now())
 
             assertThat(player.id).isEqualTo(RoomPlayerId(7L))
         }
@@ -38,7 +38,7 @@ class RoomPlayerTest {
         @Test
         fun `public typed 생성자는 0 값 선수 식별자를 허용하지 않는다`() {
             assertThatThrownBy {
-                RoomPlayer(roomPlayerId = RoomPlayerId(0L), name = "선수1", displayOrder = 0)
+                RoomPlayer(RoomPlayerId(0L), null, "선수1", PlayerStatus.AVAILABLE, 0, Instant.now(), Instant.now())
             }.isInstanceOf(IllegalArgumentException::class.java)
         }
     }
@@ -48,7 +48,7 @@ class RoomPlayerTest {
         @ParameterizedTest(name = "{0} 상태의 선수 isAvailable 검증")
         @EnumSource(PlayerStatus::class)
         fun `isAvailable은 AVAILABLE 상태에서만 true를 반환한다`(status: PlayerStatus) {
-            val player = RoomPlayer(roomId = 1L, name = "선수1", status = status, displayOrder = 0)
+            val player = RoomPlayer(1L, "선수1", status, 0, Instant.now(), Instant.now())
             assertThat(player.isAvailable()).isEqualTo(status == PlayerStatus.AVAILABLE)
         }
     }
@@ -57,7 +57,7 @@ class RoomPlayerTest {
     inner class `상태 전이` {
         @Test
         fun `선수를 배정하면 ASSIGNED 상태가 된다`() {
-            val player = RoomPlayer(roomId = 1L, name = "선수1", displayOrder = 0)
+            val player = RoomPlayer(1L, "선수1", PlayerStatus.AVAILABLE, 0, Instant.now(), Instant.now())
 
             val assigned = player.assign()
 
@@ -67,7 +67,7 @@ class RoomPlayerTest {
 
         @Test
         fun `이미 배정된 선수는 다시 배정할 수 없다`() {
-            val player = RoomPlayer(roomId = 1L, name = "선수1", status = PlayerStatus.ASSIGNED, displayOrder = 0)
+            val player = RoomPlayer(1L, "선수1", PlayerStatus.ASSIGNED, 0, Instant.now(), Instant.now())
 
             assertThatThrownBy { player.assign() }
                 .isInstanceOf(IllegalStateException::class.java)
@@ -76,7 +76,7 @@ class RoomPlayerTest {
 
         @Test
         fun `선수를 뒤로 보내면 순서만 갱신되고 상태는 유지된다`() {
-            val player = RoomPlayer(roomId = 1L, name = "선수1", displayOrder = 0)
+            val player = RoomPlayer(1L, "선수1", PlayerStatus.AVAILABLE, 0, Instant.now(), Instant.now())
 
             val moved = player.moveToBack(3)
 
@@ -86,7 +86,7 @@ class RoomPlayerTest {
 
         @Test
         fun `선수는 현재 순서보다 뒤로만 이동할 수 있다`() {
-            val player = RoomPlayer(roomId = 1L, name = "선수1", displayOrder = 3)
+            val player = RoomPlayer(1L, "선수1", PlayerStatus.AVAILABLE, 3, Instant.now(), Instant.now())
 
             assertThatThrownBy { player.moveToBack(3) }
                 .isInstanceOf(IllegalArgumentException::class.java)
@@ -95,7 +95,7 @@ class RoomPlayerTest {
 
         @Test
         fun `선수는 음수 순서로 이동할 수 없다`() {
-            val player = RoomPlayer(roomId = 1L, name = "선수1", displayOrder = 3)
+            val player = RoomPlayer(1L, "선수1", PlayerStatus.AVAILABLE, 3, Instant.now(), Instant.now())
 
             assertThatThrownBy { player.moveToBack(-1) }
                 .isInstanceOf(IllegalArgumentException::class.java)
@@ -104,7 +104,7 @@ class RoomPlayerTest {
 
         @Test
         fun `배정된 선수는 뒤로 보낼 수 없다`() {
-            val player = RoomPlayer(roomId = 1L, name = "선수1", status = PlayerStatus.ASSIGNED, displayOrder = 3)
+            val player = RoomPlayer(1L, "선수1", PlayerStatus.ASSIGNED, 3, Instant.now(), Instant.now())
 
             assertThatThrownBy { player.moveToBack(4) }
                 .isInstanceOf(IllegalStateException::class.java)

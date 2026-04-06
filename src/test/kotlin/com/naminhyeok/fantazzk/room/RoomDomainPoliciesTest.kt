@@ -117,7 +117,7 @@ class RoomDomainPoliciesTest {
             val round =
                 AuctionRound(
                     3,
-                    RoomBid(roomId = 1L, round = 3, teamLeaderId = "leader-A", amount = 100),
+                    RoomBid(1L, 3, "leader-A", 100, java.time.Instant.now(), java.time.Instant.now()),
                 )
 
             assertThatThrownBy { round.requireHigherBid(100) }
@@ -134,7 +134,7 @@ class RoomDomainPoliciesTest {
 
         @Test
         fun `최고 입찰이 있으면 낙찰 정산 정책을 만든다`() {
-            val winningBid = RoomBid(roomId = 1L, round = 3, teamLeaderId = "leader-B", amount = 150)
+            val winningBid = RoomBid(1L, 3, "leader-B", 150, java.time.Instant.now(), java.time.Instant.now())
             val round = AuctionRound(3, winningBid)
 
             val settlement = round.settle("선수1", 4, 4)
@@ -148,7 +148,7 @@ class RoomDomainPoliciesTest {
 
         @Test
         fun `최고 입찰이 있어도 아직 정원이 남아 있으면 방은 계속 진행된다`() {
-            val winningBid = RoomBid(roomId = 1L, round = 2, teamLeaderId = "leader-A", amount = 90)
+            val winningBid = RoomBid(1L, 2, "leader-A", 90, java.time.Instant.now(), java.time.Instant.now())
             val round = AuctionRound(2, winningBid)
 
             val settlement = round.settle("선수2", 2, 4)
@@ -173,7 +173,7 @@ class RoomDomainPoliciesTest {
 
         @Test
         fun `낙찰 팀의 정원이 가득 차면 더 이상 선수를 배정할 수 없다`() {
-            val round = AuctionRound(3, RoomBid(roomId = 1L, round = 3, teamLeaderId = "leader-B", amount = 150))
+            val round = AuctionRound(3, RoomBid(1L, 3, "leader-B", 150, java.time.Instant.now(), java.time.Instant.now()))
 
             assertThatThrownBy { round.requireRosterCapacity(2, 2) }
                 .isInstanceOf(IllegalStateException::class.java)
@@ -182,7 +182,7 @@ class RoomDomainPoliciesTest {
 
         @Test
         fun `정원이 남아 있으면 선수를 배정할 수 있다`() {
-            val round = AuctionRound(3, RoomBid(roomId = 1L, round = 3, teamLeaderId = "leader-B", amount = 150))
+            val round = AuctionRound(3, RoomBid(1L, 3, "leader-B", 150, java.time.Instant.now(), java.time.Instant.now()))
 
             assertThatCode { round.requireRosterCapacity(1, 2) }.doesNotThrowAnyException()
         }

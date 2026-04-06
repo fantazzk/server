@@ -79,7 +79,7 @@ class RoomAggregateRootTest {
                 currentAuctionRound = 1,
                 players =
                     listOf(
-                        RoomPlayer(roomPlayerId = 1L, roomId = 10L, name = "선수1", displayOrder = 0),
+                        RoomPlayer(1L, 10L, "선수1", PlayerStatus.AVAILABLE, 0, java.time.Instant.now(), java.time.Instant.now()),
                     ),
                 leaders =
                     listOf(
@@ -100,13 +100,7 @@ class RoomAggregateRootTest {
                     ),
                 bids =
                     listOf(
-                        RoomBid(
-                            roomBidId = 1L,
-                            roomId = 10L,
-                            round = 1,
-                            teamLeaderId = "leader-B",
-                            amount = 150,
-                        ),
+                        RoomBid(1L, 10L, 1, "leader-B", 150, java.time.Instant.now(), java.time.Instant.now()),
                     ),
             )
 
@@ -132,7 +126,7 @@ class RoomAggregateRootTest {
                 roomId = 11L,
                 status = RoomStatus.IN_PROGRESS,
                 currentTurnIndex = 1,
-                players = listOf(RoomPlayer(roomPlayerId = 1L, roomId = 11L, name = "선수2", displayOrder = 1)),
+                players = listOf(RoomPlayer(1L, 11L, "선수2", PlayerStatus.AVAILABLE, 1, java.time.Instant.now(), java.time.Instant.now())),
                 leaders =
                     listOf(
                         RoomTeamLeader(roomTeamLeaderId = 1L, roomId = 11L, teamLeaderId = "leader-A", nickname = "A"),

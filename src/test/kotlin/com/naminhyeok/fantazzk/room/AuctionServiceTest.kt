@@ -40,9 +40,9 @@ class AuctionServiceTest {
                     currentAuctionRound = 1,
                     players =
                         listOf(
-                            RoomPlayer(name = "선수1", displayOrder = 0),
-                            RoomPlayer(name = "선수2", displayOrder = 1),
-                            RoomPlayer(name = "선수3", displayOrder = 2),
+                            RoomPlayer("선수1", 0),
+                            RoomPlayer("선수2", 1),
+                            RoomPlayer("선수3", 2),
                         ),
                     leaders =
                         listOf(
@@ -218,7 +218,18 @@ class AuctionServiceTest {
         fun `경매할 선수가 없으면 정산할 수 없다`() {
             persistRoom { room ->
                 room.copy(
-                    players = room.players.map { it.copy(status = PlayerStatus.ASSIGNED) },
+                    players =
+                        room.players.map {
+                            it.copy(
+                                it.roomPlayerId,
+                                it.roomId,
+                                it.name,
+                                PlayerStatus.ASSIGNED,
+                                it.displayOrder,
+                                it.createdAt,
+                                it.updatedAt,
+                            )
+                        },
                 )
             }
 
@@ -231,7 +242,7 @@ class AuctionServiceTest {
             persistRoom {
                 it.copy(
                     currentAuctionRound = null,
-                    bids = listOf(RoomBid(roomId = roomId, round = 1, teamLeaderId = "leader-A", amount = 100)),
+                    bids = listOf(RoomBid(roomId, 1, "leader-A", 100, java.time.Instant.now(), java.time.Instant.now())),
                 )
             }
 

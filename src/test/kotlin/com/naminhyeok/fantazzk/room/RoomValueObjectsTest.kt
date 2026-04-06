@@ -23,7 +23,7 @@ class RoomValueObjectsTest {
         @Test
         fun `입찰은 기본 식별자와 감사 시각을 가진다`() {
             val beforeCreate = Instant.now()
-            val bid = RoomBid(roomId = 1L, round = 2, teamLeaderId = "leader-1", amount = 40)
+            val bid = RoomBid(1L, 2, "leader-1", 40, beforeCreate, beforeCreate)
             val afterCreate = Instant.now()
 
             assertThat(bid.roomBidId).isZero()
@@ -42,13 +42,13 @@ class RoomValueObjectsTest {
 
             val bid =
                 RoomBid(
-                    roomBidId = 4L,
-                    roomId = 2L,
-                    round = 3,
-                    teamLeaderId = "leader-2",
-                    amount = 55,
-                    createdAt = createdAt,
-                    updatedAt = updatedAt,
+                    4L,
+                    2L,
+                    3,
+                    "leader-2",
+                    55,
+                    createdAt,
+                    updatedAt,
                 )
 
             assertThat(bid.roomBidId).isEqualTo(4L)

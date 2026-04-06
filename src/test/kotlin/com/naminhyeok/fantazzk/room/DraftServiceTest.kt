@@ -37,8 +37,8 @@ class DraftServiceTest {
                     currentTurnIndex = 0,
                     players =
                         listOf(
-                            RoomPlayer(name = "선수1", displayOrder = 0),
-                            RoomPlayer(name = "선수2", displayOrder = 1),
+                            RoomPlayer("선수1", 0),
+                            RoomPlayer("선수2", 1),
                         ),
                     leaders =
                         listOf(

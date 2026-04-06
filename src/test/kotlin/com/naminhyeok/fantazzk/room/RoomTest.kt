@@ -232,7 +232,7 @@ class RoomTest {
 
         @Test
         fun `Room은 전달받은 자식 엔티티를 내부 복사본으로 보관하면서 식별자를 유지한다`() {
-            val originalPlayer = RoomPlayer(roomPlayerId = 7L, roomId = 42L, name = "선수1", displayOrder = 0)
+            val originalPlayer = RoomPlayer(7L, 42L, "선수1", PlayerStatus.AVAILABLE, 0, java.time.Instant.now(), java.time.Instant.now())
             val room = room(roomId = 42L).copy(players = listOf(originalPlayer))
 
             originalPlayer.assign()

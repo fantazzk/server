@@ -127,8 +127,8 @@ class RoomRepositoryIntegrationTest(
                     currentAuctionRound = 2,
                     players =
                         listOf(
-                            RoomPlayer(name = "선수1", displayOrder = 0),
-                            RoomPlayer(name = "선수2", displayOrder = 1),
+                            RoomPlayer("선수1", 0),
+                            RoomPlayer("선수2", 1),
                         ),
                     leaders =
                         listOf(
@@ -141,9 +141,9 @@ class RoomRepositoryIntegrationTest(
                         ),
                     bids =
                         listOf(
-                            RoomBid(round = 1, teamLeaderId = "leader-A", amount = 90),
-                            RoomBid(round = 2, teamLeaderId = "leader-A", amount = 120),
-                            RoomBid(round = 2, teamLeaderId = "leader-B", amount = 150),
+                            RoomBid(1, "leader-A", 90),
+                            RoomBid(2, "leader-A", 120),
+                            RoomBid(2, "leader-B", 150),
                         ),
                 ),
             )

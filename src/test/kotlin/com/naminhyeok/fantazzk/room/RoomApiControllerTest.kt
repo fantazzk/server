@@ -249,13 +249,13 @@ class RoomApiControllerTest {
             val room = room("BID001")
             val bid =
                 RoomBid(
-                    roomBidId = 1L,
-                    roomId = 1L,
-                    round = 1,
-                    teamLeaderId = "leader-A",
-                    amount = 100,
-                    createdAt = now,
-                    updatedAt = now,
+                    1L,
+                    1L,
+                    1,
+                    "leader-A",
+                    100,
+                    now,
+                    now,
                 )
             every { placeBid.place("BID001", "leader-A", 100) } returns bid
             every { roomFinder.get("BID001") } returns room.copy(leaders = emptyList())

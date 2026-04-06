@@ -238,9 +238,9 @@ class Room protected constructor(
 
         addBid(
             RoomBid(
-                round = currentRound,
-                teamLeaderId = teamLeaderId,
-                amount = amount,
+                currentRound,
+                teamLeaderId,
+                amount,
             ),
         )
 
@@ -296,9 +296,10 @@ class Room protected constructor(
         target.assign()
         addMember(
             RoomTeamMember(
-                teamLeaderId = teamLeaderId,
-                playerName = playerName,
-                assignOrder = assignedCount,
+                null,
+                teamLeaderId,
+                playerName,
+                assignedCount,
             ),
         )
 
@@ -445,13 +446,13 @@ class Room protected constructor(
 
             spec.players
                 .sortedBy { it.displayOrder }
-                .map { RoomPlayer(name = it.name, displayOrder = it.displayOrder) }
+                .map { RoomPlayer(it.name, it.displayOrder) }
                 .forEach(room::addPlayer)
             room.addLeader(room.createHostLeader(hostNickname))
             return room
         }
 
-        internal fun reference(roomId: Long): Room = Room(persistentId = roomId)
+        fun reference(roomId: Long): Room = Room(persistentId = roomId)
     }
 
     private fun settleSold(
@@ -473,9 +474,10 @@ class Room protected constructor(
         winner.spend(winningBid.amount)
         addMember(
             RoomTeamMember(
-                teamLeaderId = winningBid.teamLeaderId,
-                playerName = target.name,
-                assignOrder = assignedCount,
+                null,
+                winningBid.teamLeaderId,
+                target.name,
+                assignedCount,
             ),
         )
 
@@ -498,13 +500,13 @@ class Room protected constructor(
         nickname: String,
     ): RoomTeamLeader =
         RoomTeamLeader(
-            teamLeaderId = teamLeaderId,
-            nickname = nickname,
-            remainingBudget =
-                when (val configuration = configuration) {
-                    is TeamBuildingConfiguration.Auction -> configuration.budget
-                    is TeamBuildingConfiguration.Draft -> null
-                },
+            null,
+            teamLeaderId,
+            nickname,
+            when (val configuration = configuration) {
+                is TeamBuildingConfiguration.Auction -> configuration.budget()
+                is TeamBuildingConfiguration.Draft -> null
+            },
         ).also { it.attach(this) }
 
     private fun registerPlayers(players: List<RoomPlayer>) {

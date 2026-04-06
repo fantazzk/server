@@ -15,7 +15,7 @@ class RoomBidTest {
         @Test
         fun `새 입찰은 저장 전 internal entity 식별자 없이 생성된다`() {
             val beforeCreate = Instant.now()
-            val bid = RoomBid(round = 2, teamLeaderId = "leader-1", amount = 40)
+            val bid = RoomBid(2, "leader-1", 40, beforeCreate, beforeCreate)
             val afterCreate = Instant.now()
 
             assertThat(bid.id).isNull()
@@ -32,13 +32,13 @@ class RoomBidTest {
             val updatedAt = Instant.parse("2025-01-02T00:00:00Z")
             val bid =
                 RoomBid(
-                    roomBidId = 4L,
-                    roomId = 2L,
-                    round = 3,
-                    teamLeaderId = "leader-2",
-                    amount = 55,
-                    createdAt = createdAt,
-                    updatedAt = updatedAt,
+                    4L,
+                    2L,
+                    3,
+                    "leader-2",
+                    55,
+                    createdAt,
+                    updatedAt,
                 )
 
             assertThat(bid.id).isEqualTo(RoomBidId(4L))
@@ -53,7 +53,7 @@ class RoomBidTest {
         @Test
         fun `public typed 생성자는 0 값 입찰 식별자를 허용하지 않는다`() {
             assertThatThrownBy {
-                RoomBid(roomBidId = RoomBidId(0L), round = 2, teamLeaderId = "leader-1", amount = 40)
+                RoomBid(RoomBidId(0L), null, 2, "leader-1", 40, Instant.now(), Instant.now())
             }.isInstanceOf(IllegalArgumentException::class.java)
         }
     }
