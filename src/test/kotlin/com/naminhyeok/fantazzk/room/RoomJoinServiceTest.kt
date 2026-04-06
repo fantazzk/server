@@ -42,7 +42,7 @@ class RoomJoinServiceTest {
 
         persistRoom {
             it.copy(
-                leaders = listOf(RoomTeamLeader(roomId = roomId, teamLeaderId = "host", nickname = "호스트", remainingBudget = 300)),
+                leaders = listOf(RoomTeamLeader(roomId, "host", "호스트", 300)),
             )
         }
     }
@@ -84,7 +84,8 @@ class RoomJoinServiceTest {
 
             val leader = cut.join(roomCode, "드래프트참가자")
 
-            assertThat(leader.remainingBudget).isNull()
+            val remainingBudget: Int? = leader.remainingBudget
+            assertThat(remainingBudget).isNull()
         }
     }
 
@@ -127,10 +128,10 @@ class RoomJoinServiceTest {
                         leaders =
                             room.leaders +
                                 RoomTeamLeader(
-                                    roomId = roomId,
-                                    teamLeaderId = "leader-${index + 2}",
-                                    nickname = "추가팀장${index + 1}",
-                                    remainingBudget = 300,
+                                    roomId,
+                                    "leader-${index + 2}",
+                                    "추가팀장${index + 1}",
+                                    300,
                                 ),
                     )
                 }

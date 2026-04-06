@@ -166,10 +166,10 @@ class RoomStartServiceTest {
                     leaders =
                         current.leaders +
                             RoomTeamLeader(
-                                roomId = room.roomId,
-                                teamLeaderId = "leader-${index + 1}",
-                                nickname = "팀장${index + 1}",
-                                remainingBudget = room.budget,
+                                room.roomId,
+                                "leader-${index + 1}",
+                                "팀장${index + 1}",
+                                room.budget,
                             ),
                 ),
             )
