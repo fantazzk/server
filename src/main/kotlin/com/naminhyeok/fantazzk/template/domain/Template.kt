@@ -5,8 +5,6 @@ import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.Embedded
 import jakarta.persistence.Entity
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.OneToMany
 import jakarta.persistence.OrderBy
@@ -14,14 +12,14 @@ import jakarta.persistence.PostLoad
 import jakarta.persistence.Table
 import org.jmolecules.ddd.types.AggregateRoot
 import java.time.Instant
+import java.util.UUID
 
 @Entity
 @Table(name = "template")
 class Template protected constructor(
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
-    private var persistentId: Long? = null,
+    @Column(name = "id", nullable = false, updatable = false)
+    override var id: TemplateId = TemplateId.newId(),
     @Column(name = "name", nullable = false)
     val name: String = "",
     @Embedded
@@ -34,11 +32,8 @@ class Template protected constructor(
     @Column(name = "updated_at", nullable = false)
     val updatedAt: Instant = Instant.now(),
 ) : AggregateRoot<Template, TemplateId> {
-    override val id: TemplateId
-        get() = TemplateId(requireNotNull(persistentId))
-
-    val templateId: Long
-        get() = persistentId ?: 0L
+    val templateId: UUID
+        get() = id.value
 
     val mode: TeamBuildingMode
         get() = persistentConfiguration.mode
@@ -71,18 +66,12 @@ class Template protected constructor(
     fun players(): List<TemplatePlayer> = persistentPlayers.toList().also(::requireValidRoster)
 
     fun requireValidRoster(players: List<TemplatePlayer>) {
-        persistedIdOrNull()?.let { templateId ->
-            require(players.all { it.belongsTo(templateId) }) {
-                "선수는 동일한 템플릿에 속해야 합니다"
-            }
+        require(players.all { it.belongsTo(id) }) {
+            "선수는 동일한 템플릿에 속해야 합니다"
         }
         val orderedPlayerNames = players.sortedBy { it.displayOrder }.map { it.name }
         TemplateRoster.exactlyRequired(orderedPlayerNames, configuration.requiredPlayerCount)
     }
-
-    internal fun assignId(templateId: TemplateId): Template = apply { persistentId = templateId.value }
-
-    internal fun persistedIdOrNull(): TemplateId? = persistentId?.let(::TemplateId)
 
     @PostLoad
     private fun validateLoadedState() {
@@ -114,7 +103,7 @@ class Template protected constructor(
                 persistentConfiguration = TemplateConfiguration.draft(teamCount = teamCount, teamSize = teamSize, strategy = strategy),
             ).registerPlayers(playerNames).also { it.requireValidRoster(it.players()) }
 
-        fun reference(templateId: Long): Template = Template(persistentId = templateId)
+        fun reference(templateId: TemplateId): Template = Template(id = templateId)
     }
 
     private fun registerPlayers(playerNames: List<String>): Template =

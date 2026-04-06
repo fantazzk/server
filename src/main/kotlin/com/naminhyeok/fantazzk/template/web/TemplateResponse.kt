@@ -10,8 +10,8 @@ import io.swagger.v3.oas.annotations.media.Schema
 
 @Schema(description = "템플릿 조회 API 의 성공 응답 payload 입니다.")
 data class TemplateResponse(
-    @field:Schema(description = "템플릿 ID 입니다.", example = "1")
-    val id: Long,
+    @field:Schema(description = "템플릿 ID 입니다.", example = "00000000-0000-0000-0000-000000000001")
+    val id: String,
     @field:Schema(description = "템플릿 이름입니다.", example = "주말 풋살 경매전")
     val name: String,
     @field:Schema(description = "팀 빌딩 모드입니다.", example = "AUCTION")
@@ -36,7 +36,7 @@ data class TemplateResponse(
             players: List<TemplatePlayer>? = null,
         ): TemplateResponse =
             TemplateResponse(
-                id = template.templateId,
+                id = template.id.value.toString(),
                 name = template.name,
                 mode = template.mode,
                 teamCount = template.teamCount,

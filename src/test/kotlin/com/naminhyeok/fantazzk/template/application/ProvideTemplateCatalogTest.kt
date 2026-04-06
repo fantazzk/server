@@ -20,7 +20,6 @@ class ProvideTemplateCatalogTest {
 
     @Test
     fun `TemplateId를 그대로 finder에 전달하고 blueprint로 변환한다`() {
-        val templateId = TemplateId(12L)
         val template =
             Template.createDraft(
                 name = "드래프트 템플릿",
@@ -28,7 +27,8 @@ class ProvideTemplateCatalogTest {
                 teamSize = 3,
                 strategy = DraftOrderStrategy.SNAKE,
                 playerNames = listOf("선수1", "선수2", "선수3", "선수4"),
-            ).assignId(templateId)
+            )
+        val templateId = template.id
         every { templateFinder.getDetail(templateId) } returns TemplateDetail(template, template.players())
 
         val blueprint = cut.getTemplateBlueprint(templateId)
@@ -42,7 +42,7 @@ class ProvideTemplateCatalogTest {
 
     @Test
     fun `템플릿 없음 예외를 같은 TemplateId의 catalog 예외로 변환한다`() {
-        val templateId = TemplateId(99L)
+        val templateId = TemplateId.of("00000000-0000-0000-0000-000000000099")
         every { templateFinder.getDetail(templateId) } throws TemplateException.TemplateNotFoundException()
 
         assertThatThrownBy { cut.getTemplateBlueprint(templateId) }
@@ -53,7 +53,7 @@ class ProvideTemplateCatalogTest {
 
     @Test
     fun `유효하지 않은 템플릿 예외를 같은 TemplateId의 catalog 예외로 변환한다`() {
-        val templateId = TemplateId(100L)
+        val templateId = TemplateId.of("00000000-0000-0000-0000-000000000100")
         every { templateFinder.getDetail(templateId) } throws TemplateException.TemplateInvalidException()
 
         assertThatThrownBy { cut.getTemplateBlueprint(templateId) }

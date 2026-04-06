@@ -56,7 +56,7 @@ class TemplateTest {
                     playerNames = listOf("선수1", "선수2", "선수3", "선수4"),
                 )
 
-            assertThat(template.templateId).isZero()
+            assertThat(template.id).isNotNull
             assertThat(template.name).isEqualTo("경매전")
             assertThat(template.mode).isEqualTo(TeamBuildingMode.AUCTION)
             assertThat(template.teamCount).isEqualTo(2)
@@ -74,9 +74,9 @@ class TemplateTest {
                     teamSize = 2,
                     strategy = DraftOrderStrategy.FIXED,
                     playerNames = listOf("선수1", "선수2"),
-                ).assignId(TemplateId(9L))
+                )
 
-            assertThat(template.templateId).isEqualTo(9L)
+            assertThat(template.id).isNotNull
             assertThat(template.createdAt).isNotNull()
             assertThat(template.updatedAt).isNotNull()
             assertThat(template.draftOrderStrategy).isEqualTo(DraftOrderStrategy.FIXED)
@@ -109,7 +109,7 @@ class TemplateTest {
                     teamSize = 2,
                     strategy = DraftOrderStrategy.SNAKE,
                     playerNames = listOf("선수1", "선수2"),
-                ).assignId(TemplateId(5L))
+                )
 
             assertThat(template.configuration)
                 .isEqualTo(TemplateConfiguration.draft(teamCount = 2, teamSize = 2, strategy = DraftOrderStrategy.SNAKE))
@@ -142,8 +142,8 @@ class TemplateTest {
 
             val players =
                 listOf(
-                    TemplatePlayer(templateId = TemplateId(1L), name = "선수B", displayOrder = 1),
-                    TemplatePlayer(templateId = TemplateId(1L), name = "선수A", displayOrder = 0),
+                    TemplatePlayer(templateId = template.id, name = "선수B", displayOrder = 1),
+                    TemplatePlayer(templateId = template.id, name = "선수A", displayOrder = 0),
                 )
 
             assertThatCode { template.requireValidRoster(players) }.doesNotThrowAnyException()
@@ -160,7 +160,7 @@ class TemplateTest {
                     playerNames = listOf("선수1", "선수2"),
                 )
 
-            val players = listOf(TemplatePlayer(templateId = TemplateId(1L), name = "선수A", displayOrder = 0))
+            val players = listOf(TemplatePlayer(templateId = template.id, name = "선수A", displayOrder = 0))
 
             assertThatThrownBy { template.requireValidRoster(players) }
                 .isInstanceOf(IllegalArgumentException::class.java)
@@ -176,19 +176,20 @@ class TemplateTest {
                     teamSize = 2,
                     budget = 300,
                     playerNames = listOf("선수1", "선수2"),
-                ).assignId(TemplateId(1L))
+                )
+            val otherTemplateId = TemplateId.of("00000000-0000-0000-0000-000000000002")
 
             val players =
                 listOf(
                     TemplatePlayer(
-                        templatePlayerId = TemplatePlayerId(10L),
-                        templateId = TemplateId(1L),
+                        templatePlayerId = TemplatePlayerId.of("00000000-0000-0000-0000-000000000010"),
+                        templateId = template.id,
                         name = "선수A",
                         displayOrder = 0,
                     ),
                     TemplatePlayer(
-                        templatePlayerId = TemplatePlayerId(11L),
-                        templateId = TemplateId(2L),
+                        templatePlayerId = TemplatePlayerId.of("00000000-0000-0000-0000-000000000011"),
+                        templateId = otherTemplateId,
                         name = "선수B",
                         displayOrder = 1,
                     ),
@@ -211,9 +212,9 @@ class TemplateTest {
                     teamSize = 2,
                     budget = 300,
                     playerNames = listOf("선수1", "선수2"),
-                ).assignId(TemplateId(42L))
+                )
 
-            assertThat(template.id).isEqualTo(TemplateId(42L))
+            assertThat(template.id).isNotNull
         }
 
         @Test
@@ -225,14 +226,12 @@ class TemplateTest {
                     teamSize = 2,
                     budget = 300,
                     playerNames = listOf("선수1", "선수2"),
-                ).assignId(TemplateId(42L))
+                )
 
             val player = template.players().first()
 
             assertThat(player).isInstanceOf(Entity::class.java)
-            assertThatThrownBy { player.id }
-                .isInstanceOf(IllegalArgumentException::class.java)
-                .hasMessage("TemplatePlayer id는 저장 후에만 사용할 수 있습니다")
+            assertThat(player.id).isNotNull
             assertThat(player.templateId).isEqualTo(template.id)
         }
     }

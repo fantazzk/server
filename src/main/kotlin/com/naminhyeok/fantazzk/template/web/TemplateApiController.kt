@@ -123,10 +123,13 @@ class TemplateApiController(
         ],
     )
     fun getById(
-        @Parameter(description = TemplateOpenApiDocs.TEMPLATE_ID_PARAMETER, example = "1")
-        @PathVariable id: Long,
+        @Parameter(
+            description = TemplateOpenApiDocs.TEMPLATE_ID_PARAMETER,
+            example = "00000000-0000-0000-0000-000000000001",
+        )
+        @PathVariable id: String,
     ): ApiResponse<TemplateResponse> {
-        return ApiResponse.success(TemplateResponse.from(templateFinder.getDetail(TemplateId(id))))
+        return ApiResponse.success(TemplateResponse.from(templateFinder.getDetail(TemplateId.of(id))))
     }
 
     @GetMapping

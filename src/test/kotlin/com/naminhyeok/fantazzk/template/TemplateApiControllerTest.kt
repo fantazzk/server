@@ -6,6 +6,7 @@ import com.naminhyeok.fantazzk.template.application.FindTemplates
 import com.naminhyeok.fantazzk.template.application.TemplateDetail
 import com.naminhyeok.fantazzk.template.domain.Template
 import com.naminhyeok.fantazzk.template.domain.TemplatePlayer
+import com.naminhyeok.fantazzk.template.domain.TemplatePlayerId
 import com.naminhyeok.fantazzk.template.exception.TemplateException
 import com.naminhyeok.fantazzk.template.web.TemplateApiController
 import com.naminhyeok.fantazzk.template.web.TemplateExceptionHandler
@@ -137,21 +138,21 @@ class TemplateApiControllerTest {
             val players =
                 listOf(
                     TemplatePlayer(
-                        templatePlayerId = 1L,
-                        templateId = 1L,
+                        templatePlayerId = TemplatePlayerId.of("00000000-0000-0000-0000-000000000011"),
+                        templateId = template.id,
                         name = "선수1",
                         displayOrder = 0,
                     ),
                     TemplatePlayer(
-                        templatePlayerId = 2L,
-                        templateId = 1L,
+                        templatePlayerId = TemplatePlayerId.of("00000000-0000-0000-0000-000000000012"),
+                        templateId = template.id,
                         name = "선수2",
                         displayOrder = 1,
                     ),
                 )
-            every { templateFinder.getDetail(TemplateId(1L)) } returns TemplateDetail(template, players)
+            every { templateFinder.getDetail(template.id) } returns TemplateDetail(template, players)
 
-            mockMvc.get("/api/v1/templates/1")
+            mockMvc.get("/api/v1/templates/${template.id.value}")
                 .andExpect {
                     status { isOk() }
                     jsonPath("$.resultType") { value("SUCCESS") }
@@ -159,14 +160,15 @@ class TemplateApiControllerTest {
                     jsonPath("$.success.players[0].name") { value("선수1") }
                 }
 
-            verify(exactly = 1) { templateFinder.getDetail(TemplateId(1L)) }
+            verify(exactly = 1) { templateFinder.getDetail(template.id) }
         }
 
         @Test
         fun `존재하지 않는 ID로 조회하면 404를 반환한다`() {
-            every { templateFinder.getDetail(TemplateId(999L)) } throws TemplateException.TemplateNotFoundException()
+            val missingId = TemplateId.of("00000000-0000-0000-0000-000000000999")
+            every { templateFinder.getDetail(missingId) } throws TemplateException.TemplateNotFoundException()
 
-            mockMvc.get("/api/v1/templates/999")
+            mockMvc.get("/api/v1/templates/${missingId.value}")
                 .andExpect {
                     status { isNotFound() }
                     jsonPath("$.resultType") { value("ERROR") }
@@ -175,7 +177,7 @@ class TemplateApiControllerTest {
                     jsonPath("$.error.reason") { value("템플릿을 찾을 수 없습니다") }
                 }
 
-            verify(exactly = 1) { templateFinder.getDetail(TemplateId(999L)) }
+            verify(exactly = 1) { templateFinder.getDetail(missingId) }
         }
 
         @Test
@@ -198,5 +200,5 @@ class TemplateApiControllerTest {
             teamSize = 2,
             budget = 300,
             playerNames = listOf("선수1", "선수2"),
-        ).assignId(TemplateId(1L))
+        )
 }

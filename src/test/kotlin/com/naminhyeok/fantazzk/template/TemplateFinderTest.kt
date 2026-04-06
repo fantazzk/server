@@ -25,9 +25,10 @@ class TemplateFinderTest {
 
     @Test
     fun `존재하지 않는 ID로 상세 조회하면 예외가 발생한다`() {
-        every { templateRepo.findById(TemplateId(999L)) } returns null
+        val missingId = TemplateId.of("00000000-0000-0000-0000-000000000999")
+        every { templateRepo.findById(missingId) } returns null
 
-        assertThatThrownBy { cut.getDetail(TemplateId(999L)) }
+        assertThatThrownBy { cut.getDetail(missingId) }
             .isInstanceOf(TemplateException.TemplateNotFoundException::class.java)
     }
 
@@ -41,14 +42,14 @@ class TemplateFinderTest {
                     teamSize = 2,
                     budget = 300,
                     playerNames = listOf("선수1", "선수2"),
-                ).assignId(TemplateId(1L)),
+                ),
                 Template.createDraft(
                     name = "둘째",
                     teamCount = 2,
                     teamSize = 2,
                     strategy = DraftOrderStrategy.SNAKE,
                     playerNames = listOf("선수1", "선수2"),
-                ).assignId(TemplateId(2L)),
+                ),
             )
 
         val all = cut.list()
@@ -64,20 +65,21 @@ class TemplateFinderTest {
                 teamSize = 2,
                 budget = 300,
                 playerNames = listOf("선수1", "선수2"),
-            ).assignId(TemplateId(1L))
-        every { templateRepo.findById(TemplateId(template.templateId)) } returns template
+            )
+        every { templateRepo.findById(template.id) } returns template
 
-        val detail = cut.getDetail(TemplateId(template.templateId))
+        val detail = cut.getDetail(template.id)
 
-        assertThat(detail.template.templateId).isEqualTo(template.templateId)
+        assertThat(detail.template.id).isEqualTo(template.id)
         assertThat(detail.players.map { it.name }).containsExactly("선수1", "선수2")
     }
 
     @Test
     fun `상세 조회는 저장소가 유효하지 않은 aggregate를 로드하면 템플릿 invalid 예외를 던진다`() {
-        every { templateRepo.findById(TemplateId(1L)) } throws InvalidDataAccessApiUsageException("선수 수는 정확히 2명이어야 합니다")
+        val invalidId = TemplateId.of("00000000-0000-0000-0000-000000000001")
+        every { templateRepo.findById(invalidId) } throws InvalidDataAccessApiUsageException("선수 수는 정확히 2명이어야 합니다")
 
-        assertThatThrownBy { cut.getDetail(TemplateId(1L)) }
+        assertThatThrownBy { cut.getDetail(invalidId) }
             .isInstanceOf(TemplateException.TemplateInvalidException::class.java)
     }
 }

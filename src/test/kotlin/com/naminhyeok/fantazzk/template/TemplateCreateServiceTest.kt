@@ -20,9 +20,7 @@ class TemplateCreateServiceTest {
     @BeforeEach
     fun setUp() {
         templateRepo = mockk()
-        every { templateRepo.save(any<Template>()) } answers {
-            firstArg<Template>().takeUnless { it.templateId == 0L } ?: firstArg<Template>().assignId(TemplateId(1L))
-        }
+        every { templateRepo.save(any<Template>()) } answers { firstArg() }
         cut = CreateTemplate(templateRepo)
     }
 

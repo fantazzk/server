@@ -4,23 +4,21 @@ import com.naminhyeok.fantazzk.template.TemplateId
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import org.jmolecules.ddd.types.Identifier
 import java.time.Instant
+import java.util.UUID
 import org.jmolecules.ddd.types.Entity as DomainEntity
 
 @Entity
 @Table(name = "template_player")
 class TemplatePlayer(
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
-    private var persistentId: Long? = null,
+    @Column(name = "id", nullable = false, updatable = false)
+    override val id: TemplatePlayerId = TemplatePlayerId.newId(),
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "template_id", nullable = false)
     private var template: Template? = null,
@@ -33,28 +31,6 @@ class TemplatePlayer(
     @Column(name = "updated_at", nullable = false)
     val updatedAt: Instant = Instant.now(),
 ) : DomainEntity<Template, TemplatePlayerId> {
-    override val id: TemplatePlayerId
-        get() =
-            TemplatePlayerId(
-                requireNotNull(persistentId) { "TemplatePlayer id는 저장 후에만 사용할 수 있습니다" },
-            )
-
-    internal constructor(
-        templatePlayerId: Long? = null,
-        templateId: Long,
-        name: String,
-        displayOrder: Int,
-        createdAt: Instant = Instant.now(),
-        updatedAt: Instant = Instant.now(),
-    ) : this(
-        templatePlayerId = templatePlayerId?.let(::TemplatePlayerId),
-        templateId = TemplateId(templateId),
-        name = name,
-        displayOrder = displayOrder,
-        createdAt = createdAt,
-        updatedAt = updatedAt,
-    )
-
     constructor(
         templatePlayerId: TemplatePlayerId? = null,
         templateId: TemplateId,
@@ -63,23 +39,8 @@ class TemplatePlayer(
         createdAt: Instant = Instant.now(),
         updatedAt: Instant = Instant.now(),
     ) : this(
-        persistentId = templatePlayerId?.value,
-        template = Template.reference(templateId.value),
-        name = name,
-        displayOrder = displayOrder,
-        createdAt = createdAt,
-        updatedAt = updatedAt,
-    )
-
-    internal constructor(
-        templateId: Long,
-        name: String,
-        displayOrder: Int,
-        createdAt: Instant = Instant.now(),
-        updatedAt: Instant = Instant.now(),
-    ) : this(
-        templatePlayerId = null,
-        templateId = TemplateId(templateId),
+        id = templatePlayerId ?: TemplatePlayerId.newId(),
+        template = Template.reference(templateId),
         name = name,
         displayOrder = displayOrder,
         createdAt = createdAt,
@@ -102,7 +63,7 @@ class TemplatePlayer(
     )
 
     val templateId: TemplateId?
-        get() = template?.persistedIdOrNull()
+        get() = template?.id
 
     internal fun belongsTo(templateId: TemplateId): Boolean = this.templateId == templateId
 
@@ -113,9 +74,16 @@ class TemplatePlayer(
 }
 
 data class TemplatePlayerId(
-    val value: Long,
+    val value: UUID,
 ) : Identifier {
-    init {
-        require(value > 0) { "TemplatePlayerId는 1 이상이어야 합니다" }
+    companion object {
+        @JvmStatic
+        fun of(value: String): TemplatePlayerId = TemplatePlayerId(UUID.fromString(value))
+
+        @JvmStatic
+        fun of(value: UUID): TemplatePlayerId = TemplatePlayerId(value)
+
+        @JvmStatic
+        fun newId(): TemplatePlayerId = TemplatePlayerId(UUID.randomUUID())
     }
 }
