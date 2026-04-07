@@ -1,12 +1,16 @@
 package com.naminhyeok.fantazzk.room;
 
+import jakarta.persistence.Table;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
+import lombok.Getter;
 import org.jmolecules.ddd.types.AggregateRoot;
 import org.jmolecules.ddd.types.Identifier;
 
+@Getter
+@Table(name = "rooms")
 public class Room implements AggregateRoot<Room, Room.RoomId> {
     private final RoomId id;
     private final String code;
@@ -75,26 +79,6 @@ public class Room implements AggregateRoot<Room, Room.RoomId> {
     @Override
     public RoomId getId() {
         return id;
-    }
-
-    public String getCode() {
-        return code;
-    }
-
-    public RoomStatus getStatus() {
-        return status;
-    }
-
-    public RoomMode getMode() {
-        return mode;
-    }
-
-    public Integer getCurrentTurnIndex() {
-        return currentTurnIndex;
-    }
-
-    public Integer getCurrentAuctionRound() {
-        return currentAuctionRound;
     }
 
     public List<RoomPlayer> getPlayers() {
