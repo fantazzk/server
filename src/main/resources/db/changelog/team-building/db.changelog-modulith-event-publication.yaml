@@ -1,8 +1,0 @@
-databaseChangeLog:
-  - changeSet:
-      id: modulith-event-publication-v2
-      author: codex
-      changes:
-        - sqlFile:
-            path: db/changelog/team-building/modulith_event_publication.sql
-            relativeToChangelogFile: false
