@@ -203,4 +203,39 @@ public class Room implements AggregateRoot<Room, RoomId> {
 
         return new AuctionSettlement(target.getName(), AuctionOutcome.SOLD);
     }
+
+    public RoomTeamMember pick(String teamLeaderId, String playerName) {
+        if (status != RoomStatus.IN_PROGRESS) {
+            throw new IllegalStateException("진행 중인 방에서만 가능합니다");
+        }
+        if (mode != RoomMode.DRAFT) {
+            throw new IllegalStateException("드래프트 모드가 아닙니다");
+        }
+        if (currentTurnIndex == null) {
+            throw new IllegalArgumentException("현재 드래프트 턴이 없습니다");
+        }
+
+        String currentLeaderId = leaders.get(currentTurnIndex % leaders.size()).getTeamLeaderId();
+        if (!currentLeaderId.equals(teamLeaderId)) {
+            throw new IllegalStateException("현재 턴이 아닙니다");
+        }
+
+        RoomPlayer player =
+            players.stream()
+                .filter(it -> it.getName().equals(playerName))
+                .filter(it -> it.getStatus() == PlayerStatus.AVAILABLE)
+                .findFirst()
+                .orElseThrow();
+
+        player.assign();
+        RoomTeamMember member = new RoomTeamMember(teamLeaderId, playerName, members.size());
+        members.add(member);
+
+        currentTurnIndex += 1;
+        if (members.size() == teamCount * (teamSize - 1)) {
+            status = RoomStatus.COMPLETED;
+        }
+
+        return member;
+    }
 }
