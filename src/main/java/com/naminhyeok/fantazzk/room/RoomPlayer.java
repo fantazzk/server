@@ -1,5 +1,7 @@
 package com.naminhyeok.fantazzk.room;
 
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import java.util.UUID;
 import lombok.Getter;
 import org.jmolecules.ddd.types.Entity;
@@ -10,6 +12,7 @@ class RoomPlayer implements Entity<Room, RoomPlayer.RoomPlayerId> {
     private final RoomPlayerId id;
     private final String name;
     private int displayOrder;
+    @Enumerated(EnumType.STRING)
     private PlayerStatus status;
 
     RoomPlayer(String name, int displayOrder) {

@@ -1,5 +1,7 @@
 package com.naminhyeok.fantazzk.room;
 
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -14,11 +16,14 @@ public class Room implements AggregateRoot<Room, RoomId> {
     private final RoomId id;
     private final String code;
     private final String hostId;
+    @Enumerated(EnumType.STRING)
     private RoomStatus status;
+    @Enumerated(EnumType.STRING)
     private final RoomMode mode;
     private final int teamCount;
     private final int teamSize;
     private final Integer budget;
+    @Enumerated(EnumType.STRING)
     private final RoomTemplateSpec.DraftOrderStrategy draftOrderStrategy;
     private Integer currentTurnIndex;
     private Integer currentAuctionRound;

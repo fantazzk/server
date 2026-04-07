@@ -1,5 +1,7 @@
 package com.naminhyeok.fantazzk.template;
 
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import org.jmolecules.ddd.types.ValueObject;
@@ -7,10 +9,12 @@ import org.jmolecules.ddd.types.ValueObject;
 @Getter
 @EqualsAndHashCode
 public final class TemplateConfiguration implements ValueObject {
+    @Enumerated(EnumType.STRING)
     private final TemplateMode mode;
     private final int teamCount;
     private final int teamSize;
     private final Integer budget;
+    @Enumerated(EnumType.STRING)
     private final DraftOrderStrategy draftOrderStrategy;
 
     private TemplateConfiguration(
