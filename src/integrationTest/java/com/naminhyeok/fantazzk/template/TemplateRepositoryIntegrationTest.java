@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import jakarta.persistence.EntityManager;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestConstructor;
@@ -21,14 +22,10 @@ import org.springframework.transaction.annotation.Transactional;
     }
 )
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
+@RequiredArgsConstructor
 class TemplateRepositoryIntegrationTest {
     private final Templates templates;
     private final EntityManager entityManager;
-
-    TemplateRepositoryIntegrationTest(Templates templates, EntityManager entityManager) {
-        this.templates = templates;
-        this.entityManager = entityManager;
-    }
 
     @Test
     @Transactional

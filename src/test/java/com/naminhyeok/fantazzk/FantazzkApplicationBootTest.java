@@ -3,9 +3,10 @@ package com.naminhyeok.fantazzk;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Clock;
+import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.TestConstructor;
 
 @SpringBootTest(
     properties = {
@@ -17,9 +18,10 @@ import org.springframework.boot.test.context.SpringBootTest;
         "sentry.enabled=false"
     }
 )
+@TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
+@RequiredArgsConstructor
 class FantazzkApplicationBootTest {
-    @Autowired
-    private Clock clock;
+    private final Clock clock;
 
     @Test
     void 루트_애플리케이션이_최소_설정으로_부팅된다() {

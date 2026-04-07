@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.List;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestConstructor;
@@ -21,14 +22,10 @@ import org.springframework.test.context.TestConstructor;
     }
 )
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
+@RequiredArgsConstructor
 class TemplateCatalogIntegrationTest {
     private final CreateTemplate createTemplate;
     private final TemplateCatalog templateCatalog;
-
-    TemplateCatalogIntegrationTest(CreateTemplate createTemplate, TemplateCatalog templateCatalog) {
-        this.createTemplate = createTemplate;
-        this.templateCatalog = templateCatalog;
-    }
 
     @Test
     void 템플릿_계약은_설계_정보를_외부_계약으로_변환한다() {

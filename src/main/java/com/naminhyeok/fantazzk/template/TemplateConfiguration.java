@@ -1,8 +1,11 @@
 package com.naminhyeok.fantazzk.template;
 
-import java.util.Objects;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import org.jmolecules.ddd.types.ValueObject;
 
+@Getter
+@EqualsAndHashCode
 public final class TemplateConfiguration implements ValueObject {
     private final TemplateMode mode;
     private final int teamCount;
@@ -90,47 +93,7 @@ public final class TemplateConfiguration implements ValueObject {
         };
     }
 
-    public TemplateMode mode() {
-        return mode;
-    }
-
-    public int teamCount() {
-        return teamCount;
-    }
-
-    public int teamSize() {
-        return teamSize;
-    }
-
-    public Integer budget() {
-        return budget;
-    }
-
-    public DraftOrderStrategy draftOrderStrategy() {
-        return draftOrderStrategy;
-    }
-
     public int requiredPlayerCount() {
         return teamCount * (teamSize - 1);
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (this == other) {
-            return true;
-        }
-        if (!(other instanceof TemplateConfiguration that)) {
-            return false;
-        }
-        return teamCount == that.teamCount
-            && teamSize == that.teamSize
-            && mode == that.mode
-            && Objects.equals(budget, that.budget)
-            && draftOrderStrategy == that.draftOrderStrategy;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(mode, teamCount, teamSize, budget, draftOrderStrategy);
     }
 }

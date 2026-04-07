@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 import java.util.Map;
+import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.resttestclient.TestRestTemplate;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
@@ -28,12 +29,9 @@ import org.springframework.test.context.TestConstructor;
 )
 @AutoConfigureTestRestTemplate
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
+@RequiredArgsConstructor
 class TemplateApiIntegrationTest {
     private final TestRestTemplate restTemplate;
-
-    TemplateApiIntegrationTest(TestRestTemplate restTemplate) {
-        this.restTemplate = restTemplate;
-    }
 
     @Test
     void 유효한_요청으로_템플릿을_생성하면_201을_반환한다() {

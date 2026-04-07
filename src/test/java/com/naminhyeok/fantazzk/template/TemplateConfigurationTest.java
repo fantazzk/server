@@ -13,10 +13,10 @@ class TemplateConfigurationTest {
         void 예산과_필요한_선수_수를_노출한다() {
             TemplateConfiguration configuration = TemplateConfiguration.auction(2, 3, 300);
 
-            assertThat(configuration.mode()).isEqualTo(TemplateMode.AUCTION);
-            assertThat(configuration.budget()).isEqualTo(300);
+            assertThat(configuration.getMode()).isEqualTo(TemplateMode.AUCTION);
+            assertThat(configuration.getBudget()).isEqualTo(300);
             assertThat(configuration.requiredPlayerCount()).isEqualTo(4);
-            assertThat(configuration.draftOrderStrategy()).isNull();
+            assertThat(configuration.getDraftOrderStrategy()).isNull();
         }
 
         @Test
@@ -41,9 +41,9 @@ class TemplateConfigurationTest {
             TemplateConfiguration configuration =
                 TemplateConfiguration.draft(2, 3, DraftOrderStrategy.SNAKE);
 
-            assertThat(configuration.mode()).isEqualTo(TemplateMode.DRAFT);
-            assertThat(configuration.budget()).isNull();
-            assertThat(configuration.draftOrderStrategy()).isEqualTo(DraftOrderStrategy.SNAKE);
+            assertThat(configuration.getMode()).isEqualTo(TemplateMode.DRAFT);
+            assertThat(configuration.getBudget()).isNull();
+            assertThat(configuration.getDraftOrderStrategy()).isEqualTo(DraftOrderStrategy.SNAKE);
             assertThat(configuration.requiredPlayerCount()).isEqualTo(4);
         }
 
