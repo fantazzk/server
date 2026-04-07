@@ -9,17 +9,27 @@ import org.jmolecules.ddd.types.Identifier;
 class RoomPlayer implements Entity<Room, RoomPlayer.RoomPlayerId> {
     private final RoomPlayerId id;
     private final String name;
-    private final int displayOrder;
+    private int displayOrder;
+    private PlayerStatus status;
 
     RoomPlayer(String name, int displayOrder) {
         this.id = new RoomPlayerId(UUID.randomUUID());
         this.name = name;
         this.displayOrder = displayOrder;
+        this.status = PlayerStatus.AVAILABLE;
     }
 
     @Override
     public RoomPlayerId getId() {
         return id;
+    }
+
+    void assign() {
+        this.status = PlayerStatus.ASSIGNED;
+    }
+
+    void moveToBack(int nextOrder) {
+        this.displayOrder = nextOrder;
     }
 
     record RoomPlayerId(UUID roomPlayerId) implements Identifier {

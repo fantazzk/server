@@ -10,7 +10,7 @@ class RoomTeamLeader implements Entity<Room, RoomTeamLeader.RoomTeamLeaderId> {
     private final RoomTeamLeaderId id;
     private final String teamLeaderId;
     private final String nickname;
-    private final Integer remainingBudget;
+    private Integer remainingBudget;
 
     RoomTeamLeader(String teamLeaderId, String nickname, Integer remainingBudget) {
         this.id = new RoomTeamLeaderId(UUID.randomUUID());
@@ -22,6 +22,16 @@ class RoomTeamLeader implements Entity<Room, RoomTeamLeader.RoomTeamLeaderId> {
     @Override
     public RoomTeamLeaderId getId() {
         return id;
+    }
+
+    void spend(int amount) {
+        if (remainingBudget == null) {
+            throw new IllegalStateException("예산이 없는 팀장은 입찰할 수 없습니다");
+        }
+        if (remainingBudget < amount) {
+            throw new IllegalArgumentException("예산이 부족합니다");
+        }
+        remainingBudget -= amount;
     }
 
     record RoomTeamLeaderId(UUID roomTeamLeaderId) implements Identifier {
