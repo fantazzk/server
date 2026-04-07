@@ -45,7 +45,7 @@ class RoomServiceIntegrationTest {
                 )
             );
 
-        Room created = createRoom.create(template.getId().templateId(), "호스트");
+        Room created = createRoom.create(template.getId(), "호스트");
         Room reloaded = rooms.findById(created.getId()).orElseThrow();
 
         assertThat(reloaded.getStatus()).isEqualTo(RoomStatus.WAITING);
@@ -66,7 +66,7 @@ class RoomServiceIntegrationTest {
                 )
             );
 
-        Room created = createRoom.create(template.getId().templateId(), "호스트");
+        Room created = createRoom.create(template.getId(), "호스트");
         joinRoom.join(created.getCode(), "게스트");
         startRoom.start(created.getCode());
 

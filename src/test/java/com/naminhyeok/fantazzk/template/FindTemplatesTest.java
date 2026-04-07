@@ -19,7 +19,7 @@ class FindTemplatesTest {
 
     @Test
     void 존재하지_않는_ID로_상세_조회하면_예외가_발생한다() {
-        Template.TemplateId missingId = new Template.TemplateId(UUID.randomUUID());
+        TemplateId missingId = new TemplateId(UUID.randomUUID());
         when(templates.findById(missingId)).thenReturn(Optional.empty());
 
         FindTemplates cut = new FindTemplates(templates);

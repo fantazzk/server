@@ -11,7 +11,7 @@ public class FindTemplates {
     private final Templates templates;
 
     @Transactional(readOnly = true)
-    public TemplateDetail getDetail(Template.TemplateId id) {
+    public TemplateDetail getDetail(TemplateId id) {
         Template template = templates.findById(id).orElseThrow(TemplateNotFoundException::new);
         return new TemplateDetail(template, template.getPlayers());
     }

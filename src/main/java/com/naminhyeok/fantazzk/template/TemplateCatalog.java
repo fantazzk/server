@@ -1,13 +1,12 @@
 package com.naminhyeok.fantazzk.template;
 
 import java.util.List;
-import java.util.UUID;
 
 public interface TemplateCatalog {
-    TemplateBlueprint getTemplate(UUID templateId);
+    TemplateBlueprint getTemplate(TemplateId templateId);
 
     record TemplateBlueprint(
-        UUID templateId,
+        TemplateId templateId,
         TemplateMode mode,
         int teamCount,
         int teamSize,

@@ -2,6 +2,7 @@ package com.naminhyeok.fantazzk.room;
 
 import com.naminhyeok.fantazzk.template.TemplateCatalog;
 import com.naminhyeok.fantazzk.template.TemplateCatalogException;
+import com.naminhyeok.fantazzk.template.TemplateId;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -14,7 +15,7 @@ public class CreateRoom {
     private final TemplateCatalog templateCatalog;
 
     @Transactional
-    public Room create(UUID templateId, String hostNickname) {
+    public Room create(TemplateId templateId, String hostNickname) {
         TemplateCatalog.TemplateBlueprint template = getTemplate(templateId);
 
         Room room =
@@ -39,7 +40,7 @@ public class CreateRoom {
         return rooms.save(room);
     }
 
-    private TemplateCatalog.TemplateBlueprint getTemplate(UUID templateId) {
+    private TemplateCatalog.TemplateBlueprint getTemplate(TemplateId templateId) {
         try {
             return templateCatalog.getTemplate(templateId);
         } catch (TemplateCatalogException.NotFound ex) {

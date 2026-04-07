@@ -40,7 +40,7 @@ class TemplateCatalogIntegrationTest {
                 )
             );
 
-        TemplateCatalog.TemplateBlueprint blueprint = templateCatalog.getTemplate(created.getId().templateId());
+        TemplateCatalog.TemplateBlueprint blueprint = templateCatalog.getTemplate(created.getId());
 
         assertThat(blueprint.mode()).isEqualTo(TemplateMode.DRAFT);
         assertThat(blueprint.teamCount()).isEqualTo(2);
@@ -52,7 +52,7 @@ class TemplateCatalogIntegrationTest {
 
     @Test
     void 존재하지_않는_템플릿은_계약_예외로_변환한다() {
-        assertThatThrownBy(() -> templateCatalog.getTemplate(UUID.randomUUID()))
+        assertThatThrownBy(() -> templateCatalog.getTemplate(new TemplateId(UUID.randomUUID())))
             .isInstanceOf(TemplateCatalogException.NotFound.class);
     }
 }

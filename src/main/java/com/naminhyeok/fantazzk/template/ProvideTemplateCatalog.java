@@ -1,6 +1,5 @@
 package com.naminhyeok.fantazzk.template;
 
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -10,9 +9,9 @@ class ProvideTemplateCatalog implements TemplateCatalog {
     private final FindTemplates findTemplates;
 
     @Override
-    public TemplateBlueprint getTemplate(UUID templateId) {
+    public TemplateBlueprint getTemplate(TemplateId templateId) {
         try {
-            TemplateDetail detail = findTemplates.getDetail(new Template.TemplateId(templateId));
+            TemplateDetail detail = findTemplates.getDetail(templateId);
             return new TemplateBlueprint(
                 templateId,
                 detail.template().getMode(),

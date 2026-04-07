@@ -6,10 +6,9 @@ import java.util.List;
 import java.util.UUID;
 import lombok.Getter;
 import org.jmolecules.ddd.types.AggregateRoot;
-import org.jmolecules.ddd.types.Identifier;
 
 @Getter
-public class Template implements AggregateRoot<Template, Template.TemplateId> {
+public class Template implements AggregateRoot<Template, TemplateId> {
     private final TemplateId id;
     private String name;
     private TemplateConfiguration configuration;
@@ -46,10 +45,6 @@ public class Template implements AggregateRoot<Template, Template.TemplateId> {
     ) {
         return new Template(name, TemplateConfiguration.draft(teamCount, teamSize, strategy))
             .registerPlayers(playerNames);
-    }
-
-    public TemplateId getId() {
-        return id;
     }
 
     public TemplateMode getMode() {
@@ -93,8 +88,5 @@ public class Template implements AggregateRoot<Template, Template.TemplateId> {
         }
 
         return this;
-    }
-
-    public record TemplateId(UUID templateId) implements Identifier {
     }
 }

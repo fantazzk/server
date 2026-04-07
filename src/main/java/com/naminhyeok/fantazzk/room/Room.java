@@ -7,11 +7,10 @@ import java.util.List;
 import java.util.UUID;
 import lombok.Getter;
 import org.jmolecules.ddd.types.AggregateRoot;
-import org.jmolecules.ddd.types.Identifier;
 
 @Getter
 @Table(name = "rooms")
-public class Room implements AggregateRoot<Room, Room.RoomId> {
+public class Room implements AggregateRoot<Room, RoomId> {
     private final RoomId id;
     private final String code;
     private final String hostId;
@@ -76,11 +75,6 @@ public class Room implements AggregateRoot<Room, Room.RoomId> {
         return room;
     }
 
-    @Override
-    public RoomId getId() {
-        return id;
-    }
-
     public List<RoomPlayer> getPlayers() {
         return players.stream().sorted(Comparator.comparingInt(RoomPlayer::getDisplayOrder)).toList();
     }
@@ -116,8 +110,5 @@ public class Room implements AggregateRoot<Room, Room.RoomId> {
             currentTurnIndex = 0;
             currentAuctionRound = null;
         }
-    }
-
-    public record RoomId(UUID roomId) implements Identifier {
     }
 }

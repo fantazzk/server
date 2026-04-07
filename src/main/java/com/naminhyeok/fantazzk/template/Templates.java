@@ -4,10 +4,10 @@ import java.util.List;
 import java.util.Optional;
 import org.jmolecules.ddd.types.Repository;
 
-public interface Templates extends Repository<Template, Template.TemplateId> {
+public interface Templates extends Repository<Template, TemplateId> {
     Template save(Template template);
 
-    Optional<Template> findById(Template.TemplateId id);
+    Optional<Template> findById(TemplateId id);
 
     List<Template> findAll();
 }
