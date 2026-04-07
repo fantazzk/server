@@ -1,18 +1,24 @@
 [versions]
-kotlin = "2.3.0"
-kotlinx-coroutine = "1.10.2"
+spring-boot = "4.0.3"
+bytebuddy-gradle-plugin = "1.17.2"
+spring-modulith = "2.0.5"
+jmolecules-bom = "2023.2.1"
+jmolecules-integrations = "0.24.1"
+archunit = "1.4.0"
+springdoc = "2.8.6"
+sentry = "8.37.1"
 
 [plugins]
-spring-boot = { id = "org.springframework.boot", version = "4.0.3" }
-ktlint = { id = "org.jlleitschuh.gradle.ktlint", version = "12.3.0" }
-detekt = { id = "dev.detekt", version = "2.0.0-alpha.2" }
-
-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
-kotlin-spring = { id = "org.jetbrains.kotlin.plugin.spring", version.ref = "kotlin" }
-kotlin-jpa = { id = "org.jetbrains.kotlin.plugin.jpa", version.ref = "kotlin" }
+spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
+bytebuddy = { id = "net.bytebuddy.byte-buddy-gradle-plugin", version.ref = "bytebuddy-gradle-plugin" }
 
 [libraries]
-kotlin-bom = { group = "org.jetbrains.kotlin", name = "kotlin-bom", version.ref = "kotlin" }
-kotlinx-coroutine-bom = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-bom", version.ref = "kotlinx-coroutine" }
-mockk = { group = "io.mockk", name = "mockk-jvm", version = "1.14.2" }
-springmockk = { group = "com.ninja-squad", name = "springmockk", version = "4.0.2" }
+spring-modulith-bom = { group = "org.springframework.modulith", name = "spring-modulith-bom", version.ref = "spring-modulith" }
+jmolecules-bom = { group = "org.jmolecules", name = "jmolecules-bom", version.ref = "jmolecules-bom" }
+jmolecules-starter-ddd = { group = "org.jmolecules.integrations", name = "jmolecules-starter-ddd", version.ref = "jmolecules-integrations" }
+jmolecules-spring = { group = "org.jmolecules.integrations", name = "jmolecules-spring", version.ref = "jmolecules-integrations" }
+jmolecules-jpa = { group = "org.jmolecules.integrations", name = "jmolecules-jpa", version.ref = "jmolecules-integrations" }
+jmolecules-archunit = { group = "org.jmolecules.integrations", name = "jmolecules-archunit", version.ref = "jmolecules-integrations" }
+archunit-junit5 = { group = "com.tngtech.archunit", name = "archunit-junit5", version.ref = "archunit" }
+springdoc-openapi = { group = "org.springdoc", name = "springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc" }
+sentry-spring-boot4 = { group = "io.sentry", name = "sentry-spring-boot-4-starter", version.ref = "sentry" }

@@ -1,12 +1,4 @@
-rootProject.name = "fantazzk-server"
-
 pluginManagement {
-    buildscript {
-        repositories {
-            gradlePluginPortal()
-        }
-    }
-
     repositories {
         gradlePluginPortal()
         mavenCentral()
@@ -18,3 +10,5 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
+
+rootProject.name = 'fantazzk-server'
