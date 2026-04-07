@@ -15,7 +15,6 @@ import com.naminhyeok.fantazzk.room.RoomException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.logging.LogLevel;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -188,8 +187,8 @@ class GlobalExceptionHandlerTest {
         }
 
         @Override
-        public LogLevel getLogLevel() {
-            return LogLevel.WARN;
+        public org.slf4j.event.Level getLogLevel() {
+            return org.slf4j.event.Level.WARN;
         }
     }
 

@@ -1,7 +1,7 @@
 package com.naminhyeok.fantazzk;
 
-import org.springframework.boot.logging.LogLevel;
 import org.springframework.http.HttpStatus;
+import org.slf4j.event.Level;
 
 public interface ErrorDescriptor {
     HttpStatus getStatus();
@@ -10,5 +10,5 @@ public interface ErrorDescriptor {
 
     String getMessage();
 
-    LogLevel getLogLevel();
+    Level getLogLevel();
 }

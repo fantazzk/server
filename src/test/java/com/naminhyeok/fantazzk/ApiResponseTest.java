@@ -5,8 +5,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.logging.LogLevel;
 import org.springframework.http.HttpStatus;
+import org.slf4j.event.Level;
 
 class ApiResponseTest {
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -59,8 +59,8 @@ class ApiResponseTest {
         }
 
         @Override
-        public LogLevel getLogLevel() {
-            return LogLevel.WARN;
+        public Level getLogLevel() {
+            return Level.WARN;
         }
     }
 }

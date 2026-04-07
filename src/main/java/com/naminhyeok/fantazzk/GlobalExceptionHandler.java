@@ -3,9 +3,8 @@ package com.naminhyeok.fantazzk;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.logging.LogLevel;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.slf4j.event.Level;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -36,47 +35,13 @@ public class GlobalExceptionHandler {
             .body(ApiResponse.error(error, data));
     }
 
-    private void log(Exception ex, LogLevel level) {
+    private void log(Exception ex, Level level) {
         switch (level) {
             case TRACE -> log.trace("Handled exception", ex);
             case DEBUG -> log.debug("Handled exception", ex);
             case INFO -> log.info("Handled exception", ex);
             case WARN -> log.warn("Handled exception", ex);
-            case ERROR, FATAL -> log.error("Handled exception", ex);
-            case OFF -> {
-            }
-        }
-    }
-
-    private static final class LegacyErrorDescriptor implements ErrorDescriptor {
-        private final HttpStatus status;
-        private final String code;
-        private final String message;
-
-        private LegacyErrorDescriptor(HttpStatus status, String code, String message) {
-            this.status = status;
-            this.code = code;
-            this.message = message;
-        }
-
-        @Override
-        public HttpStatus getStatus() {
-            return status;
-        }
-
-        @Override
-        public String getCode() {
-            return code;
-        }
-
-        @Override
-        public String getMessage() {
-            return message;
-        }
-
-        @Override
-        public LogLevel getLogLevel() {
-            return LogLevel.WARN;
+            case ERROR -> log.error("Handled exception", ex);
         }
     }
 }
