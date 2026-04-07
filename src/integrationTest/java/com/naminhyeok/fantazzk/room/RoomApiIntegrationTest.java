@@ -6,6 +6,8 @@ import com.naminhyeok.fantazzk.template.CreateTemplate;
 import com.naminhyeok.fantazzk.template.CreateTemplateCommand;
 import com.naminhyeok.fantazzk.template.Template;
 import java.util.Map;
+import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.resttestclient.TestRestTemplate;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
@@ -30,14 +32,10 @@ import org.springframework.test.context.TestConstructor;
 )
 @AutoConfigureTestRestTemplate
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
+@RequiredArgsConstructor
 class RoomApiIntegrationTest {
     private final TestRestTemplate restTemplate;
     private final CreateTemplate createTemplate;
-
-    RoomApiIntegrationTest(TestRestTemplate restTemplate, CreateTemplate createTemplate) {
-        this.restTemplate = restTemplate;
-        this.createTemplate = createTemplate;
-    }
 
     @Test
     void 유효한_요청으로_방을_생성하면_201을_반환한다() {
@@ -63,6 +61,32 @@ class RoomApiIntegrationTest {
     }
 
     @Test
+    void 존재하지_않는_템플릿으로_방을_생성하면_404를_반환한다() {
+        String missingTemplateId = UUID.randomUUID().toString();
+
+        ResponseEntity<Map> response = restTemplate.exchange(
+            RequestEntity.post("/api/v1/rooms")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                    """
+                    {
+                      "templateId": "%s",
+                      "hostNickname": "호스트"
+                    }
+                    """.formatted(missingTemplateId)
+                ),
+            Map.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(response.getBody()).containsEntry("resultType", "ERROR");
+        Map<?, ?> error = (Map<?, ?>) response.getBody().get("error");
+        assertThat(error.get("code")).isEqualTo("ROOM_TEMPLATE_NOT_FOUND");
+        assertThat(error.get("message")).isEqualTo("방 생성에 사용할 템플릿을 찾을 수 없습니다");
+        assertThat(((Map<?, ?>) error.get("data")).get("templateId")).isEqualTo(missingTemplateId);
+    }
+
+    @Test
     void 존재하는_방을_조회하면_200과_방_정보를_반환한다() {
         Template template = createAuctionTemplate();
         String code = createRoom(template);
@@ -71,6 +95,20 @@ class RoomApiIntegrationTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(((Map<?, ?>) response.getBody().get("success")).get("code")).isEqualTo(code);
+    }
+
+    @Test
+    void 존재하지_않는_방을_조회하면_404를_반환한다() {
+        String missingCode = "MISSING";
+
+        ResponseEntity<Map> response = restTemplate.getForEntity("/api/v1/rooms/" + missingCode, Map.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(response.getBody()).containsEntry("resultType", "ERROR");
+        Map<?, ?> error = (Map<?, ?>) response.getBody().get("error");
+        assertThat(error.get("code")).isEqualTo("ROOM_NOT_FOUND");
+        assertThat(error.get("message")).isEqualTo("방을 찾을 수 없습니다");
+        assertThat(((Map<?, ?>) error.get("data")).get("code")).isEqualTo(missingCode);
     }
 
     @Test
@@ -122,6 +160,26 @@ class RoomApiIntegrationTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(((Map<?, ?>) response.getBody().get("success")).get("status")).isEqualTo("IN_PROGRESS");
+    }
+
+    @Test
+    void 팀장_자리가_부족한_방은_시작할_수_없다() {
+        Template template = createAuctionTemplate();
+        String code = createRoom(template);
+
+        ResponseEntity<Map> response = restTemplate.exchange(
+            RequestEntity.post("/api/v1/rooms/" + code + "/start")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(""),
+            Map.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(response.getBody()).containsEntry("resultType", "ERROR");
+        Map<?, ?> error = (Map<?, ?>) response.getBody().get("error");
+        assertThat(error.get("code")).isEqualTo("ROOM_NOT_STARTABLE");
+        assertThat(error.get("message")).isEqualTo("방을 시작할 수 없습니다");
+        assertThat(((Map<?, ?>) error.get("data")).get("detail")).isEqualTo("모든 팀장 자리가 채워져야 시작할 수 있습니다");
     }
 
     private Template createAuctionTemplate() {

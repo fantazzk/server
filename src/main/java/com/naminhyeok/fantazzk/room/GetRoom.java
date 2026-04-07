@@ -11,6 +11,6 @@ public class GetRoom {
 
     @Transactional(readOnly = true)
     public Room get(String code) {
-        return rooms.findByCode(code).orElseThrow();
+        return rooms.findByCode(code).orElseThrow(() -> RoomException.notFound(code));
     }
 }

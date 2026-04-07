@@ -11,7 +11,7 @@ public class PlaceBid {
 
     @Transactional
     public RoomBid place(String code, String teamLeaderId, int amount) {
-        Room room = rooms.findByCode(code).orElseThrow();
+        Room room = rooms.findByCode(code).orElseThrow(() -> RoomException.notFound(code));
         RoomBid bid = room.placeBid(teamLeaderId, amount);
         rooms.save(room);
         return bid;

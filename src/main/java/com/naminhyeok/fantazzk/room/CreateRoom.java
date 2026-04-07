@@ -44,7 +44,7 @@ public class CreateRoom {
         try {
             return templateCatalog.getTemplate(templateId);
         } catch (TemplateCatalogException.NotFound ex) {
-            throw new RoomTemplateNotFoundException();
+            throw RoomException.templateNotFound(templateId);
         }
     }
 

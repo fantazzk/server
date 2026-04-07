@@ -23,8 +23,11 @@ class ProvideTemplateCatalog implements TemplateCatalog {
                     .map(player -> new TemplatePlayerBlueprint(player.getName(), player.getDisplayOrder()))
                     .toList()
             );
-        } catch (TemplateNotFoundException ex) {
-            throw new TemplateCatalogException.NotFound(templateId);
+        } catch (TemplateException ex) {
+            if (ex.getError() == TemplateErrorType.TEMPLATE_NOT_FOUND) {
+                throw new TemplateCatalogException.NotFound(templateId);
+            }
+            throw ex;
         }
     }
 }

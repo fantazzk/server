@@ -11,7 +11,7 @@ public class SettleAuction {
 
     @Transactional
     public AuctionSettlement settle(String code) {
-        Room room = rooms.findByCode(code).orElseThrow();
+        Room room = rooms.findByCode(code).orElseThrow(() -> RoomException.notFound(code));
         AuctionSettlement settlement = room.settleAuction();
         rooms.save(room);
         return settlement;

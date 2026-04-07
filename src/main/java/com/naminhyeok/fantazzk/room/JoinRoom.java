@@ -11,7 +11,7 @@ public class JoinRoom {
 
     @Transactional
     public RoomTeamLeader join(String code, String nickname) {
-        Room room = rooms.findByCode(code).orElseThrow();
+        Room room = rooms.findByCode(code).orElseThrow(() -> RoomException.notFound(code));
         room.join(java.util.UUID.randomUUID().toString(), nickname);
         Room saved = rooms.save(room);
         return saved.getLeaders().getLast();

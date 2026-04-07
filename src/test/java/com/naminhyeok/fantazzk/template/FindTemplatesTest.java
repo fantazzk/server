@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -25,7 +26,13 @@ class FindTemplatesTest {
         FindTemplates cut = new FindTemplates(templates);
 
         assertThatThrownBy(() -> cut.getDetail(missingId))
-            .isInstanceOf(TemplateNotFoundException.class);
+            .isInstanceOf(TemplateException.class)
+            .satisfies(ex -> {
+                TemplateException templateException = (TemplateException) ex;
+                assertThat(templateException.getError()).isEqualTo(TemplateErrorType.TEMPLATE_NOT_FOUND);
+                assertThat(templateException.getData())
+                    .isEqualTo(Map.of("templateId", missingId.templateId().toString()));
+            });
     }
 
     @Test

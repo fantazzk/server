@@ -12,7 +12,7 @@ public class FindTemplates {
 
     @Transactional(readOnly = true)
     public TemplateDetail getDetail(TemplateId id) {
-        Template template = templates.findById(id).orElseThrow(TemplateNotFoundException::new);
+        Template template = templates.findById(id).orElseThrow(() -> TemplateException.notFound(id));
         return new TemplateDetail(template, template.getPlayers());
     }
 

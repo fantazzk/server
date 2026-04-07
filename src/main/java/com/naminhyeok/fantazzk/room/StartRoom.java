@@ -11,7 +11,7 @@ public class StartRoom {
 
     @Transactional
     public void start(String code) {
-        Room room = rooms.findByCode(code).orElseThrow();
+        Room room = rooms.findByCode(code).orElseThrow(() -> RoomException.notFound(code));
         room.start();
         rooms.save(room);
     }

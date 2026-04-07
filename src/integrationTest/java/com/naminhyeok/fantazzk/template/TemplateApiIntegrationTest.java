@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.resttestclient.TestRestTemplate;
@@ -81,8 +82,26 @@ class TemplateApiIntegrationTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(response.getBody()).containsEntry("resultType", "ERROR");
-        assertThat(((Map<?, ?>) response.getBody().get("error")).get("reason"))
+        Map<?, ?> error = (Map<?, ?>) response.getBody().get("error");
+        assertThat(error.get("code")).isEqualTo("TEMPLATE_INVALID_REQUEST");
+        assertThat(error.get("message")).isEqualTo("템플릿 생성 요청이 올바르지 않습니다");
+        assertThat(((Map<?, ?>) error.get("data")).get("detail"))
             .isEqualTo("드래프트 템플릿에는 예산을 지정할 수 없습니다");
+    }
+
+    @Test
+    void 존재하지_않는_템플릿을_조회하면_404를_반환한다() {
+        String missingId = UUID.randomUUID().toString();
+
+        ResponseEntity<Map> response = restTemplate.getForEntity("/api/v1/templates/" + missingId, Map.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(response.getBody()).containsEntry("resultType", "ERROR");
+        Map<?, ?> error = (Map<?, ?>) response.getBody().get("error");
+        assertThat(error.get("code")).isEqualTo("TEMPLATE_NOT_FOUND");
+        assertThat(error.get("message")).isEqualTo("템플릿을 찾을 수 없습니다");
+        assertThat(((Map<?, ?>) error.get("data")).get("templateId"))
+            .isEqualTo(missingId);
     }
 
     @Test

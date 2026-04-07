@@ -49,6 +49,40 @@ class RoomAggregateTest {
         assertThat(room.getLeaders().getLast().getNickname()).isEqualTo("게스트");
     }
 
+    @Test
+    void 대기_상태가_아니면_참가할_수_없다() {
+        Room room = startedAuctionRoom();
+
+        assertThatThrownBy(() -> room.join("guest-2", "추가 게스트"))
+            .isInstanceOf(RoomException.class)
+            .hasMessage("방에 참가할 수 없습니다");
+    }
+
+    @Test
+    void 방이_가득_차면_참가할_수_없다() {
+        Room room =
+            Room.createFromTemplate(
+                "ROOM03",
+                UUID.randomUUID().toString(),
+                "호스트",
+                new RoomTemplateSpec(
+                    RoomTemplateSpec.Mode.AUCTION,
+                    1,
+                    2,
+                    300,
+                    null,
+                    List.of(
+                        new RoomTemplateSpec.Player("선수1", 0),
+                        new RoomTemplateSpec.Player("선수2", 1)
+                    )
+                )
+            );
+
+        assertThatThrownBy(() -> room.join("guest-1", "게스트"))
+            .isInstanceOf(RoomException.class)
+            .hasMessage("방이 가득 찼습니다");
+    }
+
     @Nested
     class 시작 {
         @Test
@@ -96,8 +130,8 @@ class RoomAggregateTest {
             Room room = auctionWaitingRoom();
 
             assertThatThrownBy(room::start)
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessage("모든 팀장 자리가 채워져야 시작할 수 있습니다");
+                .isInstanceOf(RoomException.class)
+                .hasMessage("방을 시작할 수 없습니다");
         }
     }
 
@@ -118,5 +152,12 @@ class RoomAggregateTest {
                 )
             )
         );
+    }
+
+    private static Room startedAuctionRoom() {
+        Room room = auctionWaitingRoom();
+        room.join("guest-1", "게스트");
+        room.start();
+        return room;
     }
 }
