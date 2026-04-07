@@ -1,9 +1,11 @@
 package com.naminhyeok.fantazzk.room;
 
 import com.naminhyeok.fantazzk.ErrorDescriptor;
+import lombok.Getter;
 import org.springframework.boot.logging.LogLevel;
 import org.springframework.http.HttpStatus;
 
+@Getter
 public enum RoomErrorType implements ErrorDescriptor {
     ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "ROOM_NOT_FOUND", "방을 찾을 수 없습니다", LogLevel.WARN),
     ROOM_TEMPLATE_NOT_FOUND(
@@ -26,25 +28,5 @@ public enum RoomErrorType implements ErrorDescriptor {
         this.code = code;
         this.message = message;
         this.logLevel = logLevel;
-    }
-
-    @Override
-    public HttpStatus status() {
-        return status;
-    }
-
-    @Override
-    public String code() {
-        return code;
-    }
-
-    @Override
-    public String message() {
-        return message;
-    }
-
-    @Override
-    public LogLevel logLevel() {
-        return logLevel;
     }
 }

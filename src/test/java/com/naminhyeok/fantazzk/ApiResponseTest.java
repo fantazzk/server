@@ -44,22 +44,22 @@ class ApiResponseTest {
     private static final class FakeErrorDescriptor implements ErrorDescriptor {
 
         @Override
-        public HttpStatus status() {
+        public HttpStatus getStatus() {
             return HttpStatus.BAD_REQUEST;
         }
 
         @Override
-        public String code() {
+        public String getCode() {
             return "BAD_REQUEST";
         }
 
         @Override
-        public String message() {
+        public String getMessage() {
             return "잘못된 요청입니다";
         }
 
         @Override
-        public LogLevel logLevel() {
+        public LogLevel getLogLevel() {
             return LogLevel.WARN;
         }
     }

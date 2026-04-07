@@ -31,8 +31,8 @@ public class GlobalExceptionHandler {
     }
 
     private ResponseEntity<ApiResponse<Void>> respond(Exception ex, ErrorDescriptor error, Object data) {
-        log(ex, error.logLevel());
-        return ResponseEntity.status(error.status())
+        log(ex, error.getLogLevel());
+        return ResponseEntity.status(error.getStatus())
             .body(ApiResponse.error(error, data));
     }
 
@@ -60,22 +60,22 @@ public class GlobalExceptionHandler {
         }
 
         @Override
-        public HttpStatus status() {
+        public HttpStatus getStatus() {
             return status;
         }
 
         @Override
-        public String code() {
+        public String getCode() {
             return code;
         }
 
         @Override
-        public String message() {
+        public String getMessage() {
             return message;
         }
 
         @Override
-        public LogLevel logLevel() {
+        public LogLevel getLogLevel() {
             return LogLevel.WARN;
         }
     }

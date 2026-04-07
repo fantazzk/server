@@ -173,22 +173,22 @@ class GlobalExceptionHandlerTest {
 
     private static final class ConflictErrorDescriptor implements ErrorDescriptor {
         @Override
-        public HttpStatus status() {
+        public HttpStatus getStatus() {
             return HttpStatus.CONFLICT;
         }
 
         @Override
-        public String code() {
+        public String getCode() {
             return "CONFLICT_ERROR";
         }
 
         @Override
-        public String message() {
+        public String getMessage() {
             return "충돌이 발생했습니다";
         }
 
         @Override
-        public LogLevel logLevel() {
+        public LogLevel getLogLevel() {
             return LogLevel.WARN;
         }
     }

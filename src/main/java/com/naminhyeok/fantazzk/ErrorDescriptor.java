@@ -4,11 +4,11 @@ import org.springframework.boot.logging.LogLevel;
 import org.springframework.http.HttpStatus;
 
 public interface ErrorDescriptor {
-    HttpStatus status();
+    HttpStatus getStatus();
 
-    String code();
+    String getCode();
 
-    String message();
+    String getMessage();
 
-    LogLevel logLevel();
+    LogLevel getLogLevel();
 }

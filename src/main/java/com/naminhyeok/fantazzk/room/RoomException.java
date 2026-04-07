@@ -25,7 +25,7 @@ public class RoomException extends CoreException {
     }
 
     public static RoomException roomFull() {
-        return new RoomException(RoomErrorType.ROOM_FULL, Map.of("detail", RoomErrorType.ROOM_FULL.message()));
+        return new RoomException(RoomErrorType.ROOM_FULL, Map.of("detail", RoomErrorType.ROOM_FULL.getMessage()));
     }
 
     public static RoomException notStartable(String detail) {

@@ -9,7 +9,7 @@ public class CoreException extends RuntimeException {
     }
 
     public CoreException(ErrorDescriptor error, Object data) {
-        super(error.message());
+        super(error.getMessage());
         this.error = error;
         this.data = data;
     }
