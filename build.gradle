@@ -58,6 +58,8 @@ dependencies {
     implementation libs.sentry.spring.boot4
     implementation 'org.liquibase:liquibase-core'
     implementation 'org.springframework.boot:spring-boot-liquibase'
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
 
     runtimeOnly 'org.postgresql:postgresql'
 
@@ -67,6 +69,8 @@ dependencies {
     testImplementation libs.jmolecules.archunit
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     testRuntimeOnly 'com.h2database:h2'
+    testCompileOnly 'org.projectlombok:lombok'
+    testAnnotationProcessor 'org.projectlombok:lombok'
 
     integrationTestImplementation 'org.springframework.boot:spring-boot-starter-test'
     integrationTestImplementation 'org.springframework.modulith:spring-modulith-starter-test'
@@ -75,6 +79,8 @@ dependencies {
     integrationTestImplementation 'org.springframework.boot:spring-boot-jdbc-test'
     integrationTestRuntimeOnly 'com.h2database:h2'
     integrationTestRuntimeOnly 'org.postgresql:postgresql'
+    integrationTestCompileOnly 'org.projectlombok:lombok'
+    integrationTestAnnotationProcessor 'org.projectlombok:lombok'
 }
 
 byteBuddy {
