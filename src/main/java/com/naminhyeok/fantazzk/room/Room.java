@@ -1,5 +1,6 @@
 package com.naminhyeok.fantazzk.room;
 
+import com.naminhyeok.fantazzk.CoreException;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
@@ -98,20 +99,20 @@ public class Room implements AggregateRoot<Room, RoomId> {
 
     public void join(String teamLeaderId, String nickname) {
         if (status != RoomStatus.WAITING) {
-            throw RoomException.notJoinable("대기 중인 방에서만 참가할 수 있습니다");
+            throw CoreException.of(RoomErrorType.ROOM_JOIN_REQUIRES_WAITING);
         }
         if (leaders.size() >= teamCount) {
-            throw RoomException.roomFull();
+            throw CoreException.of(RoomErrorType.ROOM_FULL);
         }
         leaders.add(new RoomTeamLeader(teamLeaderId, nickname, budget));
     }
 
     public void start() {
         if (status != RoomStatus.WAITING) {
-            throw RoomException.notStartable("대기 중인 방에서만 시작할 수 있습니다");
+            throw CoreException.of(RoomErrorType.ROOM_START_REQUIRES_WAITING);
         }
         if (leaders.size() != teamCount) {
-            throw RoomException.notStartable("모든 팀장 자리가 채워져야 시작할 수 있습니다");
+            throw CoreException.of(RoomErrorType.ROOM_LEADERS_NOT_FULL);
         }
 
         status = RoomStatus.IN_PROGRESS;

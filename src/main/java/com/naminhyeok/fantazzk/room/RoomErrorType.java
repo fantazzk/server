@@ -14,9 +14,25 @@ public enum RoomErrorType implements ErrorDescriptor {
         "방 생성에 사용할 템플릿을 찾을 수 없습니다",
         Level.WARN
     ),
-    ROOM_NOT_JOINABLE(HttpStatus.CONFLICT, "ROOM_NOT_JOINABLE", "방에 참가할 수 없습니다", Level.INFO),
+    ROOM_JOIN_REQUIRES_WAITING(
+        HttpStatus.CONFLICT,
+        "ROOM_JOIN_REQUIRES_WAITING",
+        "대기 중인 방에서만 참가할 수 있습니다",
+        Level.INFO
+    ),
     ROOM_FULL(HttpStatus.CONFLICT, "ROOM_FULL", "방이 가득 찼습니다", Level.INFO),
-    ROOM_NOT_STARTABLE(HttpStatus.CONFLICT, "ROOM_NOT_STARTABLE", "방을 시작할 수 없습니다", Level.INFO);
+    ROOM_START_REQUIRES_WAITING(
+        HttpStatus.CONFLICT,
+        "ROOM_START_REQUIRES_WAITING",
+        "대기 중인 방에서만 시작할 수 있습니다",
+        Level.INFO
+    ),
+    ROOM_LEADERS_NOT_FULL(
+        HttpStatus.CONFLICT,
+        "ROOM_LEADERS_NOT_FULL",
+        "모든 팀장 자리가 채워져야 시작할 수 있습니다",
+        Level.INFO
+    );
 
     private final HttpStatus status;
     private final String code;

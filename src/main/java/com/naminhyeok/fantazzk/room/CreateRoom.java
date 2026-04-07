@@ -1,5 +1,6 @@
 package com.naminhyeok.fantazzk.room;
 
+import com.naminhyeok.fantazzk.CoreException;
 import com.naminhyeok.fantazzk.template.TemplateCatalog;
 import com.naminhyeok.fantazzk.template.TemplateCatalogException;
 import com.naminhyeok.fantazzk.template.TemplateId;
@@ -44,7 +45,7 @@ public class CreateRoom {
         try {
             return templateCatalog.getTemplate(templateId);
         } catch (TemplateCatalogException.NotFound ex) {
-            throw RoomException.templateNotFound(templateId);
+            throw CoreException.of(RoomErrorType.ROOM_TEMPLATE_NOT_FOUND);
         }
     }
 

@@ -1,10 +1,12 @@
 package com.naminhyeok.fantazzk;
 
-import java.util.Map;
+import java.util.LinkedHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.slf4j.event.Level;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -17,11 +19,22 @@ public class GlobalExceptionHandler {
         return respond(ex, ex.getError(), ex.getData());
     }
 
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    ResponseEntity<ApiResponse<Void>> handleValidationException(MethodArgumentNotValidException ex) {
+        LinkedHashMap<String, String> errors = new LinkedHashMap<>();
+        ex.getBindingResult().getAllErrors().forEach(error -> {
+            String fieldName = ((FieldError) error).getField();
+            String errorMessage = error.getDefaultMessage();
+            errors.put(fieldName, errorMessage);
+        });
+        log.warn("Validation failed: {}", errors);
+        return ResponseEntity.status(CommonErrorType.BAD_REQUEST.getStatus())
+            .body(ApiResponse.error(CommonErrorType.BAD_REQUEST, errors));
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     ResponseEntity<ApiResponse<Void>> handleIllegalArgumentException(IllegalArgumentException ex) {
-        String message = ex.getMessage();
-        Object data = message == null ? null : Map.of("detail", message);
-        return respond(ex, CommonErrorType.BAD_REQUEST, data);
+        return respond(ex, CommonErrorType.BAD_REQUEST, null);
     }
 
     @ExceptionHandler(Exception.class)

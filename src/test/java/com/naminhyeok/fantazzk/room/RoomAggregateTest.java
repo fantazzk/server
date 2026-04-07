@@ -3,6 +3,7 @@ package com.naminhyeok.fantazzk.room;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.naminhyeok.fantazzk.CoreException;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Nested;
@@ -54,8 +55,12 @@ class RoomAggregateTest {
         Room room = startedAuctionRoom();
 
         assertThatThrownBy(() -> room.join("guest-2", "추가 게스트"))
-            .isInstanceOf(RoomException.class)
-            .hasMessage("방에 참가할 수 없습니다");
+            .isInstanceOf(CoreException.class)
+            .satisfies(ex -> {
+                CoreException coreException = (CoreException) ex;
+                assertThat(coreException.getError()).isEqualTo(RoomErrorType.ROOM_JOIN_REQUIRES_WAITING);
+                assertThat(coreException.getData()).isNull();
+            });
     }
 
     @Test
@@ -76,11 +81,15 @@ class RoomAggregateTest {
                         new RoomTemplateSpec.Player("선수2", 1)
                     )
                 )
-            );
+        );
 
         assertThatThrownBy(() -> room.join("guest-1", "게스트"))
-            .isInstanceOf(RoomException.class)
-            .hasMessage("방이 가득 찼습니다");
+            .isInstanceOf(CoreException.class)
+            .satisfies(ex -> {
+                CoreException coreException = (CoreException) ex;
+                assertThat(coreException.getError()).isEqualTo(RoomErrorType.ROOM_FULL);
+                assertThat(coreException.getData()).isNull();
+            });
     }
 
     @Nested
@@ -130,8 +139,12 @@ class RoomAggregateTest {
             Room room = auctionWaitingRoom();
 
             assertThatThrownBy(room::start)
-                .isInstanceOf(RoomException.class)
-                .hasMessage("방을 시작할 수 없습니다");
+                .isInstanceOf(CoreException.class)
+                .satisfies(ex -> {
+                    CoreException coreException = (CoreException) ex;
+                    assertThat(coreException.getError()).isEqualTo(RoomErrorType.ROOM_LEADERS_NOT_FULL);
+                    assertThat(coreException.getData()).isNull();
+                });
         }
     }
 

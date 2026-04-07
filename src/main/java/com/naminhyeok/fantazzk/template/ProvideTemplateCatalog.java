@@ -1,5 +1,6 @@
 package com.naminhyeok.fantazzk.template;
 
+import com.naminhyeok.fantazzk.CoreException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -23,7 +24,7 @@ class ProvideTemplateCatalog implements TemplateCatalog {
                     .map(player -> new TemplatePlayerBlueprint(player.getName(), player.getDisplayOrder()))
                     .toList()
             );
-        } catch (TemplateException ex) {
+        } catch (CoreException ex) {
             if (ex.getError() == TemplateErrorType.TEMPLATE_NOT_FOUND) {
                 throw new TemplateCatalogException.NotFound(templateId);
             }

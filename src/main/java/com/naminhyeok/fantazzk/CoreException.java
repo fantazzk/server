@@ -4,6 +4,14 @@ public class CoreException extends RuntimeException {
     private final ErrorDescriptor error;
     private final Object data;
 
+    public static CoreException of(ErrorDescriptor error) {
+        return new CoreException(error);
+    }
+
+    public static CoreException of(ErrorDescriptor error, Object data) {
+        return new CoreException(error, data);
+    }
+
     public CoreException(ErrorDescriptor error) {
         this(error, null);
     }

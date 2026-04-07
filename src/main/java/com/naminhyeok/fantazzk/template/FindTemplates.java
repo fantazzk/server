@@ -1,5 +1,6 @@
 package com.naminhyeok.fantazzk.template;
 
+import com.naminhyeok.fantazzk.CoreException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -12,7 +13,7 @@ public class FindTemplates {
 
     @Transactional(readOnly = true)
     public TemplateDetail getDetail(TemplateId id) {
-        Template template = templates.findById(id).orElseThrow(() -> TemplateException.notFound(id));
+        Template template = templates.findById(id).orElseThrow(() -> CoreException.of(TemplateErrorType.TEMPLATE_NOT_FOUND));
         return new TemplateDetail(template, template.getPlayers());
     }
 

@@ -2,6 +2,7 @@ package com.naminhyeok.fantazzk;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -11,15 +12,20 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.naminhyeok.fantazzk.room.RoomException;
+import com.naminhyeok.fantazzk.room.RoomErrorType;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 class GlobalExceptionHandlerTest {
@@ -73,7 +79,6 @@ class GlobalExceptionHandlerTest {
             .andExpect(jsonPath("$.resultType").value("ERROR"))
             .andExpect(jsonPath("$.error.code").value("ROOM_NOT_FOUND"))
             .andExpect(jsonPath("$.error.message").value("방을 찾을 수 없습니다"))
-            .andExpect(jsonPath("$.error.data.code").value("ROOM01"))
             .andReturn()
             .getResponse()
             .getContentAsString();
@@ -82,7 +87,7 @@ class GlobalExceptionHandlerTest {
 
         assertThat(json.get("error").get("code").asText()).isEqualTo("ROOM_NOT_FOUND");
         assertThat(json.get("error").get("message").asText()).isEqualTo("방을 찾을 수 없습니다");
-        assertThat(json.get("error").get("data").get("code").asText()).isEqualTo("ROOM01");
+        assertThat(json.get("error").get("data").isNull()).isTrue();
         assertLastLog(Level.WARN);
     }
 
@@ -93,7 +98,6 @@ class GlobalExceptionHandlerTest {
             .andExpect(jsonPath("$.resultType").value("ERROR"))
             .andExpect(jsonPath("$.error.code").value("BAD_REQUEST"))
             .andExpect(jsonPath("$.error.message").value("요청이 올바르지 않습니다"))
-            .andExpect(jsonPath("$.error.data.detail").value("bad argument"))
             .andReturn()
             .getResponse()
             .getContentAsString();
@@ -102,7 +106,7 @@ class GlobalExceptionHandlerTest {
 
         assertThat(json.get("error").get("code").asText()).isEqualTo("BAD_REQUEST");
         assertThat(json.get("error").get("message").asText()).isEqualTo("요청이 올바르지 않습니다");
-        assertThat(json.get("error").get("data").get("detail").asText()).isEqualTo("bad argument");
+        assertThat(json.get("error").get("data").isNull()).isTrue();
         assertLastLog(Level.WARN);
     }
 
@@ -142,6 +146,35 @@ class GlobalExceptionHandlerTest {
         assertLastLog(Level.ERROR);
     }
 
+    @Test
+    void validation_exception_renders_field_error_map_in_data() throws Exception {
+        String response = mockMvc.perform(
+                post("/validation")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""
+                        {
+                          "name": "",
+                          "age": 0
+                        }
+                        """)
+            )
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.resultType").value("ERROR"))
+            .andExpect(jsonPath("$.error.code").value("BAD_REQUEST"))
+            .andExpect(jsonPath("$.error.message").value("요청이 올바르지 않습니다"))
+            .andExpect(jsonPath("$.error.data.name").value("이름은 필수입니다"))
+            .andExpect(jsonPath("$.error.data.age").value("나이는 1 이상이어야 합니다"))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+        JsonNode json = objectMapper.readTree(response);
+
+        assertThat(json.get("error").get("data").get("name").asText()).isEqualTo("이름은 필수입니다");
+        assertThat(json.get("error").get("data").get("age").asText()).isEqualTo("나이는 1 이상이어야 합니다");
+        assertLastLog(Level.WARN);
+    }
+
     @RestController
     static class ThrowingController {
         @GetMapping("/core")
@@ -151,7 +184,7 @@ class GlobalExceptionHandlerTest {
 
         @GetMapping("/room")
         String room() {
-            throw RoomException.notFound("ROOM01");
+            throw CoreException.of(RoomErrorType.ROOM_NOT_FOUND);
         }
 
         @GetMapping("/illegal")
@@ -168,6 +201,17 @@ class GlobalExceptionHandlerTest {
         String generic() {
             throw new RuntimeException("boom");
         }
+
+        @PostMapping("/validation")
+        String validation(@Valid @org.springframework.web.bind.annotation.RequestBody ValidationRequest request) {
+            return "ok";
+        }
+    }
+
+    record ValidationRequest(
+        @NotBlank(message = "이름은 필수입니다") String name,
+        @Min(value = 1, message = "나이는 1 이상이어야 합니다") int age
+    ) {
     }
 
     private static final class ConflictErrorDescriptor implements ErrorDescriptor {

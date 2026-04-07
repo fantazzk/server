@@ -83,7 +83,7 @@ class RoomApiIntegrationTest {
         Map<?, ?> error = (Map<?, ?>) response.getBody().get("error");
         assertThat(error.get("code")).isEqualTo("ROOM_TEMPLATE_NOT_FOUND");
         assertThat(error.get("message")).isEqualTo("방 생성에 사용할 템플릿을 찾을 수 없습니다");
-        assertThat(((Map<?, ?>) error.get("data")).get("templateId")).isEqualTo(missingTemplateId);
+        assertThat(error.get("data")).isNull();
     }
 
     @Test
@@ -108,7 +108,7 @@ class RoomApiIntegrationTest {
         Map<?, ?> error = (Map<?, ?>) response.getBody().get("error");
         assertThat(error.get("code")).isEqualTo("ROOM_NOT_FOUND");
         assertThat(error.get("message")).isEqualTo("방을 찾을 수 없습니다");
-        assertThat(((Map<?, ?>) error.get("data")).get("code")).isEqualTo(missingCode);
+        assertThat(error.get("data")).isNull();
     }
 
     @Test
@@ -177,9 +177,9 @@ class RoomApiIntegrationTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
         assertThat(response.getBody()).containsEntry("resultType", "ERROR");
         Map<?, ?> error = (Map<?, ?>) response.getBody().get("error");
-        assertThat(error.get("code")).isEqualTo("ROOM_NOT_STARTABLE");
-        assertThat(error.get("message")).isEqualTo("방을 시작할 수 없습니다");
-        assertThat(((Map<?, ?>) error.get("data")).get("detail")).isEqualTo("모든 팀장 자리가 채워져야 시작할 수 있습니다");
+        assertThat(error.get("code")).isEqualTo("ROOM_LEADERS_NOT_FULL");
+        assertThat(error.get("message")).isEqualTo("모든 팀장 자리가 채워져야 시작할 수 있습니다");
+        assertThat(error.get("data")).isNull();
     }
 
     private Template createAuctionTemplate() {
