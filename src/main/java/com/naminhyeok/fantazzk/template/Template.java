@@ -4,9 +4,11 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
+import lombok.Getter;
 import org.jmolecules.ddd.types.AggregateRoot;
 import org.jmolecules.ddd.types.Identifier;
 
+@Getter
 public class Template implements AggregateRoot<Template, Template.TemplateId> {
     private final TemplateId id;
     private String name;
@@ -50,10 +52,6 @@ public class Template implements AggregateRoot<Template, Template.TemplateId> {
         return id;
     }
 
-    public String getName() {
-        return name;
-    }
-
     public TemplateMode getMode() {
         return configuration.getMode();
     }
@@ -80,12 +78,8 @@ public class Template implements AggregateRoot<Template, Template.TemplateId> {
             .toList();
     }
 
-    public TemplateConfiguration getConfiguration() {
-        return configuration;
-    }
-
     public int getPicksPerTeam() {
-        return getTeamSize() - 1;
+        return configuration.getTeamSize() - 1;
     }
 
     private Template registerPlayers(List<String> playerNames) {
