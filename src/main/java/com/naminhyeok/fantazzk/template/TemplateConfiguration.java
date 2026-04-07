@@ -1,15 +1,22 @@
 package com.naminhyeok.fantazzk.template;
 
+import java.util.Objects;
 import org.jmolecules.ddd.types.ValueObject;
 
-public record TemplateConfiguration(
-    TemplateMode mode,
-    int teamCount,
-    int teamSize,
-    Integer budget,
-    DraftOrderStrategy draftOrderStrategy
-) implements ValueObject {
-    public TemplateConfiguration {
+public final class TemplateConfiguration implements ValueObject {
+    private final TemplateMode mode;
+    private final int teamCount;
+    private final int teamSize;
+    private final Integer budget;
+    private final DraftOrderStrategy draftOrderStrategy;
+
+    private TemplateConfiguration(
+        TemplateMode mode,
+        int teamCount,
+        int teamSize,
+        Integer budget,
+        DraftOrderStrategy draftOrderStrategy
+    ) {
         if (teamCount <= 0) {
             throw new IllegalArgumentException("팀 수는 0보다 커야 합니다");
         }
@@ -38,6 +45,12 @@ public record TemplateConfiguration(
                 throw new IllegalArgumentException("드래프트 템플릿에는 순서 전략이 필요합니다");
             }
         }
+
+        this.mode = mode;
+        this.teamCount = teamCount;
+        this.teamSize = teamSize;
+        this.budget = budget;
+        this.draftOrderStrategy = draftOrderStrategy;
     }
 
     public static TemplateConfiguration auction(int teamCount, int teamSize, int budget) {
@@ -60,32 +73,64 @@ public record TemplateConfiguration(
                 if (draftOrderStrategy != null) {
                     throw new IllegalArgumentException("경매 템플릿에는 드래프트 순서 전략을 지정할 수 없습니다");
                 }
-                yield auction(teamCount, teamSize, requireBudget(budget));
+                if (budget == null) {
+                    throw new IllegalArgumentException("경매 템플릿에는 예산이 필요합니다");
+                }
+                yield auction(teamCount, teamSize, budget);
             }
             case DRAFT -> {
                 if (budget != null) {
                     throw new IllegalArgumentException("드래프트 템플릿에는 예산을 지정할 수 없습니다");
                 }
-                yield draft(teamCount, teamSize, requireStrategy(draftOrderStrategy));
+                if (draftOrderStrategy == null) {
+                    throw new IllegalArgumentException("드래프트 템플릿에는 순서 전략이 필요합니다");
+                }
+                yield draft(teamCount, teamSize, draftOrderStrategy);
             }
         };
+    }
+
+    public TemplateMode mode() {
+        return mode;
+    }
+
+    public int teamCount() {
+        return teamCount;
+    }
+
+    public int teamSize() {
+        return teamSize;
+    }
+
+    public Integer budget() {
+        return budget;
+    }
+
+    public DraftOrderStrategy draftOrderStrategy() {
+        return draftOrderStrategy;
     }
 
     public int requiredPlayerCount() {
         return teamCount * (teamSize - 1);
     }
 
-    private static int requireBudget(Integer budget) {
-        if (budget == null) {
-            throw new IllegalArgumentException("경매 템플릿에는 예산이 필요합니다");
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) {
+            return true;
         }
-        return budget;
+        if (!(other instanceof TemplateConfiguration that)) {
+            return false;
+        }
+        return teamCount == that.teamCount
+            && teamSize == that.teamSize
+            && mode == that.mode
+            && Objects.equals(budget, that.budget)
+            && draftOrderStrategy == that.draftOrderStrategy;
     }
 
-    private static DraftOrderStrategy requireStrategy(DraftOrderStrategy strategy) {
-        if (strategy == null) {
-            throw new IllegalArgumentException("드래프트 템플릿에는 순서 전략이 필요합니다");
-        }
-        return strategy;
+    @Override
+    public int hashCode() {
+        return Objects.hash(mode, teamCount, teamSize, budget, draftOrderStrategy);
     }
 }

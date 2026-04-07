@@ -96,6 +96,10 @@ tasks.register('integrationTest', Test) {
     useJUnitPlatform()
 }
 
+tasks.named('processIntegrationTestResources') {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
 tasks.named('check') {
     dependsOn(tasks.named('integrationTest'))
 }
