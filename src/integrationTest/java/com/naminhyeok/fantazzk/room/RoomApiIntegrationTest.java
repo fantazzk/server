@@ -2,11 +2,7 @@ package com.naminhyeok.fantazzk.room;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.naminhyeok.fantazzk.template.application.CreateTemplate;
-import com.naminhyeok.fantazzk.template.application.CreateTemplateCommand;
-import com.naminhyeok.fantazzk.template.domain.Template;
 import java.util.Map;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.resttestclient.TestRestTemplate;
@@ -35,11 +31,11 @@ import org.springframework.test.context.TestConstructor;
 @RequiredArgsConstructor
 class RoomApiIntegrationTest {
     private final TestRestTemplate restTemplate;
-    private final CreateTemplate createTemplate;
+    private final com.naminhyeok.fantazzk.template.TemplateManagement templateManagement;
 
     @Test
     void 유효한_요청으로_방을_생성하면_201을_반환한다() {
-        Template template = createAuctionTemplate();
+        String templateId = createAuctionTemplateId();
 
         ResponseEntity<Map> response = restTemplate.exchange(
             RequestEntity.post("/api/v1/rooms")
@@ -50,7 +46,7 @@ class RoomApiIntegrationTest {
                       "templateId": "%s",
                       "hostNickname": "호스트"
                     }
-                    """.formatted(template.getId().templateId())
+                    """.formatted(templateId)
                 ),
             Map.class
         );
@@ -62,7 +58,7 @@ class RoomApiIntegrationTest {
 
     @Test
     void 존재하지_않는_템플릿으로_방을_생성하면_404를_반환한다() {
-        String missingTemplateId = UUID.randomUUID().toString();
+        String missingTemplateId = java.util.UUID.randomUUID().toString();
 
         ResponseEntity<Map> response = restTemplate.exchange(
             RequestEntity.post("/api/v1/rooms")
@@ -88,8 +84,8 @@ class RoomApiIntegrationTest {
 
     @Test
     void 존재하는_방을_조회하면_200과_방_정보를_반환한다() {
-        Template template = createAuctionTemplate();
-        String code = createRoom(template);
+        String templateId = createAuctionTemplateId();
+        String code = createRoom(templateId);
 
         ResponseEntity<Map> response = restTemplate.getForEntity("/api/v1/rooms/" + code, Map.class);
 
@@ -113,8 +109,8 @@ class RoomApiIntegrationTest {
 
     @Test
     void 유효한_요청으로_참가하면_200을_반환한다() {
-        Template template = createAuctionTemplate();
-        String code = createRoom(template);
+        String templateId = createAuctionTemplateId();
+        String code = createRoom(templateId);
 
         ResponseEntity<Map> response = restTemplate.exchange(
             RequestEntity.post("/api/v1/rooms/" + code + "/join")
@@ -135,8 +131,8 @@ class RoomApiIntegrationTest {
 
     @Test
     void 방을_시작하면_200과_진행중_상태를_반환한다() {
-        Template template = createAuctionTemplate();
-        String code = createRoom(template);
+        String templateId = createAuctionTemplateId();
+        String code = createRoom(templateId);
 
         restTemplate.exchange(
             RequestEntity.post("/api/v1/rooms/" + code + "/join")
@@ -164,8 +160,8 @@ class RoomApiIntegrationTest {
 
     @Test
     void 팀장_자리가_부족한_방은_시작할_수_없다() {
-        Template template = createAuctionTemplate();
-        String code = createRoom(template);
+        String templateId = createAuctionTemplateId();
+        String code = createRoom(templateId);
 
         ResponseEntity<Map> response = restTemplate.exchange(
             RequestEntity.post("/api/v1/rooms/" + code + "/start")
@@ -182,19 +178,21 @@ class RoomApiIntegrationTest {
         assertThat(error.get("data")).isNull();
     }
 
-    private Template createAuctionTemplate() {
-        return createTemplate.create(
-            new CreateTemplateCommand.Auction(
+    private String createAuctionTemplateId() {
+        return templateManagement.create(
+            new com.naminhyeok.fantazzk.template.CreateTemplateInput(
                 "경매전",
+                com.naminhyeok.fantazzk.template.TemplateCatalog.Mode.AUCTION,
                 2,
                 2,
                 300,
+                null,
                 java.util.List.of("선수1", "선수2")
             )
-        );
+        ).id();
     }
 
-    private String createRoom(Template template) {
+    private String createRoom(String templateId) {
         ResponseEntity<Map> response = restTemplate.exchange(
             RequestEntity.post("/api/v1/rooms")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -204,7 +202,7 @@ class RoomApiIntegrationTest {
                       "templateId": "%s",
                       "hostNickname": "호스트"
                     }
-                    """.formatted(template.getId().templateId())
+                    """.formatted(templateId)
                 ),
             Map.class
         );

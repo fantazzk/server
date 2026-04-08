@@ -3,10 +3,6 @@ package com.naminhyeok.fantazzk.template;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.naminhyeok.fantazzk.template.application.CreateTemplate;
-import com.naminhyeok.fantazzk.template.application.CreateTemplateCommand;
-import com.naminhyeok.fantazzk.template.domain.DraftOrderStrategy;
-import com.naminhyeok.fantazzk.template.domain.Template;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;

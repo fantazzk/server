@@ -12,7 +12,6 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.naminhyeok.fantazzk.room.domain.RoomErrorType;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -184,7 +183,7 @@ class GlobalExceptionHandlerTest {
 
         @GetMapping("/room")
         String room() {
-            throw CoreException.of(RoomErrorType.ROOM_NOT_FOUND);
+            throw CoreException.of(new MissingRoomErrorDescriptor());
         }
 
         @GetMapping("/illegal")
@@ -228,6 +227,28 @@ class GlobalExceptionHandlerTest {
         @Override
         public String getMessage() {
             return "충돌이 발생했습니다";
+        }
+
+        @Override
+        public org.slf4j.event.Level getLogLevel() {
+            return org.slf4j.event.Level.WARN;
+        }
+    }
+
+    private static final class MissingRoomErrorDescriptor implements ErrorDescriptor {
+        @Override
+        public HttpStatus getStatus() {
+            return HttpStatus.NOT_FOUND;
+        }
+
+        @Override
+        public String getCode() {
+            return "ROOM_NOT_FOUND";
+        }
+
+        @Override
+        public String getMessage() {
+            return "방을 찾을 수 없습니다";
         }
 
         @Override

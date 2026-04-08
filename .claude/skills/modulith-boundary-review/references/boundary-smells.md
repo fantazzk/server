@@ -4,6 +4,8 @@
 
 - public types exist in a module root without real cross-module value
 - another module imports subpackage implementation details
+- same-module types are forced to stay `public` only because the module was split into layer subpackages by default
+- `application` / `api` / `domain` / `repository` packages became a taxonomy habit instead of a boundary decision
 - query or repository types are used as ad-hoc cross-module APIs
 
 ## RPC By Event

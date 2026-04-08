@@ -2,11 +2,6 @@ package com.naminhyeok.fantazzk.room;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.naminhyeok.fantazzk.room.domain.Room;
-import com.naminhyeok.fantazzk.room.domain.RoomPlayer;
-import com.naminhyeok.fantazzk.room.domain.RoomTeamLeader;
-import com.naminhyeok.fantazzk.room.domain.RoomTemplateSpec;
-import com.naminhyeok.fantazzk.room.repository.Rooms;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;

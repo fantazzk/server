@@ -2,20 +2,8 @@ package com.naminhyeok.fantazzk.room;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.naminhyeok.fantazzk.room.application.CreateRoom;
-import com.naminhyeok.fantazzk.room.application.JoinRoom;
-import com.naminhyeok.fantazzk.room.application.PlaceBid;
-import com.naminhyeok.fantazzk.room.application.SettleAuction;
-import com.naminhyeok.fantazzk.room.application.StartRoom;
-import com.naminhyeok.fantazzk.room.domain.AuctionOutcome;
-import com.naminhyeok.fantazzk.room.domain.AuctionSettlement;
-import com.naminhyeok.fantazzk.room.domain.Room;
-import com.naminhyeok.fantazzk.room.domain.RoomTeamLeader;
-import com.naminhyeok.fantazzk.room.domain.RoomTeamMember;
-import com.naminhyeok.fantazzk.room.repository.Rooms;
-import com.naminhyeok.fantazzk.template.application.CreateTemplate;
-import com.naminhyeok.fantazzk.template.application.CreateTemplateCommand;
 import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -36,7 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
 @RequiredArgsConstructor
 class RoomAuctionIntegrationTest {
-    private final CreateTemplate createTemplate;
+    private final com.naminhyeok.fantazzk.template.TemplateManagement templateManagement;
     private final CreateRoom createRoom;
     private final JoinRoom joinRoom;
     private final StartRoom startRoom;
@@ -48,17 +36,19 @@ class RoomAuctionIntegrationTest {
     @Transactional
     void 입찰과_정산을_처리하면_선수_배정과_예산_차감이_반영된다() {
         var template =
-            createTemplate.create(
-                new CreateTemplateCommand.Auction(
+            templateManagement.create(
+                new com.naminhyeok.fantazzk.template.CreateTemplateInput(
                     "경매전",
+                    com.naminhyeok.fantazzk.template.TemplateCatalog.Mode.AUCTION,
                     2,
                     2,
                     300,
+                    null,
                     List.of("선수1", "선수2")
                 )
             );
 
-        Room created = createRoom.create(template.getId().templateId(), "호스트");
+        Room created = createRoom.create(UUID.fromString(template.id()), "호스트");
         RoomTeamLeader guest = joinRoom.join(created.getCode(), "게스트");
         startRoom.start(created.getCode());
 

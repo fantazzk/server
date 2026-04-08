@@ -2,10 +2,6 @@ package com.naminhyeok.fantazzk.template;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.naminhyeok.fantazzk.template.domain.Template;
-import com.naminhyeok.fantazzk.template.domain.TemplateMode;
-import com.naminhyeok.fantazzk.template.domain.TemplatePlayer;
-import com.naminhyeok.fantazzk.template.repository.Templates;
 import jakarta.persistence.EntityManager;
 import java.util.List;
 import lombok.RequiredArgsConstructor;

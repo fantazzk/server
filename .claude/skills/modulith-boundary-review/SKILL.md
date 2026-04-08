@@ -11,7 +11,7 @@ paths:
 
 ## Overview
 
-Spring Modulith boundaries should make dependency direction and collaboration style obvious. Keep module contracts narrow, keep subpackages internal, and use synchronous contracts and asynchronous events for different reasons rather than interchangeably.
+Spring Modulith boundaries should make dependency direction and collaboration style obvious. Keep module contracts narrow, prefer the module root as the primary home for core types, keep subpackages internal, and use synchronous contracts and asynchronous events for different reasons rather than interchangeably.
 
 Read `references/boundary-smells.md` when you need concrete examples of overexposed module APIs, RPC-by-event, or coupling-heavy module tests.
 
@@ -44,7 +44,10 @@ Read `references/boundary-smells.md` when you need concrete examples of overexpo
 
 ## Packaging And Coupling
 
-- Use `application`, `api`, `repository`, `query`, and `infrastructure` only when the role is clear
+- Do not default every module to `application`, `api`, `domain`, `repository`, `query`, and `infrastructure`
+- Prefer the module root for core domain and orchestration types
+- Add subpackages only for secondary concerns with clear value, such as `web`, `config`, `internal`, or intentionally exposed named interfaces
+- Use `application`, `api`, `repository`, `query`, and `infrastructure` only when the role is clear and the extra package boundary pays for itself
 - Do not create interface/impl pairs with no boundary value
 - Avoid `spi` as a default pattern
 - If a module test needs many mocked neighboring modules, treat that as a coupling smell
