@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/templates")
 @RequiredArgsConstructor
-public class TemplateApiController {
+class TemplateApiController {
     private final CreateTemplate createTemplate;
     private final FindTemplates findTemplates;
 
@@ -28,9 +28,8 @@ public class TemplateApiController {
     }
 
     @GetMapping("/{id}")
-    ApiResponse<TemplateResponse> getById(@PathVariable String id) {
-        TemplateDetail detail = findTemplates.getDetail(new TemplateId(UUID.fromString(id)));
-        return ApiResponse.success(TemplateResponse.from(detail));
+    ApiResponse<TemplateResponse> getById(@PathVariable UUID id) {
+        return ApiResponse.success(TemplateResponse.from(findTemplates.getDetail(new TemplateId(id))));
     }
 
     @GetMapping

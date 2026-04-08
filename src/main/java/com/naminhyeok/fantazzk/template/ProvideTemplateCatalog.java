@@ -1,6 +1,7 @@
 package com.naminhyeok.fantazzk.template;
 
 import com.naminhyeok.fantazzk.CoreException;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -10,23 +11,27 @@ class ProvideTemplateCatalog implements TemplateCatalog {
     private final FindTemplates findTemplates;
 
     @Override
-    public TemplateBlueprint getTemplate(TemplateId templateId) {
+    public TemplateBlueprint getTemplate(UUID templateId) {
         try {
-            TemplateDetail detail = findTemplates.getDetail(templateId);
+            TemplateDetail detail = findTemplates.getDetail(new TemplateId(templateId));
             return new TemplateBlueprint(
                 templateId,
-                detail.template().getMode(),
+                detail.template().getMode() == TemplateMode.AUCTION
+                    ? Mode.AUCTION
+                    : Mode.DRAFT,
                 detail.template().getTeamCount(),
                 detail.template().getTeamSize(),
                 detail.template().getBudget(),
-                detail.template().getDraftOrderStrategy(),
+                detail.template().getDraftOrderStrategy() == null
+                    ? null
+                    : DraftOrderStrategy.valueOf(detail.template().getDraftOrderStrategy().name()),
                 detail.players().stream()
-                    .map(player -> new TemplatePlayerBlueprint(player.getName(), player.getDisplayOrder()))
+                    .map(player -> new PlayerBlueprint(player.getName(), player.getDisplayOrder()))
                     .toList()
             );
         } catch (CoreException ex) {
             if (ex.getError() == TemplateErrorType.TEMPLATE_NOT_FOUND) {
-                throw new TemplateCatalogException.NotFound(templateId);
+                throw new TemplateCatalog.NotFound(templateId);
             }
             throw ex;
         }

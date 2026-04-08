@@ -2,9 +2,8 @@ package com.naminhyeok.fantazzk.room;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.naminhyeok.fantazzk.template.CreateTemplate;
-import com.naminhyeok.fantazzk.template.CreateTemplateCommand;
-import com.naminhyeok.fantazzk.template.Template;
+import com.naminhyeok.fantazzk.template.TemplateFixture;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -35,11 +34,11 @@ import org.springframework.test.context.TestConstructor;
 @RequiredArgsConstructor
 class RoomApiIntegrationTest {
     private final TestRestTemplate restTemplate;
-    private final CreateTemplate createTemplate;
+    private final TemplateFixture templateFixture;
 
     @Test
     void 유효한_요청으로_방을_생성하면_201을_반환한다() {
-        Template template = createAuctionTemplate();
+        String templateId = createAuctionTemplateId();
 
         ResponseEntity<Map> response = restTemplate.exchange(
             RequestEntity.post("/api/v1/rooms")
@@ -50,7 +49,7 @@ class RoomApiIntegrationTest {
                       "templateId": "%s",
                       "hostNickname": "호스트"
                     }
-                    """.formatted(template.getId().templateId())
+                    """.formatted(templateId)
                 ),
             Map.class
         );
@@ -88,8 +87,8 @@ class RoomApiIntegrationTest {
 
     @Test
     void 존재하는_방을_조회하면_200과_방_정보를_반환한다() {
-        Template template = createAuctionTemplate();
-        String code = createRoom(template);
+        String templateId = createAuctionTemplateId();
+        String code = createRoom(templateId);
 
         ResponseEntity<Map> response = restTemplate.getForEntity("/api/v1/rooms/" + code, Map.class);
 
@@ -113,8 +112,8 @@ class RoomApiIntegrationTest {
 
     @Test
     void 유효한_요청으로_참가하면_200을_반환한다() {
-        Template template = createAuctionTemplate();
-        String code = createRoom(template);
+        String templateId = createAuctionTemplateId();
+        String code = createRoom(templateId);
 
         ResponseEntity<Map> response = restTemplate.exchange(
             RequestEntity.post("/api/v1/rooms/" + code + "/join")
@@ -135,8 +134,8 @@ class RoomApiIntegrationTest {
 
     @Test
     void 방을_시작하면_200과_진행중_상태를_반환한다() {
-        Template template = createAuctionTemplate();
-        String code = createRoom(template);
+        String templateId = createAuctionTemplateId();
+        String code = createRoom(templateId);
 
         restTemplate.exchange(
             RequestEntity.post("/api/v1/rooms/" + code + "/join")
@@ -164,8 +163,8 @@ class RoomApiIntegrationTest {
 
     @Test
     void 팀장_자리가_부족한_방은_시작할_수_없다() {
-        Template template = createAuctionTemplate();
-        String code = createRoom(template);
+        String templateId = createAuctionTemplateId();
+        String code = createRoom(templateId);
 
         ResponseEntity<Map> response = restTemplate.exchange(
             RequestEntity.post("/api/v1/rooms/" + code + "/start")
@@ -182,19 +181,11 @@ class RoomApiIntegrationTest {
         assertThat(error.get("data")).isNull();
     }
 
-    private Template createAuctionTemplate() {
-        return createTemplate.create(
-            new CreateTemplateCommand.Auction(
-                "경매전",
-                2,
-                2,
-                300,
-                java.util.List.of("선수1", "선수2")
-            )
-        );
+    private String createAuctionTemplateId() {
+        return templateFixture.createAuctionTemplateId("경매전", 2, 2, 300, List.of("선수1", "선수2")).toString();
     }
 
-    private String createRoom(Template template) {
+    private String createRoom(String templateId) {
         ResponseEntity<Map> response = restTemplate.exchange(
             RequestEntity.post("/api/v1/rooms")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -204,7 +195,7 @@ class RoomApiIntegrationTest {
                       "templateId": "%s",
                       "hostNickname": "호스트"
                     }
-                    """.formatted(template.getId().templateId())
+                    """.formatted(templateId)
                 ),
             Map.class
         );

@@ -6,7 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.slf4j.event.Level;
 
 @Getter
-public enum RoomErrorType implements ErrorDescriptor {
+enum RoomErrorType implements ErrorDescriptor {
     ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "ROOM_NOT_FOUND", "방을 찾을 수 없습니다", Level.WARN),
     ROOM_TEMPLATE_NOT_FOUND(
         HttpStatus.NOT_FOUND,

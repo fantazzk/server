@@ -1,6 +1,6 @@
 package com.naminhyeok.fantazzk.room;
 
-public enum RoomMode {
+enum RoomMode {
     AUCTION,
     DRAFT
 }

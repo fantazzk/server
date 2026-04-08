@@ -12,18 +12,19 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.naminhyeok.fantazzk.room.RoomErrorType;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
-import org.junit.jupiter.api.BeforeEach;
+import java.util.Map;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.slf4j.LoggerFactory;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -179,12 +180,12 @@ class GlobalExceptionHandlerTest {
     static class ThrowingController {
         @GetMapping("/core")
         String core() {
-            throw new CoreException(new ConflictErrorDescriptor(), java.util.Map.of("detail", "conflict"));
+            throw new CoreException(new ConflictErrorDescriptor(), Map.of("detail", "conflict"));
         }
 
         @GetMapping("/room")
         String room() {
-            throw CoreException.of(RoomErrorType.ROOM_NOT_FOUND);
+            throw CoreException.of(new MissingRoomErrorDescriptor());
         }
 
         @GetMapping("/illegal")
@@ -203,7 +204,7 @@ class GlobalExceptionHandlerTest {
         }
 
         @PostMapping("/validation")
-        String validation(@Valid @org.springframework.web.bind.annotation.RequestBody ValidationRequest request) {
+        String validation(@Valid @RequestBody ValidationRequest request) {
             return "ok";
         }
     }
@@ -228,6 +229,28 @@ class GlobalExceptionHandlerTest {
         @Override
         public String getMessage() {
             return "충돌이 발생했습니다";
+        }
+
+        @Override
+        public org.slf4j.event.Level getLogLevel() {
+            return org.slf4j.event.Level.WARN;
+        }
+    }
+
+    private static final class MissingRoomErrorDescriptor implements ErrorDescriptor {
+        @Override
+        public HttpStatus getStatus() {
+            return HttpStatus.NOT_FOUND;
+        }
+
+        @Override
+        public String getCode() {
+            return "ROOM_NOT_FOUND";
+        }
+
+        @Override
+        public String getMessage() {
+            return "방을 찾을 수 없습니다";
         }
 
         @Override

@@ -8,7 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-public class FindTemplates {
+class FindTemplates {
     private final Templates templates;
 
     @Transactional(readOnly = true)

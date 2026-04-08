@@ -7,7 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-public class SettleAuction {
+class SettleAuction {
     private final Rooms rooms;
 
     @Transactional

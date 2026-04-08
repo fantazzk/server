@@ -6,7 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-public class CreateTemplate {
+class CreateTemplate {
     private final Templates templates;
 
     @Transactional

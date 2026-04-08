@@ -1,6 +1,6 @@
 package com.naminhyeok.fantazzk.room;
 
-public enum AuctionOutcome {
+enum AuctionOutcome {
     SOLD,
     PASSED
 }

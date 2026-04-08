@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/rooms")
 @RequiredArgsConstructor
-public class RoomApiController {
+class RoomApiController {
     private final CreateRoom createRoom;
     private final GetRoom getRoom;
     private final JoinRoom joinRoom;
@@ -24,7 +24,7 @@ public class RoomApiController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     ApiResponse<RoomResponse> create(@Valid @RequestBody CreateRoomRequest request) {
-        return ApiResponse.success(RoomResponse.from(createRoom.create(request.templateIdAsIdentifier(), request.hostNickname())));
+        return ApiResponse.success(RoomResponse.from(createRoom.create(request.templateId(), request.hostNickname())));
     }
 
     @GetMapping("/{code}")

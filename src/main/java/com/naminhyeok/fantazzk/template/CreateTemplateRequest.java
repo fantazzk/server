@@ -7,13 +7,13 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import java.util.List;
 
-public record CreateTemplateRequest(
+record CreateTemplateRequest(
     @NotBlank(message = "템플릿 이름은 비어 있을 수 없습니다") String name,
-    @NotNull(message = "템플릿 모드는 필수입니다") TemplateMode mode,
+    @NotNull(message = "템플릿 모드는 필수입니다") TemplateCatalog.Mode mode,
     @Positive(message = "팀 수는 1 이상이어야 합니다") int teamCount,
     @Positive(message = "팀 크기는 1 이상이어야 합니다") int teamSize,
     Integer budget,
-    DraftOrderStrategy draftOrderStrategy,
+    TemplateCatalog.DraftOrderStrategy draftOrderStrategy,
     @NotEmpty(message = "선수 목록은 비어 있을 수 없습니다") List<String> playerNames
 ) {
     CreateTemplateCommand toCommand() {
@@ -34,7 +34,13 @@ public record CreateTemplateRequest(
                 if (draftOrderStrategy == null) {
                     throw CoreException.of(TemplateErrorType.TEMPLATE_DRAFT_ORDER_STRATEGY_REQUIRED);
                 }
-                yield new CreateTemplateCommand.Draft(name, teamCount, teamSize, draftOrderStrategy, playerNames);
+                yield new CreateTemplateCommand.Draft(
+                    name,
+                    teamCount,
+                    teamSize,
+                    DraftOrderStrategy.valueOf(draftOrderStrategy.name()),
+                    playerNames
+                );
             }
         };
     }

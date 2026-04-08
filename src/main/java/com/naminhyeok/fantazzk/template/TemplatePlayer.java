@@ -1,9 +1,11 @@
 package com.naminhyeok.fantazzk.template;
 
 import java.util.UUID;
+import lombok.Getter;
 import org.jmolecules.ddd.types.Entity;
 import org.jmolecules.ddd.types.Identifier;
 
+@Getter
 class TemplatePlayer implements Entity<Template, TemplatePlayer.TemplatePlayerId> {
     private final TemplatePlayerId id;
     private String name;
@@ -22,14 +24,6 @@ class TemplatePlayer implements Entity<Template, TemplatePlayer.TemplatePlayerId
     @Override
     public TemplatePlayerId getId() {
         return id;
-    }
-
-    String getName() {
-        return name;
-    }
-
-    int getDisplayOrder() {
-        return displayOrder;
     }
 
     record TemplatePlayerId(UUID templatePlayerId) implements Identifier {

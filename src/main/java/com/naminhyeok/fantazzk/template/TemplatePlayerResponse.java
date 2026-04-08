@@ -1,6 +1,6 @@
 package com.naminhyeok.fantazzk.template;
 
-public record TemplatePlayerResponse(
+record TemplatePlayerResponse(
     String name,
     int displayOrder
 ) {

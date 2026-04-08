@@ -2,7 +2,7 @@ package com.naminhyeok.fantazzk.template;
 
 import java.util.List;
 
-public sealed interface CreateTemplateCommand permits CreateTemplateCommand.Auction, CreateTemplateCommand.Draft {
+sealed interface CreateTemplateCommand permits CreateTemplateCommand.Auction, CreateTemplateCommand.Draft {
     String name();
 
     int teamCount();

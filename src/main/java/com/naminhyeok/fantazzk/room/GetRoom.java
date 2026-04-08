@@ -7,7 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-public class GetRoom {
+class GetRoom {
     private final Rooms rooms;
 
     @Transactional(readOnly = true)

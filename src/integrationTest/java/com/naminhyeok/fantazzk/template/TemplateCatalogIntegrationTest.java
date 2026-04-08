@@ -40,19 +40,19 @@ class TemplateCatalogIntegrationTest {
                 )
             );
 
-        TemplateCatalog.TemplateBlueprint blueprint = templateCatalog.getTemplate(created.getId());
+        TemplateCatalog.TemplateBlueprint blueprint = templateCatalog.getTemplate(created.getId().templateId());
 
-        assertThat(blueprint.mode()).isEqualTo(TemplateMode.DRAFT);
+        assertThat(blueprint.mode()).isEqualTo(TemplateCatalog.Mode.DRAFT);
         assertThat(blueprint.teamCount()).isEqualTo(2);
         assertThat(blueprint.teamSize()).isEqualTo(3);
-        assertThat(blueprint.draftOrderStrategy()).isEqualTo(DraftOrderStrategy.FIXED);
-        assertThat(blueprint.players().stream().map(TemplateCatalog.TemplatePlayerBlueprint::name))
+        assertThat(blueprint.draftOrderStrategy()).isEqualTo(TemplateCatalog.DraftOrderStrategy.FIXED);
+        assertThat(blueprint.players().stream().map(TemplateCatalog.PlayerBlueprint::name))
             .containsExactly("선수4", "선수1", "선수3", "선수2");
     }
 
     @Test
     void 존재하지_않는_템플릿은_계약_예외로_변환한다() {
-        assertThatThrownBy(() -> templateCatalog.getTemplate(new TemplateId(UUID.randomUUID())))
-            .isInstanceOf(TemplateCatalogException.NotFound.class);
+        assertThatThrownBy(() -> templateCatalog.getTemplate(UUID.randomUUID()))
+            .isInstanceOf(TemplateCatalog.NotFound.class);
     }
 }

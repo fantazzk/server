@@ -2,7 +2,7 @@ package com.naminhyeok.fantazzk.room;
 
 import java.util.List;
 
-public record RoomTemplateSpec(
+record RoomTemplateSpec(
     Mode mode,
     int teamCount,
     int teamSize,

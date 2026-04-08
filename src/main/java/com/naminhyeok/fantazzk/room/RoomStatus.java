@@ -1,6 +1,6 @@
 package com.naminhyeok.fantazzk.room;
 
-public enum RoomStatus {
+enum RoomStatus {
     WAITING,
     IN_PROGRESS,
     COMPLETED

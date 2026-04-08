@@ -1,26 +1,25 @@
 package com.naminhyeok.fantazzk.template;
-
 import java.util.List;
 
-public record TemplateResponse(
+record TemplateResponse(
     String id,
     String name,
-    TemplateMode mode,
+    TemplateCatalog.Mode mode,
     int teamCount,
     int teamSize,
     Integer budget,
-    DraftOrderStrategy draftOrderStrategy,
+    TemplateCatalog.DraftOrderStrategy draftOrderStrategy,
     List<TemplatePlayerResponse> players
 ) {
     static TemplateResponse from(Template template) {
         return new TemplateResponse(
             template.getId().templateId().toString(),
             template.getName(),
-            template.getMode(),
+            template.getMode() == TemplateMode.AUCTION ? TemplateCatalog.Mode.AUCTION : TemplateCatalog.Mode.DRAFT,
             template.getTeamCount(),
             template.getTeamSize(),
             template.getBudget(),
-            template.getDraftOrderStrategy(),
+            template.getDraftOrderStrategy() == null ? null : TemplateCatalog.DraftOrderStrategy.valueOf(template.getDraftOrderStrategy().name()),
             null
         );
     }
@@ -29,11 +28,13 @@ public record TemplateResponse(
         return new TemplateResponse(
             detail.template().getId().templateId().toString(),
             detail.template().getName(),
-            detail.template().getMode(),
+            detail.template().getMode() == TemplateMode.AUCTION ? TemplateCatalog.Mode.AUCTION : TemplateCatalog.Mode.DRAFT,
             detail.template().getTeamCount(),
             detail.template().getTeamSize(),
             detail.template().getBudget(),
-            detail.template().getDraftOrderStrategy(),
+            detail.template().getDraftOrderStrategy() == null
+                ? null
+                : TemplateCatalog.DraftOrderStrategy.valueOf(detail.template().getDraftOrderStrategy().name()),
             detail.players().stream().map(TemplatePlayerResponse::from).toList()
         );
     }

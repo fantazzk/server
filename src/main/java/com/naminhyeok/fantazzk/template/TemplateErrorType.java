@@ -6,7 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.slf4j.event.Level;
 
 @Getter
-public enum TemplateErrorType implements ErrorDescriptor {
+enum TemplateErrorType implements ErrorDescriptor {
     TEMPLATE_NOT_FOUND(HttpStatus.NOT_FOUND, "TEMPLATE_NOT_FOUND", "템플릿을 찾을 수 없습니다", Level.WARN),
     TEMPLATE_AUCTION_DRAFT_ORDER_STRATEGY_NOT_ALLOWED(
         HttpStatus.BAD_REQUEST,

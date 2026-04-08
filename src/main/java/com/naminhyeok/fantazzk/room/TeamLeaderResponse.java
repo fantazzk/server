@@ -1,6 +1,6 @@
 package com.naminhyeok.fantazzk.room;
 
-public record TeamLeaderResponse(
+record TeamLeaderResponse(
     String id,
     String nickname,
     Integer remainingBudget

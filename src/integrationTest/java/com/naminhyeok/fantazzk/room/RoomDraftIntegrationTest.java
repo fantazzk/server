@@ -2,8 +2,8 @@ package com.naminhyeok.fantazzk.room;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.naminhyeok.fantazzk.template.CreateTemplate;
-import com.naminhyeok.fantazzk.template.CreateTemplateCommand;
+import com.naminhyeok.fantazzk.template.TemplateCatalog.DraftOrderStrategy;
+import com.naminhyeok.fantazzk.template.TemplateFixture;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Test;
@@ -25,7 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
 @RequiredArgsConstructor
 class RoomDraftIntegrationTest {
-    private final CreateTemplate createTemplate;
+    private final TemplateFixture templateFixture;
     private final CreateRoom createRoom;
     private final JoinRoom joinRoom;
     private final StartRoom startRoom;
@@ -36,17 +36,15 @@ class RoomDraftIntegrationTest {
     @Transactional
     void 픽을_처리하면_선수_배정과_턴_진행이_반영된다() {
         var template =
-            createTemplate.create(
-                new CreateTemplateCommand.Draft(
-                    "드래프트전",
-                    2,
-                    2,
-                    com.naminhyeok.fantazzk.template.DraftOrderStrategy.SNAKE,
-                    List.of("선수1", "선수2")
-                )
+            templateFixture.createDraftTemplateId(
+                "드래프트전",
+                2,
+                2,
+                DraftOrderStrategy.SNAKE,
+                List.of("선수1", "선수2")
             );
 
-        Room created = createRoom.create(template.getId(), "호스트");
+        Room created = createRoom.create(template, "호스트");
         joinRoom.join(created.getCode(), "게스트");
         startRoom.start(created.getCode());
 

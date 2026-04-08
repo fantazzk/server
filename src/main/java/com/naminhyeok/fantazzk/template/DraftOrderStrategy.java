@@ -1,6 +1,6 @@
 package com.naminhyeok.fantazzk.template;
 
-public enum DraftOrderStrategy {
+enum DraftOrderStrategy {
     SNAKE,
     FIXED
 }

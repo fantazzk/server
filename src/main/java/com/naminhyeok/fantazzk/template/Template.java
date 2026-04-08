@@ -8,7 +8,7 @@ import lombok.Getter;
 import org.jmolecules.ddd.types.AggregateRoot;
 
 @Getter
-public class Template implements AggregateRoot<Template, TemplateId> {
+class Template implements AggregateRoot<Template, TemplateId> {
     private final TemplateId id;
     private String name;
     private TemplateConfiguration configuration;

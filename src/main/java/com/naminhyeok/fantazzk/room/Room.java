@@ -13,7 +13,7 @@ import org.jmolecules.ddd.types.AggregateRoot;
 
 @Getter
 @Table(name = "rooms")
-public class Room implements AggregateRoot<Room, RoomId> {
+class Room implements AggregateRoot<Room, RoomId> {
     private final RoomId id;
     private final String code;
     private final String hostId;
