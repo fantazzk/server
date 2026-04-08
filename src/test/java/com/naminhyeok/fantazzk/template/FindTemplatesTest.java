@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
+import com.naminhyeok.fantazzk.CoreException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -25,7 +26,12 @@ class FindTemplatesTest {
         FindTemplates cut = new FindTemplates(templates);
 
         assertThatThrownBy(() -> cut.getDetail(missingId))
-            .isInstanceOf(TemplateNotFoundException.class);
+            .isInstanceOf(CoreException.class)
+            .satisfies(ex -> {
+                CoreException coreException = (CoreException) ex;
+                assertThat(coreException.getError()).isEqualTo(TemplateErrorType.TEMPLATE_NOT_FOUND);
+                assertThat(coreException.getData()).isNull();
+            });
     }
 
     @Test

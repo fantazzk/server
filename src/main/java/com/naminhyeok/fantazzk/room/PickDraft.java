@@ -1,5 +1,6 @@
 package com.naminhyeok.fantazzk.room;
 
+import com.naminhyeok.fantazzk.CoreException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,7 +12,7 @@ public class PickDraft {
 
     @Transactional
     public RoomTeamMember pick(String code, String teamLeaderId, String playerName) {
-        Room room = rooms.findByCode(code).orElseThrow();
+        Room room = rooms.findByCode(code).orElseThrow(() -> CoreException.of(RoomErrorType.ROOM_NOT_FOUND));
         RoomTeamMember member = room.pick(teamLeaderId, playerName);
         rooms.save(room);
         return member;

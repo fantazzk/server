@@ -1,5 +1,6 @@
 package com.naminhyeok.fantazzk.room;
 
+import com.naminhyeok.fantazzk.CoreException;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
@@ -98,20 +99,20 @@ public class Room implements AggregateRoot<Room, RoomId> {
 
     public void join(String teamLeaderId, String nickname) {
         if (status != RoomStatus.WAITING) {
-            throw new IllegalStateException("대기 중인 방에서만 참가할 수 있습니다");
+            throw CoreException.of(RoomErrorType.ROOM_JOIN_REQUIRES_WAITING);
         }
         if (leaders.size() >= teamCount) {
-            throw new IllegalStateException("방이 가득 찼습니다");
+            throw CoreException.of(RoomErrorType.ROOM_FULL);
         }
         leaders.add(new RoomTeamLeader(teamLeaderId, nickname, budget));
     }
 
     public void start() {
         if (status != RoomStatus.WAITING) {
-            throw new IllegalStateException("대기 중인 방에서만 시작할 수 있습니다");
+            throw CoreException.of(RoomErrorType.ROOM_START_REQUIRES_WAITING);
         }
         if (leaders.size() != teamCount) {
-            throw new IllegalStateException("모든 팀장 자리가 채워져야 시작할 수 있습니다");
+            throw CoreException.of(RoomErrorType.ROOM_LEADERS_NOT_FULL);
         }
 
         status = RoomStatus.IN_PROGRESS;
@@ -140,7 +141,7 @@ public class Room implements AggregateRoot<Room, RoomId> {
             leaders.stream()
                 .filter(it -> it.getTeamLeaderId().equals(teamLeaderId))
                 .findFirst()
-                .orElseThrow();
+                .orElseThrow(() -> new IllegalStateException("입찰할 팀장을 찾을 수 없습니다"));
 
         if (leader.getRemainingBudget() != null && leader.getRemainingBudget() < amount) {
             throw new IllegalArgumentException("예산이 부족합니다");
@@ -176,7 +177,7 @@ public class Room implements AggregateRoot<Room, RoomId> {
             players.stream()
                 .filter(it -> it.getStatus() == PlayerStatus.AVAILABLE)
                 .min(Comparator.comparingInt(RoomPlayer::getDisplayOrder))
-                .orElseThrow();
+                .orElseThrow(() -> new IllegalStateException("경매할 선수를 찾을 수 없습니다"));
 
         RoomBid winningBid =
             bids.stream()
@@ -196,7 +197,7 @@ public class Room implements AggregateRoot<Room, RoomId> {
             leaders.stream()
                 .filter(it -> it.getTeamLeaderId().equals(winningBid.getTeamLeaderId()))
                 .findFirst()
-                .orElseThrow();
+                .orElseThrow(() -> new IllegalStateException("낙찰한 팀장을 찾을 수 없습니다"));
 
         target.assign();
         winner.spend(winningBid.getAmount());
@@ -230,7 +231,7 @@ public class Room implements AggregateRoot<Room, RoomId> {
                 .filter(it -> it.getName().equals(playerName))
                 .filter(it -> it.getStatus() == PlayerStatus.AVAILABLE)
                 .findFirst()
-                .orElseThrow();
+                .orElseThrow(() -> new IllegalStateException("픽할 선수를 찾을 수 없습니다"));
 
         player.assign();
         RoomTeamMember member = new RoomTeamMember(teamLeaderId, playerName, members.size());

@@ -1,6 +1,7 @@
 package com.naminhyeok.fantazzk.template;
 
 import com.naminhyeok.fantazzk.ApiResponse;
+import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +23,7 @@ public class TemplateApiController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    ApiResponse<TemplateResponse> create(@RequestBody CreateTemplateRequest request) {
+    ApiResponse<TemplateResponse> create(@Valid @RequestBody CreateTemplateRequest request) {
         return ApiResponse.success(TemplateResponse.from(createTemplate.create(request.toCommand())));
     }
 

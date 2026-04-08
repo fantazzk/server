@@ -1,6 +1,7 @@
 package com.naminhyeok.fantazzk.room;
 
 import com.naminhyeok.fantazzk.ApiResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,7 +23,7 @@ public class RoomApiController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    ApiResponse<RoomResponse> create(@RequestBody CreateRoomRequest request) {
+    ApiResponse<RoomResponse> create(@Valid @RequestBody CreateRoomRequest request) {
         return ApiResponse.success(RoomResponse.from(createRoom.create(request.templateIdAsIdentifier(), request.hostNickname())));
     }
 
@@ -32,7 +33,7 @@ public class RoomApiController {
     }
 
     @PostMapping("/{code}/join")
-    ApiResponse<RoomResponse> join(@PathVariable String code, @RequestBody JoinRoomRequest request) {
+    ApiResponse<RoomResponse> join(@PathVariable String code, @Valid @RequestBody JoinRoomRequest request) {
         joinRoom.join(code, request.nickname());
         return ApiResponse.success(RoomResponse.from(getRoom.get(code)));
     }

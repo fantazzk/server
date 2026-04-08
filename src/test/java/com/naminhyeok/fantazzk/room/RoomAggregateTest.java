@@ -3,6 +3,7 @@ package com.naminhyeok.fantazzk.room;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.naminhyeok.fantazzk.CoreException;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Nested;
@@ -47,6 +48,48 @@ class RoomAggregateTest {
 
         assertThat(room.getLeaders()).hasSize(2);
         assertThat(room.getLeaders().getLast().getNickname()).isEqualTo("게스트");
+    }
+
+    @Test
+    void 대기_상태가_아니면_참가할_수_없다() {
+        Room room = startedAuctionRoom();
+
+        assertThatThrownBy(() -> room.join("guest-2", "추가 게스트"))
+            .isInstanceOf(CoreException.class)
+            .satisfies(ex -> {
+                CoreException coreException = (CoreException) ex;
+                assertThat(coreException.getError()).isEqualTo(RoomErrorType.ROOM_JOIN_REQUIRES_WAITING);
+                assertThat(coreException.getData()).isNull();
+            });
+    }
+
+    @Test
+    void 방이_가득_차면_참가할_수_없다() {
+        Room room =
+            Room.createFromTemplate(
+                "ROOM03",
+                UUID.randomUUID().toString(),
+                "호스트",
+                new RoomTemplateSpec(
+                    RoomTemplateSpec.Mode.AUCTION,
+                    1,
+                    2,
+                    300,
+                    null,
+                    List.of(
+                        new RoomTemplateSpec.Player("선수1", 0),
+                        new RoomTemplateSpec.Player("선수2", 1)
+                    )
+                )
+        );
+
+        assertThatThrownBy(() -> room.join("guest-1", "게스트"))
+            .isInstanceOf(CoreException.class)
+            .satisfies(ex -> {
+                CoreException coreException = (CoreException) ex;
+                assertThat(coreException.getError()).isEqualTo(RoomErrorType.ROOM_FULL);
+                assertThat(coreException.getData()).isNull();
+            });
     }
 
     @Nested
@@ -96,8 +139,12 @@ class RoomAggregateTest {
             Room room = auctionWaitingRoom();
 
             assertThatThrownBy(room::start)
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessage("모든 팀장 자리가 채워져야 시작할 수 있습니다");
+                .isInstanceOf(CoreException.class)
+                .satisfies(ex -> {
+                    CoreException coreException = (CoreException) ex;
+                    assertThat(coreException.getError()).isEqualTo(RoomErrorType.ROOM_LEADERS_NOT_FULL);
+                    assertThat(coreException.getData()).isNull();
+                });
         }
     }
 
@@ -118,5 +165,12 @@ class RoomAggregateTest {
                 )
             )
         );
+    }
+
+    private static Room startedAuctionRoom() {
+        Room room = auctionWaitingRoom();
+        room.join("guest-1", "게스트");
+        room.start();
+        return room;
     }
 }

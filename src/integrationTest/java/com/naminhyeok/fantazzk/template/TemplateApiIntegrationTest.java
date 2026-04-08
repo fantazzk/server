@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.resttestclient.TestRestTemplate;
@@ -81,8 +82,56 @@ class TemplateApiIntegrationTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(response.getBody()).containsEntry("resultType", "ERROR");
-        assertThat(((Map<?, ?>) response.getBody().get("error")).get("reason"))
-            .isEqualTo("드래프트 템플릿에는 예산을 지정할 수 없습니다");
+        Map<?, ?> error = (Map<?, ?>) response.getBody().get("error");
+        assertThat(error.get("code")).isEqualTo("TEMPLATE_DRAFT_BUDGET_NOT_ALLOWED");
+        assertThat(error.get("message")).isEqualTo("드래프트 템플릿에는 예산을 지정할 수 없습니다");
+        assertThat(error.get("data")).isNull();
+    }
+
+    @Test
+    void 요청_필드_검증에_실패하면_400과_필드_에러를_반환한다() {
+        ResponseEntity<Map> response = restTemplate.exchange(
+            RequestEntity.post("/api/v1/templates")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                    """
+                    {
+                      "name": "",
+                      "mode": "AUCTION",
+                      "teamCount": 0,
+                      "teamSize": 0,
+                      "budget": 300,
+                      "playerNames": []
+                    }
+                    """
+                ),
+            Map.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody()).containsEntry("resultType", "ERROR");
+        Map<?, ?> error = (Map<?, ?>) response.getBody().get("error");
+        assertThat(error.get("code")).isEqualTo("BAD_REQUEST");
+        assertThat(error.get("message")).isEqualTo("요청이 올바르지 않습니다");
+        Map<?, ?> data = (Map<?, ?>) error.get("data");
+        assertThat(data.get("name")).isEqualTo("템플릿 이름은 비어 있을 수 없습니다");
+        assertThat(data.get("teamCount")).isEqualTo("팀 수는 1 이상이어야 합니다");
+        assertThat(data.get("teamSize")).isEqualTo("팀 크기는 1 이상이어야 합니다");
+        assertThat(data.get("playerNames")).isEqualTo("선수 목록은 비어 있을 수 없습니다");
+    }
+
+    @Test
+    void 존재하지_않는_템플릿을_조회하면_404를_반환한다() {
+        String missingId = UUID.randomUUID().toString();
+
+        ResponseEntity<Map> response = restTemplate.getForEntity("/api/v1/templates/" + missingId, Map.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(response.getBody()).containsEntry("resultType", "ERROR");
+        Map<?, ?> error = (Map<?, ?>) response.getBody().get("error");
+        assertThat(error.get("code")).isEqualTo("TEMPLATE_NOT_FOUND");
+        assertThat(error.get("message")).isEqualTo("템플릿을 찾을 수 없습니다");
+        assertThat(error.get("data")).isNull();
     }
 
     @Test
