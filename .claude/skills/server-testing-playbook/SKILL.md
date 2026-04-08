@@ -76,6 +76,7 @@ Smells:
 - Regression protection can be a new test, a stronger existing test, or a stronger structural rule
 - Protect the observable result or contract, not the current implementation shape
 - Add the regression at the lowest-cost layer that can prove the behavior
+- When a module keeps a public root entrypoint only for same-module subpackages such as `web`, prefer a structural rule that forbids other modules from depending on it
 
 Bad regression tests:
 

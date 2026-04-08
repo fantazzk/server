@@ -1,7 +1,6 @@
-package com.naminhyeok.fantazzk.room.web;
+package com.naminhyeok.fantazzk.room;
 
 import com.naminhyeok.fantazzk.ApiResponse;
-import com.naminhyeok.fantazzk.room.RoomManagement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -17,26 +16,31 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/rooms")
 @RequiredArgsConstructor
 class RoomApiController {
-    private final RoomManagement roomManagement;
+    private final CreateRoom createRoom;
+    private final GetRoom getRoom;
+    private final JoinRoom joinRoom;
+    private final StartRoom startRoom;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     ApiResponse<RoomResponse> create(@Valid @RequestBody CreateRoomRequest request) {
-        return ApiResponse.success(RoomResponse.from(roomManagement.create(request.templateIdAsUuid(), request.hostNickname())));
+        return ApiResponse.success(RoomResponse.from(createRoom.create(request.templateIdAsUuid(), request.hostNickname())));
     }
 
     @GetMapping("/{code}")
     ApiResponse<RoomResponse> getByCode(@PathVariable String code) {
-        return ApiResponse.success(RoomResponse.from(roomManagement.get(code)));
+        return ApiResponse.success(RoomResponse.from(getRoom.get(code)));
     }
 
     @PostMapping("/{code}/join")
     ApiResponse<RoomResponse> join(@PathVariable String code, @Valid @RequestBody JoinRoomRequest request) {
-        return ApiResponse.success(RoomResponse.from(roomManagement.join(code, request.nickname())));
+        joinRoom.join(code, request.nickname());
+        return ApiResponse.success(RoomResponse.from(getRoom.get(code)));
     }
 
     @PostMapping("/{code}/start")
     ApiResponse<RoomResponse> start(@PathVariable String code) {
-        return ApiResponse.success(RoomResponse.from(roomManagement.start(code)));
+        startRoom.start(code);
+        return ApiResponse.success(RoomResponse.from(getRoom.get(code)));
     }
 }

@@ -9,10 +9,10 @@ import org.junit.jupiter.api.Test;
 class PublishedContractStructureTest {
     @Test
     void room_루트_계약은_public이고_대표_구현은_package_private이다() throws Exception {
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.RoomManagement")).isTrue();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.RoomView")).isTrue();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.TeamLeaderView")).isTrue();
-
+        assertClassMissing("com.naminhyeok.fantazzk.room.RoomManagement");
+        assertClassMissing("com.naminhyeok.fantazzk.room.RoomView");
+        assertClassMissing("com.naminhyeok.fantazzk.room.TeamLeaderView");
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.RoomApiController")).isFalse();
         assertThat(isPublic("com.naminhyeok.fantazzk.room.CreateRoom")).isFalse();
         assertThat(isPublic("com.naminhyeok.fantazzk.room.GetRoom")).isFalse();
         assertThat(isPublic("com.naminhyeok.fantazzk.room.Room")).isFalse();
@@ -22,17 +22,18 @@ class PublishedContractStructureTest {
     @Test
     void template_루트_계약은_public이고_대표_구현은_package_private이다() throws Exception {
         assertThat(isPublic("com.naminhyeok.fantazzk.template.TemplateCatalog")).isTrue();
-        assertThat(isPublic("com.naminhyeok.fantazzk.template.TemplateManagement")).isTrue();
-        assertThat(isPublic("com.naminhyeok.fantazzk.template.CreateTemplateInput")).isTrue();
-        assertThat(isPublic("com.naminhyeok.fantazzk.template.TemplateSummaryView")).isTrue();
-        assertThat(isPublic("com.naminhyeok.fantazzk.template.TemplateDetailView")).isTrue();
-        assertThat(isPublic("com.naminhyeok.fantazzk.template.TemplatePlayerView")).isTrue();
+        assertClassMissing("com.naminhyeok.fantazzk.template.TemplateManagement");
+        assertClassMissing("com.naminhyeok.fantazzk.template.CreateTemplateInput");
+        assertClassMissing("com.naminhyeok.fantazzk.template.TemplateSummaryView");
+        assertClassMissing("com.naminhyeok.fantazzk.template.TemplateDetailView");
+        assertClassMissing("com.naminhyeok.fantazzk.template.TemplatePlayerView");
 
         assertThat(isPublic("com.naminhyeok.fantazzk.template.CreateTemplate")).isFalse();
         assertThat(isPublic("com.naminhyeok.fantazzk.template.FindTemplates")).isFalse();
         assertThat(isPublic("com.naminhyeok.fantazzk.template.Template")).isFalse();
         assertThat(isPublic("com.naminhyeok.fantazzk.template.TemplateId")).isFalse();
         assertThat(isPublic("com.naminhyeok.fantazzk.template.Templates")).isFalse();
+        assertThat(isPublic("com.naminhyeok.fantazzk.template.TemplateApiController")).isFalse();
     }
 
     @Test
@@ -45,6 +46,7 @@ class PublishedContractStructureTest {
         assertClassMissing("com.naminhyeok.fantazzk.template.domain.Template");
         assertClassMissing("com.naminhyeok.fantazzk.template.repository.Templates");
         assertClassMissing("com.naminhyeok.fantazzk.template.api.TemplateApiController");
+        assertClassMissing("com.naminhyeok.fantazzk.template.contract.TemplateCatalog");
     }
 
     private boolean isPublic(String className) throws Exception {

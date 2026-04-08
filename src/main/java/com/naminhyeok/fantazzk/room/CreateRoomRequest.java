@@ -1,4 +1,4 @@
-package com.naminhyeok.fantazzk.room.web;
+package com.naminhyeok.fantazzk.room;
 
 import jakarta.validation.constraints.NotBlank;
 import java.util.UUID;

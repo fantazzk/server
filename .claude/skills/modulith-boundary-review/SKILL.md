@@ -33,6 +33,7 @@ Read `references/boundary-smells.md` when you need concrete examples of overexpo
 - Only public types in a module root are cross-module contracts
 - Subpackages are internal implementation details
 - Keep public surface minimal
+- If a same-module subpackage such as `web` needs a public root entrypoint, treat it as a technical seam and back it with a structural rule that forbids cross-module dependencies on it
 - Do not depend directly on another module’s internal types, repositories, queries, or application internals
 
 ## Direct Contract vs Event

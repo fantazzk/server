@@ -13,6 +13,8 @@
 - 모듈 루트 패키지의 public 타입만 다른 모듈에 공개되는 기본 계약으로 본다.
 - 모듈 하위 패키지는 기본적으로 내부 구현으로 취급한다.
 - 공개 surface는 최소로 유지한다.
+- `web`, `config` 같은 같은-모듈 하위 패키지를 위해 모듈 루트 public 진입점을 둘 수 있다.
+- 이런 public 진입점은 자동으로 cross-module API로 승격하지 말고, 다른 모듈이 의존하지 못하게 구조 테스트로 검증한다.
 - aggregate와 핵심 도메인 개념은 모듈 루트 또는 `domain` 아래에 둘 수 있다. 한 모듈 안에서는 한 가지 스타일을 일관되게 유지한다.
 - `application`, `api`, `repository`, `query`, `infrastructure`는 역할이 분명할 때만 둔다.
 - `spi` 패키지는 기본 선택지로 두지 않는다.
@@ -63,6 +65,7 @@
 - repository 테스트의 기본값은 `@DataJpaTest` 와 H2 다. 락, 격리 수준, DB vendor 고유 동작, 실제 migration 결과처럼 H2 로 충분히 증명할 수 없는 것은 `integrationTest` 에서 실제 데이터베이스로 검증한다.
 - web contract 는 `@WebMvcTest` 로 검증한다.
 - 모듈 구조는 `ApplicationModules.verify()` 로 항상 검증 가능해야 한다.
+- 같은-모듈 하위 패키지를 위한 public root entrypoint 가 있다면, 다른 모듈이 그 타입에 의존하지 못하도록 structural rule 로 검증한다.
 - 모듈 간 협력이 중요한 경우에만 `@ApplicationModuleTest`를 사용한다.
 - 구현 중에는 대상 테스트나 `./gradlew test` 를 우선 사용한다.
 - 로컬 작업을 마무리하기 전에는 `./gradlew check` 를 실행한다.

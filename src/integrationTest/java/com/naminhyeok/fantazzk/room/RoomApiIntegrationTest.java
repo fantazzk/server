@@ -2,7 +2,9 @@ package com.naminhyeok.fantazzk.room;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.naminhyeok.fantazzk.template.TemplateFixture;
 import java.util.Map;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.resttestclient.TestRestTemplate;
@@ -31,7 +33,7 @@ import org.springframework.test.context.TestConstructor;
 @RequiredArgsConstructor
 class RoomApiIntegrationTest {
     private final TestRestTemplate restTemplate;
-    private final com.naminhyeok.fantazzk.template.TemplateManagement templateManagement;
+    private final TemplateFixture templateFixture;
 
     @Test
     void 유효한_요청으로_방을_생성하면_201을_반환한다() {
@@ -58,7 +60,7 @@ class RoomApiIntegrationTest {
 
     @Test
     void 존재하지_않는_템플릿으로_방을_생성하면_404를_반환한다() {
-        String missingTemplateId = java.util.UUID.randomUUID().toString();
+        String missingTemplateId = UUID.randomUUID().toString();
 
         ResponseEntity<Map> response = restTemplate.exchange(
             RequestEntity.post("/api/v1/rooms")
@@ -179,17 +181,7 @@ class RoomApiIntegrationTest {
     }
 
     private String createAuctionTemplateId() {
-        return templateManagement.create(
-            new com.naminhyeok.fantazzk.template.CreateTemplateInput(
-                "경매전",
-                com.naminhyeok.fantazzk.template.TemplateCatalog.Mode.AUCTION,
-                2,
-                2,
-                300,
-                null,
-                java.util.List.of("선수1", "선수2")
-            )
-        ).id();
+        return templateFixture.createAuctionTemplateId("경매전", 2, 2, 300, java.util.List.of("선수1", "선수2")).toString();
     }
 
     private String createRoom(String templateId) {
