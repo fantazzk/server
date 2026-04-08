@@ -12,16 +12,19 @@ import org.springframework.transaction.annotation.Transactional;
 class CreateRoom {
     private final Rooms rooms;
     private final TemplateCatalog templateCatalog;
+    private final TeamLeaderIdentityIssuer teamLeaderIdentityIssuer;
 
     @Transactional
     public Room create(UUID templateId, String hostNickname) {
         TemplateCatalog.TemplateBlueprint template = getTemplate(templateId);
+        TeamLeaderIdentityIssuer.TeamLeaderIdentity identity = teamLeaderIdentityIssuer.issue();
 
         Room room =
             Room.createFromTemplate(
                 generateCode(),
-                UUID.randomUUID().toString(),
+                identity.leaderId(),
                 hostNickname,
+                identity.actionToken(),
                 new RoomTemplateSpec(
                     template.mode() == TemplateCatalog.Mode.AUCTION
                         ? RoomTemplateSpec.Mode.AUCTION

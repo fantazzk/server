@@ -40,7 +40,7 @@ class RoomAuctionIntegrationTest {
 
         Room created = createRoom.create(template, "호스트");
         RoomTeamLeader guest = joinRoom.join(created.getCode(), "게스트");
-        startRoom.start(created.getCode());
+        startRoom.start(created.getCode(), created.getLeaders().getFirst().getActionToken());
 
         placeBid.place(created.getCode(), guest.getTeamLeaderId(), 150);
         AuctionSettlement settlement = settleAuction.settle(created.getCode());

@@ -4,10 +4,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.List;
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 class RoomDraftTest {
+    private static final String HOST_ID = "host-1";
+    private static final String HOST_ACTION_TOKEN = "host-action-token";
+    private static final String GUEST_ID = "guest-1";
+    private static final String GUEST_ACTION_TOKEN = "guest-action-token";
+
     @Test
     void 현재_턴의_팀장이_선수를_픽할_수_있다() {
         Room room = startedDraftRoom();
@@ -48,8 +52,9 @@ class RoomDraftTest {
         Room room =
             Room.createFromTemplate(
                 "DRF001",
-                UUID.randomUUID().toString(),
+                HOST_ID,
                 "호스트",
+                HOST_ACTION_TOKEN,
                 new RoomTemplateSpec(
                     RoomTemplateSpec.Mode.DRAFT,
                     2,
@@ -62,8 +67,8 @@ class RoomDraftTest {
                     )
                 )
             );
-        room.join("guest-1", "게스트");
-        room.start();
+        room.join(GUEST_ID, "게스트", GUEST_ACTION_TOKEN);
+        room.start(HOST_ID);
         return room;
     }
 }

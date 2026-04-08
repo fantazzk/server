@@ -3,7 +3,6 @@ package com.naminhyeok.fantazzk.room;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -33,8 +32,9 @@ class RoomRepositoryIntegrationTest {
             rooms.save(
                 Room.createFromTemplate(
                     "ROOM01",
-                    UUID.randomUUID().toString(),
+                    "host-1",
                     "호스트",
+                    "host-action-token",
                     new RoomTemplateSpec(
                         RoomTemplateSpec.Mode.AUCTION,
                         2,
@@ -54,6 +54,8 @@ class RoomRepositoryIntegrationTest {
         assertThat(reloaded.getId()).isEqualTo(saved.getId());
         assertThat(reloaded.getCode()).isEqualTo("ROOM01");
         assertThat(reloaded.getPlayers().stream().map(RoomPlayer::getName)).containsExactly("선수1", "선수2");
-        assertThat(reloaded.getLeaders()).singleElement().extracting(RoomTeamLeader::getNickname).isEqualTo("호스트");
+        assertThat(reloaded.getLeaders()).singleElement()
+            .extracting(RoomTeamLeader::getNickname, RoomTeamLeader::getActionToken)
+            .containsExactly("호스트", "host-action-token");
     }
 }

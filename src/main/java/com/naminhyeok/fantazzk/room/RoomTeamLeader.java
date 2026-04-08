@@ -10,12 +10,14 @@ class RoomTeamLeader implements Entity<Room, RoomTeamLeader.RoomTeamLeaderId> {
     private final RoomTeamLeaderId id;
     private final String teamLeaderId;
     private final String nickname;
+    private final String actionToken;
     private Integer remainingBudget;
 
-    RoomTeamLeader(String teamLeaderId, String nickname, Integer remainingBudget) {
+    RoomTeamLeader(String teamLeaderId, String nickname, String actionToken, Integer remainingBudget) {
         this.id = new RoomTeamLeaderId(UUID.randomUUID());
         this.teamLeaderId = teamLeaderId;
         this.nickname = nickname;
+        this.actionToken = actionToken;
         this.remainingBudget = remainingBudget;
     }
 
