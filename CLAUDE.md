@@ -1,124 +1,79 @@
 # Fantazzk Server
 
-## 모듈 구조
+## 프로젝트 형태
 
-도메인 하나는 기본적으로 다음 모듈로 구성된다.
+- 이 저장소는 단일 Gradle 프로젝트, 단일 Spring Boot 애플리케이션을 가진 Spring Modulith다.
+- 루트 엔트리포인트는 `com.naminhyeok.fantazzk.FantazzkApplication` 하나만 둔다.
+- 애플리케이션 모듈은 패키지 루트로 정의한다.
+- 최상위 문서는 현재 모듈 목록 같은 스냅샷보다 오래 가는 규칙만 설명한다.
+- 상세한 팀 공유 플레이북은 `.claude/skills/` 아래에 두고, 이 문서는 짧은 운영 규칙만 유지한다.
 
-- `model` — 도메인 모델, 값 객체, 순수 도메인 규칙
-- `exception` — 도메인 예외
-- `schema` — Liquibase 마이그레이션
-- `infrastructure` — repository port, 외부 도메인과 통신하기 위한 out-port 계약
-- `service` — 유스케이스와 비즈니스 로직
-- `repository-{type}` — `infrastructure`에 정의된 persistence port 구현
-- `api` — REST controller, request/response DTO
-- `application-{type}` — 실행 환경 설정과 모듈 조립
-- `integration:X-Y` — 소비자 도메인 `X`의 out-port를 제공자 도메인 `Y`에 연결하는 어댑터
+## 모듈 경계
 
-## 의존성 규칙
+- 모듈 루트 패키지의 public 타입만 다른 모듈에 공개되는 기본 계약으로 본다.
+- 모듈 하위 패키지는 기본적으로 내부 구현으로 취급한다.
+- 공개 surface는 최소로 유지한다.
+- aggregate와 핵심 도메인 개념은 모듈 루트 또는 `domain` 아래에 둘 수 있다. 한 모듈 안에서는 한 가지 스타일을 일관되게 유지한다.
+- `application`, `api`, `repository`, `query`, `infrastructure`는 역할이 분명할 때만 둔다.
+- `spi` 패키지는 기본 선택지로 두지 않는다.
+- 의미 없는 port/adapter, interface/impl 쌍은 두지 않는다. 추상화는 모듈 경계, 도메인 개념, 기술적 제약을 분명히 드러낼 때만 유지한다.
+- 새로 손대는 파일은 경로와 패키지 선언을 맞춘다. 기존 어긋남은 점진적으로 해소한다.
 
-| 모듈 | 허용된 의존성 |
-|------|-------------|
-| model, exception, schema | 없음 |
-| infrastructure | model |
-| service | model, infrastructure, exception |
-| repository-{type} | infrastructure |
-| api | service, exception |
-| integration:X-Y | X:infrastructure, Y:service |
-| application-{type} | schema, api, repository-{type}, integration:* |
+## 협력 규칙
 
-역방향 의존 금지.
+- 같은 모듈 내부 협력은 direct call 을 기본으로 한다.
+- 모듈 간 필수 동기 협력은 explicit contract bean 으로 표현한다.
+- 모듈 간 후속 반응이나 비동기 협력은 실제 consumer 가 있을 때만 domain event 로 표현한다.
+- 다른 모듈의 repository, application service, query service를 직접 찌르지 않는다.
+- 이벤트는 RPC 대체재처럼 쓰지 않는다. required consistency 는 direct contract 로 표현한다.
+- application service의 기본 흐름은 `load -> invoke aggregate -> save` 다.
+- application service는 same-module orchestration 을 위해 manual publisher 를 들고 다니지 않는다.
+- listener 나 projection 은 가능한 한 event payload 만으로 처리하고, read-side 갱신만을 위해 write model 을 다시 조회하는 구조는 피한다.
 
-상위 레이어가 하위 레이어를 침범하면 안 된다.
+## Java 와 Spring 규칙
 
-도메인 간 직접 의존은 허용하지 않는다.
-도메인 간 연결은 반드시 소비자 소유 port + `integration:X-Y` 어댑터로 표현한다.
+- package-private 을 기본으로 하고, `public` 은 모듈 루트 계약, 외부 API, 프레임워크가 요구하는 타입에만 사용한다.
+- 루트 애플리케이션은 `@SpringBootApplication`을 사용한다.
+- 컴포넌트 스캔 기반 등록을 기본으로 한다.
+- `@Configuration`은 실제 bean 조립이 필요한 경우에만 둔다.
+- 단순히 이미 스캔 가능한 타입을 다시 export 하기 위한 wrapper configuration 은 만들지 않는다.
+- 생성자 주입을 기본으로 한다.
+- 도메인 개념은 가능하면 `jMolecules` 타입과 인터페이스로 먼저 표현하고, annotation 은 역할을 보강할 때만 사용한다.
+- aggregate root 와 identifier 는 `org.jmolecules.ddd.types`를 우선 사용한다.
+- application / query service 구현은 `org.jmolecules.ddd.annotation.Service`로 역할을 드러낸다.
+- repository abstraction 은 `org.jmolecules.ddd.annotation.Repository`로 역할을 드러낸다.
 
-## 역할 원칙
+## 테스트와 검증
 
-### Model Module (`model`)
+- 테스트는 구현 과정을 기록하는 용도가 아니라 설계 규칙, 도메인 규칙, 외부 계약, 회귀 위험을 보호하는 실행 가능한 문서다.
+- 테스트는 구현 세부보다 공개 계약과 관찰 가능한 결과를 우선 검증한다.
+- domain 로직은 가능하면 Spring 없이 deterministic 한 unit test 로 검증할 수 있어야 한다.
+- 시간, 난수, 사용자에게 의미 있는 코드 생성, 외부 상태 같은 비결정 요소는 경계 밖으로 밀어내고 주입 가능하게 만든다.
+- 단순 기술적 UUID 생성까지 모두 래핑할 필요는 없다. 다만 규칙이 붙는 코드나 결과를 바꾸는 랜덤성은 명시적 generator 나 strategy 로 분리한다.
+- 기본 test double 은 fake 와 stub 이다. mock 과 spy 는 제한적으로 사용한다.
+- `@MockitoBean`은 `@WebMvcTest` 같은 Spring slice 나 모듈 경계 테스트에서 scope 제어가 필요할 때만 제한적으로 사용한다.
+- fixture 는 builder 를 기본으로 하고, 테스트의 의미를 바꾸는 값은 테스트 본문에서 직접 드러낸다.
+- fixture 가 반복되는 잡음을 줄이는 것은 좋지만, 핵심 전제를 숨기면 안 된다.
+- 테스트 편의를 위해 production code 를 왜곡하지 않는다.
+- 테스트 코드와 fixture 도 관리와 리팩토링의 대상이다. 구현 리팩토링에 과도하게 깨지는 테스트는 설계도 다시 본다.
+- 유지할 테스트는 모듈 규칙, 도메인 invariant, 외부 계약, 실제 regression risk 를 보호해야 한다.
+- thin delegation 이나 일회성 TDD scaffolding, 구현 choreography 만 보존하는 테스트는 정리 대상이다.
+- 버그를 수정했다면 그 문제가 다시 발생하지 않도록 자동 검증을 추가하는 것을 기본 원칙으로 한다.
+- regression test 는 내부 구현이 아니라 외부 계약, 도메인 규칙, 관찰 가능한 결과를 고정해야 한다.
+- repository 테스트의 기본값은 `@DataJpaTest` 와 H2 다. 락, 격리 수준, DB vendor 고유 동작, 실제 migration 결과처럼 H2 로 충분히 증명할 수 없는 것은 `integrationTest` 에서 실제 데이터베이스로 검증한다.
+- web contract 는 `@WebMvcTest` 로 검증한다.
+- 모듈 구조는 `ApplicationModules.verify()` 로 항상 검증 가능해야 한다.
+- 모듈 간 협력이 중요한 경우에만 `@ApplicationModuleTest`를 사용한다.
+- 구현 중에는 대상 테스트나 `./gradlew test` 를 우선 사용한다.
+- 로컬 작업을 마무리하기 전에는 `./gradlew check` 를 실행한다.
+- commit 직전이나 review 전에는 `./gradlew integrationTest` 를 실행한다.
+- `integrationTest` 는 unit test 만으로 충분히 증명할 수 없는 외부 경계와 실제 런타임 조합을 검증한다. 피드백 루프는 더 길지만 중요한 검증이므로 commit 전과 CI 에서는 반드시 포함한다.
 
-- 도메인의 핵심 개념과 규칙을 포함한다.
-- 외부 기술, 저장소, 네트워크에 대한 관심사를 가지지 않는다.
-- 가능한 한 순수하게 유지한다.
-- Identity + Props → Model 인터페이스 패턴
-- Props = 순수 프로퍼티만. 비즈니스 메서드는 확장 함수로 분리
-- data class는 순수 값 객체. 검증(init)은 허용
+## 에이전트가 피해야 할 것
 
-### Service Module (`service`)
-
-- 유스케이스와 비즈니스 흐름을 구현한다.
-- 외부 시스템 접근은 직접 하지 않고 `infrastructure`의 port를 통해서만 수행한다.
-- 다른 도메인의 내부 구현이나 타입에 직접 의존하지 않는다.
-- public interface + `internal` impl
-- 도메인 서비스가 개념 간 협업 조율. 서비스끼리 직접 호출 금지
-
-### Infrastructure Module (`infrastructure`)
-
-- persistence port와 external out-port의 계약만 정의한다.
-- 구현을 포함하지 않는다.
-- 소비자 도메인이 외부에 요구하는 최소 계약만 소유한다.
-
-### Repository Module (`repository-{type}`)
-
-- `infrastructure`에 정의된 persistence port를 구현한다.
-- JDBC, JPA, Document DB 등 기술 세부사항은 이 계층에 머문다.
-- Entity가 Model 인터페이스 직접 구현
-- `@Column` bare annotation. enum 직접 매핑 (커스텀 컨버터)
-- RepositoryImpl에서 `.toModel()`로 도메인 data class 반환. Entity 직접 반환 금지
-- `@EnableJdbcRepositories`
-
-### API Module (`api`)
-
-- 외부 입력을 받는 driving adapter다.
-- REST controller와 request/response DTO를 포함한다.
-- 비즈니스 판단은 `service`에 위임한다.
-- `@Import`로 컨트롤러 등록
-- DTO는 `dto` 패키지, 파일별 분리
-
-### Integration Module (`integration:X-Y`)
-
-- 소비자 `X`의 out-port를 제공자 `Y`의 공개된 use case에 연결하는 adapter를 구현한다.
-- 도메인 간 번역, 매핑, 예외 변환, 재시도, 캐시, 통신 기술 세부사항은 이 모듈에 위치한다.
-- 현재 구현은 in-process 동기 호출일 수 있고, 이후 HTTP/gRPC/MQ/event/projection 기반으로 바뀔 수 있다.
-- 통신 방식이 바뀌어도 소비자 도메인의 `service`와 `infrastructure` 계약은 유지되어야 한다.
-
-### Application Module (`application-{type}`)
-
-- 실행 환경 설정과 모듈 조립만 담당한다.
-- 비즈니스 로직과 도메인 간 adapter 구현을 포함하지 않는다.
-- 필요한 `integration` 모듈을 가져와 wiring만 수행한다.
-
-## 도메인 간 통신
-
-도메인 간 통신은 Consumer-Owned Port 패턴을 따른다.
-
-- 소비자 도메인이 자신의 `infrastructure` 모듈에 out-port 인터페이스와 계약 타입을 소유한다.
-- 제공자 도메인은 소비자 도메인의 존재를 몰라야 한다.
-- 제공자 도메인 접근은 제공자 도메인의 공개된 `service` interface를 통해서만 이뤄진다.
-- 도메인 간 adapter 구현은 항상 `integration:X-Y` 모듈에 위치한다.
-- `application-*`는 integration 모듈을 조립만 하며, 통신 정책과 번역 로직을 직접 가지지 않는다.
-- 소비자 도메인은 제공자 도메인의 entity, repository, controller, 내부 패키지를 직접 참조하면 안 된다.
-
-## 이벤트와 통신 방식
-
-이벤트, MQ, RPC, HTTP, in-process 호출은 모두 통신 구현 방식이다.
-이들은 아키텍처 경계 자체가 아니라 `integration` 내부의 구현 선택이다.
-
-- 즉시 응답과 강한 일관성이 필요하면 동기 호출을 사용한다.
-- 느슨한 결합, fan-out, projection, eventual consistency가 필요하면 이벤트/MQ를 사용한다.
-- 어떤 방식을 선택하더라도 도메인 경계는 port와 integration 모듈로 유지해야 한다.
-
-## 빈 등록 규칙
-
-- `@SpringBootApplication` 사용 금지
-- 런처는 `@SpringBootConfiguration` + `@EnableAutoConfiguration`
-- 모든 빈은 `@AutoConfiguration` + `@Bean`으로 명시적 등록
-- `.imports` 파일에 반드시 등록
-- `@ComponentScan`, `@Component`, `@Service`, `@Repository` 사용 금지
-
-## 테스트
-
-- AssertJ, 한글 테스트명
-- 테스트 대상은 `cut` (Class Under Test) 명명
-- repository 통합 테스트: `@DataJdbcTest` + `@ImportAutoConfiguration` + `@TestConstructor`
-- application 통합 테스트: `@SpringBootTest` + `@AutoConfigureTestRestTemplate` + `@TestConstructor`
+- 현재 모듈 목록이나 임시 구조를 최상위 규칙으로 문서화하는 것
+- 다른 모듈의 내부 패키지나 구현 타입에 직접 결합하는 것
+- mock 을 기본값처럼 남발하는 것
+- 구현 리팩토링을 막는 brittle test 를 늘리는 것
+- 테스트 편의를 위해 production code 에 test-only hook 을 추가하는 것
+- 이미 lower-cost test 가 보호하는 규칙을 다른 레이어에서 반복 검증하는 것
