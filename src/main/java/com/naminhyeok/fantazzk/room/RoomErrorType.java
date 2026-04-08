@@ -21,10 +21,28 @@ enum RoomErrorType implements ErrorDescriptor {
         Level.INFO
     ),
     ROOM_FULL(HttpStatus.CONFLICT, "ROOM_FULL", "방이 가득 찼습니다", Level.INFO),
+    ROOM_ACTION_TOKEN_REQUIRED(
+        HttpStatus.UNAUTHORIZED,
+        "ROOM_ACTION_TOKEN_REQUIRED",
+        "방 액션 토큰이 필요합니다",
+        Level.INFO
+    ),
+    ROOM_ACTION_TOKEN_INVALID(
+        HttpStatus.UNAUTHORIZED,
+        "ROOM_ACTION_TOKEN_INVALID",
+        "유효한 방 액션 토큰이 아닙니다",
+        Level.INFO
+    ),
     ROOM_START_REQUIRES_WAITING(
         HttpStatus.CONFLICT,
         "ROOM_START_REQUIRES_WAITING",
         "대기 중인 방에서만 시작할 수 있습니다",
+        Level.INFO
+    ),
+    ROOM_START_FORBIDDEN(
+        HttpStatus.FORBIDDEN,
+        "ROOM_START_FORBIDDEN",
+        "방장은 방을 시작할 수 있는 유일한 팀장입니다",
         Level.INFO
     ),
     ROOM_LEADERS_NOT_FULL(

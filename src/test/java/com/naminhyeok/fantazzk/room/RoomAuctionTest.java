@@ -4,10 +4,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.List;
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 class RoomAuctionTest {
+    private static final String HOST_ID = "host-1";
+    private static final String HOST_ACTION_TOKEN = "host-action-token";
+    private static final String GUEST_ID = "guest-1";
+    private static final String GUEST_ACTION_TOKEN = "guest-action-token";
+
     @Test
     void 현재_최고가보다_낮거나_같은_입찰은_할_수_없다() {
         Room room = startedAuctionRoom();
@@ -47,8 +51,9 @@ class RoomAuctionTest {
         Room room =
             Room.createFromTemplate(
                 "AUC001",
-                UUID.randomUUID().toString(),
+                HOST_ID,
                 "호스트",
+                HOST_ACTION_TOKEN,
                 new RoomTemplateSpec(
                     RoomTemplateSpec.Mode.AUCTION,
                     2,
@@ -61,8 +66,8 @@ class RoomAuctionTest {
                     )
                 )
             );
-        room.join("guest-1", "게스트");
-        room.start();
+        room.join(GUEST_ID, "게스트", GUEST_ACTION_TOKEN);
+        room.start(HOST_ID);
         return room;
     }
 }

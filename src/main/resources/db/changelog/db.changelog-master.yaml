@@ -10,3 +10,14 @@ databaseChangeLog:
             path: db/changelog/db.changelog-initial.sql
             splitStatements: true
             stripComments: false
+  - changeSet:
+      id: 2-room-team-leader-action-token
+      author: codex
+      changes:
+        - sqlFile:
+            dbms: h2,postgresql
+            encoding: UTF-8
+            endDelimiter: ;
+            path: db/changelog/db.changelog-room-team-leader-action-token.sql
+            splitStatements: true
+            stripComments: false

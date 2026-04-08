@@ -46,7 +46,7 @@ class RoomDraftIntegrationTest {
 
         Room created = createRoom.create(template, "호스트");
         joinRoom.join(created.getCode(), "게스트");
-        startRoom.start(created.getCode());
+        startRoom.start(created.getCode(), created.getLeaders().getFirst().getActionToken());
 
         String currentLeaderId = rooms.findByCode(created.getCode()).orElseThrow().getLeaders().getFirst().getTeamLeaderId();
         RoomTeamMember member = pickDraft.pick(created.getCode(), currentLeaderId, "선수1");

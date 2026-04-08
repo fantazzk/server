@@ -1,7 +1,6 @@
 package com.naminhyeok.fantazzk.room;
 
 import com.naminhyeok.fantazzk.CoreException;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,11 +9,13 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 class JoinRoom {
     private final Rooms rooms;
+    private final TeamLeaderIdentityIssuer teamLeaderIdentityIssuer;
 
     @Transactional
     public RoomTeamLeader join(String code, String nickname) {
         Room room = rooms.findByCode(code).orElseThrow(() -> CoreException.of(RoomErrorType.ROOM_NOT_FOUND));
-        room.join(UUID.randomUUID().toString(), nickname);
+        TeamLeaderIdentityIssuer.TeamLeaderIdentity identity = teamLeaderIdentityIssuer.issue();
+        room.join(identity.leaderId(), nickname, identity.actionToken());
         Room saved = rooms.save(room);
         return saved.getLeaders().getLast();
     }

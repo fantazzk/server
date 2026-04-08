@@ -10,13 +10,19 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 class RoomAggregateTest {
+    private static final String HOST_ID = "host-1";
+    private static final String HOST_ACTION_TOKEN = "host-action-token";
+    private static final String GUEST_ID = "guest-1";
+    private static final String GUEST_ACTION_TOKEN = "guest-action-token";
+
     @Test
     void 템플릿_명세로_방을_생성하면_선수와_호스트를_초기화한다() {
         Room room =
             Room.createFromTemplate(
                 "ROOM01",
-                UUID.randomUUID().toString(),
+                HOST_ID,
                 "호스트",
+                HOST_ACTION_TOKEN,
                 new RoomTemplateSpec(
                     RoomTemplateSpec.Mode.AUCTION,
                     2,
@@ -38,23 +44,25 @@ class RoomAggregateTest {
         RoomTeamLeader hostLeader = room.getLeaders().getFirst();
         assertThat(hostLeader.getNickname()).isEqualTo("호스트");
         assertThat(hostLeader.getRemainingBudget()).isEqualTo(300);
+        assertThat(hostLeader.getActionToken()).isEqualTo(HOST_ACTION_TOKEN);
     }
 
     @Test
     void 참가하면_팀장을_추가한다() {
         Room room = auctionWaitingRoom();
 
-        room.join("guest-1", "게스트");
+        room.join(GUEST_ID, "게스트", GUEST_ACTION_TOKEN);
 
         assertThat(room.getLeaders()).hasSize(2);
         assertThat(room.getLeaders().getLast().getNickname()).isEqualTo("게스트");
+        assertThat(room.getLeaders().getLast().getActionToken()).isEqualTo(GUEST_ACTION_TOKEN);
     }
 
     @Test
     void 대기_상태가_아니면_참가할_수_없다() {
         Room room = startedAuctionRoom();
 
-        assertThatThrownBy(() -> room.join("guest-2", "추가 게스트"))
+        assertThatThrownBy(() -> room.join("guest-2", "추가 게스트", "guest-2-action-token"))
             .isInstanceOf(CoreException.class)
             .satisfies(ex -> {
                 CoreException coreException = (CoreException) ex;
@@ -68,8 +76,9 @@ class RoomAggregateTest {
         Room room =
             Room.createFromTemplate(
                 "ROOM03",
-                UUID.randomUUID().toString(),
+                HOST_ID,
                 "호스트",
+                HOST_ACTION_TOKEN,
                 new RoomTemplateSpec(
                     RoomTemplateSpec.Mode.AUCTION,
                     1,
@@ -83,7 +92,7 @@ class RoomAggregateTest {
                 )
         );
 
-        assertThatThrownBy(() -> room.join("guest-1", "게스트"))
+        assertThatThrownBy(() -> room.join(GUEST_ID, "게스트", GUEST_ACTION_TOKEN))
             .isInstanceOf(CoreException.class)
             .satisfies(ex -> {
                 CoreException coreException = (CoreException) ex;
@@ -97,9 +106,9 @@ class RoomAggregateTest {
         @Test
         void 경매_방을_시작하면_경매_라운드를_초기화한다() {
             Room room = auctionWaitingRoom();
-            room.join("guest-1", "게스트");
+            room.join(GUEST_ID, "게스트", GUEST_ACTION_TOKEN);
 
-            room.start();
+            room.start(HOST_ID);
 
             assertThat(room.getStatus()).isEqualTo(RoomStatus.IN_PROGRESS);
             assertThat(room.getCurrentAuctionRound()).isEqualTo(1);
@@ -111,8 +120,9 @@ class RoomAggregateTest {
             Room room =
                 Room.createFromTemplate(
                     "ROOM02",
-                    UUID.randomUUID().toString(),
+                    HOST_ID,
                     "호스트",
+                    HOST_ACTION_TOKEN,
                     new RoomTemplateSpec(
                         RoomTemplateSpec.Mode.DRAFT,
                         2,
@@ -125,9 +135,9 @@ class RoomAggregateTest {
                         )
                     )
                 );
-            room.join("guest-1", "게스트");
+            room.join(GUEST_ID, "게스트", GUEST_ACTION_TOKEN);
 
-            room.start();
+            room.start(HOST_ID);
 
             assertThat(room.getStatus()).isEqualTo(RoomStatus.IN_PROGRESS);
             assertThat(room.getCurrentTurnIndex()).isEqualTo(0);
@@ -138,11 +148,25 @@ class RoomAggregateTest {
         void 팀장_자리가_다_차지_않으면_시작할_수_없다() {
             Room room = auctionWaitingRoom();
 
-            assertThatThrownBy(room::start)
+            assertThatThrownBy(() -> room.start(HOST_ID))
                 .isInstanceOf(CoreException.class)
                 .satisfies(ex -> {
                     CoreException coreException = (CoreException) ex;
                     assertThat(coreException.getError()).isEqualTo(RoomErrorType.ROOM_LEADERS_NOT_FULL);
+                    assertThat(coreException.getData()).isNull();
+                });
+        }
+
+        @Test
+        void 호스트가_아니면_시작할_수_없다() {
+            Room room = auctionWaitingRoom();
+            room.join(GUEST_ID, "게스트", GUEST_ACTION_TOKEN);
+
+            assertThatThrownBy(() -> room.start(GUEST_ID))
+                .isInstanceOf(CoreException.class)
+                .satisfies(ex -> {
+                    CoreException coreException = (CoreException) ex;
+                    assertThat(coreException.getError()).isEqualTo(RoomErrorType.ROOM_START_FORBIDDEN);
                     assertThat(coreException.getData()).isNull();
                 });
         }
@@ -151,8 +175,9 @@ class RoomAggregateTest {
     private static Room auctionWaitingRoom() {
         return Room.createFromTemplate(
             "ROOM01",
-            UUID.randomUUID().toString(),
+            HOST_ID,
             "호스트",
+            HOST_ACTION_TOKEN,
             new RoomTemplateSpec(
                 RoomTemplateSpec.Mode.AUCTION,
                 2,
@@ -169,8 +194,8 @@ class RoomAggregateTest {
 
     private static Room startedAuctionRoom() {
         Room room = auctionWaitingRoom();
-        room.join("guest-1", "게스트");
-        room.start();
+        room.join(GUEST_ID, "게스트", GUEST_ACTION_TOKEN);
+        room.start(HOST_ID);
         return room;
     }
 }

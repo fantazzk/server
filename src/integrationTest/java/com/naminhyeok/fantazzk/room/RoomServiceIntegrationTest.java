@@ -1,7 +1,9 @@
 package com.naminhyeok.fantazzk.room;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.naminhyeok.fantazzk.CoreException;
 import com.naminhyeok.fantazzk.template.TemplateFixture;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
         "sentry.enabled=false"
     }
 )
+@Transactional
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
 @RequiredArgsConstructor
 class RoomServiceIntegrationTest {
@@ -31,8 +34,7 @@ class RoomServiceIntegrationTest {
     private final Rooms rooms;
 
     @Test
-    @Transactional
-    void 템플릿으로_방을_생성하면_대기_상태와_호스트_팀장을_저장한다() {
+    void 템플릿으로_방을_생성하면_호스트_액션_토큰을_발급하고_저장한다() {
         var template =
             templateFixture.createAuctionTemplateId("경매전", 2, 2, 300, List.of("선수1", "선수2"));
 
@@ -40,23 +42,28 @@ class RoomServiceIntegrationTest {
         Room reloaded = rooms.findById(created.getId()).orElseThrow();
 
         assertThat(reloaded.getStatus()).isEqualTo(RoomStatus.WAITING);
-        assertThat(reloaded.getLeaders()).singleElement().extracting(RoomTeamLeader::getNickname).isEqualTo("호스트");
+        assertThat(reloaded.getLeaders()).singleElement()
+            .extracting(RoomTeamLeader::getNickname, RoomTeamLeader::getActionToken)
+            .satisfies(tuple -> {
+                assertThat(tuple.get(0)).isEqualTo("호스트");
+                assertThat(tuple.get(1)).asString().isNotBlank();
+            });
     }
 
     @Test
-    @Transactional
-    void 참가와_시작을_순서대로_처리한다() {
+    void 호스트가_아닌_액션_토큰으로는_방을_시작할_수_없다() {
         var template =
             templateFixture.createAuctionTemplateId("경매전", 2, 2, 300, List.of("선수1", "선수2"));
 
         Room created = createRoom.create(template, "호스트");
-        joinRoom.join(created.getCode(), "게스트");
-        startRoom.start(created.getCode());
+        RoomTeamLeader guest = joinRoom.join(created.getCode(), "게스트");
 
-        Room reloaded = rooms.findByCode(created.getCode()).orElseThrow();
-
-        assertThat(reloaded.getLeaders()).hasSize(2);
-        assertThat(reloaded.getStatus()).isEqualTo(RoomStatus.IN_PROGRESS);
-        assertThat(reloaded.getCurrentAuctionRound()).isEqualTo(1);
+        assertThatThrownBy(() -> startRoom.start(created.getCode(), guest.getActionToken()))
+            .isInstanceOf(CoreException.class)
+            .satisfies(ex -> {
+                CoreException coreException = (CoreException) ex;
+                assertThat(coreException.getError()).isEqualTo(RoomErrorType.ROOM_START_FORBIDDEN);
+                assertThat(coreException.getData()).isNull();
+            });
     }
 }

@@ -63,6 +63,7 @@ class Room implements AggregateRoot<Room, RoomId> {
         String code,
         String hostId,
         String hostNickname,
+        String hostActionToken,
         RoomTemplateSpec spec
     ) {
         Room room =
@@ -81,7 +82,7 @@ class Room implements AggregateRoot<Room, RoomId> {
             .map(player -> new RoomPlayer(player.name(), player.displayOrder()))
             .forEach(room.players::add);
 
-        room.leaders.add(new RoomTeamLeader(hostId, hostNickname, spec.budget()));
+        room.leaders.add(new RoomTeamLeader(hostId, hostNickname, hostActionToken, spec.budget()));
         return room;
     }
 
@@ -97,17 +98,20 @@ class Room implements AggregateRoot<Room, RoomId> {
         return List.copyOf(members);
     }
 
-    public void join(String teamLeaderId, String nickname) {
+    public void join(String teamLeaderId, String nickname, String actionToken) {
         if (status != RoomStatus.WAITING) {
             throw CoreException.of(RoomErrorType.ROOM_JOIN_REQUIRES_WAITING);
         }
         if (leaders.size() >= teamCount) {
             throw CoreException.of(RoomErrorType.ROOM_FULL);
         }
-        leaders.add(new RoomTeamLeader(teamLeaderId, nickname, budget));
+        leaders.add(new RoomTeamLeader(teamLeaderId, nickname, actionToken, budget));
     }
 
-    public void start() {
+    public void start(String callerLeaderId) {
+        if (!hostId.equals(callerLeaderId)) {
+            throw CoreException.of(RoomErrorType.ROOM_START_FORBIDDEN);
+        }
         if (status != RoomStatus.WAITING) {
             throw CoreException.of(RoomErrorType.ROOM_START_REQUIRES_WAITING);
         }
