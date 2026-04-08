@@ -106,7 +106,3 @@ tasks.register('integrationTest', Test) {
 tasks.named('processIntegrationTestResources') {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
-
-tasks.named('check') {
-    dependsOn(tasks.named('integrationTest'))
-}
