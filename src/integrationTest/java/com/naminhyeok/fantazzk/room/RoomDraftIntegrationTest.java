@@ -2,8 +2,17 @@ package com.naminhyeok.fantazzk.room;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.naminhyeok.fantazzk.template.CreateTemplate;
-import com.naminhyeok.fantazzk.template.CreateTemplateCommand;
+import com.naminhyeok.fantazzk.room.application.CreateRoom;
+import com.naminhyeok.fantazzk.room.application.JoinRoom;
+import com.naminhyeok.fantazzk.room.application.PickDraft;
+import com.naminhyeok.fantazzk.room.application.StartRoom;
+import com.naminhyeok.fantazzk.room.domain.PlayerStatus;
+import com.naminhyeok.fantazzk.room.domain.Room;
+import com.naminhyeok.fantazzk.room.domain.RoomTeamMember;
+import com.naminhyeok.fantazzk.room.repository.Rooms;
+import com.naminhyeok.fantazzk.template.application.CreateTemplate;
+import com.naminhyeok.fantazzk.template.application.CreateTemplateCommand;
+import com.naminhyeok.fantazzk.template.domain.DraftOrderStrategy;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Test;
@@ -41,12 +50,12 @@ class RoomDraftIntegrationTest {
                     "드래프트전",
                     2,
                     2,
-                    com.naminhyeok.fantazzk.template.DraftOrderStrategy.SNAKE,
+                    DraftOrderStrategy.SNAKE,
                     List.of("선수1", "선수2")
                 )
             );
 
-        Room created = createRoom.create(template.getId(), "호스트");
+        Room created = createRoom.create(template.getId().templateId(), "호스트");
         joinRoom.join(created.getCode(), "게스트");
         startRoom.start(created.getCode());
 

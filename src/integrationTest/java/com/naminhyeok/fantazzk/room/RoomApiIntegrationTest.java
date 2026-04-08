@@ -2,9 +2,9 @@ package com.naminhyeok.fantazzk.room;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.naminhyeok.fantazzk.template.CreateTemplate;
-import com.naminhyeok.fantazzk.template.CreateTemplateCommand;
-import com.naminhyeok.fantazzk.template.Template;
+import com.naminhyeok.fantazzk.template.application.CreateTemplate;
+import com.naminhyeok.fantazzk.template.application.CreateTemplateCommand;
+import com.naminhyeok.fantazzk.template.domain.Template;
 import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;

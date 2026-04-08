@@ -2,8 +2,15 @@ package com.naminhyeok.fantazzk.room;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.naminhyeok.fantazzk.template.CreateTemplate;
-import com.naminhyeok.fantazzk.template.CreateTemplateCommand;
+import com.naminhyeok.fantazzk.room.application.CreateRoom;
+import com.naminhyeok.fantazzk.room.application.JoinRoom;
+import com.naminhyeok.fantazzk.room.application.StartRoom;
+import com.naminhyeok.fantazzk.room.domain.Room;
+import com.naminhyeok.fantazzk.room.domain.RoomStatus;
+import com.naminhyeok.fantazzk.room.domain.RoomTeamLeader;
+import com.naminhyeok.fantazzk.room.repository.Rooms;
+import com.naminhyeok.fantazzk.template.application.CreateTemplate;
+import com.naminhyeok.fantazzk.template.application.CreateTemplateCommand;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Test;
@@ -45,7 +52,7 @@ class RoomServiceIntegrationTest {
                 )
             );
 
-        Room created = createRoom.create(template.getId(), "호스트");
+        Room created = createRoom.create(template.getId().templateId(), "호스트");
         Room reloaded = rooms.findById(created.getId()).orElseThrow();
 
         assertThat(reloaded.getStatus()).isEqualTo(RoomStatus.WAITING);
@@ -66,7 +73,7 @@ class RoomServiceIntegrationTest {
                 )
             );
 
-        Room created = createRoom.create(template.getId(), "호스트");
+        Room created = createRoom.create(template.getId().templateId(), "호스트");
         joinRoom.join(created.getCode(), "게스트");
         startRoom.start(created.getCode());
 

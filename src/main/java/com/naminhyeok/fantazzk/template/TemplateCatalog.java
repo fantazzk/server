@@ -1,24 +1,41 @@
 package com.naminhyeok.fantazzk.template;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface TemplateCatalog {
-    TemplateBlueprint getTemplate(TemplateId templateId);
+    TemplateBlueprint getTemplate(UUID templateId);
+
+    enum Mode {
+        AUCTION,
+        DRAFT
+    }
+
+    enum DraftOrderStrategy {
+        SNAKE,
+        FIXED
+    }
 
     record TemplateBlueprint(
-        TemplateId templateId,
-        TemplateMode mode,
+        UUID templateId,
+        Mode mode,
         int teamCount,
         int teamSize,
         Integer budget,
         DraftOrderStrategy draftOrderStrategy,
-        List<TemplatePlayerBlueprint> players
+        List<PlayerBlueprint> players
     ) {
     }
 
-    record TemplatePlayerBlueprint(
+    record PlayerBlueprint(
         String name,
         int displayOrder
     ) {
+    }
+
+    final class NotFound extends RuntimeException {
+        public NotFound(UUID templateId) {
+            super("템플릿을 찾을 수 없습니다: " + templateId);
+        }
     }
 }
