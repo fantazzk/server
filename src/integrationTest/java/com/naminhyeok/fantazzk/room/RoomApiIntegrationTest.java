@@ -3,6 +3,7 @@ package com.naminhyeok.fantazzk.room;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.naminhyeok.fantazzk.template.TemplateFixture;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -181,7 +182,7 @@ class RoomApiIntegrationTest {
     }
 
     private String createAuctionTemplateId() {
-        return templateFixture.createAuctionTemplateId("경매전", 2, 2, 300, java.util.List.of("선수1", "선수2")).toString();
+        return templateFixture.createAuctionTemplateId("경매전", 2, 2, 300, List.of("선수1", "선수2")).toString();
     }
 
     private String createRoom(String templateId) {

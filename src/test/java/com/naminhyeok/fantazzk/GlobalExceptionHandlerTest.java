@@ -15,8 +15,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
-import org.junit.jupiter.api.BeforeEach;
+import java.util.Map;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -179,7 +180,7 @@ class GlobalExceptionHandlerTest {
     static class ThrowingController {
         @GetMapping("/core")
         String core() {
-            throw new CoreException(new ConflictErrorDescriptor(), java.util.Map.of("detail", "conflict"));
+            throw new CoreException(new ConflictErrorDescriptor(), Map.of("detail", "conflict"));
         }
 
         @GetMapping("/room")

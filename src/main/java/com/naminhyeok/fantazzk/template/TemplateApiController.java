@@ -28,8 +28,8 @@ class TemplateApiController {
     }
 
     @GetMapping("/{id}")
-    ApiResponse<TemplateResponse> getById(@PathVariable String id) {
-        return ApiResponse.success(TemplateResponse.from(findTemplates.getDetail(new TemplateId(UUID.fromString(id)))));
+    ApiResponse<TemplateResponse> getById(@PathVariable UUID id) {
+        return ApiResponse.success(TemplateResponse.from(findTemplates.getDetail(new TemplateId(id))));
     }
 
     @GetMapping

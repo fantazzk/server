@@ -24,7 +24,7 @@ class RoomApiController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     ApiResponse<RoomResponse> create(@Valid @RequestBody CreateRoomRequest request) {
-        return ApiResponse.success(RoomResponse.from(createRoom.create(request.templateIdAsUuid(), request.hostNickname())));
+        return ApiResponse.success(RoomResponse.from(createRoom.create(request.templateId(), request.hostNickname())));
     }
 
     @GetMapping("/{code}")
