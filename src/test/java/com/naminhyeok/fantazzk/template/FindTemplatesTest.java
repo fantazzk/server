@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.groups.Tuple.tuple;
 
 import com.naminhyeok.fantazzk.CoreException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -74,6 +75,12 @@ class FindTemplatesTest {
                 tuple(0, "선수1"),
                 tuple(1, "선수2")
             );
+    }
+
+    @Test
+    void 템플릿_카탈로그_player_blueprint는_legacy_display_order_accessor를_노출하지_않는다() {
+        assertThat(List.of(TemplateCatalog.PlayerBlueprint.class.getDeclaredMethods()).stream().map(Method::getName).toList())
+            .doesNotContain("displayOrder");
     }
 
     private static final class InMemoryTemplates implements Templates {

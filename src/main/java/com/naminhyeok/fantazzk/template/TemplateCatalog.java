@@ -31,9 +31,6 @@ public interface TemplateCatalog {
         String name,
         int playerIndex
     ) {
-        public int displayOrder() {
-            return playerIndex;
-        }
     }
 
     final class NotFound extends RuntimeException {

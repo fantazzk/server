@@ -72,7 +72,7 @@ class CreateRoom {
                     ? null
                     : RoomTemplateSpec.DraftOrderStrategy.valueOf(template.draftOrderStrategy().name()),
                 template.players().stream()
-                    .map(player -> new RoomTemplateSpec.Player(player.name(), player.displayOrder()))
+                    .map(player -> new RoomTemplateSpec.Player(player.name(), player.playerIndex()))
                     .toList()
             ),
             Instant.now(clock)
