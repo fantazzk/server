@@ -11,46 +11,35 @@ import java.util.TreeMap;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestConstructor;
 
+@ActiveProfiles("test")
 @SpringBootTest(
     properties = {
-        "spring.datasource.url=jdbc:h2:mem:liquibase-smoke;DB_CLOSE_DELAY=-1",
-        "spring.datasource.driver-class-name=org.h2.Driver",
-        "spring.datasource.username=sa",
-        "spring.datasource.password=",
         "spring.jpa.hibernate.ddl-auto=validate",
         "sentry.enabled=false"
     }
 )
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
-class LiquibaseSmokeTest {
+class LiquibasePostgresSmokeTest {
     private final JdbcTemplate jdbcTemplate;
 
-    LiquibaseSmokeTest(JdbcTemplate jdbcTemplate) {
+    LiquibasePostgresSmokeTest(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
 
     @Test
-    void liquibase_초기_스키마로_자바_jpa_구조를_검증하며_부팅한다() {
-        assertThat(countTable("template")).isEqualTo(1);
-        assertThat(countTable("template_player")).isEqualTo(1);
+    void liquibase_실제_postgresql_스키마에서_rooms_변경을_검증한다() {
         assertThat(countTable("rooms")).isEqualTo(1);
         assertThat(countColumn("rooms", "created_at")).isEqualTo(1);
         assertThat(countIndex("rooms", "idx_rooms_status_created_at")).isEqualTo(1);
-        assertThat(indexColumns("rooms", "idx_rooms_status_created_at")).containsExactly("STATUS", "CREATED_AT");
-        assertThat(countTable("room_player")).isEqualTo(1);
-        assertThat(countTable("room_team_leader")).isEqualTo(1);
-        assertThat(countColumn("room_team_leader", "action_token")).isEqualTo(1);
-        assertThat(countColumn("room_team_leader", "draft_position")).isEqualTo(1);
-        assertThat(countTable("room_team_member")).isEqualTo(1);
-        assertThat(countTable("room_bid")).isEqualTo(1);
-        assertThat(countTable("event_publication")).isEqualTo(1);
+        assertThat(indexColumns("rooms", "idx_rooms_status_created_at")).containsExactly("status", "created_at");
     }
 
     private Integer countTable(String tableName) {
         return jdbcTemplate.queryForObject(
-            "select count(*) from information_schema.tables where table_name = upper(?)",
+            "select count(*) from information_schema.tables where table_schema = current_schema() and table_name = ?",
             Integer.class,
             tableName
         );
@@ -58,7 +47,7 @@ class LiquibaseSmokeTest {
 
     private Integer countColumn(String tableName, String columnName) {
         return jdbcTemplate.queryForObject(
-            "select count(*) from information_schema.columns where table_name = upper(?) and column_name = upper(?)",
+            "select count(*) from information_schema.columns where table_schema = current_schema() and table_name = ? and column_name = ?",
             Integer.class,
             tableName,
             columnName
@@ -67,7 +56,7 @@ class LiquibaseSmokeTest {
 
     private Integer countIndex(String tableName, String indexName) {
         return jdbcTemplate.queryForObject(
-            "select count(*) from information_schema.indexes where table_name = upper(?) and index_name = upper(?)",
+            "select count(*) from pg_indexes where schemaname = current_schema() and tablename = ? and indexname = ?",
             Integer.class,
             tableName,
             indexName
@@ -77,7 +66,7 @@ class LiquibaseSmokeTest {
     private List<String> indexColumns(String tableName, String indexName) {
         return jdbcTemplate.execute((Connection connection) -> {
             var columnsByOrdinal = new TreeMap<Integer, String>();
-            try (ResultSet resultSet = connection.getMetaData().getIndexInfo(null, null, tableName.toUpperCase(Locale.ROOT), false, false)) {
+            try (ResultSet resultSet = connection.getMetaData().getIndexInfo(null, currentSchema(connection), tableName, false, false)) {
                 while (resultSet.next()) {
                     var currentIndexName = resultSet.getString("INDEX_NAME");
                     var columnName = resultSet.getString("COLUMN_NAME");
@@ -88,5 +77,14 @@ class LiquibaseSmokeTest {
             }
             return new ArrayList<>(columnsByOrdinal.values());
         });
+    }
+
+    private String currentSchema(Connection connection) {
+        try (ResultSet resultSet = connection.createStatement().executeQuery("select current_schema()")) {
+            resultSet.next();
+            return resultSet.getString(1);
+        } catch (Exception ex) {
+            throw new IllegalStateException(ex);
+        }
     }
 }

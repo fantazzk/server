@@ -4,10 +4,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.naminhyeok.fantazzk.CoreException;
+import java.time.Instant;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class RoomAuctionTest {
+    private static final Instant CREATED_AT = Instant.parse("2026-04-09T00:00:00Z");
     private static final String HOST_ID = "host-1";
     private static final String HOST_ACTION_TOKEN = "host-action-token";
     private static final String GUEST_ID = "guest-1";
@@ -132,7 +134,8 @@ class RoomAuctionTest {
                     new RoomTemplateSpec.Player("선수1", 0),
                     new RoomTemplateSpec.Player("선수2", 1)
                 )
-            )
+            ),
+            CREATED_AT
         );
     }
 
@@ -153,7 +156,8 @@ class RoomAuctionTest {
                         new RoomTemplateSpec.Player("선수1", 0),
                         new RoomTemplateSpec.Player("선수2", 1)
                     )
-                )
+                ),
+                CREATED_AT
             );
         room.join(GUEST_ID, "게스트", GUEST_ACTION_TOKEN);
         room.selectDraftPosition(HOST_ID, 1);
