@@ -65,3 +65,173 @@ jobs:
         with:
           check_name: 'JUnit Test Report'
           report_paths: '**/build/test-results/*[tT]est/TEST-*.xml'
+
+  sync-openapi-to-web-fe:
+    name: sync openapi to web-fe
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: ci
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      WEB_FE_REPOSITORY: fantazzk/web-fe
+      WEB_FE_BRANCH: automation/openapi-sync
+      WEB_FE_OPENAPI_PATH: ${{ vars.WEB_FE_OPENAPI_PATH }}
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: resolve sync configuration
+        id: sync-config
+        env:
+          OPENAPI_SYNC_APP_ID: ${{ vars.OPENAPI_SYNC_APP_ID }}
+          OPENAPI_SYNC_APP_PRIVATE_KEY: ${{ secrets.OPENAPI_SYNC_APP_PRIVATE_KEY }}
+        run: |
+          if [ -z "${OPENAPI_SYNC_APP_ID}" ] || [ -z "${OPENAPI_SYNC_APP_PRIVATE_KEY}" ]; then
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "OpenAPI sync is disabled because OPENAPI_SYNC_APP_ID or OPENAPI_SYNC_APP_PRIVATE_KEY is not configured."
+            exit 0
+          fi
+
+          echo "enabled=true" >> "$GITHUB_OUTPUT"
+
+          if [ -n "${WEB_FE_OPENAPI_PATH}" ]; then
+            printf 'web_fe_openapi_path=%s\n' "${WEB_FE_OPENAPI_PATH}" >> "$GITHUB_OUTPUT"
+          else
+            echo "web_fe_openapi_path=openapi/fantazzk.yaml" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: install sdkman
+        if: steps.sync-config.outputs.enabled == 'true'
+        run: curl -s "https://get.sdkman.io" | bash
+
+      - name: jdk cache
+        if: steps.sync-config.outputs.enabled == 'true'
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.sdkman
+          key: gha-${{ runner.os }}-sdkman-${{ hashFiles('**/.sdkmanrc') }}
+
+      - name: install jdk
+        if: steps.sync-config.outputs.enabled == 'true'
+        run: |
+          source "$HOME/.sdkman/bin/sdkman-init.sh"
+          sdk env install
+
+      - name: gradle cache
+        if: steps.sync-config.outputs.enabled == 'true'
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            ~/.gradle/jdks
+          key: gha-${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            gha-${{ runner.os }}-gradle
+
+      - name: generate GitHub App token
+        if: steps.sync-config.outputs.enabled == 'true'
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ vars.OPENAPI_SYNC_APP_ID }}
+          private-key: ${{ secrets.OPENAPI_SYNC_APP_PRIVATE_KEY }}
+          owner: fantazzk
+
+      - name: checkout web-fe
+        if: steps.sync-config.outputs.enabled == 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.WEB_FE_REPOSITORY }}
+          token: ${{ steps.app-token.outputs.token }}
+          path: web-fe
+
+      - name: export OpenAPI yaml
+        if: steps.sync-config.outputs.enabled == 'true'
+        run: |
+          source "$HOME/.sdkman/bin/sdkman-init.sh"
+          ./gradlew bootRun --args='--spring.profiles.active=test --server.port=8080' > app.log 2>&1 &
+          app_pid=$!
+          trap 'kill "${app_pid}" || true' EXIT
+
+          attempts=0
+          while [ "${attempts}" -lt 60 ]; do
+            if curl --fail --silent --show-error http://127.0.0.1:8080/v3/api-docs.yaml -o openapi.yaml; then
+              exit 0
+            fi
+
+            if ! kill -0 "${app_pid}" 2>/dev/null; then
+              echo "Application exited before the OpenAPI endpoint became ready."
+              cat app.log
+              exit 1
+            fi
+
+            attempts=$((attempts + 1))
+            sleep 2
+          done
+
+          echo "OpenAPI endpoint did not become ready in time."
+          cat app.log
+          exit 1
+
+      - name: copy OpenAPI into web-fe
+        if: steps.sync-config.outputs.enabled == 'true'
+        working-directory: web-fe
+        env:
+          TARGET_PATH: ${{ steps.sync-config.outputs.web_fe_openapi_path }}
+        run: |
+          mkdir -p "$(dirname "${TARGET_PATH}")"
+          cp "${GITHUB_WORKSPACE}/openapi.yaml" "${TARGET_PATH}"
+
+      - name: commit and push sync branch
+        if: steps.sync-config.outputs.enabled == 'true'
+        id: commit
+        working-directory: web-fe
+        env:
+          TARGET_PATH: ${{ steps.sync-config.outputs.web_fe_openapi_path }}
+        run: |
+          if [ -z "$(git status --short -- "${TARGET_PATH}")" ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "OpenAPI spec is already up to date."
+            exit 0
+          fi
+
+          git config user.name "fantazzk-openapi-bot[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "${WEB_FE_BRANCH}"
+          git add "${TARGET_PATH}"
+          git commit -m "chore(api): sync OpenAPI from ${GITHUB_REPOSITORY}@${GITHUB_SHA}"
+          git push --force-with-lease origin "${WEB_FE_BRANCH}"
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: create or update pull request
+        if: steps.commit.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          TARGET_PATH: ${{ steps.sync-config.outputs.web_fe_openapi_path }}
+        run: |
+          pr_number="$(gh pr list --repo "${WEB_FE_REPOSITORY}" --head "${WEB_FE_BRANCH}" --base main --json number --jq '.[0].number')"
+          pr_body="$(cat <<EOF
+          Automated OpenAPI sync from ${GITHUB_REPOSITORY}.
+
+          - Source commit: ${GITHUB_SHA}
+          - Synced file: ${TARGET_PATH}
+          EOF
+          )"
+
+          if [ -n "${pr_number}" ]; then
+            gh pr edit "${pr_number}" \
+              --repo "${WEB_FE_REPOSITORY}" \
+              --title "chore(api): sync OpenAPI spec" \
+              --body "${pr_body}"
+            exit 0
+          fi
+
+          gh pr create \
+            --repo "${WEB_FE_REPOSITORY}" \
+            --base main \
+            --head "${WEB_FE_BRANCH}" \
+            --title "chore(api): sync OpenAPI spec" \
+            --body "${pr_body}"
