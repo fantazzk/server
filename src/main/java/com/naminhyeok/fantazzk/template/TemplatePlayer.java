@@ -22,8 +22,4 @@ final class TemplatePlayer implements ValueObject {
         this.name = name;
         this.playerIndex = playerIndex;
     }
-
-    int getDisplayOrder() {
-        return playerIndex;
-    }
 }
