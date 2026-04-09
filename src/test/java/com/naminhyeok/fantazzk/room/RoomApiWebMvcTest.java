@@ -12,6 +12,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.naminhyeok.fantazzk.CoreException;
 import com.naminhyeok.fantazzk.ErrorMessage;
 import com.naminhyeok.fantazzk.GlobalExceptionHandler;
+import java.time.Instant;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +32,7 @@ import tools.jackson.databind.ObjectMapper;
 @AutoConfigureMockMvc(addFilters = false)
 @Import(GlobalExceptionHandler.class)
 class RoomApiWebMvcTest {
+    private static final Instant CREATED_AT = Instant.parse("2026-04-09T00:00:00Z");
     private static final String ROOM_CODE = "ROOM01";
     private static final String HOST_ID = "host-1";
     private static final String HOST_TOKEN = "host-action-token";
@@ -398,7 +400,8 @@ class RoomApiWebMvcTest {
                     new RoomTemplateSpec.Player("선수1", 0),
                     new RoomTemplateSpec.Player("선수2", 1)
                 )
-            )
+            ),
+            CREATED_AT
         );
     }
 
@@ -425,7 +428,8 @@ class RoomApiWebMvcTest {
                         new RoomTemplateSpec.Player("선수1", 0),
                         new RoomTemplateSpec.Player("선수2", 1)
                     )
-                )
+                ),
+                CREATED_AT
             );
         room.join(GUEST_ID, "게스트", GUEST_TOKEN);
         room.selectDraftPosition(HOST_ID, 1);

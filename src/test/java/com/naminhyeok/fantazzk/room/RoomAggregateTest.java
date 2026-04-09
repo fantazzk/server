@@ -4,12 +4,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.naminhyeok.fantazzk.CoreException;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 class RoomAggregateTest {
+    private static final Instant CREATED_AT = Instant.parse("2026-04-09T00:00:00Z");
     private static final String HOST_ID = "host-1";
     private static final String HOST_ACTION_TOKEN = "host-action-token";
     private static final String GUEST_ID = "guest-1";
@@ -33,10 +35,12 @@ class RoomAggregateTest {
                         new RoomTemplateSpec.Player("선수B", 1),
                         new RoomTemplateSpec.Player("선수A", 0)
                     )
-                )
+                ),
+                CREATED_AT
             );
 
         assertThat(room.getCode()).isEqualTo("ROOM01");
+        assertThat(room.getCreatedAt()).isEqualTo(CREATED_AT);
         assertThat(room.getStatus()).isEqualTo(RoomStatus.WAITING);
         assertThat(room.getMode()).isEqualTo(RoomMode.AUCTION);
         assertThat(room.getPlayers().stream().map(RoomPlayer::getName)).containsExactly("선수A", "선수B");
@@ -45,6 +49,22 @@ class RoomAggregateTest {
         assertThat(hostLeader.getNickname()).isEqualTo("호스트");
         assertThat(hostLeader.getRemainingBudget()).isEqualTo(300);
         assertThat(hostLeader.getActionToken()).isEqualTo(HOST_ACTION_TOKEN);
+    }
+
+    @Test
+    void 참여_가능한_대기룸만_joinable이다() {
+        Room joinable = auctionWaitingRoom(CREATED_AT);
+
+        Room full = auctionWaitingRoom(CREATED_AT.plusSeconds(60));
+        full.join(GUEST_ID, "게스트", GUEST_ACTION_TOKEN);
+
+        Room started = auctionWaitingRoom(CREATED_AT.plusSeconds(120));
+        started.join(GUEST_ID, "게스트", GUEST_ACTION_TOKEN);
+        started.start(HOST_ID);
+
+        assertThat(joinable.isJoinable()).isTrue();
+        assertThat(full.isJoinable()).isFalse();
+        assertThat(started.isJoinable()).isFalse();
     }
 
     @Test
@@ -137,7 +157,8 @@ class RoomAggregateTest {
                         new RoomTemplateSpec.Player("선수1", 0),
                         new RoomTemplateSpec.Player("선수2", 1)
                     )
-                )
+                ),
+                CREATED_AT
         );
 
         assertThatThrownBy(() -> room.join(GUEST_ID, "게스트", GUEST_ACTION_TOKEN))
@@ -222,6 +243,10 @@ class RoomAggregateTest {
     }
 
     private static Room auctionWaitingRoom() {
+        return auctionWaitingRoom(CREATED_AT);
+    }
+
+    private static Room auctionWaitingRoom(Instant createdAt) {
         return Room.createFromTemplate(
             "ROOM01",
             HOST_ID,
@@ -237,7 +262,8 @@ class RoomAggregateTest {
                     new RoomTemplateSpec.Player("선수1", 0),
                     new RoomTemplateSpec.Player("선수2", 1)
                 )
-            )
+            ),
+            createdAt
         );
     }
 
@@ -249,6 +275,10 @@ class RoomAggregateTest {
     }
 
     private static Room waitingDraftRoom() {
+        return waitingDraftRoom(CREATED_AT);
+    }
+
+    private static Room waitingDraftRoom(Instant createdAt) {
         return Room.createFromTemplate(
             "ROOM02",
             HOST_ID,
@@ -264,7 +294,8 @@ class RoomAggregateTest {
                     new RoomTemplateSpec.Player("선수1", 0),
                     new RoomTemplateSpec.Player("선수2", 1)
                 )
-            )
+            ),
+            createdAt
         );
     }
 }

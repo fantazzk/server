@@ -2,6 +2,8 @@ package com.naminhyeok.fantazzk.room;
 
 import com.naminhyeok.fantazzk.CoreException;
 import com.naminhyeok.fantazzk.template.TemplateCatalog;
+import java.time.Clock;
+import java.time.Instant;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -13,6 +15,7 @@ class CreateRoom {
     private final Rooms rooms;
     private final TemplateCatalog templateCatalog;
     private final TeamLeaderIdentityIssuer teamLeaderIdentityIssuer;
+    private final Clock clock;
 
     @Transactional
     public Room create(UUID templateId, String hostNickname) {
@@ -38,7 +41,8 @@ class CreateRoom {
                     template.players().stream()
                         .map(player -> new RoomTemplateSpec.Player(player.name(), player.displayOrder()))
                         .toList()
-                )
+                ),
+                Instant.now(clock)
             );
 
         return rooms.save(room);

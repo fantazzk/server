@@ -2,8 +2,10 @@ package com.naminhyeok.fantazzk.room;
 
 import com.naminhyeok.fantazzk.CoreException;
 import jakarta.persistence.EnumType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -16,6 +18,8 @@ import org.jmolecules.ddd.types.AggregateRoot;
 class Room implements AggregateRoot<Room, RoomId> {
     private final RoomId id;
     private final String code;
+    @Column(nullable = false, updatable = false)
+    private final Instant createdAt;
     private final String hostId;
     @Enumerated(EnumType.STRING)
     private RoomStatus status;
@@ -35,6 +39,7 @@ class Room implements AggregateRoot<Room, RoomId> {
 
     Room(
         String code,
+        Instant createdAt,
         String hostId,
         RoomMode mode,
         int teamCount,
@@ -44,6 +49,7 @@ class Room implements AggregateRoot<Room, RoomId> {
     ) {
         this.id = new RoomId(UUID.randomUUID());
         this.code = code;
+        this.createdAt = createdAt;
         this.hostId = hostId;
         this.status = RoomStatus.WAITING;
         this.mode = mode;
@@ -64,11 +70,13 @@ class Room implements AggregateRoot<Room, RoomId> {
         String hostId,
         String hostNickname,
         String hostActionToken,
-        RoomTemplateSpec spec
+        RoomTemplateSpec spec,
+        Instant createdAt
     ) {
         Room room =
             new Room(
                 code,
+                createdAt,
                 hostId,
                 spec.mode() == RoomTemplateSpec.Mode.AUCTION ? RoomMode.AUCTION : RoomMode.DRAFT,
                 spec.teamCount(),
@@ -109,6 +117,10 @@ class Room implements AggregateRoot<Room, RoomId> {
             return RoomStartReadiness.WAITING_FOR_DRAFT_POSITIONS;
         }
         return RoomStartReadiness.STARTABLE;
+    }
+
+    boolean isJoinable() {
+        return status == RoomStatus.WAITING && leaders.size() < teamCount;
     }
 
     public void join(String teamLeaderId, String nickname, String actionToken) {

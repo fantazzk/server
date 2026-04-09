@@ -2,6 +2,7 @@ package com.naminhyeok.fantazzk.room;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.Instant;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Test;
@@ -23,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
 @RequiredArgsConstructor
 class RoomRepositoryIntegrationTest {
+    private static final Instant CREATED_AT = Instant.parse("2026-04-09T00:00:00Z");
     private final Rooms rooms;
 
     @Test
@@ -44,7 +46,8 @@ class RoomRepositoryIntegrationTest {
                         new RoomTemplateSpec.Player("선수1", 0),
                         new RoomTemplateSpec.Player("선수2", 1)
                     )
-                )
+                ),
+                CREATED_AT
             );
         room.join("guest-1", "게스트", "guest-action-token");
         room.selectDraftPosition("host-1", 2);
@@ -56,6 +59,7 @@ class RoomRepositoryIntegrationTest {
 
         assertThat(reloaded.getId()).isEqualTo(saved.getId());
         assertThat(reloaded.getCode()).isEqualTo("ROOM01");
+        assertThat(reloaded.getCreatedAt()).isEqualTo(CREATED_AT);
         assertThat(reloaded.getPlayers().stream().map(RoomPlayer::getName)).containsExactly("선수1", "선수2");
         assertThat(reloaded.getLeaders())
             .extracting(RoomTeamLeader::getNickname, RoomTeamLeader::getActionToken, RoomTeamLeader::getDraftPosition)
@@ -63,5 +67,34 @@ class RoomRepositoryIntegrationTest {
                 org.assertj.core.groups.Tuple.tuple("호스트", "host-action-token", 2),
                 org.assertj.core.groups.Tuple.tuple("게스트", "guest-action-token", 1)
             );
+    }
+
+    @Test
+    @Transactional
+    void 방의_createdAt을_저장하고_다시_읽는다() {
+        Room room =
+            Room.createFromTemplate(
+                "ROOM02",
+                "host-1",
+                "호스트",
+                "host-action-token",
+                new RoomTemplateSpec(
+                    RoomTemplateSpec.Mode.DRAFT,
+                    2,
+                    2,
+                    null,
+                    RoomTemplateSpec.DraftOrderStrategy.SNAKE,
+                    List.of(
+                        new RoomTemplateSpec.Player("선수1", 0),
+                        new RoomTemplateSpec.Player("선수2", 1)
+                    )
+                ),
+                CREATED_AT
+            );
+
+        Room saved = rooms.save(room);
+        Room reloaded = rooms.findById(saved.getId()).orElseThrow();
+
+        assertThat(reloaded.getCreatedAt()).isEqualTo(CREATED_AT);
     }
 }
