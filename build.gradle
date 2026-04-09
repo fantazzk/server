@@ -102,8 +102,7 @@ tasks.register('integrationTest', Test) {
     group = LifecycleBasePlugin.VERIFICATION_GROUP
     testClassesDirs = sourceSets.integrationTest.output.classesDirs
     classpath = sourceSets.integrationTest.runtimeClasspath
-    environment 'TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE', '/var/run/docker.sock'
-    environment 'TESTCONTAINERS_HOST_OVERRIDE', 'localhost'
+    environment 'TESTCONTAINERS_RYUK_DISABLED', 'true'
     shouldRunAfter(tasks.test)
     useJUnitPlatform()
 }
