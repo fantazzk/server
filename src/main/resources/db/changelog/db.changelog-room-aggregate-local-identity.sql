@@ -48,23 +48,18 @@ CREATE TABLE room_team_member_v2
     members_room_id UUID         NOT NULL,
     assign_order    INT          NOT NULL,
     team_leader_id  VARCHAR(255) NOT NULL,
-    room_player_id  INT,
     player_name     VARCHAR(255) NOT NULL,
     PRIMARY KEY (members_room_id, assign_order),
     CONSTRAINT fk_room_team_member_v2_room
         FOREIGN KEY (members_room_id) REFERENCES rooms (room_id)
 );
 
-INSERT INTO room_team_member_v2 (members_room_id, assign_order, team_leader_id, room_player_id, player_name)
-SELECT member.members_room_id,
-       member.assign_order,
-       member.team_leader_id,
-       player.room_player_id,
-       member.player_name
-FROM room_team_member member
-LEFT JOIN room_player player
-    ON player.players_room_id = member.members_room_id
-   AND player.name = member.player_name;
+INSERT INTO room_team_member_v2 (members_room_id, assign_order, team_leader_id, player_name)
+SELECT members_room_id,
+       assign_order,
+       team_leader_id,
+       player_name
+FROM room_team_member;
 
 DROP TABLE room_team_member;
 

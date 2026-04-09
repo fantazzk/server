@@ -63,8 +63,8 @@ class RoomDraftIntegrationTest {
 
         assertThat(member.getPlayerName()).isEqualTo("선수1");
         assertThat(reloaded.getMembers()).singleElement()
-            .extracting(RoomTeamMember::teamLeaderId, RoomTeamMember::getPlayerId, RoomTeamMember::getPlayerName)
-            .containsExactly(new TeamLeaderId(currentLeaderId), new RoomPlayerId(0), "선수1");
+            .extracting(RoomTeamMember::teamLeaderId, RoomTeamMember::getPlayerName)
+            .containsExactly(new TeamLeaderId(currentLeaderId), "선수1");
         assertThat(reloaded.getPlayers().stream().filter(it -> it.getName().equals("선수1")).findFirst().orElseThrow().getStatus())
             .isEqualTo(PlayerStatus.ASSIGNED);
         assertThat(reloaded.getCurrentTurnIndex()).isEqualTo(1);
