@@ -32,3 +32,14 @@ databaseChangeLog:
             path: db/changelog/db.changelog-room-team-leader-draft-position.sql
             splitStatements: true
             stripComments: false
+  - changeSet:
+      id: 4-room-created-at
+      author: codex
+      changes:
+        - sqlFile:
+            dbms: h2,postgresql
+            encoding: UTF-8
+            endDelimiter: ;
+            path: db/changelog/db.changelog-room-created-at.sql
+            splitStatements: true
+            stripComments: false
