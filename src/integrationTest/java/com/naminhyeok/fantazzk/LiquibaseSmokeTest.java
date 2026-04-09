@@ -2,6 +2,12 @@ package com.naminhyeok.fantazzk;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.TreeMap;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -32,6 +38,7 @@ class LiquibaseSmokeTest {
         assertThat(countTable("rooms")).isEqualTo(1);
         assertThat(countColumn("rooms", "created_at")).isEqualTo(1);
         assertThat(countIndex("rooms", "idx_rooms_status_created_at")).isEqualTo(1);
+        assertThat(indexColumns("rooms", "idx_rooms_status_created_at")).containsExactly("STATUS", "CREATED_AT");
         assertThat(countTable("room_player")).isEqualTo(1);
         assertThat(countTable("room_team_leader")).isEqualTo(1);
         assertThat(countColumn("room_team_leader", "action_token")).isEqualTo(1);
@@ -65,5 +72,21 @@ class LiquibaseSmokeTest {
             tableName,
             indexName
         );
+    }
+
+    private List<String> indexColumns(String tableName, String indexName) {
+        return jdbcTemplate.execute((Connection connection) -> {
+            var columnsByOrdinal = new TreeMap<Integer, String>();
+            try (ResultSet resultSet = connection.getMetaData().getIndexInfo(null, null, tableName.toUpperCase(Locale.ROOT), false, false)) {
+                while (resultSet.next()) {
+                    var currentIndexName = resultSet.getString("INDEX_NAME");
+                    var columnName = resultSet.getString("COLUMN_NAME");
+                    if (indexName.equalsIgnoreCase(currentIndexName) && columnName != null) {
+                        columnsByOrdinal.put(resultSet.getInt("ORDINAL_POSITION"), columnName);
+                    }
+                }
+            }
+            return new ArrayList<>(columnsByOrdinal.values());
+        });
     }
 }
