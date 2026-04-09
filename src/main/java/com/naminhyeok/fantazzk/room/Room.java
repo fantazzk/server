@@ -98,6 +98,19 @@ class Room implements AggregateRoot<Room, RoomId> {
         return List.copyOf(members);
     }
 
+    public RoomStartReadiness getStartReadiness() {
+        if (status != RoomStatus.WAITING) {
+            return RoomStartReadiness.NOT_WAITING;
+        }
+        if (leaders.size() != teamCount) {
+            return RoomStartReadiness.WAITING_FOR_LEADERS;
+        }
+        if (mode == RoomMode.DRAFT && !hasConfirmedDraftPositions()) {
+            return RoomStartReadiness.WAITING_FOR_DRAFT_POSITIONS;
+        }
+        return RoomStartReadiness.STARTABLE;
+    }
+
     public void join(String teamLeaderId, String nickname, String actionToken) {
         if (status != RoomStatus.WAITING) {
             throw CoreException.of(RoomErrorType.ROOM_JOIN_REQUIRES_WAITING);
@@ -108,15 +121,39 @@ class Room implements AggregateRoot<Room, RoomId> {
         leaders.add(new RoomTeamLeader(teamLeaderId, nickname, actionToken, budget));
     }
 
+    public void selectDraftPosition(String callerLeaderId, int draftPosition) {
+        validateDraftPositionChange(draftPosition);
+
+        RoomTeamLeader caller = getLeader(callerLeaderId);
+        boolean taken =
+            leaders.stream()
+                .filter(leader -> !leader.getTeamLeaderId().equals(callerLeaderId))
+                .anyMatch(leader -> Integer.valueOf(draftPosition).equals(leader.getDraftPosition()));
+        if (taken) {
+            throw CoreException.of(RoomErrorType.ROOM_DRAFT_POSITION_TAKEN);
+        }
+
+        caller.assignDraftPosition(draftPosition);
+    }
+
+    public void clearDraftPosition(String callerLeaderId) {
+        validateDraftModeWaiting();
+        getLeader(callerLeaderId).clearDraftPosition();
+    }
+
     public void start(String callerLeaderId) {
         if (!hostId.equals(callerLeaderId)) {
             throw CoreException.of(RoomErrorType.ROOM_START_FORBIDDEN);
         }
-        if (status != RoomStatus.WAITING) {
+        RoomStartReadiness readiness = getStartReadiness();
+        if (readiness == RoomStartReadiness.NOT_WAITING) {
             throw CoreException.of(RoomErrorType.ROOM_START_REQUIRES_WAITING);
         }
-        if (leaders.size() != teamCount) {
+        if (readiness == RoomStartReadiness.WAITING_FOR_LEADERS) {
             throw CoreException.of(RoomErrorType.ROOM_LEADERS_NOT_FULL);
+        }
+        if (readiness == RoomStartReadiness.WAITING_FOR_DRAFT_POSITIONS) {
+            throw CoreException.of(RoomErrorType.ROOM_DRAFT_POSITIONS_NOT_FULL);
         }
 
         status = RoomStatus.IN_PROGRESS;
@@ -225,7 +262,8 @@ class Room implements AggregateRoot<Room, RoomId> {
             throw new IllegalArgumentException("현재 드래프트 턴이 없습니다");
         }
 
-        String currentLeaderId = leaders.get(currentTurnIndex % leaders.size()).getTeamLeaderId();
+        List<RoomTeamLeader> orderedLeaders = getLeadersInDraftOrder();
+        String currentLeaderId = orderedLeaders.get(currentTurnIndex % orderedLeaders.size()).getTeamLeaderId();
         if (!currentLeaderId.equals(teamLeaderId)) {
             throw new IllegalStateException("현재 턴이 아닙니다");
         }
@@ -247,5 +285,39 @@ class Room implements AggregateRoot<Room, RoomId> {
         }
 
         return member;
+    }
+
+    private void validateDraftPositionChange(int draftPosition) {
+        validateDraftModeWaiting();
+        if (draftPosition < 1 || draftPosition > teamCount) {
+            throw CoreException.of(RoomErrorType.ROOM_DRAFT_POSITION_OUT_OF_RANGE);
+        }
+    }
+
+    private void validateDraftModeWaiting() {
+        if (mode != RoomMode.DRAFT) {
+            throw CoreException.of(RoomErrorType.ROOM_DRAFT_POSITION_REQUIRES_DRAFT_MODE);
+        }
+        if (status != RoomStatus.WAITING) {
+            throw CoreException.of(RoomErrorType.ROOM_DRAFT_POSITION_REQUIRES_WAITING);
+        }
+    }
+
+    private boolean hasConfirmedDraftPositions() {
+        return leaders.stream().allMatch(leader -> leader.getDraftPosition() != null)
+            && leaders.stream().map(RoomTeamLeader::getDraftPosition).distinct().count() == teamCount;
+    }
+
+    private List<RoomTeamLeader> getLeadersInDraftOrder() {
+        return leaders.stream()
+            .sorted(Comparator.comparingInt(RoomTeamLeader::getDraftPosition))
+            .toList();
+    }
+
+    private RoomTeamLeader getLeader(String teamLeaderId) {
+        return leaders.stream()
+            .filter(leader -> leader.getTeamLeaderId().equals(teamLeaderId))
+            .findFirst()
+            .orElseThrow(() -> new IllegalStateException("팀장을 찾을 수 없습니다"));
     }
 }

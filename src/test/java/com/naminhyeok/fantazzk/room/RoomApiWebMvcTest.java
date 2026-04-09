@@ -3,8 +3,10 @@ package com.naminhyeok.fantazzk.room;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.naminhyeok.fantazzk.CoreException;
@@ -51,6 +53,12 @@ class RoomApiWebMvcTest {
 
     @MockitoBean
     private StartRoom startRoom;
+
+    @MockitoBean
+    private SelectDraftPosition selectDraftPosition;
+
+    @MockitoBean
+    private ClearDraftPosition clearDraftPosition;
 
     @Test
     void create는_room과_teamLeaderSession을_반환한다() throws Exception {
@@ -111,7 +119,7 @@ class RoomApiWebMvcTest {
 
     @Test
     void get은_public_room_snapshot만_반환한다() throws Exception {
-        given(getRoom.get(ROOM_CODE)).willReturn(waitingAuctionRoom());
+        given(getRoom.get(ROOM_CODE)).willReturn(waitingDraftRoom());
 
         var result = mockMvcTester().perform(get("/api/v1/rooms/{code}", ROOM_CODE));
 
@@ -121,6 +129,11 @@ class RoomApiWebMvcTest {
                 assertThat(response.resultType()).isEqualTo("SUCCESS");
                 assertThat(response.success().code()).isEqualTo(ROOM_CODE);
                 assertThat(response.success().status()).isEqualTo("WAITING");
+                assertThat(response.success().mode()).isEqualTo("DRAFT");
+                assertThat(response.success().teamCount()).isEqualTo(2);
+                assertThat(response.success().startReadiness()).isEqualTo("WAITING_FOR_DRAFT_POSITIONS");
+                assertThat(response.success().teamLeaders()).extracting(TeamLeaderResponse::draftPosition)
+                    .containsExactly(1, null);
             });
         assertThat(result.getResponse().getContentAsString()).doesNotContain("teamLeaderSession");
     }
@@ -205,6 +218,81 @@ class RoomApiWebMvcTest {
             });
     }
 
+    @Test
+    void selectDraftPosition은_header가_있으면_성공한다() throws Exception {
+        Room room = waitingDraftRoom();
+        room.selectDraftPosition(GUEST_ID, 2);
+        doNothing().when(selectDraftPosition).select(ROOM_CODE, GUEST_TOKEN, 2);
+        given(getRoom.get(ROOM_CODE)).willReturn(room);
+
+        var result = mockMvcTester().perform(
+            put("/api/v1/rooms/{code}/draft-position", ROOM_CODE)
+                .header("X-Room-Action-Token", GUEST_TOKEN)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    {
+                      "draftPosition": 2
+                    }
+                    """
+                )
+        );
+
+        result.assertThat().hasStatusOk();
+        assertThat(readBody(result, RoomResponseApiResponse.class))
+            .satisfies(response -> {
+                assertThat(response.success().startReadiness()).isEqualTo("STARTABLE");
+                assertThat(response.success().teamLeaders()).extracting(TeamLeaderResponse::draftPosition)
+                    .containsExactly(1, 2);
+            });
+    }
+
+    @Test
+    void clearDraftPosition은_header가_있으면_성공한다() throws Exception {
+        Room room = waitingDraftRoom();
+        doNothing().when(clearDraftPosition).clear(ROOM_CODE, HOST_TOKEN);
+        given(getRoom.get(ROOM_CODE)).willReturn(room);
+
+        var result = mockMvcTester().perform(
+            delete("/api/v1/rooms/{code}/draft-position", ROOM_CODE)
+                .header("X-Room-Action-Token", HOST_TOKEN)
+        );
+
+        result.assertThat().hasStatusOk();
+        assertThat(readBody(result, RoomResponseApiResponse.class))
+            .satisfies(response -> {
+                assertThat(response.success().startReadiness()).isEqualTo("WAITING_FOR_DRAFT_POSITIONS");
+                assertThat(response.success().teamLeaders()).extracting(TeamLeaderResponse::draftPosition)
+                    .containsExactly(1, null);
+            });
+    }
+
+    @Test
+    void selectDraftPosition은_header가_없으면_401을_반환한다() throws Exception {
+        doThrow(CoreException.of(RoomErrorType.ROOM_ACTION_TOKEN_REQUIRED))
+            .when(selectDraftPosition)
+            .select(ROOM_CODE, null, 2);
+
+        var result = mockMvcTester().perform(
+            put("/api/v1/rooms/{code}/draft-position", ROOM_CODE)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    {
+                      "draftPosition": 2
+                    }
+                    """
+                )
+        );
+
+        result.assertThat().hasStatus(HttpStatus.UNAUTHORIZED);
+        assertThat(readBody(result, VoidApiResponse.class))
+            .satisfies(response -> {
+                assertThat(response.resultType()).isEqualTo("ERROR");
+                assertThat(response.error().code()).isEqualTo("ROOM_ACTION_TOKEN_REQUIRED");
+            });
+    }
+
     private MockMvcTester mockMvcTester() {
         return MockMvcTester.create(mockMvc);
     }
@@ -236,6 +324,30 @@ class RoomApiWebMvcTest {
     private Room joinedAuctionRoom() {
         Room room = waitingAuctionRoom();
         room.join(GUEST_ID, "게스트", GUEST_TOKEN);
+        return room;
+    }
+
+    private Room waitingDraftRoom() {
+        Room room =
+            Room.createFromTemplate(
+                ROOM_CODE,
+                HOST_ID,
+                "호스트",
+                HOST_TOKEN,
+                new RoomTemplateSpec(
+                    RoomTemplateSpec.Mode.DRAFT,
+                    2,
+                    2,
+                    null,
+                    RoomTemplateSpec.DraftOrderStrategy.SNAKE,
+                    List.of(
+                        new RoomTemplateSpec.Player("선수1", 0),
+                        new RoomTemplateSpec.Player("선수2", 1)
+                    )
+                )
+            );
+        room.join(GUEST_ID, "게스트", GUEST_TOKEN);
+        room.selectDraftPosition(HOST_ID, 1);
         return room;
     }
 

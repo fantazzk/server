@@ -3,9 +3,15 @@ package com.naminhyeok.fantazzk.room;
 record TeamLeaderResponse(
     String id,
     String nickname,
+    Integer draftPosition,
     Integer remainingBudget
 ) {
     static TeamLeaderResponse from(RoomTeamLeader leader) {
-        return new TeamLeaderResponse(leader.getTeamLeaderId(), leader.getNickname(), leader.getRemainingBudget());
+        return new TeamLeaderResponse(
+            leader.getTeamLeaderId(),
+            leader.getNickname(),
+            leader.getDraftPosition(),
+            leader.getRemainingBudget()
+        );
     }
 }

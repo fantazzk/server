@@ -32,6 +32,8 @@ class LiquibaseSmokeTest {
         assertThat(countTable("rooms")).isEqualTo(1);
         assertThat(countTable("room_player")).isEqualTo(1);
         assertThat(countTable("room_team_leader")).isEqualTo(1);
+        assertThat(countColumn("room_team_leader", "action_token")).isEqualTo(1);
+        assertThat(countColumn("room_team_leader", "draft_position")).isEqualTo(1);
         assertThat(countTable("room_team_member")).isEqualTo(1);
         assertThat(countTable("room_bid")).isEqualTo(1);
         assertThat(countTable("event_publication")).isEqualTo(1);
@@ -42,6 +44,15 @@ class LiquibaseSmokeTest {
             "select count(*) from information_schema.tables where table_name = upper(?)",
             Integer.class,
             tableName
+        );
+    }
+
+    private Integer countColumn(String tableName, String columnName) {
+        return jdbcTemplate.queryForObject(
+            "select count(*) from information_schema.columns where table_name = upper(?) and column_name = upper(?)",
+            Integer.class,
+            tableName,
+            columnName
         );
     }
 }

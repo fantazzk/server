@@ -59,6 +59,54 @@ class RoomAggregateTest {
     }
 
     @Test
+    void 드래프트_자리를_선택하면_팀장에게_확정된다() {
+        Room room = waitingDraftRoom();
+        room.join(GUEST_ID, "게스트", GUEST_ACTION_TOKEN);
+
+        room.selectDraftPosition(HOST_ID, 2);
+
+        assertThat(room.getLeaders().getFirst().getDraftPosition()).isEqualTo(2);
+        assertThat(room.getStartReadiness()).isEqualTo(RoomStartReadiness.WAITING_FOR_DRAFT_POSITIONS);
+    }
+
+    @Test
+    void 드래프트_자리를_다른_빈_자리로_변경할_수_있다() {
+        Room room = waitingDraftRoom();
+        room.join(GUEST_ID, "게스트", GUEST_ACTION_TOKEN);
+        room.selectDraftPosition(HOST_ID, 1);
+
+        room.selectDraftPosition(HOST_ID, 2);
+
+        assertThat(room.getLeaders().getFirst().getDraftPosition()).isEqualTo(2);
+    }
+
+    @Test
+    void 드래프트_자리를_취소하면_미선택으로_돌아간다() {
+        Room room = waitingDraftRoom();
+        room.join(GUEST_ID, "게스트", GUEST_ACTION_TOKEN);
+        room.selectDraftPosition(HOST_ID, 1);
+
+        room.clearDraftPosition(HOST_ID);
+
+        assertThat(room.getLeaders().getFirst().getDraftPosition()).isNull();
+    }
+
+    @Test
+    void 이미_선점된_드래프트_자리는_선택할_수_없다() {
+        Room room = waitingDraftRoom();
+        room.join(GUEST_ID, "게스트", GUEST_ACTION_TOKEN);
+        room.selectDraftPosition(HOST_ID, 1);
+
+        assertThatThrownBy(() -> room.selectDraftPosition(GUEST_ID, 1))
+            .isInstanceOf(CoreException.class)
+            .satisfies(ex -> {
+                CoreException coreException = (CoreException) ex;
+                assertThat(coreException.getError()).isEqualTo(RoomErrorType.ROOM_DRAFT_POSITION_TAKEN);
+                assertThat(coreException.getData()).isNull();
+            });
+    }
+
+    @Test
     void 대기_상태가_아니면_참가할_수_없다() {
         Room room = startedAuctionRoom();
 
@@ -117,31 +165,32 @@ class RoomAggregateTest {
 
         @Test
         void 드래프트_방을_시작하면_현재_턴을_초기화한다() {
-            Room room =
-                Room.createFromTemplate(
-                    "ROOM02",
-                    HOST_ID,
-                    "호스트",
-                    HOST_ACTION_TOKEN,
-                    new RoomTemplateSpec(
-                        RoomTemplateSpec.Mode.DRAFT,
-                        2,
-                        2,
-                        null,
-                        RoomTemplateSpec.DraftOrderStrategy.SNAKE,
-                        List.of(
-                            new RoomTemplateSpec.Player("선수1", 0),
-                            new RoomTemplateSpec.Player("선수2", 1)
-                        )
-                    )
-                );
+            Room room = waitingDraftRoom();
             room.join(GUEST_ID, "게스트", GUEST_ACTION_TOKEN);
+            room.selectDraftPosition(HOST_ID, 1);
+            room.selectDraftPosition(GUEST_ID, 2);
 
             room.start(HOST_ID);
 
             assertThat(room.getStatus()).isEqualTo(RoomStatus.IN_PROGRESS);
             assertThat(room.getCurrentTurnIndex()).isEqualTo(0);
             assertThat(room.getCurrentAuctionRound()).isNull();
+        }
+
+        @Test
+        void 드래프트_방은_자리_확정이_끝나야_시작할_수_있다() {
+            Room room = waitingDraftRoom();
+            room.join(GUEST_ID, "게스트", GUEST_ACTION_TOKEN);
+            room.selectDraftPosition(HOST_ID, 1);
+
+            assertThat(room.getStartReadiness()).isEqualTo(RoomStartReadiness.WAITING_FOR_DRAFT_POSITIONS);
+            assertThatThrownBy(() -> room.start(HOST_ID))
+                .isInstanceOf(CoreException.class)
+                .satisfies(ex -> {
+                    CoreException coreException = (CoreException) ex;
+                    assertThat(coreException.getError()).isEqualTo(RoomErrorType.ROOM_DRAFT_POSITIONS_NOT_FULL);
+                    assertThat(coreException.getData()).isNull();
+                });
         }
 
         @Test
@@ -197,5 +246,25 @@ class RoomAggregateTest {
         room.join(GUEST_ID, "게스트", GUEST_ACTION_TOKEN);
         room.start(HOST_ID);
         return room;
+    }
+
+    private static Room waitingDraftRoom() {
+        return Room.createFromTemplate(
+            "ROOM02",
+            HOST_ID,
+            "호스트",
+            HOST_ACTION_TOKEN,
+            new RoomTemplateSpec(
+                RoomTemplateSpec.Mode.DRAFT,
+                2,
+                2,
+                null,
+                RoomTemplateSpec.DraftOrderStrategy.SNAKE,
+                List.of(
+                    new RoomTemplateSpec.Player("선수1", 0),
+                    new RoomTemplateSpec.Player("선수2", 1)
+                )
+            )
+        );
     }
 }

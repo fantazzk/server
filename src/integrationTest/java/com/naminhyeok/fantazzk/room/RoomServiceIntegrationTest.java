@@ -31,6 +31,8 @@ class RoomServiceIntegrationTest {
     private final CreateRoom createRoom;
     private final JoinRoom joinRoom;
     private final StartRoom startRoom;
+    private final SelectDraftPosition selectDraftPosition;
+    private final ClearDraftPosition clearDraftPosition;
     private final Rooms rooms;
 
     @Test
@@ -65,5 +67,62 @@ class RoomServiceIntegrationTest {
                 assertThat(coreException.getError()).isEqualTo(RoomErrorType.ROOM_START_FORBIDDEN);
                 assertThat(coreException.getData()).isNull();
             });
+    }
+
+    @Test
+    void 드래프트_자리가_모두_확정되면_시작_가능_상태가_된다() {
+        var template =
+            templateFixture.createDraftTemplateId("드래프트전", 2, 2, com.naminhyeok.fantazzk.template.TemplateCatalog.DraftOrderStrategy.SNAKE, List.of("선수1", "선수2"));
+
+        Room created = createRoom.create(template, "호스트");
+        RoomTeamLeader guest = joinRoom.join(created.getCode(), "게스트");
+
+        selectDraftPosition.select(created.getCode(), created.getLeaders().getFirst().getActionToken(), 2);
+        selectDraftPosition.select(created.getCode(), guest.getActionToken(), 1);
+
+        Room reloaded = rooms.findByCode(created.getCode()).orElseThrow();
+
+        assertThat(reloaded.getStartReadiness()).isEqualTo(RoomStartReadiness.STARTABLE);
+        assertThat(reloaded.getLeaders())
+            .extracting(RoomTeamLeader::getTeamLeaderId, RoomTeamLeader::getDraftPosition)
+            .containsExactlyInAnyOrder(
+                org.assertj.core.groups.Tuple.tuple(created.getLeaders().getFirst().getTeamLeaderId(), 2),
+                org.assertj.core.groups.Tuple.tuple(guest.getTeamLeaderId(), 1)
+            );
+    }
+
+    @Test
+    void 드래프트_자리가_미확정이면_방을_시작할_수_없다() {
+        var template =
+            templateFixture.createDraftTemplateId("드래프트전", 2, 2, com.naminhyeok.fantazzk.template.TemplateCatalog.DraftOrderStrategy.SNAKE, List.of("선수1", "선수2"));
+
+        Room created = createRoom.create(template, "호스트");
+        joinRoom.join(created.getCode(), "게스트");
+        selectDraftPosition.select(created.getCode(), created.getLeaders().getFirst().getActionToken(), 1);
+
+        assertThatThrownBy(() -> startRoom.start(created.getCode(), created.getLeaders().getFirst().getActionToken()))
+            .isInstanceOf(CoreException.class)
+            .satisfies(ex -> {
+                CoreException coreException = (CoreException) ex;
+                assertThat(coreException.getError()).isEqualTo(RoomErrorType.ROOM_DRAFT_POSITIONS_NOT_FULL);
+                assertThat(coreException.getData()).isNull();
+            });
+    }
+
+    @Test
+    void 드래프트_자리를_취소하면_다시_미선택이_된다() {
+        var template =
+            templateFixture.createDraftTemplateId("드래프트전", 2, 2, com.naminhyeok.fantazzk.template.TemplateCatalog.DraftOrderStrategy.SNAKE, List.of("선수1", "선수2"));
+
+        Room created = createRoom.create(template, "호스트");
+
+        selectDraftPosition.select(created.getCode(), created.getLeaders().getFirst().getActionToken(), 1);
+        clearDraftPosition.clear(created.getCode(), created.getLeaders().getFirst().getActionToken());
+
+        Room reloaded = rooms.findByCode(created.getCode()).orElseThrow();
+
+        assertThat(reloaded.getLeaders()).singleElement()
+            .extracting(RoomTeamLeader::getDraftPosition)
+            .isNull();
     }
 }
