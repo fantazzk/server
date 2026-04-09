@@ -56,4 +56,21 @@ class RoomAuctionIntegrationTest {
             .isEqualTo(150);
         assertThat(reloaded.getCurrentAuctionRound()).isEqualTo(2);
     }
+
+    @Test
+    void 같은_라운드의_입찰_순번은_재조회_후에도_누적된다() {
+        var template =
+            templateFixture.createAuctionTemplateId("경매전", 2, 2, 300, List.of("선수1", "선수2"));
+
+        Room created = createRoom.create(template, "호스트");
+        RoomTeamLeader guest = joinRoom.join(created.getCode(), "게스트");
+        startRoom.start(created.getCode(), created.getLeaders().getFirst().getActionToken());
+
+        RoomBid firstBid = placeBid.place(created.getCode(), created.getLeaders().getFirst().getId().value(), 100);
+        Room reloaded = rooms.findByCode(created.getCode()).orElseThrow();
+        RoomBid secondBid = placeBid.place(reloaded.getCode(), guest.getId().value(), 150);
+
+        assertThat(firstBid.sequence()).isEqualTo(new BidSequence(1));
+        assertThat(secondBid.sequence()).isEqualTo(new BidSequence(2));
+    }
 }

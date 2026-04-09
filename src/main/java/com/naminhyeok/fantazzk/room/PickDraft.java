@@ -13,14 +13,7 @@ class PickDraft {
     @Transactional
     public RoomTeamMember pick(String code, String teamLeaderId, String playerName) {
         Room room = rooms.findByCode(code).orElseThrow(() -> CoreException.of(RoomErrorType.ROOM_NOT_FOUND));
-        RoomPlayerId playerId =
-            room.getPlayers().stream()
-                .filter(player -> player.getName().equals(playerName))
-                .filter(player -> player.getStatus() == PlayerStatus.AVAILABLE)
-                .findFirst()
-                .map(RoomPlayer::getId)
-                .orElseThrow(() -> new IllegalStateException("픽할 선수를 찾을 수 없습니다"));
-        RoomTeamMember member = room.pick(new TeamLeaderId(teamLeaderId), playerId);
+        RoomTeamMember member = room.pick(new TeamLeaderId(teamLeaderId), playerName);
         rooms.save(room);
         return member;
     }
