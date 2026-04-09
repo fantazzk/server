@@ -1,31 +1,29 @@
 package com.naminhyeok.fantazzk.template;
 
-import java.util.UUID;
+import jakarta.persistence.Column;
+import jakarta.persistence.Embeddable;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import org.jmolecules.ddd.types.Entity;
-import org.jmolecules.ddd.types.Identifier;
+import org.jmolecules.ddd.types.ValueObject;
 
 @Getter
-class TemplatePlayer implements Entity<Template, TemplatePlayer.TemplatePlayerId> {
-    private final TemplatePlayerId id;
-    private String name;
-    private int displayOrder;
+@Embeddable
+@EqualsAndHashCode
+final class TemplatePlayer implements ValueObject {
+    private final String name;
+    @Column(name = "display_order")
+    private final int playerIndex;
 
-    TemplatePlayer(String name, int displayOrder) {
+    TemplatePlayer(String name, int playerIndex) {
         if (name == null || name.isBlank()) {
             throw new IllegalArgumentException("선수 이름은 비어 있을 수 없습니다");
         }
 
-        this.id = new TemplatePlayerId(UUID.randomUUID());
         this.name = name;
-        this.displayOrder = displayOrder;
+        this.playerIndex = playerIndex;
     }
 
-    @Override
-    public TemplatePlayerId getId() {
-        return id;
-    }
-
-    record TemplatePlayerId(UUID templatePlayerId) implements Identifier {
+    int getDisplayOrder() {
+        return playerIndex;
     }
 }

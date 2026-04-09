@@ -29,8 +29,11 @@ public interface TemplateCatalog {
 
     record PlayerBlueprint(
         String name,
-        int displayOrder
+        int playerIndex
     ) {
+        public int displayOrder() {
+            return playerIndex;
+        }
     }
 
     final class NotFound extends RuntimeException {

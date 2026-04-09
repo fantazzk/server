@@ -2,6 +2,7 @@ package com.naminhyeok.fantazzk.template;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.groups.Tuple.tuple;
 
 import java.util.List;
 import org.junit.jupiter.api.Nested;
@@ -11,7 +12,7 @@ class TemplateAggregateTest {
     @Nested
     class 경매_템플릿_생성 {
         @Test
-        void 입력한_선수_순서를_display_order로_보관한다() {
+        void 입력한_선수_순서를_aggregate_local_player_index와_이름으로_보관한다() {
             Template template =
                 Template.createAuction(
                     "주말 경매전",
@@ -21,10 +22,12 @@ class TemplateAggregateTest {
                     List.of("선수2", "선수1")
                 );
 
-            assertThat(template.getPlayers().stream().map(TemplatePlayer::getName))
-                .containsExactly("선수2", "선수1");
-            assertThat(template.getPlayers().stream().map(TemplatePlayer::getDisplayOrder))
-                .containsExactly(0, 1);
+            assertThat(template.getPlayers())
+                .extracting("playerIndex", "name")
+                .containsExactly(
+                    tuple(0, "선수2"),
+                    tuple(1, "선수1")
+                );
         }
 
         @Test
