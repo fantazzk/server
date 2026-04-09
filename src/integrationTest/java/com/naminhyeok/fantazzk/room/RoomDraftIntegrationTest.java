@@ -1,9 +1,11 @@
 package com.naminhyeok.fantazzk.room;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 
 import com.naminhyeok.fantazzk.template.TemplateCatalog.DraftOrderStrategy;
 import com.naminhyeok.fantazzk.template.TemplateFixture;
+import jakarta.persistence.EntityManager;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Test;
@@ -32,6 +34,7 @@ class RoomDraftIntegrationTest {
     private final SelectDraftPosition selectDraftPosition;
     private final PickDraft pickDraft;
     private final Rooms rooms;
+    private final EntityManager entityManager;
 
     @Test
     @Transactional
@@ -63,5 +66,50 @@ class RoomDraftIntegrationTest {
         assertThat(reloaded.getPlayers().stream().filter(it -> it.getName().equals("선수1")).findFirst().orElseThrow().getStatus())
             .isEqualTo(PlayerStatus.ASSIGNED);
         assertThat(reloaded.getCurrentTurnIndex()).isEqualTo(1);
+    }
+
+    @Test
+    @Transactional
+    void SNAKE_드래프트는_재조회_후에도_2라운드가_역순으로_진행된다() {
+        var template =
+            templateFixture.createDraftTemplateId(
+                "드래프트전",
+                2,
+                3,
+                DraftOrderStrategy.SNAKE,
+                List.of("선수1", "선수2", "선수3", "선수4")
+            );
+
+        Room created = createRoom.create(template, "호스트");
+        RoomTeamLeader guest = joinRoom.join(created.getCode(), "게스트");
+        RoomTeamLeader host = created.getLeaders().getFirst();
+        selectDraftPosition.select(created.getCode(), host.getActionToken(), 1);
+        selectDraftPosition.select(created.getCode(), guest.getActionToken(), 2);
+        startRoom.start(created.getCode(), host.getActionToken());
+
+        pickDraft.pick(created.getCode(), host.getTeamLeaderId(), "선수1");
+        pickDraft.pick(created.getCode(), guest.getTeamLeaderId(), "선수2");
+
+        entityManager.flush();
+        entityManager.clear();
+        Room reloadedAfterSecondPick = rooms.findByCode(created.getCode()).orElseThrow();
+
+        assertThat(reloadedAfterSecondPick.getCurrentTurnIndex()).isEqualTo(2);
+
+        RoomTeamMember thirdPick = pickDraft.pick(created.getCode(), guest.getTeamLeaderId(), "선수3");
+
+        entityManager.flush();
+        entityManager.clear();
+        Room reloadedAfterThirdPick = rooms.findByCode(created.getCode()).orElseThrow();
+
+        assertThat(thirdPick.getTeamLeaderId()).isEqualTo(guest.getTeamLeaderId());
+        assertThat(reloadedAfterThirdPick.getMembers())
+            .extracting(RoomTeamMember::getTeamLeaderId, RoomTeamMember::getPlayerName)
+            .containsExactly(
+                tuple(host.getTeamLeaderId(), "선수1"),
+                tuple(guest.getTeamLeaderId(), "선수2"),
+                tuple(guest.getTeamLeaderId(), "선수3")
+            );
+        assertThat(reloadedAfterThirdPick.getCurrentTurnIndex()).isEqualTo(3);
     }
 }

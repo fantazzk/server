@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.naminhyeok.fantazzk.CoreException;
 import java.util.List;
+import java.util.stream.IntStream;
 import org.junit.jupiter.api.Test;
 
 class RoomDraftTest {
@@ -101,6 +102,39 @@ class RoomDraftTest {
         assertThat(room.getMembers()).hasSize(2);
     }
 
+    void SNAKE_드래프트는_2라운드에서_역순으로_진행된다() {
+        Room room = startedDraftRoom(RoomTemplateSpec.DraftOrderStrategy.SNAKE, 3, List.of("선수1", "선수2", "선수3", "선수4"));
+
+        room.pick(HOST_ID, "선수1");
+        room.pick(GUEST_ID, "선수2");
+
+        assertThatThrownBy(() -> room.pick(HOST_ID, "선수3"))
+            .isInstanceOf(CoreException.class)
+            .isInstanceOfSatisfying(CoreException.class, ex -> assertRoomError(ex, RoomErrorType.ROOM_PICK_OUT_OF_TURN));
+
+        RoomTeamMember thirdPick = room.pick(GUEST_ID, "선수3");
+
+        assertThat(thirdPick.getTeamLeaderId()).isEqualTo(GUEST_ID);
+        assertThat(room.getCurrentTurnIndex()).isEqualTo(3);
+    }
+
+    @Test
+    void FIXED_드래프트는_2라운드에서도_같은_순서로_진행된다() {
+        Room room = startedDraftRoom(RoomTemplateSpec.DraftOrderStrategy.FIXED, 3, List.of("선수1", "선수2", "선수3", "선수4"));
+
+        room.pick(HOST_ID, "선수1");
+        room.pick(GUEST_ID, "선수2");
+
+        assertThatThrownBy(() -> room.pick(GUEST_ID, "선수3"))
+            .isInstanceOf(CoreException.class)
+            .isInstanceOfSatisfying(CoreException.class, ex -> assertRoomError(ex, RoomErrorType.ROOM_PICK_OUT_OF_TURN));
+
+        RoomTeamMember thirdPick = room.pick(HOST_ID, "선수3");
+
+        assertThat(thirdPick.getTeamLeaderId()).isEqualTo(HOST_ID);
+        assertThat(room.getCurrentTurnIndex()).isEqualTo(3);
+    }
+
     private static void assertRoomError(CoreException ex, RoomErrorType expected) {
         assertThat(ex.getError()).isEqualTo(expected);
     }
@@ -121,7 +155,32 @@ class RoomDraftTest {
         return room;
     }
 
+    private static Room startedDraftRoom(
+        RoomTemplateSpec.DraftOrderStrategy draftOrderStrategy,
+        int teamSize,
+        List<String> playerNames
+    ) {
+        Room room = waitingDraftRoom(draftOrderStrategy, teamSize, playerNames);
+        room.join(GUEST_ID, "게스트", GUEST_ACTION_TOKEN);
+        room.selectDraftPosition(HOST_ID, 1);
+        room.selectDraftPosition(GUEST_ID, 2);
+        room.start(HOST_ID);
+        return room;
+    }
+
     private static Room waitingDraftRoom() {
+        return waitingDraftRoom(
+            RoomTemplateSpec.DraftOrderStrategy.SNAKE,
+            2,
+            List.of("선수1", "선수2")
+        );
+    }
+
+    private static Room waitingDraftRoom(
+        RoomTemplateSpec.DraftOrderStrategy draftOrderStrategy,
+        int teamSize,
+        List<String> playerNames
+    ) {
         Room room =
             Room.createFromTemplate(
                 "DRF001",
@@ -131,13 +190,12 @@ class RoomDraftTest {
                 new RoomTemplateSpec(
                     RoomTemplateSpec.Mode.DRAFT,
                     2,
-                    2,
+                    teamSize,
                     null,
-                    RoomTemplateSpec.DraftOrderStrategy.SNAKE,
-                    List.of(
-                        new RoomTemplateSpec.Player("선수1", 0),
-                        new RoomTemplateSpec.Player("선수2", 1)
-                    )
+                    draftOrderStrategy,
+                    IntStream.range(0, playerNames.size())
+                        .mapToObj(index -> new RoomTemplateSpec.Player(playerNames.get(index), index))
+                        .toList()
                 )
             );
         return room;
