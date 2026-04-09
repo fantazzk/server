@@ -52,6 +52,9 @@ class RoomApiWebMvcTest {
     private GetRoom getRoom;
 
     @MockitoBean
+    private FindJoinableRooms findJoinableRooms;
+
+    @MockitoBean
     private JoinRoom joinRoom;
 
     @MockitoBean
@@ -232,6 +235,27 @@ class RoomApiWebMvcTest {
     }
 
     @Test
+    void list는_참여_가능한_room_목록을_반환한다() throws Exception {
+        Room latest = waitingAuctionRoom("ROOM99", Instant.parse("2026-04-09T00:03:00Z"));
+        Room older = waitingDraftRoom("ROOM01", Instant.parse("2026-04-09T00:01:00Z"));
+
+        given(findJoinableRooms.list()).willReturn(List.of(latest, older));
+
+        var result = mockMvcTester().perform(get("/api/v1/rooms"));
+
+        result.assertThat().hasStatusOk();
+        assertThat(readBody(result, JoinableRoomListApiResponse.class))
+            .satisfies(response -> {
+                assertThat(response.resultType()).isEqualTo("SUCCESS");
+                assertThat(response.success()).hasSize(2);
+                assertThat(response.success().getFirst().code()).isEqualTo("ROOM99");
+                assertThat(response.success().getFirst().joinedLeaderCount()).isEqualTo(1);
+                assertThat(response.success().getFirst().remainingSlotCount()).isEqualTo(1);
+                assertThat(response.success().getFirst().startReadiness()).isEqualTo("WAITING_FOR_LEADERS");
+            });
+    }
+
+    @Test
     void join은_room과_teamLeaderSession을_반환한다() throws Exception {
         Room room = joinedAuctionRoom();
         RoomTeamLeader guest = room.getLeaders().getLast();
@@ -385,8 +409,12 @@ class RoomApiWebMvcTest {
     }
 
     private Room waitingAuctionRoom() {
+        return waitingAuctionRoom(ROOM_CODE, CREATED_AT);
+    }
+
+    private Room waitingAuctionRoom(String code, Instant createdAt) {
         return Room.createFromTemplate(
-            ROOM_CODE,
+            code,
             HOST_ID,
             "호스트",
             HOST_TOKEN,
@@ -401,7 +429,7 @@ class RoomApiWebMvcTest {
                     new RoomTemplateSpec.Player("선수2", 1)
                 )
             ),
-            CREATED_AT
+            createdAt
         );
     }
 
@@ -412,9 +440,13 @@ class RoomApiWebMvcTest {
     }
 
     private Room waitingDraftRoom() {
+        return waitingDraftRoom(ROOM_CODE, CREATED_AT);
+    }
+
+    private Room waitingDraftRoom(String code, Instant createdAt) {
         Room room =
             Room.createFromTemplate(
-                ROOM_CODE,
+                code,
                 HOST_ID,
                 "호스트",
                 HOST_TOKEN,
@@ -429,7 +461,7 @@ class RoomApiWebMvcTest {
                         new RoomTemplateSpec.Player("선수2", 1)
                     )
                 ),
-                CREATED_AT
+                createdAt
             );
         room.join(GUEST_ID, "게스트", GUEST_TOKEN);
         room.selectDraftPosition(HOST_ID, 1);
@@ -526,6 +558,13 @@ class RoomApiWebMvcTest {
     private record VoidApiResponse(
         String resultType,
         Void success,
+        ErrorMessage error
+    ) {
+    }
+
+    private record JoinableRoomListApiResponse(
+        String resultType,
+        List<JoinableRoomResponse> success,
         ErrorMessage error
     ) {
     }

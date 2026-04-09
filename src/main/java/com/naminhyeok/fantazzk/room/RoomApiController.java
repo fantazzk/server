@@ -2,6 +2,7 @@ package com.naminhyeok.fantazzk.room;
 
 import com.naminhyeok.fantazzk.ApiResponse;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -21,10 +22,20 @@ import org.springframework.web.bind.annotation.RestController;
 class RoomApiController {
     private final CreateRoom createRoom;
     private final GetRoom getRoom;
+    private final FindJoinableRooms findJoinableRooms;
     private final JoinRoom joinRoom;
     private final StartRoom startRoom;
     private final SelectDraftPosition selectDraftPosition;
     private final ClearDraftPosition clearDraftPosition;
+
+    @GetMapping
+    ApiResponse<List<JoinableRoomResponse>> list() {
+        return ApiResponse.success(
+            findJoinableRooms.list().stream()
+                .map(JoinableRoomResponse::from)
+                .toList()
+        );
+    }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
