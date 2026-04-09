@@ -23,8 +23,8 @@ import org.springframework.test.context.TestConstructor;
         "spring.datasource.driver-class-name=org.h2.Driver",
         "spring.datasource.username=sa",
         "spring.datasource.password=",
-        "spring.jpa.hibernate.ddl-auto=create-drop",
-        "spring.liquibase.enabled=false",
+        "spring.jpa.hibernate.ddl-auto=validate",
+        "spring.liquibase.enabled=true",
         "sentry.enabled=false"
     }
 )
@@ -57,6 +57,42 @@ class TemplateApiIntegrationTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         assertThat(response.getBody()).containsEntry("resultType", "SUCCESS");
         assertThat(((Map<?, ?>) response.getBody().get("success")).get("name")).isEqualTo("경매전");
+    }
+
+    @Test
+    void 상세_조회는_선수_display_order를_응답에_유지한다() {
+        ResponseEntity<Map> createResponse = restTemplate.exchange(
+            RequestEntity.post("/api/v1/templates")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                    """
+                    {
+                      "name": "상세조회용 경매전",
+                      "mode": "AUCTION",
+                      "teamCount": 2,
+                      "teamSize": 2,
+                      "budget": 300,
+                      "playerNames": ["선수1", "선수2"]
+                    }
+                    """
+                ),
+            Map.class
+        );
+
+        String templateId = (String) ((Map<?, ?>) createResponse.getBody().get("success")).get("id");
+
+        ResponseEntity<Map> response = restTemplate.getForEntity("/api/v1/templates/" + templateId, Map.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).containsEntry("resultType", "SUCCESS");
+        Map<?, ?> success = (Map<?, ?>) response.getBody().get("success");
+        assertThat(success.get("name")).isEqualTo("상세조회용 경매전");
+        List<Map<String, Object>> players = (List<Map<String, Object>>) success.get("players");
+        assertThat(players)
+            .containsExactly(
+                Map.of("name", "선수1", "displayOrder", 0),
+                Map.of("name", "선수2", "displayOrder", 1)
+            );
     }
 
     @Test

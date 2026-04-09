@@ -16,8 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
         "spring.datasource.driver-class-name=org.h2.Driver",
         "spring.datasource.username=sa",
         "spring.datasource.password=",
-        "spring.jpa.hibernate.ddl-auto=create-drop",
-        "spring.liquibase.enabled=false",
+        "spring.jpa.hibernate.ddl-auto=validate",
+        "spring.liquibase.enabled=true",
         "sentry.enabled=false"
     }
 )
@@ -49,7 +49,11 @@ class TemplateRepositoryIntegrationTest {
         assertThat(reloaded.getId()).isEqualTo(saved.getId());
         assertThat(reloaded.getName()).isEqualTo("주말 풋살 경매전");
         assertThat(reloaded.getMode()).isEqualTo(TemplateMode.AUCTION);
-        assertThat(reloaded.getPlayers().stream().map(TemplatePlayer::getName))
-            .containsExactly("선수1", "선수2");
+        assertThat(reloaded.getPlayers())
+            .extracting("playerIndex", "name")
+            .containsExactly(
+                org.assertj.core.groups.Tuple.tuple(0, "선수1"),
+                org.assertj.core.groups.Tuple.tuple(1, "선수2")
+            );
     }
 }

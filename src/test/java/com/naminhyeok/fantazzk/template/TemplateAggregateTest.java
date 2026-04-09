@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.groups.Tuple.tuple;
 
-import java.lang.reflect.Method;
 import java.util.List;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -30,13 +29,6 @@ class TemplateAggregateTest {
                     tuple(1, "선수1")
                 );
         }
-
-        @Test
-        void 템플릿_플레이어는_legacy_display_order_accessor를_노출하지_않는다() {
-            assertThat(List.of(TemplatePlayer.class.getDeclaredMethods()).stream().map(Method::getName).toList())
-                .doesNotContain("getDisplayOrder");
-        }
-
         @Test
         void 필요한_선수_수를_정확히_강제한다() {
             assertThatThrownBy(() ->

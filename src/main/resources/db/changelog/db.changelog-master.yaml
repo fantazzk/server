@@ -54,3 +54,14 @@ databaseChangeLog:
             path: db/changelog/db.changelog-room-created-at-index.sql
             splitStatements: true
             stripComments: false
+  - changeSet:
+      id: 6-template-player-aggregate-local-identity
+      author: codex
+      changes:
+        - sqlFile:
+            dbms: h2,postgresql
+            encoding: UTF-8
+            endDelimiter: ;
+            path: db/changelog/db.changelog-template-player-aggregate-local-identity.sql
+            splitStatements: true
+            stripComments: false

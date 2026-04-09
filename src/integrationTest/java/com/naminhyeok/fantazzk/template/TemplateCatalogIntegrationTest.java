@@ -2,6 +2,7 @@ package com.naminhyeok.fantazzk.template;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.groups.Tuple.tuple;
 
 import java.util.List;
 import java.util.UUID;
@@ -16,8 +17,8 @@ import org.springframework.test.context.TestConstructor;
         "spring.datasource.driver-class-name=org.h2.Driver",
         "spring.datasource.username=sa",
         "spring.datasource.password=",
-        "spring.jpa.hibernate.ddl-auto=create-drop",
-        "spring.liquibase.enabled=false",
+        "spring.jpa.hibernate.ddl-auto=validate",
+        "spring.liquibase.enabled=true",
         "sentry.enabled=false"
     }
 )
@@ -46,8 +47,14 @@ class TemplateCatalogIntegrationTest {
         assertThat(blueprint.teamCount()).isEqualTo(2);
         assertThat(blueprint.teamSize()).isEqualTo(3);
         assertThat(blueprint.draftOrderStrategy()).isEqualTo(TemplateCatalog.DraftOrderStrategy.FIXED);
-        assertThat(blueprint.players().stream().map(TemplateCatalog.PlayerBlueprint::name))
-            .containsExactly("선수4", "선수1", "선수3", "선수2");
+        assertThat(blueprint.players())
+            .extracting("playerIndex", "name")
+            .containsExactly(
+                tuple(0, "선수4"),
+                tuple(1, "선수1"),
+                tuple(2, "선수3"),
+                tuple(3, "선수2")
+            );
     }
 
     @Test
