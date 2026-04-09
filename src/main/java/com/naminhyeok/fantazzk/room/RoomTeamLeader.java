@@ -11,6 +11,7 @@ class RoomTeamLeader implements Entity<Room, RoomTeamLeader.RoomTeamLeaderId> {
     private final String teamLeaderId;
     private final String nickname;
     private final String actionToken;
+    private Integer draftPosition;
     private Integer remainingBudget;
 
     RoomTeamLeader(String teamLeaderId, String nickname, String actionToken, Integer remainingBudget) {
@@ -18,6 +19,7 @@ class RoomTeamLeader implements Entity<Room, RoomTeamLeader.RoomTeamLeaderId> {
         this.teamLeaderId = teamLeaderId;
         this.nickname = nickname;
         this.actionToken = actionToken;
+        this.draftPosition = null;
         this.remainingBudget = remainingBudget;
     }
 
@@ -34,6 +36,14 @@ class RoomTeamLeader implements Entity<Room, RoomTeamLeader.RoomTeamLeaderId> {
             throw new IllegalArgumentException("예산이 부족합니다");
         }
         remainingBudget -= amount;
+    }
+
+    void assignDraftPosition(int draftPosition) {
+        this.draftPosition = draftPosition;
+    }
+
+    void clearDraftPosition() {
+        this.draftPosition = null;
     }
 
     record RoomTeamLeaderId(UUID roomTeamLeaderId) implements Identifier {

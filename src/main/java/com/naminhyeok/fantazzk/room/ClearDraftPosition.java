@@ -7,15 +7,15 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-class StartRoom {
+class ClearDraftPosition {
     private final Rooms rooms;
     private final RoomActionAuthorizer roomActionAuthorizer;
 
     @Transactional
-    public void start(String code, String actionToken) {
+    public void clear(String code, String actionToken) {
         Room room = rooms.findByCode(code).orElseThrow(() -> CoreException.of(RoomErrorType.ROOM_NOT_FOUND));
         RoomTeamLeader caller = roomActionAuthorizer.authenticate(room, actionToken);
-        room.start(caller.getTeamLeaderId());
+        room.clearDraftPosition(caller.getTeamLeaderId());
         rooms.save(room);
     }
 }

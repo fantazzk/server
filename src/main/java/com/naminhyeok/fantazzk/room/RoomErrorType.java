@@ -33,6 +33,30 @@ enum RoomErrorType implements ErrorDescriptor {
         "유효한 방 액션 토큰이 아닙니다",
         Level.INFO
     ),
+    ROOM_DRAFT_POSITION_REQUIRES_WAITING(
+        HttpStatus.CONFLICT,
+        "ROOM_DRAFT_POSITION_REQUIRES_WAITING",
+        "드래프트 자리는 대기 중인 방에서만 선택할 수 있습니다",
+        Level.INFO
+    ),
+    ROOM_DRAFT_POSITION_REQUIRES_DRAFT_MODE(
+        HttpStatus.CONFLICT,
+        "ROOM_DRAFT_POSITION_REQUIRES_DRAFT_MODE",
+        "드래프트 방에서만 드래프트 자리를 선택할 수 있습니다",
+        Level.INFO
+    ),
+    ROOM_DRAFT_POSITION_OUT_OF_RANGE(
+        HttpStatus.BAD_REQUEST,
+        "ROOM_DRAFT_POSITION_OUT_OF_RANGE",
+        "유효한 드래프트 자리가 아닙니다",
+        Level.INFO
+    ),
+    ROOM_DRAFT_POSITION_TAKEN(
+        HttpStatus.CONFLICT,
+        "ROOM_DRAFT_POSITION_TAKEN",
+        "이미 선택된 드래프트 자리입니다",
+        Level.INFO
+    ),
     ROOM_START_REQUIRES_WAITING(
         HttpStatus.CONFLICT,
         "ROOM_START_REQUIRES_WAITING",
@@ -49,6 +73,12 @@ enum RoomErrorType implements ErrorDescriptor {
         HttpStatus.CONFLICT,
         "ROOM_LEADERS_NOT_FULL",
         "모든 팀장 자리가 채워져야 시작할 수 있습니다",
+        Level.INFO
+    ),
+    ROOM_DRAFT_POSITIONS_NOT_FULL(
+        HttpStatus.CONFLICT,
+        "ROOM_DRAFT_POSITIONS_NOT_FULL",
+        "모든 팀장이 서로 다른 드래프트 자리를 확정해야 시작할 수 있습니다",
         Level.INFO
     );
 

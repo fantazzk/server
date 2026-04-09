@@ -29,6 +29,7 @@ class RoomDraftIntegrationTest {
     private final CreateRoom createRoom;
     private final JoinRoom joinRoom;
     private final StartRoom startRoom;
+    private final SelectDraftPosition selectDraftPosition;
     private final PickDraft pickDraft;
     private final Rooms rooms;
 
@@ -45,10 +46,12 @@ class RoomDraftIntegrationTest {
             );
 
         Room created = createRoom.create(template, "호스트");
-        joinRoom.join(created.getCode(), "게스트");
+        RoomTeamLeader guest = joinRoom.join(created.getCode(), "게스트");
+        selectDraftPosition.select(created.getCode(), created.getLeaders().getFirst().getActionToken(), 2);
+        selectDraftPosition.select(created.getCode(), guest.getActionToken(), 1);
         startRoom.start(created.getCode(), created.getLeaders().getFirst().getActionToken());
 
-        String currentLeaderId = rooms.findByCode(created.getCode()).orElseThrow().getLeaders().getFirst().getTeamLeaderId();
+        String currentLeaderId = guest.getTeamLeaderId();
         RoomTeamMember member = pickDraft.pick(created.getCode(), currentLeaderId, "선수1");
 
         Room reloaded = rooms.findByCode(created.getCode()).orElseThrow();

@@ -28,34 +28,40 @@ class RoomRepositoryIntegrationTest {
     @Test
     @Transactional
     void 방과_내부_선수_팀장_컬렉션을_저장하고_다시_읽는다() {
-        Room saved =
-            rooms.save(
-                Room.createFromTemplate(
-                    "ROOM01",
-                    "host-1",
-                    "호스트",
-                    "host-action-token",
-                    new RoomTemplateSpec(
-                        RoomTemplateSpec.Mode.AUCTION,
-                        2,
-                        2,
-                        300,
-                        null,
-                        List.of(
-                            new RoomTemplateSpec.Player("선수1", 0),
-                            new RoomTemplateSpec.Player("선수2", 1)
-                        )
+        Room room =
+            Room.createFromTemplate(
+                "ROOM01",
+                "host-1",
+                "호스트",
+                "host-action-token",
+                new RoomTemplateSpec(
+                    RoomTemplateSpec.Mode.DRAFT,
+                    2,
+                    2,
+                    null,
+                    RoomTemplateSpec.DraftOrderStrategy.SNAKE,
+                    List.of(
+                        new RoomTemplateSpec.Player("선수1", 0),
+                        new RoomTemplateSpec.Player("선수2", 1)
                     )
                 )
             );
+        room.join("guest-1", "게스트", "guest-action-token");
+        room.selectDraftPosition("host-1", 2);
+        room.selectDraftPosition("guest-1", 1);
+
+        Room saved = rooms.save(room);
 
         Room reloaded = rooms.findById(saved.getId()).orElseThrow();
 
         assertThat(reloaded.getId()).isEqualTo(saved.getId());
         assertThat(reloaded.getCode()).isEqualTo("ROOM01");
         assertThat(reloaded.getPlayers().stream().map(RoomPlayer::getName)).containsExactly("선수1", "선수2");
-        assertThat(reloaded.getLeaders()).singleElement()
-            .extracting(RoomTeamLeader::getNickname, RoomTeamLeader::getActionToken)
-            .containsExactly("호스트", "host-action-token");
+        assertThat(reloaded.getLeaders())
+            .extracting(RoomTeamLeader::getNickname, RoomTeamLeader::getActionToken, RoomTeamLeader::getDraftPosition)
+            .containsExactlyInAnyOrder(
+                org.assertj.core.groups.Tuple.tuple("호스트", "host-action-token", 2),
+                org.assertj.core.groups.Tuple.tuple("게스트", "guest-action-token", 1)
+            );
     }
 }
