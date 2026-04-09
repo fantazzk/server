@@ -9,6 +9,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import lombok.Getter;
 import org.jmolecules.ddd.types.AggregateRoot;
@@ -49,7 +50,7 @@ class Room implements AggregateRoot<Room, RoomId> {
     ) {
         this.id = new RoomId(UUID.randomUUID());
         this.code = code;
-        this.createdAt = createdAt;
+        this.createdAt = Objects.requireNonNull(createdAt, "createdAt must not be null");
         this.hostId = hostId;
         this.status = RoomStatus.WAITING;
         this.mode = mode;

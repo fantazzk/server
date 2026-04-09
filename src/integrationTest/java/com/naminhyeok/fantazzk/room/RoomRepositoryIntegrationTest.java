@@ -1,7 +1,9 @@
 package com.naminhyeok.fantazzk.room;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import jakarta.persistence.EntityManager;
 import java.time.Instant;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 class RoomRepositoryIntegrationTest {
     private static final Instant CREATED_AT = Instant.parse("2026-04-09T00:00:00Z");
     private final Rooms rooms;
+    private final EntityManager entityManager;
 
     @Test
     @Transactional
@@ -54,9 +57,12 @@ class RoomRepositoryIntegrationTest {
         room.selectDraftPosition("guest-1", 1);
 
         Room saved = rooms.save(room);
+        entityManager.flush();
+        entityManager.clear();
 
         Room reloaded = rooms.findById(saved.getId()).orElseThrow();
 
+        assertThat(reloaded).isNotSameAs(saved);
         assertThat(reloaded.getId()).isEqualTo(saved.getId());
         assertThat(reloaded.getCode()).isEqualTo("ROOM01");
         assertThat(reloaded.getCreatedAt()).isEqualTo(CREATED_AT);
@@ -93,8 +99,34 @@ class RoomRepositoryIntegrationTest {
             );
 
         Room saved = rooms.save(room);
+        entityManager.flush();
+        entityManager.clear();
         Room reloaded = rooms.findById(saved.getId()).orElseThrow();
 
         assertThat(reloaded.getCreatedAt()).isEqualTo(CREATED_AT);
+    }
+
+    @Test
+    void 방의_createdAt은_null일_수_없다() {
+        assertThatThrownBy(() ->
+            Room.createFromTemplate(
+                "ROOM03",
+                "host-1",
+                "호스트",
+                "host-action-token",
+                new RoomTemplateSpec(
+                    RoomTemplateSpec.Mode.DRAFT,
+                    2,
+                    2,
+                    null,
+                    RoomTemplateSpec.DraftOrderStrategy.SNAKE,
+                    List.of(
+                        new RoomTemplateSpec.Player("선수1", 0),
+                        new RoomTemplateSpec.Player("선수2", 1)
+                    )
+                ),
+                null
+            )
+        ).isInstanceOf(NullPointerException.class);
     }
 }
