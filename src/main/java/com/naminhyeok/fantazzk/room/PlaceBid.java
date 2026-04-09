@@ -13,7 +13,7 @@ class PlaceBid {
     @Transactional
     public RoomBid place(String code, String teamLeaderId, int amount) {
         Room room = rooms.findByCode(code).orElseThrow(() -> CoreException.of(RoomErrorType.ROOM_NOT_FOUND));
-        RoomBid bid = room.placeBid(teamLeaderId, amount);
+        RoomBid bid = room.placeBid(new TeamLeaderId(teamLeaderId), amount);
         rooms.save(room);
         return bid;
     }

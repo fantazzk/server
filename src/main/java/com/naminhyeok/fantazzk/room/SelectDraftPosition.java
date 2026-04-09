@@ -15,7 +15,7 @@ class SelectDraftPosition {
     public void select(String code, String actionToken, int draftPosition) {
         Room room = rooms.findByCode(code).orElseThrow(() -> CoreException.of(RoomErrorType.ROOM_NOT_FOUND));
         RoomTeamLeader caller = roomActionAuthorizer.authenticate(room, actionToken);
-        room.selectDraftPosition(caller.getTeamLeaderId(), draftPosition);
+        room.selectDraftPosition(caller.getId(), draftPosition);
         rooms.save(room);
     }
 }

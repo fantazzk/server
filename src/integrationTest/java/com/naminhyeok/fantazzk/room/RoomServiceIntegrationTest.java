@@ -84,10 +84,10 @@ class RoomServiceIntegrationTest {
 
         assertThat(reloaded.getStartReadiness()).isEqualTo(RoomStartReadiness.STARTABLE);
         assertThat(reloaded.getLeaders())
-            .extracting(RoomTeamLeader::getTeamLeaderId, RoomTeamLeader::getDraftPosition)
+            .extracting(RoomTeamLeader::getId, RoomTeamLeader::getDraftPosition)
             .containsExactlyInAnyOrder(
-                org.assertj.core.groups.Tuple.tuple(created.getLeaders().getFirst().getTeamLeaderId(), 2),
-                org.assertj.core.groups.Tuple.tuple(guest.getTeamLeaderId(), 1)
+                org.assertj.core.groups.Tuple.tuple(created.getLeaders().getFirst().getId(), 2),
+                org.assertj.core.groups.Tuple.tuple(guest.getId(), 1)
             );
     }
 

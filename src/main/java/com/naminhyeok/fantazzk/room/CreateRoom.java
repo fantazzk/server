@@ -58,7 +58,7 @@ class CreateRoom {
     ) {
         return Room.createFromTemplate(
             generateCode(),
-            identity.leaderId(),
+            new TeamLeaderId(identity.leaderId()),
             hostNickname,
             identity.actionToken(),
             new RoomTemplateSpec(

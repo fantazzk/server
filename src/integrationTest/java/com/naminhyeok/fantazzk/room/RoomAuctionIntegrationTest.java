@@ -42,7 +42,7 @@ class RoomAuctionIntegrationTest {
         RoomTeamLeader guest = joinRoom.join(created.getCode(), "게스트");
         startRoom.start(created.getCode(), created.getLeaders().getFirst().getActionToken());
 
-        placeBid.place(created.getCode(), guest.getTeamLeaderId(), 150);
+        placeBid.place(created.getCode(), guest.getId().value(), 150);
         AuctionSettlement settlement = settleAuction.settle(created.getCode());
 
         Room reloaded = rooms.findByCode(created.getCode()).orElseThrow();
@@ -50,9 +50,9 @@ class RoomAuctionIntegrationTest {
         assertThat(settlement.outcome()).isEqualTo(AuctionOutcome.SOLD);
         assertThat(settlement.playerName()).isEqualTo("선수1");
         assertThat(reloaded.getMembers()).singleElement()
-            .extracting(RoomTeamMember::getTeamLeaderId, RoomTeamMember::getPlayerName)
-            .containsExactly(guest.getTeamLeaderId(), "선수1");
-        assertThat(reloaded.getLeaders().stream().filter(it -> it.getTeamLeaderId().equals(guest.getTeamLeaderId())).findFirst().orElseThrow().getRemainingBudget())
+            .extracting(RoomTeamMember::teamLeaderId, RoomTeamMember::getPlayerId, RoomTeamMember::getPlayerName)
+            .containsExactly(guest.getId(), new RoomPlayerId(0), "선수1");
+        assertThat(reloaded.getLeaders().stream().filter(it -> it.getId().equals(guest.getId())).findFirst().orElseThrow().getRemainingBudget())
             .isEqualTo(150);
         assertThat(reloaded.getCurrentAuctionRound()).isEqualTo(2);
     }

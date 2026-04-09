@@ -21,8 +21,5 @@ record RoomTemplateSpec(
     }
 
     public record Player(RoomPlayerId id, String name, int displayOrder) {
-        public Player(String name, int displayOrder) {
-            this(new RoomPlayerId(displayOrder), name, displayOrder);
-        }
     }
 }

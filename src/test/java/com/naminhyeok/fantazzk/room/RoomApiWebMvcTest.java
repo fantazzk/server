@@ -324,7 +324,7 @@ class RoomApiWebMvcTest {
     @Test
     void selectDraftPosition은_header가_있으면_성공한다() throws Exception {
         Room room = waitingDraftRoom();
-        room.selectDraftPosition(GUEST_ID, 2);
+        room.selectDraftPosition(new TeamLeaderId(GUEST_ID), 2);
         doNothing().when(selectDraftPosition).select(ROOM_CODE, GUEST_TOKEN, 2);
         given(getRoom.get(ROOM_CODE)).willReturn(room);
 

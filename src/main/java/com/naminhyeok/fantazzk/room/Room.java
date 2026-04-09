@@ -300,6 +300,7 @@ class Room implements AggregateRoot<Room, RoomId> {
         if (mode != RoomMode.DRAFT) {
             throw CoreException.of(RoomErrorType.ROOM_PICK_REQUIRES_DRAFT_MODE);
         }
+
         DraftProgress progress = requireCurrentDraftProgress();
         if (!progress.currentLeaderId().equals(teamLeaderId.value())) {
             throw CoreException.of(RoomErrorType.ROOM_PICK_OUT_OF_TURN);
