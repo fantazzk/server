@@ -7,45 +7,38 @@ import java.time.Instant;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.dao.DataIntegrityViolationException;
 
 @Service
 @RequiredArgsConstructor
 class CreateRoom {
+    private static final int MAX_ROOM_CODE_ATTEMPTS = 3;
+    private static final String ROOM_CODE_CONSTRAINT = "uk_rooms_code";
+
     private final Rooms rooms;
     private final TemplateCatalog templateCatalog;
     private final TeamLeaderIdentityIssuer teamLeaderIdentityIssuer;
     private final Clock clock;
 
-    @Transactional
     public Room create(UUID templateId, String hostNickname) {
         TemplateCatalog.TemplateBlueprint template = getTemplate(templateId);
         TeamLeaderIdentityIssuer.TeamLeaderIdentity identity = teamLeaderIdentityIssuer.issue();
 
-        Room room =
-            Room.createFromTemplate(
-                generateCode(),
-                identity.leaderId(),
-                hostNickname,
-                identity.actionToken(),
-                new RoomTemplateSpec(
-                    template.mode() == TemplateCatalog.Mode.AUCTION
-                        ? RoomTemplateSpec.Mode.AUCTION
-                        : RoomTemplateSpec.Mode.DRAFT,
-                    template.teamCount(),
-                    template.teamSize(),
-                    template.budget(),
-                    template.draftOrderStrategy() == null
-                        ? null
-                        : RoomTemplateSpec.DraftOrderStrategy.valueOf(template.draftOrderStrategy().name()),
-                    template.players().stream()
-                        .map(player -> new RoomTemplateSpec.Player(player.name(), player.displayOrder()))
-                        .toList()
-                ),
-                Instant.now(clock)
-            );
+        for (int attempt = 1; attempt <= MAX_ROOM_CODE_ATTEMPTS; attempt++) {
+            Room room = newRoom(template, identity, hostNickname);
+            try {
+                return rooms.saveAndFlush(room);
+            } catch (DataIntegrityViolationException ex) {
+                if (!isRoomCodeCollision(ex)) {
+                    throw ex;
+                }
+                if (attempt == MAX_ROOM_CODE_ATTEMPTS) {
+                    throw CoreException.of(RoomErrorType.ROOM_CODE_GENERATION_FAILED);
+                }
+            }
+        }
 
-        return rooms.save(room);
+        throw CoreException.of(RoomErrorType.ROOM_CODE_GENERATION_FAILED);
     }
 
     private TemplateCatalog.TemplateBlueprint getTemplate(UUID templateId) {
@@ -56,7 +49,47 @@ class CreateRoom {
         }
     }
 
+    private Room newRoom(
+        TemplateCatalog.TemplateBlueprint template,
+        TeamLeaderIdentityIssuer.TeamLeaderIdentity identity,
+        String hostNickname
+    ) {
+        return Room.createFromTemplate(
+            generateCode(),
+            identity.leaderId(),
+            hostNickname,
+            identity.actionToken(),
+            new RoomTemplateSpec(
+                template.mode() == TemplateCatalog.Mode.AUCTION
+                    ? RoomTemplateSpec.Mode.AUCTION
+                    : RoomTemplateSpec.Mode.DRAFT,
+                template.teamCount(),
+                template.teamSize(),
+                template.budget(),
+                template.draftOrderStrategy() == null
+                    ? null
+                    : RoomTemplateSpec.DraftOrderStrategy.valueOf(template.draftOrderStrategy().name()),
+                template.players().stream()
+                    .map(player -> new RoomTemplateSpec.Player(player.name(), player.displayOrder()))
+                    .toList()
+            ),
+            Instant.now(clock)
+        );
+    }
+
     private String generateCode() {
         return UUID.randomUUID().toString().replace("-", "").substring(0, 6).toUpperCase();
+    }
+
+    private boolean isRoomCodeCollision(Throwable throwable) {
+        Throwable current = throwable;
+        while (current != null) {
+            String message = current.getMessage();
+            if (message != null && message.contains(ROOM_CODE_CONSTRAINT)) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
     }
 }

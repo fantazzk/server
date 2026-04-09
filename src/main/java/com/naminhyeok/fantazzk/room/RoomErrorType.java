@@ -14,6 +14,12 @@ enum RoomErrorType implements ErrorDescriptor {
         "방 생성에 사용할 템플릿을 찾을 수 없습니다",
         Level.WARN
     ),
+    ROOM_CODE_GENERATION_FAILED(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "ROOM_CODE_GENERATION_FAILED",
+        "방 코드를 생성하지 못했습니다",
+        Level.ERROR
+    ),
     ROOM_JOIN_REQUIRES_WAITING(
         HttpStatus.CONFLICT,
         "ROOM_JOIN_REQUIRES_WAITING",
