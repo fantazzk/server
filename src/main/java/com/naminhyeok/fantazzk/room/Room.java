@@ -169,23 +169,26 @@ class Room implements AggregateRoot<Room, RoomId> {
 
     public RoomBid placeBid(String teamLeaderId, int amount) {
         if (status != RoomStatus.IN_PROGRESS) {
-            throw new IllegalStateException("진행 중인 방에서만 가능합니다");
+            throw CoreException.of(RoomErrorType.ROOM_PLAY_REQUIRES_IN_PROGRESS);
         }
         if (mode != RoomMode.AUCTION) {
-            throw new IllegalStateException("경매 모드가 아닙니다");
+            throw CoreException.of(RoomErrorType.ROOM_BID_REQUIRES_AUCTION_MODE);
         }
         if (currentAuctionRound == null) {
-            throw new IllegalArgumentException("현재 경매 라운드가 없습니다");
+            throw new IllegalStateException("현재 경매 라운드가 없습니다");
+        }
+        if (amount <= 0) {
+            throw CoreException.of(RoomErrorType.ROOM_BID_AMOUNT_NOT_POSITIVE);
         }
 
         RoomTeamLeader leader =
             leaders.stream()
                 .filter(it -> it.getTeamLeaderId().equals(teamLeaderId))
                 .findFirst()
-                .orElseThrow(() -> new IllegalStateException("입찰할 팀장을 찾을 수 없습니다"));
+                .orElseThrow(() -> CoreException.of(RoomErrorType.ROOM_BIDDER_NOT_FOUND));
 
         if (leader.getRemainingBudget() != null && leader.getRemainingBudget() < amount) {
-            throw new IllegalArgumentException("예산이 부족합니다");
+            throw CoreException.of(RoomErrorType.ROOM_BID_BUDGET_EXCEEDED);
         }
 
         bids.stream()
@@ -194,7 +197,7 @@ class Room implements AggregateRoot<Room, RoomId> {
             .max()
             .ifPresent(highest -> {
                 if (amount <= highest) {
-                    throw new IllegalArgumentException("현재 최고가보다 높아야 합니다");
+                    throw CoreException.of(RoomErrorType.ROOM_BID_TOO_LOW);
                 }
             });
 
@@ -205,13 +208,13 @@ class Room implements AggregateRoot<Room, RoomId> {
 
     public AuctionSettlement settleAuction() {
         if (status != RoomStatus.IN_PROGRESS) {
-            throw new IllegalStateException("진행 중인 방에서만 가능합니다");
+            throw CoreException.of(RoomErrorType.ROOM_PLAY_REQUIRES_IN_PROGRESS);
         }
         if (mode != RoomMode.AUCTION) {
-            throw new IllegalStateException("경매 모드가 아닙니다");
+            throw CoreException.of(RoomErrorType.ROOM_BID_REQUIRES_AUCTION_MODE);
         }
         if (currentAuctionRound == null) {
-            throw new IllegalArgumentException("현재 경매 라운드가 없습니다");
+            throw new IllegalStateException("현재 경매 라운드가 없습니다");
         }
 
         RoomPlayer target =
@@ -253,19 +256,19 @@ class Room implements AggregateRoot<Room, RoomId> {
 
     public RoomTeamMember pick(String teamLeaderId, String playerName) {
         if (status != RoomStatus.IN_PROGRESS) {
-            throw new IllegalStateException("진행 중인 방에서만 가능합니다");
+            throw CoreException.of(RoomErrorType.ROOM_PLAY_REQUIRES_IN_PROGRESS);
         }
         if (mode != RoomMode.DRAFT) {
-            throw new IllegalStateException("드래프트 모드가 아닙니다");
+            throw CoreException.of(RoomErrorType.ROOM_PICK_REQUIRES_DRAFT_MODE);
         }
         if (currentTurnIndex == null) {
-            throw new IllegalArgumentException("현재 드래프트 턴이 없습니다");
+            throw new IllegalStateException("현재 드래프트 턴이 없습니다");
         }
 
         List<RoomTeamLeader> orderedLeaders = getLeadersInDraftOrder();
         String currentLeaderId = orderedLeaders.get(currentTurnIndex % orderedLeaders.size()).getTeamLeaderId();
         if (!currentLeaderId.equals(teamLeaderId)) {
-            throw new IllegalStateException("현재 턴이 아닙니다");
+            throw CoreException.of(RoomErrorType.ROOM_PICK_OUT_OF_TURN);
         }
 
         RoomPlayer player =
@@ -273,7 +276,7 @@ class Room implements AggregateRoot<Room, RoomId> {
                 .filter(it -> it.getName().equals(playerName))
                 .filter(it -> it.getStatus() == PlayerStatus.AVAILABLE)
                 .findFirst()
-                .orElseThrow(() -> new IllegalStateException("픽할 선수를 찾을 수 없습니다"));
+                .orElseThrow(() -> CoreException.of(RoomErrorType.ROOM_PICK_PLAYER_NOT_AVAILABLE));
 
         player.assign();
         RoomTeamMember member = new RoomTeamMember(teamLeaderId, playerName, members.size());
