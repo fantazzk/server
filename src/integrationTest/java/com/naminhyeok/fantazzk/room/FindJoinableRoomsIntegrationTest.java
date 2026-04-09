@@ -8,7 +8,6 @@ import org.springframework.data.domain.PageRequest;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.test.context.TestConstructor;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,7 +23,6 @@ import org.springframework.transaction.annotation.Transactional;
     }
 )
 @Transactional
-@Import(FindJoinableRooms.class)
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
 @RequiredArgsConstructor
 class FindJoinableRoomsIntegrationTest {
@@ -32,42 +30,27 @@ class FindJoinableRoomsIntegrationTest {
     private final Rooms rooms;
 
     @Test
-    void 참여_가능한_waiting_room만_최신순으로_반환한다() {
-        rooms.save(waitingRoom("ROOM01", Instant.parse("2026-04-09T00:00:00Z")));
+    void 참여_가능한_waiting_room만_최신순과_안정적인_tie_break로_반환한다() {
+        Instant createdAt = Instant.parse("2026-04-09T00:00:00Z");
+        rooms.save(fullWaitingRoom("ROOM10", createdAt));
+        rooms.save(waitingRoom("ROOM09", createdAt));
+        rooms.save(fullWaitingRoom("ROOM08", createdAt));
+        rooms.save(waitingRoom("ROOM07", createdAt));
+        rooms.save(fullWaitingRoom("ROOM06", createdAt));
+        rooms.save(waitingRoom("ROOM05", createdAt));
+        rooms.save(fullWaitingRoom("ROOM04", createdAt));
+        rooms.save(waitingRoom("ROOM03", createdAt));
+        rooms.save(fullWaitingRoom("ROOM02", createdAt));
+        rooms.save(waitingRoom("ROOM01", createdAt));
 
-        Room full = waitingRoom("ROOM02", Instant.parse("2026-04-09T00:01:00Z"));
-        full.join("guest-1", "게스트", "guest-action-token");
-        rooms.save(full);
-
-        Room started = waitingRoom("ROOM03", Instant.parse("2026-04-09T00:02:00Z"));
-        started.join("guest-2", "게스트", "guest-action-token-2");
-        started.start("host-ROOM03");
-        rooms.save(started);
-
-        rooms.save(waitingRoom("ROOM04", Instant.parse("2026-04-09T00:03:00Z")));
-
-        assertThat(findJoinableRooms.list()).extracting(Room::getCode)
-            .containsExactly("ROOM04", "ROOM01");
-    }
-
-    @Test
-    void 참여_가능한_room은_최대_다섯개까지만_반환한다() {
-        List.of("ROOM01", "ROOM02", "ROOM03", "ROOM04", "ROOM05", "ROOM06")
-            .forEach(
-                code ->
-                    rooms.save(
-                        waitingRoom(code, Instant.parse("2026-04-09T00:00:00Z").plusSeconds(code.charAt(5)))
-                    )
-            );
-
-        assertThat(rooms.findByStatusOrderByCreatedAtDesc(RoomStatus.WAITING, PageRequest.of(0, 5)).getContent())
+        assertThat(rooms.findJoinableWaitingRooms(PageRequest.of(0, 5)))
             .extracting(Room::getCode)
-            .containsExactly("ROOM06", "ROOM05", "ROOM04", "ROOM03", "ROOM02");
+            .containsExactly("ROOM09", "ROOM07", "ROOM05", "ROOM03", "ROOM01");
 
         assertThat(findJoinableRooms.list())
             .hasSize(5)
             .extracting(Room::getCode)
-            .containsExactly("ROOM06", "ROOM05", "ROOM04", "ROOM03", "ROOM02");
+            .containsExactly("ROOM09", "ROOM07", "ROOM05", "ROOM03", "ROOM01");
     }
 
     private Room waitingRoom(String code, Instant createdAt) {
@@ -89,5 +72,11 @@ class FindJoinableRoomsIntegrationTest {
             ),
             createdAt
         );
+    }
+
+    private Room fullWaitingRoom(String code, Instant createdAt) {
+        Room room = waitingRoom(code, createdAt);
+        room.join("guest-" + code, "게스트-" + code, "guest-action-token-" + code);
+        return room;
     }
 }

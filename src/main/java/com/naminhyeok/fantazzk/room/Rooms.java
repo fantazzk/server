@@ -1,8 +1,9 @@
 package com.naminhyeok.fantazzk.room;
 
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
+import org.springframework.data.jpa.repository.Query;
 import org.jmolecules.ddd.types.Repository;
 
 interface Rooms extends Repository<Room, RoomId> {
@@ -12,5 +13,12 @@ interface Rooms extends Repository<Room, RoomId> {
 
     Optional<Room> findByCode(String code);
 
-    Slice<Room> findByStatusOrderByCreatedAtDesc(RoomStatus status, Pageable pageable);
+    @Query("""
+        select r
+        from Room r
+        where r.status = com.naminhyeok.fantazzk.room.RoomStatus.WAITING
+          and size(r.leaders) < r.teamCount
+        order by r.createdAt desc, r.code desc
+        """)
+    List<Room> findJoinableWaitingRooms(Pageable pageable);
 }
