@@ -6,6 +6,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.dao.DataIntegrityViolationException;
 
@@ -15,7 +16,7 @@ class CreateRoom {
     private static final int MAX_ROOM_CODE_ATTEMPTS = 3;
     private static final String ROOM_CODE_CONSTRAINT = "uk_rooms_code";
 
-    private final Rooms rooms;
+    private final CreateRoomAttempt createRoomAttempt;
     private final TemplateCatalog templateCatalog;
     private final TeamLeaderIdentityIssuer teamLeaderIdentityIssuer;
     private final Clock clock;
@@ -27,7 +28,7 @@ class CreateRoom {
         for (int attempt = 1; attempt <= MAX_ROOM_CODE_ATTEMPTS; attempt++) {
             Room room = newRoom(template, identity, hostNickname);
             try {
-                return rooms.saveAndFlush(room);
+                return createRoomAttempt.save(room);
             } catch (DataIntegrityViolationException ex) {
                 if (!isRoomCodeCollision(ex)) {
                     throw ex;
@@ -84,8 +85,11 @@ class CreateRoom {
     private boolean isRoomCodeCollision(Throwable throwable) {
         Throwable current = throwable;
         while (current != null) {
-            String message = current.getMessage();
-            if (message != null && message.contains(ROOM_CODE_CONSTRAINT)) {
+            if (
+                current instanceof ConstraintViolationException constraintViolationException &&
+                constraintViolationException.getConstraintName() != null &&
+                ROOM_CODE_CONSTRAINT.equalsIgnoreCase(constraintViolationException.getConstraintName())
+            ) {
                 return true;
             }
             current = current.getCause();

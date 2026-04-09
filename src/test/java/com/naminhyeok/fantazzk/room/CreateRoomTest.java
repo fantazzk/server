@@ -12,6 +12,7 @@ import java.util.Optional;
 import java.util.Queue;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 
 class CreateRoomTest {
@@ -22,7 +23,8 @@ class CreateRoomTest {
                 roomCodeCollision(),
                 roomCodeCollision()
             );
-        CreateRoom createRoom = new CreateRoom(rooms, new StubTemplateCatalog(), new StubTeamLeaderIdentityIssuer());
+        CreateRoom createRoom =
+            new CreateRoom(new CreateRoomAttempt(rooms), new StubTemplateCatalog(), new StubTeamLeaderIdentityIssuer());
 
         Room created = createRoom.create(UUID.randomUUID(), "호스트");
 
@@ -34,9 +36,13 @@ class CreateRoomTest {
     @Test
     void 방_코드_충돌이_아닌_영속화_실패는_재시도하지_않고_그대로_전파한다() {
         DataIntegrityViolationException persistenceFailure =
-            new DataIntegrityViolationException("different constraint");
+            new DataIntegrityViolationException(
+                "constraint [uk_rooms_code]",
+                new ConstraintViolationException("other constraint", null, "uk_rooms_host_id")
+            );
         RecordingRooms rooms = new RecordingRooms(persistenceFailure);
-        CreateRoom createRoom = new CreateRoom(rooms, new StubTemplateCatalog(), new StubTeamLeaderIdentityIssuer());
+        CreateRoom createRoom =
+            new CreateRoom(new CreateRoomAttempt(rooms), new StubTemplateCatalog(), new StubTeamLeaderIdentityIssuer());
 
         assertThatThrownBy(() -> createRoom.create(UUID.randomUUID(), "호스트"))
             .isSameAs(persistenceFailure);
@@ -51,7 +57,8 @@ class CreateRoomTest {
                 roomCodeCollision(),
                 roomCodeCollision()
             );
-        CreateRoom createRoom = new CreateRoom(rooms, new StubTemplateCatalog(), new StubTeamLeaderIdentityIssuer());
+        CreateRoom createRoom =
+            new CreateRoom(new CreateRoomAttempt(rooms), new StubTemplateCatalog(), new StubTeamLeaderIdentityIssuer());
 
         assertThatThrownBy(() -> createRoom.create(UUID.randomUUID(), "호스트"))
             .isInstanceOf(CoreException.class)
@@ -64,7 +71,10 @@ class CreateRoomTest {
     }
 
     private static DataIntegrityViolationException roomCodeCollision() {
-        return new DataIntegrityViolationException("constraint [uk_rooms_code]");
+        return new DataIntegrityViolationException(
+            "insert failed",
+            new ConstraintViolationException("duplicate key", null, "UK_ROOMS_CODE")
+        );
     }
 
     private static final class RecordingRooms implements Rooms {
