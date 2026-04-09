@@ -493,7 +493,8 @@ class RoomApiWebMvcTest {
                         new RoomTemplateSpec.Player("선수3", 2),
                         new RoomTemplateSpec.Player("선수4", 3)
                     )
-                )
+                ),
+                CREATED_AT
             );
         room.join(GUEST_ID, "게스트", GUEST_TOKEN);
         room.start(HOST_ID);
@@ -521,7 +522,8 @@ class RoomApiWebMvcTest {
                         new RoomTemplateSpec.Player("선수3", 2),
                         new RoomTemplateSpec.Player("선수4", 3)
                     )
-                )
+                ),
+                CREATED_AT
             );
         room.join(GUEST_ID, "게스트", GUEST_TOKEN);
         room.selectDraftPosition(HOST_ID, 1);
