@@ -18,10 +18,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.TestConstructor;
+import org.springframework.test.context.transaction.TestTransaction;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 @SpringBootTest(
@@ -63,7 +63,10 @@ class CreateRoomRetryIntegrationTest {
     @Test
     @Transactional
     void 바깥_트랜잭션_안에서도_중복_방코드_충돌_후_새_시도로_방_생성에_성공한다() {
-        assertThat(TransactionSynchronizationManager.isActualTransactionActive()).isTrue();
+        assertThat(TestTransaction.isActive()).isTrue();
+        assertThat(TestTransaction.isFlaggedForRollback()).isTrue();
+        TestTransaction.flagForCommit();
+        assertThat(TestTransaction.isFlaggedForRollback()).isFalse();
 
         var template =
             templateFixture.createAuctionTemplateId("경매전", 2, 2, 300, List.of("선수1", "선수2"));
@@ -74,12 +77,24 @@ class CreateRoomRetryIntegrationTest {
         Room created = createRoom.create(template, "호스트");
 
         assertThat(AopUtils.isAopProxy(createRoomAttempt)).isTrue();
-        assertThat(TransactionSynchronizationManager.isActualTransactionActive()).isTrue();
+        assertThat(TestTransaction.isActive()).isTrue();
+        assertThat(TestTransaction.isFlaggedForRollback()).isFalse();
         assertThat(created.getCode()).isEqualTo("ROOM02");
         assertThat(rooms.findByCode("ROOM01")).isPresent();
         assertThat(rooms.findByCode("ROOM02")).get()
             .extracting(Room::getId, Room::getCode)
             .containsExactly(created.getId(), "ROOM02");
+
+        TestTransaction.end();
+
+        assertThat(TestTransaction.isActive()).isFalse();
+
+        inNewTransaction(() -> {
+            assertThat(rooms.findByCode("ROOM01")).isPresent();
+            assertThat(rooms.findByCode("ROOM02")).get()
+                .extracting(Room::getId, Room::getCode)
+                .containsExactly(created.getId(), "ROOM02");
+        });
     }
 
     @Test
