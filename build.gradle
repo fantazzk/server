@@ -79,6 +79,8 @@ dependencies {
     integrationTestImplementation 'org.springframework.boot:spring-boot-restclient'
     integrationTestImplementation 'org.springframework.boot:spring-boot-resttestclient'
     integrationTestImplementation 'org.springframework.boot:spring-boot-jdbc-test'
+    integrationTestRuntimeOnly 'org.testcontainers:jdbc:1.21.4'
+    integrationTestRuntimeOnly 'org.testcontainers:postgresql:1.21.4'
     integrationTestRuntimeOnly 'com.h2database:h2'
     integrationTestRuntimeOnly 'org.postgresql:postgresql'
     integrationTestCompileOnly 'org.projectlombok:lombok'
@@ -100,6 +102,8 @@ tasks.register('integrationTest', Test) {
     group = LifecycleBasePlugin.VERIFICATION_GROUP
     testClassesDirs = sourceSets.integrationTest.output.classesDirs
     classpath = sourceSets.integrationTest.runtimeClasspath
+    environment 'TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE', '/var/run/docker.sock'
+    environment 'TESTCONTAINERS_HOST_OVERRIDE', 'localhost'
     shouldRunAfter(tasks.test)
     useJUnitPlatform()
 }
