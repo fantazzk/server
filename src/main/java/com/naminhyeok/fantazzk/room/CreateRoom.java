@@ -5,6 +5,7 @@ import com.naminhyeok.fantazzk.template.TemplateCatalog;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.UUID;
+import java.util.regex.Pattern;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -15,6 +16,9 @@ import lombok.RequiredArgsConstructor;
 class CreateRoom {
     private static final int MAX_ROOM_CODE_ATTEMPTS = 3;
     private static final String ROOM_CODE_CONSTRAINT = "uk_rooms_code";
+    private static final Pattern ROOM_CODE_CONSTRAINT_PATTERN = Pattern.compile(
+        "(?i)(^|[^a-z0-9_])" + ROOM_CODE_CONSTRAINT + "([^a-z0-9_]|$)"
+    );
 
     private final CreateRoomAttempt createRoomAttempt;
     private final TemplateCatalog templateCatalog;
@@ -92,13 +96,16 @@ class CreateRoom {
         while (current != null) {
             if (
                 current instanceof ConstraintViolationException constraintViolationException &&
-                constraintViolationException.getConstraintName() != null &&
-                ROOM_CODE_CONSTRAINT.equalsIgnoreCase(constraintViolationException.getConstraintName())
+                isRoomCodeConstraint(constraintViolationException.getConstraintName())
             ) {
                 return true;
             }
             current = current.getCause();
         }
         return false;
+    }
+
+    private boolean isRoomCodeConstraint(String constraintName) {
+        return constraintName != null && ROOM_CODE_CONSTRAINT_PATTERN.matcher(constraintName).find();
     }
 }

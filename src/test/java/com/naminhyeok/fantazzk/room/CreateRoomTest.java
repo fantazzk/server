@@ -21,7 +21,7 @@ class CreateRoomTest {
         RecordingRooms rooms =
             new RecordingRooms(
                 roomCodeCollision(),
-                roomCodeCollision()
+                decoratedRoomCodeCollision()
             );
         CreateRoom createRoom =
             new CreateRoom(
@@ -91,6 +91,17 @@ class CreateRoomTest {
         return new DataIntegrityViolationException(
             "insert failed",
             new ConstraintViolationException("duplicate key", null, "UK_ROOMS_CODE")
+        );
+    }
+
+    private static DataIntegrityViolationException decoratedRoomCodeCollision() {
+        return new DataIntegrityViolationException(
+            "insert failed",
+            new ConstraintViolationException(
+                "duplicate key",
+                null,
+                "PUBLIC.UK_ROOMS_CODE INDEX PUBLIC.UK_ROOMS_CODE_INDEX_4"
+            )
         );
     }
 
