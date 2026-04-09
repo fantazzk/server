@@ -18,8 +18,8 @@ class RoomAuctionTest {
     @Test
     void 현재_최고가보다_낮거나_같은_입찰은_할_수_없다() {
         Room room = startedAuctionRoom();
-        String hostLeaderId = room.getLeaders().getFirst().getTeamLeaderId();
-        String guestLeaderId = room.getLeaders().getLast().getTeamLeaderId();
+        TeamLeaderId hostLeaderId = room.getLeaders().getFirst().getId();
+        TeamLeaderId guestLeaderId = room.getLeaders().getLast().getId();
 
         room.placeBid(hostLeaderId, 100);
 
@@ -32,7 +32,7 @@ class RoomAuctionTest {
     void 진행_중이_아니면_입찰할_수_없다() {
         Room room = waitingAuctionRoom();
 
-        assertThatThrownBy(() -> room.placeBid(HOST_ID, 100))
+        assertThatThrownBy(() -> room.placeBid(new TeamLeaderId(HOST_ID), 100))
             .isInstanceOfSatisfying(CoreException.class, ex -> assertRoomError(ex, RoomErrorType.ROOM_PLAY_REQUIRES_IN_PROGRESS));
     }
 
@@ -40,7 +40,7 @@ class RoomAuctionTest {
     void 드래프트_방에서는_입찰할_수_없다() {
         Room room = startedDraftRoomForAuctionError();
 
-        assertThatThrownBy(() -> room.placeBid(HOST_ID, 100))
+        assertThatThrownBy(() -> room.placeBid(new TeamLeaderId(HOST_ID), 100))
             .isInstanceOf(CoreException.class)
             .isInstanceOfSatisfying(CoreException.class, ex -> assertRoomError(ex, RoomErrorType.ROOM_BID_REQUIRES_AUCTION_MODE));
     }
@@ -49,7 +49,7 @@ class RoomAuctionTest {
     void 예산이_부족하면_입찰할_수_없다() {
         Room room = startedAuctionRoom();
 
-        assertThatThrownBy(() -> room.placeBid(HOST_ID, 400))
+        assertThatThrownBy(() -> room.placeBid(new TeamLeaderId(HOST_ID), 400))
             .isInstanceOf(CoreException.class)
             .isInstanceOfSatisfying(CoreException.class, ex -> assertRoomError(ex, RoomErrorType.ROOM_BID_BUDGET_EXCEEDED));
     }
@@ -57,7 +57,7 @@ class RoomAuctionTest {
     @Test
     void 입찰_금액은_0보다_커야_한다() {
         Room room = startedAuctionRoom();
-        String hostLeaderId = room.getLeaders().getFirst().getTeamLeaderId();
+        TeamLeaderId hostLeaderId = room.getLeaders().getFirst().getId();
 
         for (int amount : List.of(0, -1)) {
             assertThatThrownBy(() -> room.placeBid(hostLeaderId, amount))
@@ -70,7 +70,7 @@ class RoomAuctionTest {
     void 방에_없는_팀장_id로는_입찰할_수_없다() {
         Room room = startedAuctionRoom();
 
-        assertThatThrownBy(() -> room.placeBid("unknown-leader", 100))
+        assertThatThrownBy(() -> room.placeBid(new TeamLeaderId("unknown-leader"), 100))
             .isInstanceOf(CoreException.class)
             .isInstanceOfSatisfying(CoreException.class, ex -> assertRoomError(ex, RoomErrorType.ROOM_BIDDER_NOT_FOUND));
     }
@@ -78,23 +78,39 @@ class RoomAuctionTest {
     @Test
     void 낙찰되면_선수가_배정되고_예산이_차감되며_다음_라운드로_진행한다() {
         Room room = startedAuctionRoom();
-        String hostLeaderId = room.getLeaders().getFirst().getTeamLeaderId();
-        String guestLeaderId = room.getLeaders().getLast().getTeamLeaderId();
+        TeamLeaderId hostLeaderId = room.getLeaders().getFirst().getId();
+        TeamLeaderId guestLeaderId = room.getLeaders().getLast().getId();
 
-        room.placeBid(hostLeaderId, 100);
-        room.placeBid(guestLeaderId, 150);
+        RoomBid firstBid = room.placeBid(hostLeaderId, 100);
+        RoomBid secondBid = room.placeBid(guestLeaderId, 150);
 
         AuctionSettlement settlement = room.settleAuction();
 
+        assertThat(firstBid.sequence()).isEqualTo(new BidSequence(1));
+        assertThat(secondBid.sequence()).isEqualTo(new BidSequence(2));
         assertThat(settlement.outcome()).isEqualTo(AuctionOutcome.SOLD);
         assertThat(settlement.playerName()).isEqualTo("선수1");
         assertThat(room.getMembers()).singleElement()
-            .extracting(RoomTeamMember::getTeamLeaderId, RoomTeamMember::getPlayerName)
+            .extracting(RoomTeamMember::teamLeaderId, RoomTeamMember::getPlayerName)
             .containsExactly(guestLeaderId, "선수1");
-        assertThat(room.getLeaders().stream().filter(it -> it.getTeamLeaderId().equals(guestLeaderId)).findFirst().orElseThrow().getRemainingBudget())
+        assertThat(room.getLeaders().stream().filter(it -> it.getId().equals(guestLeaderId)).findFirst().orElseThrow().getRemainingBudget())
             .isEqualTo(150);
         assertThat(room.getPlayers().getFirst().getStatus()).isEqualTo(PlayerStatus.ASSIGNED);
         assertThat(room.getCurrentAuctionRound()).isEqualTo(2);
+    }
+
+    @Test
+    void 새_경매_라운드가_시작되면_입찰_순번은_다시_처음부터_시작한다() {
+        Room room = startedAuctionRoom();
+        TeamLeaderId hostLeaderId = room.getLeaders().getFirst().getId();
+
+        room.placeBid(hostLeaderId, 100);
+        room.settleAuction();
+
+        RoomBid nextRoundBid = room.placeBid(hostLeaderId, 120);
+
+        assertThat(nextRoundBid.sequence()).isEqualTo(new BidSequence(1));
+        assertThat(nextRoundBid.getRound()).isEqualTo(2);
     }
 
     @Test
@@ -121,7 +137,7 @@ class RoomAuctionTest {
     private static Room waitingAuctionRoom() {
         return Room.createFromTemplate(
             "ROOM01",
-            HOST_ID,
+            new TeamLeaderId(HOST_ID),
             "호스트",
             HOST_ACTION_TOKEN,
             new RoomTemplateSpec(
@@ -131,8 +147,8 @@ class RoomAuctionTest {
                 300,
                 null,
                 List.of(
-                    new RoomTemplateSpec.Player("선수1", 0),
-                    new RoomTemplateSpec.Player("선수2", 1)
+                    new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", 0),
+                    new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", 1)
                 )
             ),
             CREATED_AT
@@ -143,7 +159,7 @@ class RoomAuctionTest {
         Room room =
             Room.createFromTemplate(
                 "ROOM02",
-                HOST_ID,
+                new TeamLeaderId(HOST_ID),
                 "호스트",
                 HOST_ACTION_TOKEN,
                 new RoomTemplateSpec(
@@ -153,23 +169,23 @@ class RoomAuctionTest {
                     null,
                     RoomTemplateSpec.DraftOrderStrategy.SNAKE,
                     List.of(
-                        new RoomTemplateSpec.Player("선수1", 0),
-                        new RoomTemplateSpec.Player("선수2", 1)
+                        new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", 0),
+                        new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", 1)
                     )
                 ),
                 CREATED_AT
             );
-        room.join(GUEST_ID, "게스트", GUEST_ACTION_TOKEN);
-        room.selectDraftPosition(HOST_ID, 1);
-        room.selectDraftPosition(GUEST_ID, 2);
-        room.start(HOST_ID);
+        room.join(new TeamLeaderId(GUEST_ID), "게스트", GUEST_ACTION_TOKEN);
+        room.selectDraftPosition(new TeamLeaderId(HOST_ID), 1);
+        room.selectDraftPosition(new TeamLeaderId(GUEST_ID), 2);
+        room.start(new TeamLeaderId(HOST_ID));
         return room;
     }
 
     private static Room startedAuctionRoom() {
         Room room = waitingAuctionRoom();
-        room.join(GUEST_ID, "게스트", GUEST_ACTION_TOKEN);
-        room.start(HOST_ID);
+        room.join(new TeamLeaderId(GUEST_ID), "게스트", GUEST_ACTION_TOKEN);
+        room.start(new TeamLeaderId(HOST_ID));
         return room;
     }
 }

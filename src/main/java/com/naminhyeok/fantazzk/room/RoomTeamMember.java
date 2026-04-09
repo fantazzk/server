@@ -1,29 +1,47 @@
 package com.naminhyeok.fantazzk.room;
 
-import java.util.UUID;
-import lombok.Getter;
-import org.jmolecules.ddd.types.Entity;
-import org.jmolecules.ddd.types.Identifier;
+import jakarta.persistence.Access;
+import jakarta.persistence.AccessType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Embeddable;
+import lombok.EqualsAndHashCode;
+import org.jmolecules.ddd.types.ValueObject;
 
-@Getter
-class RoomTeamMember implements Entity<Room, RoomTeamMember.RoomTeamMemberId> {
-    private final RoomTeamMemberId id;
-    private final String teamLeaderId;
-    private final String playerName;
-    private final int assignOrder;
+@Access(AccessType.FIELD)
+@Embeddable
+@EqualsAndHashCode
+final class RoomTeamMember implements ValueObject {
+    @Column(name = "team_leader_id")
+    @Convert(converter = TeamLeaderId.JpaConverter.class)
+    private TeamLeaderId teamLeaderId;
+    @Column(name = "player_name")
+    private String playerName;
+    @Column(name = "assign_order")
+    private int assignOrder;
 
-    RoomTeamMember(String teamLeaderId, String playerName, int assignOrder) {
-        this.id = new RoomTeamMemberId(UUID.randomUUID());
+    RoomTeamMember() {
+    }
+
+    RoomTeamMember(TeamLeaderId teamLeaderId, String playerName, int assignOrder) {
         this.teamLeaderId = teamLeaderId;
         this.playerName = playerName;
         this.assignOrder = assignOrder;
     }
 
-    @Override
-    public RoomTeamMemberId getId() {
-        return id;
+    TeamLeaderId teamLeaderId() {
+        return teamLeaderId;
     }
 
-    record RoomTeamMemberId(UUID roomTeamMemberId) implements Identifier {
+    String getTeamLeaderId() {
+        return teamLeaderId.value();
+    }
+
+    String getPlayerName() {
+        return playerName;
+    }
+
+    int getAssignOrder() {
+        return assignOrder;
     }
 }

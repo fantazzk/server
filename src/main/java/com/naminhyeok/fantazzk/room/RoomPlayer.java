@@ -1,28 +1,39 @@
 package com.naminhyeok.fantazzk.room;
 
+import jakarta.persistence.Access;
+import jakarta.persistence.AccessType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Embeddable;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import java.util.UUID;
 import lombok.Getter;
-import org.jmolecules.ddd.types.Entity;
-import org.jmolecules.ddd.types.Identifier;
 
 @Getter
-class RoomPlayer implements Entity<Room, RoomPlayer.RoomPlayerId> {
-    private final RoomPlayerId id;
-    private final String name;
+@Access(AccessType.FIELD)
+@Embeddable
+class RoomPlayer {
+    @Column(name = "room_player_id")
+    @Convert(converter = RoomPlayerId.JpaConverter.class)
+    private RoomPlayerId id;
+    @Column(name = "name")
+    private String name;
+    @Column(name = "display_order")
     private int displayOrder;
+    @Column(name = "status")
     @Enumerated(EnumType.STRING)
     private PlayerStatus status;
 
-    RoomPlayer(String name, int displayOrder) {
-        this.id = new RoomPlayerId(UUID.randomUUID());
+    RoomPlayer() {
+    }
+
+    RoomPlayer(RoomPlayerId id, String name, int displayOrder) {
+        this.id = id;
         this.name = name;
         this.displayOrder = displayOrder;
         this.status = PlayerStatus.AVAILABLE;
     }
 
-    @Override
     public RoomPlayerId getId() {
         return id;
     }
@@ -33,8 +44,5 @@ class RoomPlayer implements Entity<Room, RoomPlayer.RoomPlayerId> {
 
     void moveToBack(int nextOrder) {
         this.displayOrder = nextOrder;
-    }
-
-    record RoomPlayerId(UUID roomPlayerId) implements Identifier {
     }
 }

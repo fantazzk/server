@@ -27,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 class RoomRepositoryIntegrationTest {
     private static final Instant CREATED_AT = Instant.parse("2026-04-09T00:00:00Z");
+
     private final Rooms rooms;
     private final EntityManager entityManager;
 
@@ -36,7 +37,7 @@ class RoomRepositoryIntegrationTest {
         Room room =
             Room.createFromTemplate(
                 "ROOM01",
-                "host-1",
+                new TeamLeaderId("host-1"),
                 "호스트",
                 "host-action-token",
                 new RoomTemplateSpec(
@@ -46,15 +47,15 @@ class RoomRepositoryIntegrationTest {
                     null,
                     RoomTemplateSpec.DraftOrderStrategy.SNAKE,
                     List.of(
-                        new RoomTemplateSpec.Player("선수1", 0),
-                        new RoomTemplateSpec.Player("선수2", 1)
+                        new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", 0),
+                        new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", 1)
                     )
                 ),
                 CREATED_AT
             );
-        room.join("guest-1", "게스트", "guest-action-token");
-        room.selectDraftPosition("host-1", 2);
-        room.selectDraftPosition("guest-1", 1);
+        room.join(new TeamLeaderId("guest-1"), "게스트", "guest-action-token");
+        room.selectDraftPosition(new TeamLeaderId("host-1"), 2);
+        room.selectDraftPosition(new TeamLeaderId("guest-1"), 1);
 
         Room saved = rooms.save(room);
         entityManager.flush();
@@ -66,12 +67,14 @@ class RoomRepositoryIntegrationTest {
         assertThat(reloaded.getId()).isEqualTo(saved.getId());
         assertThat(reloaded.getCode()).isEqualTo("ROOM01");
         assertThat(reloaded.getCreatedAt()).isEqualTo(CREATED_AT);
+        assertThat(reloaded.getPlayers()).extracting(RoomPlayer::getId)
+            .containsExactly(new RoomPlayerId(0), new RoomPlayerId(1));
         assertThat(reloaded.getPlayers().stream().map(RoomPlayer::getName)).containsExactly("선수1", "선수2");
         assertThat(reloaded.getLeaders())
-            .extracting(RoomTeamLeader::getNickname, RoomTeamLeader::getActionToken, RoomTeamLeader::getDraftPosition)
+            .extracting(RoomTeamLeader::getId, RoomTeamLeader::getNickname, RoomTeamLeader::getActionToken, RoomTeamLeader::getDraftPosition)
             .containsExactlyInAnyOrder(
-                org.assertj.core.groups.Tuple.tuple("호스트", "host-action-token", 2),
-                org.assertj.core.groups.Tuple.tuple("게스트", "guest-action-token", 1)
+                org.assertj.core.groups.Tuple.tuple(new TeamLeaderId("host-1"), "호스트", "host-action-token", 2),
+                org.assertj.core.groups.Tuple.tuple(new TeamLeaderId("guest-1"), "게스트", "guest-action-token", 1)
             );
     }
 
@@ -81,7 +84,7 @@ class RoomRepositoryIntegrationTest {
         Room room =
             Room.createFromTemplate(
                 "ROOM02",
-                "host-1",
+                new TeamLeaderId("host-1"),
                 "호스트",
                 "host-action-token",
                 new RoomTemplateSpec(
@@ -91,8 +94,8 @@ class RoomRepositoryIntegrationTest {
                     null,
                     RoomTemplateSpec.DraftOrderStrategy.SNAKE,
                     List.of(
-                        new RoomTemplateSpec.Player("선수1", 0),
-                        new RoomTemplateSpec.Player("선수2", 1)
+                        new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", 0),
+                        new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", 1)
                     )
                 ),
                 CREATED_AT
@@ -101,6 +104,7 @@ class RoomRepositoryIntegrationTest {
         Room saved = rooms.save(room);
         entityManager.flush();
         entityManager.clear();
+
         Room reloaded = rooms.findById(saved.getId()).orElseThrow();
 
         assertThat(reloaded.getCreatedAt()).isEqualTo(CREATED_AT);
@@ -111,7 +115,7 @@ class RoomRepositoryIntegrationTest {
         assertThatThrownBy(() ->
             Room.createFromTemplate(
                 "ROOM03",
-                "host-1",
+                new TeamLeaderId("host-1"),
                 "호스트",
                 "host-action-token",
                 new RoomTemplateSpec(
@@ -121,8 +125,8 @@ class RoomRepositoryIntegrationTest {
                     null,
                     RoomTemplateSpec.DraftOrderStrategy.SNAKE,
                     List.of(
-                        new RoomTemplateSpec.Player("선수1", 0),
-                        new RoomTemplateSpec.Player("선수2", 1)
+                        new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", 0),
+                        new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", 1)
                     )
                 ),
                 null

@@ -415,7 +415,7 @@ class RoomApiWebMvcTest {
     private Room waitingAuctionRoom(String code, Instant createdAt) {
         return Room.createFromTemplate(
             code,
-            HOST_ID,
+            new TeamLeaderId(HOST_ID),
             "호스트",
             HOST_TOKEN,
             new RoomTemplateSpec(
@@ -425,8 +425,8 @@ class RoomApiWebMvcTest {
                 300,
                 null,
                 List.of(
-                    new RoomTemplateSpec.Player("선수1", 0),
-                    new RoomTemplateSpec.Player("선수2", 1)
+                    new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", 0),
+                    new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", 1)
                 )
             ),
             createdAt
@@ -435,7 +435,7 @@ class RoomApiWebMvcTest {
 
     private Room joinedAuctionRoom() {
         Room room = waitingAuctionRoom();
-        room.join(GUEST_ID, "게스트", GUEST_TOKEN);
+        room.join(new TeamLeaderId(GUEST_ID), "게스트", GUEST_TOKEN);
         return room;
     }
 
@@ -447,7 +447,7 @@ class RoomApiWebMvcTest {
         Room room =
             Room.createFromTemplate(
                 code,
-                HOST_ID,
+                new TeamLeaderId(HOST_ID),
                 "호스트",
                 HOST_TOKEN,
                 new RoomTemplateSpec(
@@ -457,20 +457,20 @@ class RoomApiWebMvcTest {
                     null,
                     RoomTemplateSpec.DraftOrderStrategy.SNAKE,
                     List.of(
-                        new RoomTemplateSpec.Player("선수1", 0),
-                        new RoomTemplateSpec.Player("선수2", 1)
+                        new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", 0),
+                        new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", 1)
                     )
                 ),
                 createdAt
             );
-        room.join(GUEST_ID, "게스트", GUEST_TOKEN);
-        room.selectDraftPosition(HOST_ID, 1);
+        room.join(new TeamLeaderId(GUEST_ID), "게스트", GUEST_TOKEN);
+        room.selectDraftPosition(new TeamLeaderId(HOST_ID), 1);
         return room;
     }
 
     private Room startedAuctionRoom() {
         Room room = joinedAuctionRoom();
-        room.start(HOST_ID);
+        room.start(new TeamLeaderId(HOST_ID));
         return room;
     }
 
@@ -478,7 +478,7 @@ class RoomApiWebMvcTest {
         Room room =
             Room.createFromTemplate(
                 ROOM_CODE,
-                HOST_ID,
+                new TeamLeaderId(HOST_ID),
                 "호스트",
                 HOST_TOKEN,
                 new RoomTemplateSpec(
@@ -488,17 +488,17 @@ class RoomApiWebMvcTest {
                     300,
                     null,
                     List.of(
-                        new RoomTemplateSpec.Player("선수1", 0),
-                        new RoomTemplateSpec.Player("선수2", 1),
-                        new RoomTemplateSpec.Player("선수3", 2),
-                        new RoomTemplateSpec.Player("선수4", 3)
+                        new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", 0),
+                        new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", 1),
+                        new RoomTemplateSpec.Player(new RoomPlayerId(2), "선수3", 2),
+                        new RoomTemplateSpec.Player(new RoomPlayerId(3), "선수4", 3)
                     )
                 ),
                 CREATED_AT
             );
-        room.join(GUEST_ID, "게스트", GUEST_TOKEN);
-        room.start(HOST_ID);
-        room.placeBid(HOST_ID, 100);
+        room.join(new TeamLeaderId(GUEST_ID), "게스트", GUEST_TOKEN);
+        room.start(new TeamLeaderId(HOST_ID));
+        room.placeBid(new TeamLeaderId(HOST_ID), 100);
         room.settleAuction();
         return room;
     }
@@ -507,7 +507,7 @@ class RoomApiWebMvcTest {
         Room room =
             Room.createFromTemplate(
                 ROOM_CODE,
-                HOST_ID,
+                new TeamLeaderId(HOST_ID),
                 "호스트",
                 HOST_TOKEN,
                 new RoomTemplateSpec(
@@ -517,29 +517,29 @@ class RoomApiWebMvcTest {
                     null,
                     RoomTemplateSpec.DraftOrderStrategy.SNAKE,
                     List.of(
-                        new RoomTemplateSpec.Player("선수1", 0),
-                        new RoomTemplateSpec.Player("선수2", 1),
-                        new RoomTemplateSpec.Player("선수3", 2),
-                        new RoomTemplateSpec.Player("선수4", 3)
+                        new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", 0),
+                        new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", 1),
+                        new RoomTemplateSpec.Player(new RoomPlayerId(2), "선수3", 2),
+                        new RoomTemplateSpec.Player(new RoomPlayerId(3), "선수4", 3)
                     )
                 ),
                 CREATED_AT
             );
-        room.join(GUEST_ID, "게스트", GUEST_TOKEN);
-        room.selectDraftPosition(HOST_ID, 1);
-        room.selectDraftPosition(GUEST_ID, 2);
-        room.start(HOST_ID);
-        room.pick(HOST_ID, "선수1");
-        room.pick(GUEST_ID, "선수2");
+        room.join(new TeamLeaderId(GUEST_ID), "게스트", GUEST_TOKEN);
+        room.selectDraftPosition(new TeamLeaderId(HOST_ID), 1);
+        room.selectDraftPosition(new TeamLeaderId(GUEST_ID), 2);
+        room.start(new TeamLeaderId(HOST_ID));
+        room.pick(new TeamLeaderId(HOST_ID), "선수1");
+        room.pick(new TeamLeaderId(GUEST_ID), "선수2");
         return room;
     }
 
     private Room completedDraftRoom() {
         Room room = waitingDraftRoom();
-        room.selectDraftPosition(GUEST_ID, 2);
-        room.start(HOST_ID);
-        room.pick(HOST_ID, "선수1");
-        room.pick(GUEST_ID, "선수2");
+        room.selectDraftPosition(new TeamLeaderId(GUEST_ID), 2);
+        room.start(new TeamLeaderId(HOST_ID));
+        room.pick(new TeamLeaderId(HOST_ID), "선수1");
+        room.pick(new TeamLeaderId(GUEST_ID), "선수2");
         return room;
     }
 

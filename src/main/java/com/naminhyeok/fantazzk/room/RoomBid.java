@@ -1,29 +1,51 @@
 package com.naminhyeok.fantazzk.room;
 
-import java.util.UUID;
-import lombok.Getter;
-import org.jmolecules.ddd.types.Entity;
-import org.jmolecules.ddd.types.Identifier;
+import jakarta.persistence.Access;
+import jakarta.persistence.AccessType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Embeddable;
+import lombok.EqualsAndHashCode;
+import org.jmolecules.ddd.types.ValueObject;
 
-@Getter
-class RoomBid implements Entity<Room, RoomBid.RoomBidId> {
-    private final RoomBidId id;
-    private final int round;
-    private final String teamLeaderId;
-    private final int amount;
+@Access(AccessType.FIELD)
+@Embeddable
+@EqualsAndHashCode
+final class RoomBid implements ValueObject {
+    @Column(name = "round")
+    private int round;
+    @Column(name = "bid_sequence")
+    @Convert(converter = BidSequence.JpaConverter.class)
+    private BidSequence sequence;
+    @Column(name = "team_leader_id")
+    @Convert(converter = TeamLeaderId.JpaConverter.class)
+    private TeamLeaderId teamLeaderId;
+    @Column(name = "amount")
+    private int amount;
 
-    RoomBid(int round, String teamLeaderId, int amount) {
-        this.id = new RoomBidId(UUID.randomUUID());
+    RoomBid() {
+    }
+
+    RoomBid(int round, BidSequence sequence, TeamLeaderId teamLeaderId, int amount) {
         this.round = round;
+        this.sequence = sequence;
         this.teamLeaderId = teamLeaderId;
         this.amount = amount;
     }
 
-    @Override
-    public RoomBidId getId() {
-        return id;
+    int getRound() {
+        return round;
     }
 
-    record RoomBidId(UUID roomBidId) implements Identifier {
+    BidSequence sequence() {
+        return sequence;
+    }
+
+    TeamLeaderId teamLeaderId() {
+        return teamLeaderId;
+    }
+
+    int getAmount() {
+        return amount;
     }
 }

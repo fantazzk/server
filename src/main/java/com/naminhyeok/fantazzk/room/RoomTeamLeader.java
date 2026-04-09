@@ -1,31 +1,45 @@
 package com.naminhyeok.fantazzk.room;
 
-import java.util.UUID;
+import jakarta.persistence.Access;
+import jakarta.persistence.AccessType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Embeddable;
 import lombok.Getter;
-import org.jmolecules.ddd.types.Entity;
-import org.jmolecules.ddd.types.Identifier;
 
 @Getter
-class RoomTeamLeader implements Entity<Room, RoomTeamLeader.RoomTeamLeaderId> {
-    private final RoomTeamLeaderId id;
-    private final String teamLeaderId;
-    private final String nickname;
-    private final String actionToken;
+@Access(AccessType.FIELD)
+@Embeddable
+class RoomTeamLeader {
+    @Column(name = "team_leader_id")
+    @Convert(converter = TeamLeaderId.JpaConverter.class)
+    private TeamLeaderId id;
+    @Column(name = "nickname")
+    private String nickname;
+    @Column(name = "action_token")
+    private String actionToken;
+    @Column(name = "draft_position")
     private Integer draftPosition;
+    @Column(name = "remaining_budget")
     private Integer remainingBudget;
 
-    RoomTeamLeader(String teamLeaderId, String nickname, String actionToken, Integer remainingBudget) {
-        this.id = new RoomTeamLeaderId(UUID.randomUUID());
-        this.teamLeaderId = teamLeaderId;
+    RoomTeamLeader() {
+    }
+
+    RoomTeamLeader(TeamLeaderId id, String nickname, String actionToken, Integer remainingBudget) {
+        this.id = id;
         this.nickname = nickname;
         this.actionToken = actionToken;
         this.draftPosition = null;
         this.remainingBudget = remainingBudget;
     }
 
-    @Override
-    public RoomTeamLeaderId getId() {
+    public TeamLeaderId getId() {
         return id;
+    }
+
+    String getTeamLeaderId() {
+        return id.value();
     }
 
     void spend(int amount) {
@@ -44,8 +58,5 @@ class RoomTeamLeader implements Entity<Room, RoomTeamLeader.RoomTeamLeaderId> {
 
     void clearDraftPosition() {
         this.draftPosition = null;
-    }
-
-    record RoomTeamLeaderId(UUID roomTeamLeaderId) implements Identifier {
     }
 }
