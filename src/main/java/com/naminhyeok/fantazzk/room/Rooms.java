@@ -1,7 +1,8 @@
 package com.naminhyeok.fantazzk.room;
 
-import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.jmolecules.ddd.types.Repository;
 
 interface Rooms extends Repository<Room, RoomId> {
@@ -11,5 +12,5 @@ interface Rooms extends Repository<Room, RoomId> {
 
     Optional<Room> findByCode(String code);
 
-    List<Room> findAllByStatusOrderByCreatedAtDesc(RoomStatus status);
+    Slice<Room> findByStatusOrderByCreatedAtDesc(RoomStatus status, Pageable pageable);
 }

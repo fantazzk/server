@@ -4,9 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Instant;
 import java.util.List;
+import org.springframework.data.domain.PageRequest;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.TestConstructor;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
     }
 )
 @Transactional
+@Import(FindJoinableRooms.class)
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
 @RequiredArgsConstructor
 class FindJoinableRoomsIntegrationTest {
@@ -56,6 +59,10 @@ class FindJoinableRoomsIntegrationTest {
                         waitingRoom(code, Instant.parse("2026-04-09T00:00:00Z").plusSeconds(code.charAt(5)))
                     )
             );
+
+        assertThat(rooms.findByStatusOrderByCreatedAtDesc(RoomStatus.WAITING, PageRequest.of(0, 5)).getContent())
+            .extracting(Room::getCode)
+            .containsExactly("ROOM06", "ROOM05", "ROOM04", "ROOM03", "ROOM02");
 
         assertThat(findJoinableRooms.list())
             .hasSize(5)
