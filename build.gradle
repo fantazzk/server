@@ -104,6 +104,14 @@ tasks.register('integrationTest', Test) {
     useJUnitPlatform()
 }
 
+tasks.register('openapiBootRun', JavaExec) {
+    description = 'Runs the application with the test runtime classpath for OpenAPI export.'
+    group = 'documentation'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.naminhyeok.fantazzk.FantazzkApplication'
+    dependsOn(tasks.testClasses)
+}
+
 tasks.named('processIntegrationTestResources') {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
