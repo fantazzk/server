@@ -57,6 +57,23 @@ sentry:
 spring:
   config:
     activate:
+      on-profile: openapi
+  datasource:
+    url: jdbc:h2:mem:openapi;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  liquibase:
+    enabled: false
+
+sentry:
+  enabled: false
+
+---
+
+spring:
+  config:
+    activate:
       on-profile: dev
   datasource:
     url: ${DATABASE_URL}

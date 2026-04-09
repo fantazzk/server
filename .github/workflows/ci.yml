@@ -152,7 +152,7 @@ jobs:
         if: steps.sync-config.outputs.enabled == 'true'
         run: |
           source "$HOME/.sdkman/bin/sdkman-init.sh"
-          ./gradlew bootRun --args='--spring.profiles.active=test --server.port=8080' > app.log 2>&1 &
+          SPRING_PROFILES_ACTIVE=openapi PORT=8080 ./gradlew openapiBootRun --no-daemon > app.log 2>&1 &
           app_pid=$!
           trap 'kill "${app_pid}" || true' EXIT
 
