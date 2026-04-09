@@ -6,8 +6,14 @@ record RoomResponse(
     String status,
     String mode,
     int teamCount,
+    int teamSize,
+    Integer budget,
+    String draftOrderStrategy,
     String startReadiness,
-    List<TeamLeaderResponse> teamLeaders
+    List<TeamLeaderResponse> teamLeaders,
+    List<RoomPlayerResponse> players,
+    List<RoomMemberResponse> members,
+    RoomProgressResponse progress
 ) {
     static RoomResponse from(Room room) {
         return new RoomResponse(
@@ -15,8 +21,14 @@ record RoomResponse(
             room.getStatus().name(),
             room.getMode().name(),
             room.getTeamCount(),
+            room.getTeamSize(),
+            room.getBudget(),
+            room.getDraftOrderStrategy() == null ? null : room.getDraftOrderStrategy().name(),
             room.getStartReadiness().name(),
-            room.getLeaders().stream().map(TeamLeaderResponse::from).toList()
+            room.getLeaders().stream().map(TeamLeaderResponse::from).toList(),
+            room.getPlayers().stream().map(RoomPlayerResponse::from).toList(),
+            room.getMembers().stream().map(RoomMemberResponse::from).toList(),
+            RoomProgressResponse.from(room)
         );
     }
 }

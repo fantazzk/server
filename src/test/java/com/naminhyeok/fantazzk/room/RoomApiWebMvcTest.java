@@ -24,6 +24,7 @@ import org.springframework.test.web.servlet.assertj.MockMvcTester;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 @WebMvcTest(RoomApiController.class)
@@ -124,18 +125,94 @@ class RoomApiWebMvcTest {
         var result = mockMvcTester().perform(get("/api/v1/rooms/{code}", ROOM_CODE));
 
         result.assertThat().hasStatusOk();
-        assertThat(readBody(result, RoomResponseApiResponse.class))
-            .satisfies(response -> {
-                assertThat(response.resultType()).isEqualTo("SUCCESS");
-                assertThat(response.success().code()).isEqualTo(ROOM_CODE);
-                assertThat(response.success().status()).isEqualTo("WAITING");
-                assertThat(response.success().mode()).isEqualTo("DRAFT");
-                assertThat(response.success().teamCount()).isEqualTo(2);
-                assertThat(response.success().startReadiness()).isEqualTo("WAITING_FOR_DRAFT_POSITIONS");
-                assertThat(response.success().teamLeaders()).extracting(TeamLeaderResponse::draftPosition)
-                    .containsExactly(1, null);
-            });
+        JsonNode body = readTree(result);
+        assertThat(body.at("/resultType").asText()).isEqualTo("SUCCESS");
+        assertThat(body.at("/success/code").asText()).isEqualTo(ROOM_CODE);
+        assertThat(body.at("/success/status").asText()).isEqualTo("WAITING");
+        assertThat(body.at("/success/mode").asText()).isEqualTo("DRAFT");
+        assertThat(body.at("/success/teamCount").asInt()).isEqualTo(2);
+        assertThat(body.at("/success/teamSize").asInt()).isEqualTo(2);
+        assertThat(body.at("/success/budget").isNull()).isTrue();
+        assertThat(body.at("/success/draftOrderStrategy").asText()).isEqualTo("SNAKE");
+        assertThat(body.at("/success/startReadiness").asText()).isEqualTo("WAITING_FOR_DRAFT_POSITIONS");
+        assertThat(body.at("/success/teamLeaders/0/draftPosition").asInt()).isEqualTo(1);
+        assertThat(body.at("/success/teamLeaders/1/draftPosition").isNull()).isTrue();
+        assertThat(body.at("/success/players/0/name").asText()).isEqualTo("선수1");
+        assertThat(body.at("/success/players/0/displayOrder").asInt()).isEqualTo(0);
+        assertThat(body.at("/success/players/0/status").asText()).isEqualTo("AVAILABLE");
+        assertThat(body.at("/success/players/1/name").asText()).isEqualTo("선수2");
+        assertThat(body.at("/success/members").isArray()).isTrue();
+        assertThat(body.at("/success/members")).hasSize(0);
+        assertThat(body.at("/success/progress/currentTurnIndex").isNull()).isTrue();
+        assertThat(body.at("/success/progress/currentRound").isNull()).isTrue();
+        assertThat(body.at("/success/progress/currentLeaderId").isNull()).isTrue();
+        assertThat(body.at("/success/progress/currentRoundLeaderIds").isNull()).isTrue();
         assertThat(result.getResponse().getContentAsString()).doesNotContain("teamLeaderSession");
+    }
+
+    @Test
+    void get은_드래프트_진행중_스냅샷을_반환한다() throws Exception {
+        given(getRoom.get(ROOM_CODE)).willReturn(inProgressDraftRoom());
+
+        var result = mockMvcTester().perform(get("/api/v1/rooms/{code}", ROOM_CODE));
+
+        result.assertThat().hasStatusOk();
+        JsonNode body = readTree(result);
+        assertThat(body.at("/success/status").asText()).isEqualTo("IN_PROGRESS");
+        assertThat(body.at("/success/players/0/status").asText()).isEqualTo("ASSIGNED");
+        assertThat(body.at("/success/players/1/status").asText()).isEqualTo("ASSIGNED");
+        assertThat(body.at("/success/players/2/status").asText()).isEqualTo("AVAILABLE");
+        assertThat(body.at("/success/members/0/teamLeaderId").asText()).isEqualTo(HOST_ID);
+        assertThat(body.at("/success/members/0/playerName").asText()).isEqualTo("선수1");
+        assertThat(body.at("/success/members/0/assignOrder").asInt()).isEqualTo(0);
+        assertThat(body.at("/success/members/1/teamLeaderId").asText()).isEqualTo(GUEST_ID);
+        assertThat(body.at("/success/members/1/playerName").asText()).isEqualTo("선수2");
+        assertThat(body.at("/success/members/1/assignOrder").asInt()).isEqualTo(1);
+        assertThat(body.at("/success/progress/currentTurnIndex").asInt()).isEqualTo(2);
+        assertThat(body.at("/success/progress/currentRound").asInt()).isEqualTo(2);
+        assertThat(body.at("/success/progress/currentLeaderId").asText()).isEqualTo(GUEST_ID);
+        assertThat(body.at("/success/progress/currentRoundLeaderIds/0").asText()).isEqualTo(GUEST_ID);
+        assertThat(body.at("/success/progress/currentRoundLeaderIds/1").asText()).isEqualTo(HOST_ID);
+    }
+
+    @Test
+    void get은_완료된_방도_players_members_progress_null로_결과를_렌더링할_수_있다() throws Exception {
+        given(getRoom.get(ROOM_CODE)).willReturn(completedDraftRoom());
+
+        var result = mockMvcTester().perform(get("/api/v1/rooms/{code}", ROOM_CODE));
+
+        result.assertThat().hasStatusOk();
+        JsonNode body = readTree(result);
+        assertThat(body.at("/success/status").asText()).isEqualTo("COMPLETED");
+        assertThat(body.at("/success/players/0/status").asText()).isEqualTo("ASSIGNED");
+        assertThat(body.at("/success/players/1/status").asText()).isEqualTo("ASSIGNED");
+        assertThat(body.at("/success/members/0/teamLeaderId").asText()).isEqualTo(HOST_ID);
+        assertThat(body.at("/success/members/1/teamLeaderId").asText()).isEqualTo(GUEST_ID);
+        assertThat(body.at("/success/progress/currentTurnIndex").isNull()).isTrue();
+        assertThat(body.at("/success/progress/currentRound").isNull()).isTrue();
+        assertThat(body.at("/success/progress/currentLeaderId").isNull()).isTrue();
+        assertThat(body.at("/success/progress/currentRoundLeaderIds").isNull()).isTrue();
+    }
+
+    @Test
+    void get은_경매_진행중_스냅샷에서_currentRound를_currentAuctionRound로_반환한다() throws Exception {
+        given(getRoom.get(ROOM_CODE)).willReturn(inProgressAuctionRoom());
+
+        var result = mockMvcTester().perform(get("/api/v1/rooms/{code}", ROOM_CODE));
+
+        result.assertThat().hasStatusOk();
+        JsonNode body = readTree(result);
+        assertThat(body.at("/success/status").asText()).isEqualTo("IN_PROGRESS");
+        assertThat(body.at("/success/budget").asInt()).isEqualTo(300);
+        assertThat(body.at("/success/draftOrderStrategy").isNull()).isTrue();
+        assertThat(body.at("/success/players/0/status").asText()).isEqualTo("ASSIGNED");
+        assertThat(body.at("/success/players/1/status").asText()).isEqualTo("AVAILABLE");
+        assertThat(body.at("/success/members/0/teamLeaderId").asText()).isEqualTo(HOST_ID);
+        assertThat(body.at("/success/members/0/playerName").asText()).isEqualTo("선수1");
+        assertThat(body.at("/success/progress/currentTurnIndex").isNull()).isTrue();
+        assertThat(body.at("/success/progress/currentRound").asInt()).isEqualTo(2);
+        assertThat(body.at("/success/progress/currentLeaderId").isNull()).isTrue();
+        assertThat(body.at("/success/progress/currentRoundLeaderIds").isNull()).isTrue();
     }
 
     @Test
@@ -301,6 +378,10 @@ class RoomApiWebMvcTest {
         return objectMapper.readValue(result.getResponse().getContentAsString(), bodyType);
     }
 
+    private JsonNode readTree(MvcTestResult result) throws Exception {
+        return objectMapper.readTree(result.getResponse().getContentAsString());
+    }
+
     private Room waitingAuctionRoom() {
         return Room.createFromTemplate(
             ROOM_CODE,
@@ -354,6 +435,73 @@ class RoomApiWebMvcTest {
     private Room startedAuctionRoom() {
         Room room = joinedAuctionRoom();
         room.start(HOST_ID);
+        return room;
+    }
+
+    private Room inProgressAuctionRoom() {
+        Room room =
+            Room.createFromTemplate(
+                ROOM_CODE,
+                HOST_ID,
+                "호스트",
+                HOST_TOKEN,
+                new RoomTemplateSpec(
+                    RoomTemplateSpec.Mode.AUCTION,
+                    2,
+                    3,
+                    300,
+                    null,
+                    List.of(
+                        new RoomTemplateSpec.Player("선수1", 0),
+                        new RoomTemplateSpec.Player("선수2", 1),
+                        new RoomTemplateSpec.Player("선수3", 2),
+                        new RoomTemplateSpec.Player("선수4", 3)
+                    )
+                )
+            );
+        room.join(GUEST_ID, "게스트", GUEST_TOKEN);
+        room.start(HOST_ID);
+        room.placeBid(HOST_ID, 100);
+        room.settleAuction();
+        return room;
+    }
+
+    private Room inProgressDraftRoom() {
+        Room room =
+            Room.createFromTemplate(
+                ROOM_CODE,
+                HOST_ID,
+                "호스트",
+                HOST_TOKEN,
+                new RoomTemplateSpec(
+                    RoomTemplateSpec.Mode.DRAFT,
+                    2,
+                    3,
+                    null,
+                    RoomTemplateSpec.DraftOrderStrategy.SNAKE,
+                    List.of(
+                        new RoomTemplateSpec.Player("선수1", 0),
+                        new RoomTemplateSpec.Player("선수2", 1),
+                        new RoomTemplateSpec.Player("선수3", 2),
+                        new RoomTemplateSpec.Player("선수4", 3)
+                    )
+                )
+            );
+        room.join(GUEST_ID, "게스트", GUEST_TOKEN);
+        room.selectDraftPosition(HOST_ID, 1);
+        room.selectDraftPosition(GUEST_ID, 2);
+        room.start(HOST_ID);
+        room.pick(HOST_ID, "선수1");
+        room.pick(GUEST_ID, "선수2");
+        return room;
+    }
+
+    private Room completedDraftRoom() {
+        Room room = waitingDraftRoom();
+        room.selectDraftPosition(GUEST_ID, 2);
+        room.start(HOST_ID);
+        room.pick(HOST_ID, "선수1");
+        room.pick(GUEST_ID, "선수2");
         return room;
     }
 

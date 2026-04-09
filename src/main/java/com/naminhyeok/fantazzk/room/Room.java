@@ -261,13 +261,8 @@ class Room implements AggregateRoot<Room, RoomId> {
         if (mode != RoomMode.DRAFT) {
             throw CoreException.of(RoomErrorType.ROOM_PICK_REQUIRES_DRAFT_MODE);
         }
-        if (currentTurnIndex == null) {
-            throw new IllegalStateException("현재 드래프트 턴이 없습니다");
-        }
-
-        List<RoomTeamLeader> orderedLeaders = getLeadersInDraftOrder();
-        String currentLeaderId = orderedLeaders.get(currentTurnIndex % orderedLeaders.size()).getTeamLeaderId();
-        if (!currentLeaderId.equals(teamLeaderId)) {
+        DraftProgress progress = requireCurrentDraftProgress();
+        if (!progress.currentLeaderId().equals(teamLeaderId)) {
             throw CoreException.of(RoomErrorType.ROOM_PICK_OUT_OF_TURN);
         }
 
@@ -288,6 +283,14 @@ class Room implements AggregateRoot<Room, RoomId> {
         }
 
         return member;
+    }
+
+    DraftProgress currentDraftProgress() {
+        if (mode != RoomMode.DRAFT || status != RoomStatus.IN_PROGRESS || currentTurnIndex == null) {
+            return null;
+        }
+
+        return DraftProgress.from(getLeaderIdsInDraftOrder(), draftOrderStrategy, currentTurnIndex);
     }
 
     private void validateDraftPositionChange(int draftPosition) {
@@ -315,6 +318,18 @@ class Room implements AggregateRoot<Room, RoomId> {
         return leaders.stream()
             .sorted(Comparator.comparingInt(RoomTeamLeader::getDraftPosition))
             .toList();
+    }
+
+    private DraftProgress requireCurrentDraftProgress() {
+        DraftProgress progress = currentDraftProgress();
+        if (progress == null) {
+            throw new IllegalStateException("현재 드래프트 턴이 없습니다");
+        }
+        return progress;
+    }
+
+    private List<String> getLeaderIdsInDraftOrder() {
+        return getLeadersInDraftOrder().stream().map(RoomTeamLeader::getTeamLeaderId).toList();
     }
 
     private RoomTeamLeader getLeader(String teamLeaderId) {
