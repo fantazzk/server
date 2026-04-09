@@ -24,7 +24,12 @@ class CreateRoomTest {
                 roomCodeCollision()
             );
         CreateRoom createRoom =
-            new CreateRoom(new CreateRoomAttempt(rooms), new StubTemplateCatalog(), new StubTeamLeaderIdentityIssuer());
+            new CreateRoom(
+                new CreateRoomAttempt(rooms),
+                new StubTemplateCatalog(),
+                new StubTeamLeaderIdentityIssuer(),
+                new StubRoomCodeGenerator("ROOM01", "ROOM02", "ROOM03")
+            );
 
         Room created = createRoom.create(UUID.randomUUID(), "호스트");
 
@@ -42,7 +47,12 @@ class CreateRoomTest {
             );
         RecordingRooms rooms = new RecordingRooms(persistenceFailure);
         CreateRoom createRoom =
-            new CreateRoom(new CreateRoomAttempt(rooms), new StubTemplateCatalog(), new StubTeamLeaderIdentityIssuer());
+            new CreateRoom(
+                new CreateRoomAttempt(rooms),
+                new StubTemplateCatalog(),
+                new StubTeamLeaderIdentityIssuer(),
+                new StubRoomCodeGenerator("ROOM01")
+            );
 
         assertThatThrownBy(() -> createRoom.create(UUID.randomUUID(), "호스트"))
             .isSameAs(persistenceFailure);
@@ -58,7 +68,12 @@ class CreateRoomTest {
                 roomCodeCollision()
             );
         CreateRoom createRoom =
-            new CreateRoom(new CreateRoomAttempt(rooms), new StubTemplateCatalog(), new StubTeamLeaderIdentityIssuer());
+            new CreateRoom(
+                new CreateRoomAttempt(rooms),
+                new StubTemplateCatalog(),
+                new StubTeamLeaderIdentityIssuer(),
+                new StubRoomCodeGenerator("ROOM01", "ROOM02", "ROOM03")
+            );
 
         assertThatThrownBy(() -> createRoom.create(UUID.randomUUID(), "호스트"))
             .isInstanceOf(CoreException.class)
@@ -144,6 +159,19 @@ class CreateRoomTest {
         @Override
         public TeamLeaderIdentity issue() {
             return new TeamLeaderIdentity("host-id", "action-token");
+        }
+    }
+
+    private static final class StubRoomCodeGenerator implements RoomCodeGenerator {
+        private final Queue<String> roomCodes = new ArrayDeque<>();
+
+        private StubRoomCodeGenerator(String... roomCodes) {
+            this.roomCodes.addAll(List.of(roomCodes));
+        }
+
+        @Override
+        public String generate() {
+            return roomCodes.remove();
         }
     }
 }

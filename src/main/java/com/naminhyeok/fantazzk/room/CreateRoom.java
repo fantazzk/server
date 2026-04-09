@@ -5,10 +5,10 @@ import com.naminhyeok.fantazzk.template.TemplateCatalog;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.UUID;
-import lombok.RequiredArgsConstructor;
 import org.hibernate.exception.ConstraintViolationException;
-import org.springframework.stereotype.Service;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.stereotype.Service;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -20,6 +20,7 @@ class CreateRoom {
     private final TemplateCatalog templateCatalog;
     private final TeamLeaderIdentityIssuer teamLeaderIdentityIssuer;
     private final Clock clock;
+    private final RoomCodeGenerator roomCodeGenerator;
 
     public Room create(UUID templateId, String hostNickname) {
         TemplateCatalog.TemplateBlueprint template = getTemplate(templateId);
@@ -79,7 +80,7 @@ class CreateRoom {
     }
 
     private String generateCode() {
-        return UUID.randomUUID().toString().replace("-", "").substring(0, 6).toUpperCase();
+        return roomCodeGenerator.generate();
     }
 
     private boolean isRoomCodeCollision(Throwable throwable) {
