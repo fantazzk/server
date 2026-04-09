@@ -69,6 +69,60 @@ enum RoomErrorType implements ErrorDescriptor {
         "방장은 방을 시작할 수 있는 유일한 팀장입니다",
         Level.INFO
     ),
+    ROOM_PLAY_REQUIRES_IN_PROGRESS(
+        HttpStatus.CONFLICT,
+        "ROOM_PLAY_REQUIRES_IN_PROGRESS",
+        "진행 중인 방에서만 플레이할 수 있습니다",
+        Level.INFO
+    ),
+    ROOM_BID_REQUIRES_AUCTION_MODE(
+        HttpStatus.CONFLICT,
+        "ROOM_BID_REQUIRES_AUCTION_MODE",
+        "경매 방에서만 입찰 또는 정산할 수 있습니다",
+        Level.INFO
+    ),
+    ROOM_BID_AMOUNT_NOT_POSITIVE(
+        HttpStatus.BAD_REQUEST,
+        "ROOM_BID_AMOUNT_NOT_POSITIVE",
+        "입찰 금액은 0보다 커야 합니다",
+        Level.INFO
+    ),
+    ROOM_BIDDER_NOT_FOUND(
+        HttpStatus.NOT_FOUND,
+        "ROOM_BIDDER_NOT_FOUND",
+        "입찰할 팀장을 찾을 수 없습니다",
+        Level.INFO
+    ),
+    ROOM_BID_BUDGET_EXCEEDED(
+        HttpStatus.BAD_REQUEST,
+        "ROOM_BID_BUDGET_EXCEEDED",
+        "남은 예산보다 큰 금액은 입찰할 수 없습니다",
+        Level.INFO
+    ),
+    ROOM_BID_TOO_LOW(
+        HttpStatus.CONFLICT,
+        "ROOM_BID_TOO_LOW",
+        "현재 최고가보다 높은 금액만 입찰할 수 있습니다",
+        Level.INFO
+    ),
+    ROOM_PICK_REQUIRES_DRAFT_MODE(
+        HttpStatus.CONFLICT,
+        "ROOM_PICK_REQUIRES_DRAFT_MODE",
+        "드래프트 방에서만 픽할 수 있습니다",
+        Level.INFO
+    ),
+    ROOM_PICK_OUT_OF_TURN(
+        HttpStatus.CONFLICT,
+        "ROOM_PICK_OUT_OF_TURN",
+        "현재 턴인 팀장만 픽할 수 있습니다",
+        Level.INFO
+    ),
+    ROOM_PICK_PLAYER_NOT_AVAILABLE(
+        HttpStatus.CONFLICT,
+        "ROOM_PICK_PLAYER_NOT_AVAILABLE",
+        "현재 픽 가능한 선수를 찾을 수 없습니다",
+        Level.INFO
+    ),
     ROOM_LEADERS_NOT_FULL(
         HttpStatus.CONFLICT,
         "ROOM_LEADERS_NOT_FULL",
