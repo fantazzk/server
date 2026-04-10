@@ -47,11 +47,14 @@ class RoomSchemaMigrationIntegrationTest {
             new ClassPathResource("db/changelog/db.changelog-initial.sql"),
             new ClassPathResource("db/changelog/db.changelog-room-team-leader-action-token.sql"),
             new ClassPathResource("db/changelog/db.changelog-room-team-leader-draft-position.sql"),
+            new ClassPathResource("db/changelog/db.changelog-room-created-at.sql"),
+            new ClassPathResource("db/changelog/db.changelog-room-created-at-index.sql"),
             new ByteArrayResource(
                 """
                 INSERT INTO rooms (
                     room_id,
                     code,
+                    created_at,
                     host_id,
                     status,
                     mode,
@@ -64,6 +67,7 @@ class RoomSchemaMigrationIntegrationTest {
                 ) VALUES (
                     '%s',
                     'MIG001',
+                    TIMESTAMP WITH TIME ZONE '2026-04-09T00:00:00Z',
                     'host-1',
                     'IN_PROGRESS',
                     'AUCTION',

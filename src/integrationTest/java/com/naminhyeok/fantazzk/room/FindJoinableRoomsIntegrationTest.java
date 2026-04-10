@@ -71,7 +71,7 @@ class FindJoinableRoomsIntegrationTest {
     private Room waitingRoom(String code, Instant createdAt) {
         return Room.createFromTemplate(
             code,
-            "host-" + code,
+            new TeamLeaderId("host-" + code),
             "호스트-" + code,
             "token-" + code,
             new RoomTemplateSpec(
@@ -81,8 +81,8 @@ class FindJoinableRoomsIntegrationTest {
                 300,
                 null,
                 List.of(
-                    new RoomTemplateSpec.Player("선수1", 0),
-                    new RoomTemplateSpec.Player("선수2", 1)
+                    new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", 0),
+                    new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", 1)
                 )
             ),
             createdAt
@@ -91,7 +91,7 @@ class FindJoinableRoomsIntegrationTest {
 
     private Room fullWaitingRoom(String code, Instant createdAt) {
         Room room = waitingRoom(code, createdAt);
-        room.join("guest-" + code, "게스트-" + code, "guest-action-token-" + code);
+        room.join(new TeamLeaderId("guest-" + code), "게스트-" + code, "guest-action-token-" + code);
         return room;
     }
 }

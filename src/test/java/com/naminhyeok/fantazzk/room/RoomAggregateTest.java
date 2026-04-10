@@ -59,11 +59,11 @@ class RoomAggregateTest {
         Room joinable = auctionWaitingRoom(CREATED_AT);
 
         Room full = auctionWaitingRoom(CREATED_AT.plusSeconds(60));
-        full.join(GUEST_ID, "게스트", GUEST_ACTION_TOKEN);
+        full.join(new TeamLeaderId(GUEST_ID), "게스트", GUEST_ACTION_TOKEN);
 
         Room started = auctionWaitingRoom(CREATED_AT.plusSeconds(120));
-        started.join(GUEST_ID, "게스트", GUEST_ACTION_TOKEN);
-        started.start(HOST_ID);
+        started.join(new TeamLeaderId(GUEST_ID), "게스트", GUEST_ACTION_TOKEN);
+        started.start(new TeamLeaderId(HOST_ID));
 
         assertThat(joinable.isJoinable()).isTrue();
         assertThat(full.isJoinable()).isFalse();

@@ -38,6 +38,10 @@ class RoomTeamLeader {
         return id;
     }
 
+    String getTeamLeaderId() {
+        return id.value();
+    }
+
     void spend(int amount) {
         if (remainingBudget == null) {
             throw new IllegalStateException("예산이 없는 팀장은 입찰할 수 없습니다");

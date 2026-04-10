@@ -5,6 +5,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.naminhyeok.fantazzk.CoreException;
 import com.naminhyeok.fantazzk.template.TemplateCatalog;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,6 +31,7 @@ class CreateRoomTest {
                 new CreateRoomAttempt(rooms),
                 new StubTemplateCatalog(),
                 new StubTeamLeaderIdentityIssuer(),
+                Clock.fixed(Instant.parse("2026-04-10T00:00:00Z"), ZoneOffset.UTC),
                 new StubRoomCodeGenerator("ROOM01", "ROOM02", "ROOM03")
             );
 
@@ -53,6 +57,7 @@ class CreateRoomTest {
                 new CreateRoomAttempt(rooms),
                 new StubTemplateCatalog(),
                 new StubTeamLeaderIdentityIssuer(),
+                Clock.fixed(Instant.parse("2026-04-10T00:00:00Z"), ZoneOffset.UTC),
                 new StubRoomCodeGenerator("ROOM01")
             );
 
@@ -74,6 +79,7 @@ class CreateRoomTest {
                 new CreateRoomAttempt(rooms),
                 new StubTemplateCatalog(),
                 new StubTeamLeaderIdentityIssuer(),
+                Clock.fixed(Instant.parse("2026-04-10T00:00:00Z"), ZoneOffset.UTC),
                 new StubRoomCodeGenerator("ROOM01", "ROOM02", "ROOM03")
             );
 
@@ -138,6 +144,11 @@ class CreateRoomTest {
         @Override
         public Optional<Room> findByCode(String code) {
             return Optional.empty();
+        }
+
+        @Override
+        public List<Room> findJoinableWaitingRooms(org.springframework.data.domain.Pageable pageable) {
+            return List.of();
         }
 
         private Room savedRoom() {

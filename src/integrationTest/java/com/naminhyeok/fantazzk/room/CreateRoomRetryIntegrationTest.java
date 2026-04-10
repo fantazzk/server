@@ -132,7 +132,8 @@ class CreateRoomRetryIntegrationTest {
                     new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", 0),
                     new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", 1)
                 )
-            )
+            ),
+            java.time.Instant.parse("2026-04-10T00:00:00Z")
         );
     }
 
