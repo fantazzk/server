@@ -5,6 +5,6 @@ record TemplatePlayerResponse(
     int displayOrder
 ) {
     static TemplatePlayerResponse from(TemplatePlayer player) {
-        return new TemplatePlayerResponse(player.getName(), player.getPlayerIndex());
+        return new TemplatePlayerResponse(player.name(), player.playerIndex());
     }
 }

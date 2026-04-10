@@ -33,14 +33,11 @@ final class RoomTeamMember implements ValueObject {
         return teamLeaderId;
     }
 
-    String getTeamLeaderId() {
-        return teamLeaderId.value();
-    }
-    String getPlayerName() {
+    String playerName() {
         return playerName;
     }
 
-    int getAssignOrder() {
+    int assignOrder() {
         return assignOrder;
     }
 }

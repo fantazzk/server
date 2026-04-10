@@ -3,10 +3,8 @@ package com.naminhyeok.fantazzk.template;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
 import org.jmolecules.ddd.types.ValueObject;
 
-@Getter
 @Embeddable
 @EqualsAndHashCode
 final class TemplatePlayer implements ValueObject {
@@ -21,5 +19,13 @@ final class TemplatePlayer implements ValueObject {
 
         this.name = name;
         this.playerIndex = playerIndex;
+    }
+
+    String name() {
+        return name;
+    }
+
+    int playerIndex() {
+        return playerIndex;
     }
 }

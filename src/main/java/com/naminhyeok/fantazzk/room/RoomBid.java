@@ -33,7 +33,7 @@ final class RoomBid implements ValueObject {
         this.amount = amount;
     }
 
-    int getRound() {
+    int round() {
         return round;
     }
 
@@ -45,7 +45,7 @@ final class RoomBid implements ValueObject {
         return teamLeaderId;
     }
 
-    int getAmount() {
+    int amount() {
         return amount;
     }
 }

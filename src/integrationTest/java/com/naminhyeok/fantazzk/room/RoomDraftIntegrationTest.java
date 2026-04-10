@@ -61,10 +61,10 @@ class RoomDraftIntegrationTest {
 
         Room reloaded = rooms.findByCode(created.getCode()).orElseThrow();
 
-        assertThat(member.getPlayerName()).isEqualTo("선수1");
+        assertThat(member.playerName()).isEqualTo("선수1");
         assertThat(reloaded.getMembers()).singleElement()
-            .extracting(RoomTeamMember::getTeamLeaderId, RoomTeamMember::getPlayerName)
-            .containsExactly(currentLeaderId, "선수1");
+            .extracting(RoomTeamMember::teamLeaderId, RoomTeamMember::playerName)
+            .containsExactly(new TeamLeaderId(currentLeaderId), "선수1");
         assertThat(reloaded.getPlayers().stream().filter(it -> it.getName().equals("선수1")).findFirst().orElseThrow().getStatus())
             .isEqualTo(PlayerStatus.ASSIGNED);
         assertThat(reloaded.getCurrentTurnIndex()).isEqualTo(1);
@@ -126,13 +126,13 @@ class RoomDraftIntegrationTest {
         entityManager.clear();
         Room reloadedAfterThirdPick = rooms.findByCode(created.getCode()).orElseThrow();
 
-        assertThat(thirdPick.getTeamLeaderId()).isEqualTo(guest.getTeamLeaderId());
+        assertThat(thirdPick.teamLeaderId()).isEqualTo(guest.getId());
         assertThat(reloadedAfterThirdPick.getMembers())
-            .extracting(RoomTeamMember::getTeamLeaderId, RoomTeamMember::getPlayerName)
+            .extracting(RoomTeamMember::teamLeaderId, RoomTeamMember::playerName)
             .containsExactly(
-                tuple(host.getTeamLeaderId(), "선수1"),
-                tuple(guest.getTeamLeaderId(), "선수2"),
-                tuple(guest.getTeamLeaderId(), "선수3")
+                tuple(host.getId(), "선수1"),
+                tuple(guest.getId(), "선수2"),
+                tuple(guest.getId(), "선수3")
             );
         assertThat(reloadedAfterThirdPick.getCurrentTurnIndex()).isEqualTo(3);
     }

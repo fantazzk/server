@@ -91,7 +91,7 @@ class RoomAuctionTest {
         assertThat(settlement.outcome()).isEqualTo(AuctionOutcome.SOLD);
         assertThat(settlement.playerName()).isEqualTo("선수1");
         assertThat(room.getMembers()).singleElement()
-            .extracting(RoomTeamMember::teamLeaderId, RoomTeamMember::getPlayerName)
+            .extracting(RoomTeamMember::teamLeaderId, RoomTeamMember::playerName)
             .containsExactly(guestLeaderId, "선수1");
         assertThat(room.getLeaders().stream().filter(it -> it.getId().equals(guestLeaderId)).findFirst().orElseThrow().getRemainingBudget())
             .isEqualTo(150);
@@ -110,7 +110,7 @@ class RoomAuctionTest {
         RoomBid nextRoundBid = room.placeBid(hostLeaderId, 120);
 
         assertThat(nextRoundBid.sequence()).isEqualTo(new BidSequence(1));
-        assertThat(nextRoundBid.getRound()).isEqualTo(2);
+        assertThat(nextRoundBid.round()).isEqualTo(2);
     }
 
     @Test

@@ -24,7 +24,7 @@ class RoomDraftTest {
         RoomTeamMember member = room.pick(currentLeaderId, "선수1");
 
         assertThat(member.teamLeaderId()).isEqualTo(currentLeaderId);
-        assertThat(member.getPlayerName()).isEqualTo("선수1");
+        assertThat(member.playerName()).isEqualTo("선수1");
         assertThat(room.getPlayers().getFirst().getStatus()).isEqualTo(PlayerStatus.ASSIGNED);
         assertThat(room.getCurrentTurnIndex()).isEqualTo(1);
     }
@@ -87,7 +87,7 @@ class RoomDraftTest {
 
         RoomTeamMember member = room.pick(new TeamLeaderId(GUEST_ID), "선수1");
 
-        assertThat(member.getTeamLeaderId()).isEqualTo(GUEST_ID);
+        assertThat(member.teamLeaderId()).isEqualTo(new TeamLeaderId(GUEST_ID));
         assertThat(room.getCurrentTurnIndex()).isEqualTo(1);
     }
 
@@ -115,7 +115,7 @@ class RoomDraftTest {
 
         RoomTeamMember thirdPick = room.pick(new TeamLeaderId(GUEST_ID), "선수3");
 
-        assertThat(thirdPick.getTeamLeaderId()).isEqualTo(GUEST_ID);
+        assertThat(thirdPick.teamLeaderId()).isEqualTo(new TeamLeaderId(GUEST_ID));
         assertThat(room.getCurrentTurnIndex()).isEqualTo(3);
     }
 
@@ -132,7 +132,7 @@ class RoomDraftTest {
 
         RoomTeamMember thirdPick = room.pick(new TeamLeaderId(HOST_ID), "선수3");
 
-        assertThat(thirdPick.getTeamLeaderId()).isEqualTo(HOST_ID);
+        assertThat(thirdPick.teamLeaderId()).isEqualTo(new TeamLeaderId(HOST_ID));
         assertThat(room.getCurrentTurnIndex()).isEqualTo(3);
     }
 

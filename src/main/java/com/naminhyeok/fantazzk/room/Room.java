@@ -222,8 +222,8 @@ class Room implements AggregateRoot<Room, RoomId> {
         }
 
         bids.stream()
-            .filter(it -> it.getRound() == currentAuctionRound)
-            .mapToInt(RoomBid::getAmount)
+            .filter(it -> it.round() == currentAuctionRound)
+            .mapToInt(RoomBid::amount)
             .max()
             .ifPresent(highest -> {
                 if (amount <= highest) {
@@ -234,7 +234,7 @@ class Room implements AggregateRoot<Room, RoomId> {
         BidSequence nextSequence =
             new BidSequence(
                 bids.stream()
-                    .filter(it -> it.getRound() == currentAuctionRound)
+                    .filter(it -> it.round() == currentAuctionRound)
                     .map(RoomBid::sequence)
                     .mapToInt(BidSequence::value)
                     .max()
@@ -264,8 +264,8 @@ class Room implements AggregateRoot<Room, RoomId> {
 
         RoomBid winningBid =
             bids.stream()
-                .filter(it -> it.getRound() == currentAuctionRound)
-                .max(Comparator.comparingInt(RoomBid::getAmount))
+                .filter(it -> it.round() == currentAuctionRound)
+                .max(Comparator.comparingInt(RoomBid::amount))
                 .orElse(null);
 
         currentAuctionRound += 1;
@@ -283,7 +283,7 @@ class Room implements AggregateRoot<Room, RoomId> {
                 .orElseThrow(() -> new IllegalStateException("낙찰한 팀장을 찾을 수 없습니다"));
 
         target.assign();
-        winner.spend(winningBid.getAmount());
+        winner.spend(winningBid.amount());
         members.add(new RoomTeamMember(winningBid.teamLeaderId(), target.getName(), members.size()));
 
         if (members.size() == teamCount * (teamSize - 1)) {

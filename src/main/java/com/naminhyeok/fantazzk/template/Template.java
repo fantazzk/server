@@ -74,7 +74,7 @@ class Template implements AggregateRoot<Template, TemplateId> {
 
     public List<TemplatePlayer> getPlayers() {
         return players.stream()
-            .sorted(Comparator.comparingInt(TemplatePlayer::getPlayerIndex))
+            .sorted(Comparator.comparingInt(TemplatePlayer::playerIndex))
             .toList();
     }
 
