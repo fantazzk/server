@@ -15,7 +15,7 @@ class ClearDraftPosition {
     public void clear(String code, String actionToken) {
         Room room = rooms.findByCode(code).orElseThrow(() -> CoreException.of(RoomErrorType.ROOM_NOT_FOUND));
         RoomTeamLeader caller = roomActionAuthorizer.authenticate(room, actionToken);
-        room.clearDraftPosition(caller.getTeamLeaderId());
+        room.clearDraftPosition(caller.getId());
         rooms.save(room);
     }
 }

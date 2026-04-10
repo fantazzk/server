@@ -40,11 +40,14 @@ class LiquibaseSmokeTest {
         assertThat(countIndex("rooms", "idx_rooms_status_created_at")).isEqualTo(1);
         assertThat(indexColumns("rooms", "idx_rooms_status_created_at")).containsExactly("STATUS", "CREATED_AT");
         assertThat(countTable("room_player")).isEqualTo(1);
+        assertThat(countColumn("room_player", "room_player_id")).isEqualTo(1);
         assertThat(countTable("room_team_leader")).isEqualTo(1);
-        assertThat(countColumn("room_team_leader", "action_token")).isEqualTo(1);
+        assertThat(countColumn("room_team_leader", "team_leader_id")).isEqualTo(1);
         assertThat(countColumn("room_team_leader", "draft_position")).isEqualTo(1);
+        assertThat(countColumn("room_team_leader", "action_token")).isEqualTo(1);
         assertThat(countTable("room_team_member")).isEqualTo(1);
         assertThat(countTable("room_bid")).isEqualTo(1);
+        assertThat(countColumn("room_bid", "bid_sequence")).isEqualTo(1);
         assertThat(countTable("event_publication")).isEqualTo(1);
     }
 

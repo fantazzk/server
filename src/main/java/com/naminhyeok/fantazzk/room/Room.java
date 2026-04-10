@@ -1,9 +1,15 @@
 package com.naminhyeok.fantazzk.room;
 
 import com.naminhyeok.fantazzk.CoreException;
-import jakarta.persistence.EnumType;
+import jakarta.persistence.Access;
+import jakarta.persistence.AccessType;
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -15,13 +21,16 @@ import lombok.Getter;
 import org.jmolecules.ddd.types.AggregateRoot;
 
 @Getter
+@Access(AccessType.FIELD)
 @Table(name = "rooms")
 class Room implements AggregateRoot<Room, RoomId> {
     private final RoomId id;
     private final String code;
     @Column(nullable = false, updatable = false)
     private final Instant createdAt;
-    private final String hostId;
+    @Column(name = "host_id")
+    @Convert(converter = TeamLeaderId.JpaConverter.class)
+    private final TeamLeaderId hostLeaderId;
     @Enumerated(EnumType.STRING)
     private RoomStatus status;
     @Enumerated(EnumType.STRING)
@@ -33,15 +42,23 @@ class Room implements AggregateRoot<Room, RoomId> {
     private final RoomTemplateSpec.DraftOrderStrategy draftOrderStrategy;
     private Integer currentTurnIndex;
     private Integer currentAuctionRound;
+    @ElementCollection
+    @CollectionTable(name = "room_player", joinColumns = @JoinColumn(name = "players_room_id"))
     private final List<RoomPlayer> players;
+    @ElementCollection
+    @CollectionTable(name = "room_team_leader", joinColumns = @JoinColumn(name = "leaders_room_id"))
     private final List<RoomTeamLeader> leaders;
+    @ElementCollection
+    @CollectionTable(name = "room_team_member", joinColumns = @JoinColumn(name = "members_room_id"))
     private final List<RoomTeamMember> members;
+    @ElementCollection
+    @CollectionTable(name = "room_bid", joinColumns = @JoinColumn(name = "bids_room_id"))
     private final List<RoomBid> bids;
 
     Room(
         String code,
         Instant createdAt,
-        String hostId,
+        TeamLeaderId hostLeaderId,
         RoomMode mode,
         int teamCount,
         int teamSize,
@@ -51,7 +68,7 @@ class Room implements AggregateRoot<Room, RoomId> {
         this.id = new RoomId(UUID.randomUUID());
         this.code = code;
         this.createdAt = Objects.requireNonNull(createdAt, "createdAt must not be null");
-        this.hostId = hostId;
+        this.hostLeaderId = Objects.requireNonNull(hostLeaderId, "hostLeaderId must not be null");
         this.status = RoomStatus.WAITING;
         this.mode = mode;
         this.teamCount = teamCount;
@@ -68,7 +85,7 @@ class Room implements AggregateRoot<Room, RoomId> {
 
     public static Room createFromTemplate(
         String code,
-        String hostId,
+        TeamLeaderId hostLeaderId,
         String hostNickname,
         String hostActionToken,
         RoomTemplateSpec spec,
@@ -78,7 +95,7 @@ class Room implements AggregateRoot<Room, RoomId> {
             new Room(
                 code,
                 createdAt,
-                hostId,
+                hostLeaderId,
                 spec.mode() == RoomTemplateSpec.Mode.AUCTION ? RoomMode.AUCTION : RoomMode.DRAFT,
                 spec.teamCount(),
                 spec.teamSize(),
@@ -88,10 +105,10 @@ class Room implements AggregateRoot<Room, RoomId> {
 
         spec.players().stream()
             .sorted(Comparator.comparingInt(RoomTemplateSpec.Player::displayOrder))
-            .map(player -> new RoomPlayer(player.name(), player.displayOrder()))
+            .map(player -> new RoomPlayer(player.id(), player.name(), player.displayOrder()))
             .forEach(room.players::add);
 
-        room.leaders.add(new RoomTeamLeader(hostId, hostNickname, hostActionToken, spec.budget()));
+        room.leaders.add(new RoomTeamLeader(hostLeaderId, hostNickname, hostActionToken, spec.budget()));
         return room;
     }
 
@@ -124,7 +141,7 @@ class Room implements AggregateRoot<Room, RoomId> {
         return status == RoomStatus.WAITING && leaders.size() < teamCount;
     }
 
-    public void join(String teamLeaderId, String nickname, String actionToken) {
+    public void join(TeamLeaderId teamLeaderId, String nickname, String actionToken) {
         if (status != RoomStatus.WAITING) {
             throw CoreException.of(RoomErrorType.ROOM_JOIN_REQUIRES_WAITING);
         }
@@ -134,13 +151,13 @@ class Room implements AggregateRoot<Room, RoomId> {
         leaders.add(new RoomTeamLeader(teamLeaderId, nickname, actionToken, budget));
     }
 
-    public void selectDraftPosition(String callerLeaderId, int draftPosition) {
+    void selectDraftPosition(TeamLeaderId callerLeaderId, int draftPosition) {
         validateDraftPositionChange(draftPosition);
 
         RoomTeamLeader caller = getLeader(callerLeaderId);
         boolean taken =
             leaders.stream()
-                .filter(leader -> !leader.getTeamLeaderId().equals(callerLeaderId))
+                .filter(leader -> !leader.getId().equals(callerLeaderId))
                 .anyMatch(leader -> Integer.valueOf(draftPosition).equals(leader.getDraftPosition()));
         if (taken) {
             throw CoreException.of(RoomErrorType.ROOM_DRAFT_POSITION_TAKEN);
@@ -149,13 +166,13 @@ class Room implements AggregateRoot<Room, RoomId> {
         caller.assignDraftPosition(draftPosition);
     }
 
-    public void clearDraftPosition(String callerLeaderId) {
+    void clearDraftPosition(TeamLeaderId callerLeaderId) {
         validateDraftModeWaiting();
         getLeader(callerLeaderId).clearDraftPosition();
     }
 
-    public void start(String callerLeaderId) {
-        if (!hostId.equals(callerLeaderId)) {
+    void start(TeamLeaderId callerLeaderId) {
+        if (!hostLeaderId.equals(callerLeaderId)) {
             throw CoreException.of(RoomErrorType.ROOM_START_FORBIDDEN);
         }
         RoomStartReadiness readiness = getStartReadiness();
@@ -180,7 +197,7 @@ class Room implements AggregateRoot<Room, RoomId> {
         }
     }
 
-    public RoomBid placeBid(String teamLeaderId, int amount) {
+    RoomBid placeBid(TeamLeaderId teamLeaderId, int amount) {
         if (status != RoomStatus.IN_PROGRESS) {
             throw CoreException.of(RoomErrorType.ROOM_PLAY_REQUIRES_IN_PROGRESS);
         }
@@ -196,7 +213,7 @@ class Room implements AggregateRoot<Room, RoomId> {
 
         RoomTeamLeader leader =
             leaders.stream()
-                .filter(it -> it.getTeamLeaderId().equals(teamLeaderId))
+                .filter(it -> it.getId().equals(teamLeaderId))
                 .findFirst()
                 .orElseThrow(() -> CoreException.of(RoomErrorType.ROOM_BIDDER_NOT_FOUND));
 
@@ -205,8 +222,8 @@ class Room implements AggregateRoot<Room, RoomId> {
         }
 
         bids.stream()
-            .filter(it -> it.getRound() == currentAuctionRound)
-            .mapToInt(RoomBid::getAmount)
+            .filter(it -> it.round() == currentAuctionRound)
+            .mapToInt(RoomBid::amount)
             .max()
             .ifPresent(highest -> {
                 if (amount <= highest) {
@@ -214,7 +231,16 @@ class Room implements AggregateRoot<Room, RoomId> {
                 }
             });
 
-        RoomBid bid = new RoomBid(currentAuctionRound, teamLeaderId, amount);
+        BidSequence nextSequence =
+            new BidSequence(
+                bids.stream()
+                    .filter(it -> it.round() == currentAuctionRound)
+                    .map(RoomBid::sequence)
+                    .mapToInt(BidSequence::value)
+                    .max()
+                    .orElse(0) + 1
+            );
+        RoomBid bid = new RoomBid(currentAuctionRound, nextSequence, teamLeaderId, amount);
         bids.add(bid);
         return bid;
     }
@@ -238,8 +264,8 @@ class Room implements AggregateRoot<Room, RoomId> {
 
         RoomBid winningBid =
             bids.stream()
-                .filter(it -> it.getRound() == currentAuctionRound)
-                .max(Comparator.comparingInt(RoomBid::getAmount))
+                .filter(it -> it.round() == currentAuctionRound)
+                .max(Comparator.comparingInt(RoomBid::amount))
                 .orElse(null);
 
         currentAuctionRound += 1;
@@ -252,13 +278,13 @@ class Room implements AggregateRoot<Room, RoomId> {
 
         RoomTeamLeader winner =
             leaders.stream()
-                .filter(it -> it.getTeamLeaderId().equals(winningBid.getTeamLeaderId()))
+                .filter(it -> it.getId().equals(winningBid.teamLeaderId()))
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("낙찰한 팀장을 찾을 수 없습니다"));
 
         target.assign();
-        winner.spend(winningBid.getAmount());
-        members.add(new RoomTeamMember(winningBid.getTeamLeaderId(), target.getName(), members.size()));
+        winner.spend(winningBid.amount());
+        members.add(new RoomTeamMember(winningBid.teamLeaderId(), target.getName(), members.size()));
 
         if (members.size() == teamCount * (teamSize - 1)) {
             status = RoomStatus.COMPLETED;
@@ -267,15 +293,16 @@ class Room implements AggregateRoot<Room, RoomId> {
         return new AuctionSettlement(target.getName(), AuctionOutcome.SOLD);
     }
 
-    public RoomTeamMember pick(String teamLeaderId, String playerName) {
+    RoomTeamMember pick(TeamLeaderId teamLeaderId, String playerName) {
         if (status != RoomStatus.IN_PROGRESS) {
             throw CoreException.of(RoomErrorType.ROOM_PLAY_REQUIRES_IN_PROGRESS);
         }
         if (mode != RoomMode.DRAFT) {
             throw CoreException.of(RoomErrorType.ROOM_PICK_REQUIRES_DRAFT_MODE);
         }
+
         DraftProgress progress = requireCurrentDraftProgress();
-        if (!progress.currentLeaderId().equals(teamLeaderId)) {
+        if (!progress.currentLeaderId().equals(teamLeaderId.value())) {
             throw CoreException.of(RoomErrorType.ROOM_PICK_OUT_OF_TURN);
         }
 
@@ -287,7 +314,7 @@ class Room implements AggregateRoot<Room, RoomId> {
                 .orElseThrow(() -> CoreException.of(RoomErrorType.ROOM_PICK_PLAYER_NOT_AVAILABLE));
 
         player.assign();
-        RoomTeamMember member = new RoomTeamMember(teamLeaderId, playerName, members.size());
+        RoomTeamMember member = new RoomTeamMember(teamLeaderId, player.getName(), members.size());
         members.add(member);
 
         currentTurnIndex += 1;
@@ -345,9 +372,9 @@ class Room implements AggregateRoot<Room, RoomId> {
         return getLeadersInDraftOrder().stream().map(RoomTeamLeader::getTeamLeaderId).toList();
     }
 
-    private RoomTeamLeader getLeader(String teamLeaderId) {
+    private RoomTeamLeader getLeader(TeamLeaderId teamLeaderId) {
         return leaders.stream()
-            .filter(leader -> leader.getTeamLeaderId().equals(teamLeaderId))
+            .filter(leader -> leader.getId().equals(teamLeaderId))
             .findFirst()
             .orElseThrow(() -> new IllegalStateException("팀장을 찾을 수 없습니다"));
     }

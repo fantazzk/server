@@ -77,7 +77,7 @@ class RoomApiIntegrationTest {
     private Room joinableAuctionRoom(String code, Instant createdAt) {
         return Room.createFromTemplate(
             code,
-            "host-" + code,
+            new TeamLeaderId("host-" + code),
             "호스트-" + code,
             "host-action-token-" + code,
             new RoomTemplateSpec(
@@ -87,8 +87,8 @@ class RoomApiIntegrationTest {
                 300,
                 null,
                 List.of(
-                    new RoomTemplateSpec.Player("선수1", 0),
-                    new RoomTemplateSpec.Player("선수2", 1)
+                    new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", 0),
+                    new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", 1)
                 )
             ),
             createdAt
@@ -97,20 +97,20 @@ class RoomApiIntegrationTest {
 
     private Room fullWaitingAuctionRoom(String code, Instant createdAt) {
         Room room = joinableAuctionRoom(code, createdAt);
-        room.join("guest-" + code, "게스트-" + code, "guest-action-token-" + code);
+        room.join(new TeamLeaderId("guest-" + code), "게스트-" + code, "guest-action-token-" + code);
         return room;
     }
 
     private Room inProgressAuctionRoom(String code, Instant createdAt) {
         Room room = fullWaitingAuctionRoom(code, createdAt);
-        room.start("host-" + code);
+        room.start(new TeamLeaderId("host-" + code));
         return room;
     }
 
     private Room joinableDraftRoom(String code, Instant createdAt) {
         return Room.createFromTemplate(
             code,
-            "host-" + code,
+            new TeamLeaderId("host-" + code),
             "호스트-" + code,
             "host-action-token-" + code,
             new RoomTemplateSpec(
@@ -120,8 +120,8 @@ class RoomApiIntegrationTest {
                 null,
                 RoomTemplateSpec.DraftOrderStrategy.SNAKE,
                 List.of(
-                    new RoomTemplateSpec.Player("선수1", 0),
-                    new RoomTemplateSpec.Player("선수2", 1)
+                    new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", 0),
+                    new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", 1)
                 )
             ),
             createdAt

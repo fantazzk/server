@@ -1,5 +1,8 @@
 package com.naminhyeok.fantazzk.template;
 
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.JoinColumn;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -12,6 +15,8 @@ class Template implements AggregateRoot<Template, TemplateId> {
     private final TemplateId id;
     private String name;
     private TemplateConfiguration configuration;
+    @ElementCollection
+    @CollectionTable(name = "template_player", joinColumns = @JoinColumn(name = "players_template_id"))
     private List<TemplatePlayer> players;
 
     Template(String name, TemplateConfiguration configuration) {
@@ -69,7 +74,7 @@ class Template implements AggregateRoot<Template, TemplateId> {
 
     public List<TemplatePlayer> getPlayers() {
         return players.stream()
-            .sorted(Comparator.comparingInt(TemplatePlayer::getDisplayOrder))
+            .sorted(Comparator.comparingInt(TemplatePlayer::playerIndex))
             .toList();
     }
 

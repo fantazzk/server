@@ -8,7 +8,7 @@ record TeamLeaderResponse(
 ) {
     static TeamLeaderResponse from(RoomTeamLeader leader) {
         return new TeamLeaderResponse(
-            leader.getTeamLeaderId(),
+            leader.getId().value(),
             leader.getNickname(),
             leader.getDraftPosition(),
             leader.getRemainingBudget()

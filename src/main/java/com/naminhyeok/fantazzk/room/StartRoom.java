@@ -15,7 +15,7 @@ class StartRoom {
     public void start(String code, String actionToken) {
         Room room = rooms.findByCode(code).orElseThrow(() -> CoreException.of(RoomErrorType.ROOM_NOT_FOUND));
         RoomTeamLeader caller = roomActionAuthorizer.authenticate(room, actionToken);
-        room.start(caller.getTeamLeaderId());
+        room.start(caller.getId());
         rooms.save(room);
     }
 }

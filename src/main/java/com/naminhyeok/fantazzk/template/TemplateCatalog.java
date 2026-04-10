@@ -29,7 +29,7 @@ public interface TemplateCatalog {
 
     record PlayerBlueprint(
         String name,
-        int displayOrder
+        int playerIndex
     ) {
     }
 

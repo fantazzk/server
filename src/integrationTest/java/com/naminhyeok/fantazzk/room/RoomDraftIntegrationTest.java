@@ -1,8 +1,10 @@
 package com.naminhyeok.fantazzk.room;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.tuple;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.groups.Tuple.tuple;
 
+import com.naminhyeok.fantazzk.CoreException;
 import com.naminhyeok.fantazzk.template.TemplateCatalog.DraftOrderStrategy;
 import com.naminhyeok.fantazzk.template.TemplateFixture;
 import jakarta.persistence.EntityManager;
@@ -59,13 +61,35 @@ class RoomDraftIntegrationTest {
 
         Room reloaded = rooms.findByCode(created.getCode()).orElseThrow();
 
-        assertThat(member.getPlayerName()).isEqualTo("선수1");
+        assertThat(member.playerName()).isEqualTo("선수1");
         assertThat(reloaded.getMembers()).singleElement()
-            .extracting(RoomTeamMember::getTeamLeaderId, RoomTeamMember::getPlayerName)
-            .containsExactly(currentLeaderId, "선수1");
+            .extracting(RoomTeamMember::teamLeaderId, RoomTeamMember::playerName)
+            .containsExactly(new TeamLeaderId(currentLeaderId), "선수1");
         assertThat(reloaded.getPlayers().stream().filter(it -> it.getName().equals("선수1")).findFirst().orElseThrow().getStatus())
             .isEqualTo(PlayerStatus.ASSIGNED);
         assertThat(reloaded.getCurrentTurnIndex()).isEqualTo(1);
+    }
+
+    @Test
+    void 픽_요청은_선수이름_해석보다_턴_검증을_먼저_적용한다() {
+        var template =
+            templateFixture.createDraftTemplateId(
+                "드래프트전",
+                2,
+                2,
+                DraftOrderStrategy.SNAKE,
+                List.of("선수1", "선수2")
+            );
+
+        Room created = createRoom.create(template, "호스트");
+        RoomTeamLeader guest = joinRoom.join(created.getCode(), "게스트");
+        selectDraftPosition.select(created.getCode(), created.getLeaders().getFirst().getActionToken(), 2);
+        selectDraftPosition.select(created.getCode(), guest.getActionToken(), 1);
+        startRoom.start(created.getCode(), created.getLeaders().getFirst().getActionToken());
+
+        assertThatThrownBy(() -> pickDraft.pick(created.getCode(), created.getLeaders().getFirst().getTeamLeaderId(), "없는선수"))
+            .isInstanceOf(CoreException.class)
+            .isInstanceOfSatisfying(CoreException.class, ex -> assertThat(ex.getError()).isEqualTo(RoomErrorType.ROOM_PICK_OUT_OF_TURN));
     }
 
     @Test
@@ -102,13 +126,13 @@ class RoomDraftIntegrationTest {
         entityManager.clear();
         Room reloadedAfterThirdPick = rooms.findByCode(created.getCode()).orElseThrow();
 
-        assertThat(thirdPick.getTeamLeaderId()).isEqualTo(guest.getTeamLeaderId());
+        assertThat(thirdPick.teamLeaderId()).isEqualTo(guest.getId());
         assertThat(reloadedAfterThirdPick.getMembers())
-            .extracting(RoomTeamMember::getTeamLeaderId, RoomTeamMember::getPlayerName)
+            .extracting(RoomTeamMember::teamLeaderId, RoomTeamMember::playerName)
             .containsExactly(
-                tuple(host.getTeamLeaderId(), "선수1"),
-                tuple(guest.getTeamLeaderId(), "선수2"),
-                tuple(guest.getTeamLeaderId(), "선수3")
+                tuple(host.getId(), "선수1"),
+                tuple(guest.getId(), "선수2"),
+                tuple(guest.getId(), "선수3")
             );
         assertThat(reloadedAfterThirdPick.getCurrentTurnIndex()).isEqualTo(3);
     }

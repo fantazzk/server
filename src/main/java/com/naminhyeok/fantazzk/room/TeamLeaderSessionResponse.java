@@ -7,8 +7,8 @@ record TeamLeaderSessionResponse(
 ) {
     static TeamLeaderSessionResponse from(Room room, RoomTeamLeader leader) {
         return new TeamLeaderSessionResponse(
-            leader.getTeamLeaderId(),
-            room.getHostId().equals(leader.getTeamLeaderId()) ? "HOST" : "LEADER",
+            leader.getId().value(),
+            room.getHostLeaderId().equals(leader.getId()) ? "HOST" : "LEADER",
             leader.getActionToken()
         );
     }

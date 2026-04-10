@@ -5,47 +5,46 @@ import com.naminhyeok.fantazzk.template.TemplateCatalog;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.UUID;
-import lombok.RequiredArgsConstructor;
+import java.util.regex.Pattern;
+import org.hibernate.exception.ConstraintViolationException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
 class CreateRoom {
-    private final Rooms rooms;
+    private static final int MAX_ROOM_CODE_ATTEMPTS = 3;
+    private static final String ROOM_CODE_CONSTRAINT = "uk_rooms_code";
+    private static final Pattern ROOM_CODE_CONSTRAINT_PATTERN = Pattern.compile(
+        "(?i)(^|[^a-z0-9_])" + ROOM_CODE_CONSTRAINT + "([^a-z0-9_]|$)"
+    );
+
+    private final CreateRoomAttempt createRoomAttempt;
     private final TemplateCatalog templateCatalog;
     private final TeamLeaderIdentityIssuer teamLeaderIdentityIssuer;
     private final Clock clock;
+    private final RoomCodeGenerator roomCodeGenerator;
 
-    @Transactional
     public Room create(UUID templateId, String hostNickname) {
         TemplateCatalog.TemplateBlueprint template = getTemplate(templateId);
         TeamLeaderIdentityIssuer.TeamLeaderIdentity identity = teamLeaderIdentityIssuer.issue();
 
-        Room room =
-            Room.createFromTemplate(
-                generateCode(),
-                identity.leaderId(),
-                hostNickname,
-                identity.actionToken(),
-                new RoomTemplateSpec(
-                    template.mode() == TemplateCatalog.Mode.AUCTION
-                        ? RoomTemplateSpec.Mode.AUCTION
-                        : RoomTemplateSpec.Mode.DRAFT,
-                    template.teamCount(),
-                    template.teamSize(),
-                    template.budget(),
-                    template.draftOrderStrategy() == null
-                        ? null
-                        : RoomTemplateSpec.DraftOrderStrategy.valueOf(template.draftOrderStrategy().name()),
-                    template.players().stream()
-                        .map(player -> new RoomTemplateSpec.Player(player.name(), player.displayOrder()))
-                        .toList()
-                ),
-                Instant.now(clock)
-            );
+        for (int attempt = 1; attempt <= MAX_ROOM_CODE_ATTEMPTS; attempt++) {
+            Room room = newRoom(template, identity, hostNickname);
+            try {
+                return createRoomAttempt.save(room);
+            } catch (DataIntegrityViolationException ex) {
+                if (!isRoomCodeCollision(ex)) {
+                    throw ex;
+                }
+                if (attempt == MAX_ROOM_CODE_ATTEMPTS) {
+                    throw CoreException.of(RoomErrorType.ROOM_CODE_GENERATION_FAILED);
+                }
+            }
+        }
 
-        return rooms.save(room);
+        throw CoreException.of(RoomErrorType.ROOM_CODE_GENERATION_FAILED);
     }
 
     private TemplateCatalog.TemplateBlueprint getTemplate(UUID templateId) {
@@ -56,7 +55,57 @@ class CreateRoom {
         }
     }
 
+    private Room newRoom(
+        TemplateCatalog.TemplateBlueprint template,
+        TeamLeaderIdentityIssuer.TeamLeaderIdentity identity,
+        String hostNickname
+    ) {
+        return Room.createFromTemplate(
+            generateCode(),
+            new TeamLeaderId(identity.leaderId()),
+            hostNickname,
+            identity.actionToken(),
+            new RoomTemplateSpec(
+                template.mode() == TemplateCatalog.Mode.AUCTION
+                    ? RoomTemplateSpec.Mode.AUCTION
+                    : RoomTemplateSpec.Mode.DRAFT,
+                template.teamCount(),
+                template.teamSize(),
+                template.budget(),
+                template.draftOrderStrategy() == null
+                    ? null
+                    : RoomTemplateSpec.DraftOrderStrategy.valueOf(template.draftOrderStrategy().name()),
+                template.players().stream()
+                    .map(player -> new RoomTemplateSpec.Player(
+                        new RoomPlayerId(player.playerIndex()),
+                        player.name(),
+                        player.playerIndex()
+                    ))
+                    .toList()
+            ),
+            Instant.now(clock)
+        );
+    }
+
     private String generateCode() {
-        return UUID.randomUUID().toString().replace("-", "").substring(0, 6).toUpperCase();
+        return roomCodeGenerator.generate();
+    }
+
+    private boolean isRoomCodeCollision(Throwable throwable) {
+        Throwable current = throwable;
+        while (current != null) {
+            if (
+                current instanceof ConstraintViolationException constraintViolationException &&
+                isRoomCodeConstraint(constraintViolationException.getConstraintName())
+            ) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
+    }
+
+    private boolean isRoomCodeConstraint(String constraintName) {
+        return constraintName != null && ROOM_CODE_CONSTRAINT_PATTERN.matcher(constraintName).find();
     }
 }

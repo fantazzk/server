@@ -15,7 +15,7 @@ class JoinRoom {
     public RoomTeamLeader join(String code, String nickname) {
         Room room = rooms.findByCode(code).orElseThrow(() -> CoreException.of(RoomErrorType.ROOM_NOT_FOUND));
         TeamLeaderIdentityIssuer.TeamLeaderIdentity identity = teamLeaderIdentityIssuer.issue();
-        room.join(identity.leaderId(), nickname, identity.actionToken());
+        room.join(new TeamLeaderId(identity.leaderId()), nickname, identity.actionToken());
         Room saved = rooms.save(room);
         return saved.getLeaders().getLast();
     }

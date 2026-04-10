@@ -26,7 +26,7 @@ class ProvideTemplateCatalog implements TemplateCatalog {
                     ? null
                     : DraftOrderStrategy.valueOf(detail.template().getDraftOrderStrategy().name()),
                 detail.players().stream()
-                    .map(player -> new PlayerBlueprint(player.getName(), player.getDisplayOrder()))
+                    .map(player -> new PlayerBlueprint(player.name(), player.playerIndex()))
                     .toList()
             );
         } catch (CoreException ex) {

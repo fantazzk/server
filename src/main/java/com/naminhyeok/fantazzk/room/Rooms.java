@@ -9,6 +9,8 @@ import org.jmolecules.ddd.types.Repository;
 interface Rooms extends Repository<Room, RoomId> {
     Room save(Room room);
 
+    Room saveAndFlush(Room room);
+
     Optional<Room> findById(RoomId id);
 
     Optional<Room> findByCode(String code);

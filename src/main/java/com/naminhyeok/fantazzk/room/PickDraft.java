@@ -13,7 +13,7 @@ class PickDraft {
     @Transactional
     public RoomTeamMember pick(String code, String teamLeaderId, String playerName) {
         Room room = rooms.findByCode(code).orElseThrow(() -> CoreException.of(RoomErrorType.ROOM_NOT_FOUND));
-        RoomTeamMember member = room.pick(teamLeaderId, playerName);
+        RoomTeamMember member = room.pick(new TeamLeaderId(teamLeaderId), playerName);
         rooms.save(room);
         return member;
     }

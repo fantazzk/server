@@ -7,9 +7,9 @@ record RoomMemberResponse(
 ) {
     static RoomMemberResponse from(RoomTeamMember member) {
         return new RoomMemberResponse(
-            member.getTeamLeaderId(),
-            member.getPlayerName(),
-            member.getAssignOrder()
+            member.teamLeaderId().value(),
+            member.playerName(),
+            member.assignOrder()
         );
     }
 }
