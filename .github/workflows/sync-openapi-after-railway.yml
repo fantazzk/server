@@ -1,0 +1,258 @@
+name: Sync OpenAPI After Railway
+
+on:
+  status:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sync-openapi-to-web-fe
+  cancel-in-progress: true
+
+jobs:
+  sync-openapi-to-web-fe:
+    name: sync openapi to web-fe after railway deploy
+    if: github.event.state == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: resolve sync configuration
+        id: sync-config
+        env:
+          EVENT_CONTEXT: ${{ github.event.context }}
+          EVENT_SHA: ${{ github.event.sha }}
+          OPENAPI_SYNC_APP_ID: ${{ vars.OPENAPI_SYNC_APP_ID }}
+          OPENAPI_SYNC_APP_PRIVATE_KEY: ${{ secrets.OPENAPI_SYNC_APP_PRIVATE_KEY }}
+          RAILWAY_DEPLOY_STATUS_CONTEXT: ${{ vars.RAILWAY_DEPLOY_STATUS_CONTEXT }}
+          WEB_FE_BASE_BRANCH: ${{ vars.WEB_FE_BASE_BRANCH }}
+          WEB_FE_OPENAPI_PATH: ${{ vars.WEB_FE_OPENAPI_PATH }}
+          WEB_FE_REPOSITORY: ${{ vars.WEB_FE_REPOSITORY }}
+          WEB_FE_SYNC_BRANCH: ${{ vars.WEB_FE_SYNC_BRANCH }}
+        run: |
+          set -eu
+
+          expected_context="${RAILWAY_DEPLOY_STATUS_CONTEXT:-fantazzk - server}"
+          if [ "${EVENT_CONTEXT}" != "${expected_context}" ]; then
+            {
+              echo "enabled=false"
+            } >> "$GITHUB_OUTPUT"
+            echo "OpenAPI sync skipped because status context '${EVENT_CONTEXT}' does not match '${expected_context}'."
+            exit 0
+          fi
+
+          if [ -z "${OPENAPI_SYNC_APP_ID}" ] || [ -z "${OPENAPI_SYNC_APP_PRIVATE_KEY}" ]; then
+            {
+              echo "enabled=false"
+            } >> "$GITHUB_OUTPUT"
+            echo "OpenAPI sync is disabled because OPENAPI_SYNC_APP_ID or OPENAPI_SYNC_APP_PRIVATE_KEY is not configured."
+            exit 0
+          fi
+
+          if [ -z "${EVENT_SHA}" ]; then
+            {
+              echo "enabled=false"
+            } >> "$GITHUB_OUTPUT"
+            echo "OpenAPI sync skipped because the status event did not include a commit SHA."
+            exit 0
+          fi
+
+          {
+            echo "enabled=true"
+            printf 'source_sha=%s\n' "${EVENT_SHA}"
+            printf 'web_fe_base_branch=%s\n' "${WEB_FE_BASE_BRANCH:-dev}"
+            printf 'web_fe_openapi_path=%s\n' "${WEB_FE_OPENAPI_PATH:-openapi/fantazzk.yaml}"
+            printf 'web_fe_repository=%s\n' "${WEB_FE_REPOSITORY:-fantazzk/web-fe}"
+            printf 'web_fe_sync_branch=%s\n' "${WEB_FE_SYNC_BRANCH:-automation/openapi-sync}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: checkout source commit
+        if: steps.sync-config.outputs.enabled == 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.sync-config.outputs.source_sha }}
+
+      - name: verify source commit is current main head
+        if: steps.sync-config.outputs.enabled == 'true'
+        id: main-head
+        run: |
+          set -eu
+
+          git fetch origin main --depth=1
+
+          source_sha="${{ steps.sync-config.outputs.source_sha }}"
+          main_sha="$(git rev-parse origin/main)"
+
+          if [ "${source_sha}" != "${main_sha}" ]; then
+            {
+              echo "should_sync=false"
+            } >> "$GITHUB_OUTPUT"
+            echo "OpenAPI sync skipped because ${source_sha} is no longer the current main HEAD (${main_sha})."
+            exit 0
+          fi
+
+          {
+            echo "should_sync=true"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: install sdkman
+        if: steps.main-head.outputs.should_sync == 'true'
+        run: curl -s "https://get.sdkman.io" | bash
+
+      - name: jdk cache
+        if: steps.main-head.outputs.should_sync == 'true'
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.sdkman
+          key: gha-${{ runner.os }}-sdkman-${{ hashFiles('**/.sdkmanrc') }}
+
+      - name: install jdk
+        if: steps.main-head.outputs.should_sync == 'true'
+        run: |
+          source "$HOME/.sdkman/bin/sdkman-init.sh"
+          sdk env install
+
+      - name: gradle cache
+        if: steps.main-head.outputs.should_sync == 'true'
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            ~/.gradle/jdks
+          key: gha-${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            gha-${{ runner.os }}-gradle
+
+      - name: generate GitHub App token
+        if: steps.main-head.outputs.should_sync == 'true'
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ vars.OPENAPI_SYNC_APP_ID }}
+          private-key: ${{ secrets.OPENAPI_SYNC_APP_PRIVATE_KEY }}
+          owner: fantazzk
+
+      - name: checkout web-fe
+        if: steps.main-head.outputs.should_sync == 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ steps.sync-config.outputs.web_fe_repository }}
+          ref: ${{ steps.sync-config.outputs.web_fe_base_branch }}
+          token: ${{ steps.app-token.outputs.token }}
+          fetch-depth: 0
+          path: web-fe
+
+      - name: export OpenAPI yaml
+        if: steps.main-head.outputs.should_sync == 'true'
+        run: |
+          source "$HOME/.sdkman/bin/sdkman-init.sh"
+          SPRING_PROFILES_ACTIVE=openapi PORT=8080 ./gradlew openapiBootRun --no-daemon > app.log 2>&1 &
+          app_pid=$!
+          trap 'kill "${app_pid}" || true' EXIT
+
+          attempts=0
+          while [ "${attempts}" -lt 60 ]; do
+            if curl --fail --silent --show-error http://127.0.0.1:8080/v3/api-docs.yaml -o openapi.yaml; then
+              exit 0
+            fi
+
+            if ! kill -0 "${app_pid}" 2>/dev/null; then
+              echo "Application exited before the OpenAPI endpoint became ready."
+              cat app.log
+              exit 1
+            fi
+
+            attempts=$((attempts + 1))
+            sleep 2
+          done
+
+          echo "OpenAPI endpoint did not become ready in time."
+          cat app.log
+          exit 1
+
+      - name: copy OpenAPI into web-fe
+        if: steps.main-head.outputs.should_sync == 'true'
+        working-directory: web-fe
+        env:
+          TARGET_PATH: ${{ steps.sync-config.outputs.web_fe_openapi_path }}
+        run: |
+          mkdir -p "$(dirname "${TARGET_PATH}")"
+          cp "${GITHUB_WORKSPACE}/openapi.yaml" "${TARGET_PATH}"
+
+      - name: commit and push sync branch
+        if: steps.main-head.outputs.should_sync == 'true'
+        id: commit
+        working-directory: web-fe
+        env:
+          SOURCE_SHA: ${{ steps.sync-config.outputs.source_sha }}
+          TARGET_PATH: ${{ steps.sync-config.outputs.web_fe_openapi_path }}
+          WEB_FE_BASE_BRANCH: ${{ steps.sync-config.outputs.web_fe_base_branch }}
+          WEB_FE_SYNC_BRANCH: ${{ steps.sync-config.outputs.web_fe_sync_branch }}
+        run: |
+          set -eu
+
+          if [ -z "$(git status --short -- "${TARGET_PATH}")" ]; then
+            {
+              echo "changed=false"
+            } >> "$GITHUB_OUTPUT"
+            echo "OpenAPI spec is already up to date."
+            exit 0
+          fi
+
+          git config user.name "fantazzk-openapi-bot[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git fetch origin "+refs/heads/${WEB_FE_BASE_BRANCH}:refs/remotes/origin/${WEB_FE_BASE_BRANCH}"
+          git fetch origin "+refs/heads/${WEB_FE_SYNC_BRANCH}:refs/remotes/origin/${WEB_FE_SYNC_BRANCH}" || true
+
+          git checkout -B "${WEB_FE_SYNC_BRANCH}" "origin/${WEB_FE_BASE_BRANCH}"
+          git add "${TARGET_PATH}"
+          git commit -m "chore(api): sync OpenAPI from ${GITHUB_REPOSITORY}@${SOURCE_SHA}"
+
+          if git show-ref --verify --quiet "refs/remotes/origin/${WEB_FE_SYNC_BRANCH}"; then
+            git push --force-with-lease origin "HEAD:${WEB_FE_SYNC_BRANCH}"
+          else
+            git push origin "HEAD:${WEB_FE_SYNC_BRANCH}"
+          fi
+
+          {
+            echo "changed=true"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: create or update pull request
+        if: steps.commit.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          SOURCE_SHA: ${{ steps.sync-config.outputs.source_sha }}
+          TARGET_PATH: ${{ steps.sync-config.outputs.web_fe_openapi_path }}
+          WEB_FE_BASE_BRANCH: ${{ steps.sync-config.outputs.web_fe_base_branch }}
+          WEB_FE_REPOSITORY: ${{ steps.sync-config.outputs.web_fe_repository }}
+          WEB_FE_SYNC_BRANCH: ${{ steps.sync-config.outputs.web_fe_sync_branch }}
+        run: |
+          set -eu
+
+          pr_number="$(gh pr list --repo "${WEB_FE_REPOSITORY}" --head "${WEB_FE_SYNC_BRANCH}" --base "${WEB_FE_BASE_BRANCH}" --json number --jq '.[0].number')"
+          pr_body="$(cat <<EOF
+          Automated OpenAPI sync from ${GITHUB_REPOSITORY}.
+
+          - Source commit: ${SOURCE_SHA}
+          - Trigger: successful Railway deploy status
+          - Synced file: ${TARGET_PATH}
+          EOF
+          )"
+
+          if [ -n "${pr_number}" ]; then
+            gh pr edit "${pr_number}" \
+              --repo "${WEB_FE_REPOSITORY}" \
+              --title "chore(api): sync OpenAPI spec" \
+              --body "${pr_body}"
+            exit 0
+          fi
+
+          gh pr create \
+            --repo "${WEB_FE_REPOSITORY}" \
+            --base "${WEB_FE_BASE_BRANCH}" \
+            --head "${WEB_FE_SYNC_BRANCH}" \
+            --title "chore(api): sync OpenAPI spec" \
+            --body "${pr_body}"
