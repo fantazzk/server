@@ -24,7 +24,10 @@ class RoomApiController {
     private final GetRoom getRoom;
     private final FindJoinableRooms findJoinableRooms;
     private final JoinRoom joinRoom;
+    private final PlaceBid placeBid;
+    private final PickDraft pickDraft;
     private final StartRoom startRoom;
+    private final SettleAuction settleAuction;
     private final SelectDraftPosition selectDraftPosition;
     private final ClearDraftPosition clearDraftPosition;
 
@@ -61,6 +64,31 @@ class RoomApiController {
     ) {
         startRoom.start(code, actionToken);
         return ApiResponse.success(RoomResponse.from(getRoom.get(code)));
+    }
+
+    @PostMapping("/{code}/bids")
+    ApiResponse<RoomResponse> placeBid(
+        @PathVariable String code,
+        @RequestHeader(value = "X-Room-Action-Token", required = false) String actionToken,
+        @Valid @RequestBody PlaceBidRequest request
+    ) {
+        placeBid.place(code, actionToken, request.amount());
+        return ApiResponse.success(RoomResponse.from(getRoom.get(code)));
+    }
+
+    @PostMapping("/{code}/draft-picks")
+    ApiResponse<RoomResponse> pickDraft(
+        @PathVariable String code,
+        @RequestHeader(value = "X-Room-Action-Token", required = false) String actionToken,
+        @Valid @RequestBody PickDraftRequest request
+    ) {
+        pickDraft.pick(code, actionToken, request.playerName());
+        return ApiResponse.success(RoomResponse.from(getRoom.get(code)));
+    }
+
+    @PostMapping("/{code}/auction/progress")
+    ApiResponse<RoomResponse> progressAuction(@PathVariable String code) {
+        return ApiResponse.success(RoomResponse.from(settleAuction.settleIfDue(code)));
     }
 
     @PutMapping("/{code}/draft-position")

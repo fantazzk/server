@@ -23,4 +23,16 @@ interface Rooms extends Repository<Room, RoomId> {
         order by r.createdAt desc, r.code desc
         """)
     List<Room> findJoinableWaitingRooms(Pageable pageable);
+
+    @Query("""
+        select r
+        from Room r
+        where r.status = com.naminhyeok.fantazzk.room.RoomStatus.IN_PROGRESS
+          and r.mode = com.naminhyeok.fantazzk.room.RoomMode.AUCTION
+        order by
+          case when r.currentAuctionRoundEndsAt is null then 0 else 1 end,
+          r.currentAuctionRoundEndsAt asc,
+          r.code asc
+        """)
+    List<Room> findSchedulableAuctionRooms(Pageable pageable);
 }

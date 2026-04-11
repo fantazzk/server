@@ -105,10 +105,22 @@ enum RoomErrorType implements ErrorDescriptor {
         "남은 예산보다 큰 금액은 입찰할 수 없습니다",
         Level.INFO
     ),
+    ROOM_BID_REQUIRES_OPEN_ROUND(
+        HttpStatus.CONFLICT,
+        "ROOM_BID_REQUIRES_OPEN_ROUND",
+        "열린 경매 라운드에서만 입찰할 수 있습니다",
+        Level.INFO
+    ),
     ROOM_BID_TOO_LOW(
         HttpStatus.CONFLICT,
         "ROOM_BID_TOO_LOW",
         "현재 최고가보다 높은 금액만 입찰할 수 있습니다",
+        Level.INFO
+    ),
+    ROOM_AUCTION_ROUND_NOT_ENDED(
+        HttpStatus.CONFLICT,
+        "ROOM_AUCTION_ROUND_NOT_ENDED",
+        "경매 라운드가 아직 종료되지 않았습니다",
         Level.INFO
     ),
     ROOM_PICK_REQUIRES_DRAFT_MODE(
@@ -139,6 +151,12 @@ enum RoomErrorType implements ErrorDescriptor {
         HttpStatus.CONFLICT,
         "ROOM_DRAFT_POSITIONS_NOT_FULL",
         "모든 팀장이 서로 다른 드래프트 자리를 확정해야 시작할 수 있습니다",
+        Level.INFO
+    ),
+    ROOM_CONCURRENT_MODIFICATION(
+        HttpStatus.CONFLICT,
+        "ROOM_CONCURRENT_MODIFICATION",
+        "방 상태가 동시에 변경되었습니다. 최신 상태를 확인한 뒤 다시 시도해 주세요",
         Level.INFO
     );
 

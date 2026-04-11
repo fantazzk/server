@@ -151,6 +151,11 @@ class CreateRoomTest {
             return List.of();
         }
 
+        @Override
+        public List<Room> findSchedulableAuctionRooms(org.springframework.data.domain.Pageable pageable) {
+            return List.of();
+        }
+
         private Room savedRoom() {
             return savedRoom;
         }

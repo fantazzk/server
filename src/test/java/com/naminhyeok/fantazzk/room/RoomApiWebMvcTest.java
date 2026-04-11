@@ -66,6 +66,15 @@ class RoomApiWebMvcTest {
     @MockitoBean
     private ClearDraftPosition clearDraftPosition;
 
+    @MockitoBean
+    private PlaceBid placeBid;
+
+    @MockitoBean
+    private PickDraft pickDraft;
+
+    @MockitoBean
+    private SettleAuction settleAuction;
+
     @Test
     void create는_room과_teamLeaderSession을_반환한다() throws Exception {
         Room room = waitingAuctionRoom();
@@ -152,6 +161,7 @@ class RoomApiWebMvcTest {
         assertThat(body.at("/success/progress/currentRound").isNull()).isTrue();
         assertThat(body.at("/success/progress/currentLeaderId").isNull()).isTrue();
         assertThat(body.at("/success/progress/currentRoundLeaderIds").isNull()).isTrue();
+        assertThat(body.at("/success/progress/currentAuctionRoundEndsAt").isNull()).isTrue();
         assertThat(result.getResponse().getContentAsString()).doesNotContain("teamLeaderSession");
     }
 
@@ -197,6 +207,7 @@ class RoomApiWebMvcTest {
         assertThat(body.at("/success/progress/currentRound").isNull()).isTrue();
         assertThat(body.at("/success/progress/currentLeaderId").isNull()).isTrue();
         assertThat(body.at("/success/progress/currentRoundLeaderIds").isNull()).isTrue();
+        assertThat(body.at("/success/progress/currentAuctionRoundEndsAt").isNull()).isTrue();
     }
 
     @Test
@@ -218,6 +229,7 @@ class RoomApiWebMvcTest {
         assertThat(body.at("/success/progress/currentRound").asInt()).isEqualTo(2);
         assertThat(body.at("/success/progress/currentLeaderId").isNull()).isTrue();
         assertThat(body.at("/success/progress/currentRoundLeaderIds").isNull()).isTrue();
+        assertThat(body.at("/success/progress/currentAuctionRoundEndsAt").asText()).isEqualTo("2026-04-09T00:00:30Z");
     }
 
     @Test
@@ -318,6 +330,252 @@ class RoomApiWebMvcTest {
             .satisfies(response -> {
                 assertThat(response.resultType()).isEqualTo("ERROR");
                 assertThat(response.error().code()).isEqualTo("ROOM_ACTION_TOKEN_REQUIRED");
+            });
+    }
+
+    @Test
+    void start는_optimistic_lock_conflict를_409로_반환한다() throws Exception {
+        doThrow(CoreException.of(RoomErrorType.ROOM_CONCURRENT_MODIFICATION))
+            .when(startRoom)
+            .start(ROOM_CODE, HOST_TOKEN);
+
+        var result = mockMvcTester().perform(
+            post("/api/v1/rooms/{code}/start", ROOM_CODE)
+                .header("X-Room-Action-Token", HOST_TOKEN)
+        );
+
+        result.assertThat().hasStatus(HttpStatus.CONFLICT);
+        assertThat(readBody(result, VoidApiResponse.class))
+            .satisfies(response -> {
+                assertThat(response.resultType()).isEqualTo("ERROR");
+                assertThat(response.error().code()).isEqualTo("ROOM_CONCURRENT_MODIFICATION");
+            });
+    }
+
+    @Test
+    void placeBid는_header가_있으면_최신_room_snapshot을_반환한다() throws Exception {
+        Room room = startedAuctionRoom();
+        given(placeBid.place(ROOM_CODE, HOST_TOKEN, 150))
+            .willReturn(new RoomBid(1, new BidSequence(1), new TeamLeaderId(HOST_ID), 150));
+        given(getRoom.get(ROOM_CODE)).willReturn(room);
+
+        var result = mockMvcTester().perform(
+            post("/api/v1/rooms/{code}/bids", ROOM_CODE)
+                .header("X-Room-Action-Token", HOST_TOKEN)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    {
+                      "amount": 150
+                    }
+                    """
+                )
+        );
+
+        result.assertThat().hasStatusOk();
+        assertThat(readBody(result, RoomResponseApiResponse.class))
+            .satisfies(response -> {
+                assertThat(response.resultType()).isEqualTo("SUCCESS");
+                assertThat(response.success().status()).isEqualTo("IN_PROGRESS");
+                assertThat(response.success().progress().currentRound()).isEqualTo(1);
+                assertThat(response.success().progress().currentAuctionRoundEndsAt())
+                    .isEqualTo("2026-04-09T00:00:15Z");
+            });
+    }
+
+    @Test
+    void placeBid는_header가_없으면_401을_반환한다() throws Exception {
+        doThrow(CoreException.of(RoomErrorType.ROOM_ACTION_TOKEN_REQUIRED))
+            .when(placeBid)
+            .place(ROOM_CODE, null, 150);
+
+        var result = mockMvcTester().perform(
+            post("/api/v1/rooms/{code}/bids", ROOM_CODE)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    {
+                      "amount": 150
+                    }
+                    """
+                )
+        );
+
+        result.assertThat().hasStatus(HttpStatus.UNAUTHORIZED);
+        assertThat(readBody(result, VoidApiResponse.class))
+            .satisfies(response -> {
+                assertThat(response.resultType()).isEqualTo("ERROR");
+                assertThat(response.error().code()).isEqualTo("ROOM_ACTION_TOKEN_REQUIRED");
+            });
+    }
+
+    @Test
+    void placeBid는_0원이면_400을_반환한다() throws Exception {
+        var result = mockMvcTester().perform(
+            post("/api/v1/rooms/{code}/bids", ROOM_CODE)
+                .header("X-Room-Action-Token", HOST_TOKEN)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    {
+                      "amount": 0
+                    }
+                    """
+                )
+        );
+
+        result.assertThat().hasStatus(HttpStatus.BAD_REQUEST);
+        assertThat(readBody(result, VoidApiResponse.class))
+            .satisfies(response -> {
+                assertThat(response.resultType()).isEqualTo("ERROR");
+                assertThat(response.error().code()).isEqualTo("BAD_REQUEST");
+            });
+    }
+
+    @Test
+    void placeBid는_amount가_없으면_400을_반환한다() throws Exception {
+        var result = mockMvcTester().perform(
+            post("/api/v1/rooms/{code}/bids", ROOM_CODE)
+                .header("X-Room-Action-Token", HOST_TOKEN)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}")
+        );
+
+        result.assertThat().hasStatus(HttpStatus.BAD_REQUEST);
+        assertThat(readBody(result, VoidApiResponse.class))
+            .satisfies(response -> {
+                assertThat(response.resultType()).isEqualTo("ERROR");
+                assertThat(response.error().code()).isEqualTo("BAD_REQUEST");
+            });
+    }
+
+    @Test
+    void placeBid는_optimistic_lock_conflict를_409로_반환한다() throws Exception {
+        doThrow(CoreException.of(RoomErrorType.ROOM_CONCURRENT_MODIFICATION))
+            .when(placeBid)
+            .place(ROOM_CODE, HOST_TOKEN, 150);
+
+        var result = mockMvcTester().perform(
+            post("/api/v1/rooms/{code}/bids", ROOM_CODE)
+                .header("X-Room-Action-Token", HOST_TOKEN)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    {
+                      "amount": 150
+                    }
+                    """
+                )
+        );
+
+        result.assertThat().hasStatus(HttpStatus.CONFLICT);
+        assertThat(readBody(result, VoidApiResponse.class))
+            .satisfies(response -> {
+                assertThat(response.resultType()).isEqualTo("ERROR");
+                assertThat(response.error().code()).isEqualTo("ROOM_CONCURRENT_MODIFICATION");
+            });
+    }
+
+    @Test
+    void pickDraft는_header가_있으면_최신_room_snapshot을_반환한다() throws Exception {
+        Room room = inProgressDraftRoom();
+        given(pickDraft.pick(ROOM_CODE, GUEST_TOKEN, "선수3"))
+            .willReturn(new RoomTeamMember(new TeamLeaderId(GUEST_ID), "선수3", 2));
+        given(getRoom.get(ROOM_CODE)).willReturn(room);
+
+        var result = mockMvcTester().perform(
+            post("/api/v1/rooms/{code}/draft-picks", ROOM_CODE)
+                .header("X-Room-Action-Token", GUEST_TOKEN)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    {
+                      "playerName": "선수3"
+                    }
+                    """
+                )
+        );
+
+        result.assertThat().hasStatusOk();
+        assertThat(readBody(result, RoomResponseApiResponse.class))
+            .satisfies(response -> {
+                assertThat(response.resultType()).isEqualTo("SUCCESS");
+                assertThat(response.success().status()).isEqualTo("IN_PROGRESS");
+                assertThat(response.success().progress().currentTurnIndex()).isEqualTo(2);
+                assertThat(response.success().members()).hasSize(2);
+            });
+    }
+
+    @Test
+    void pickDraft는_header가_없으면_401을_반환한다() throws Exception {
+        doThrow(CoreException.of(RoomErrorType.ROOM_ACTION_TOKEN_REQUIRED))
+            .when(pickDraft)
+            .pick(ROOM_CODE, null, "선수3");
+
+        var result = mockMvcTester().perform(
+            post("/api/v1/rooms/{code}/draft-picks", ROOM_CODE)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    {
+                      "playerName": "선수3"
+                    }
+                    """
+                )
+        );
+
+        result.assertThat().hasStatus(HttpStatus.UNAUTHORIZED);
+        assertThat(readBody(result, VoidApiResponse.class))
+            .satisfies(response -> {
+                assertThat(response.resultType()).isEqualTo("ERROR");
+                assertThat(response.error().code()).isEqualTo("ROOM_ACTION_TOKEN_REQUIRED");
+            });
+    }
+
+    @Test
+    void pickDraft는_optimistic_lock_conflict를_409로_반환한다() throws Exception {
+        doThrow(CoreException.of(RoomErrorType.ROOM_CONCURRENT_MODIFICATION))
+            .when(pickDraft)
+            .pick(ROOM_CODE, GUEST_TOKEN, "선수3");
+
+        var result = mockMvcTester().perform(
+            post("/api/v1/rooms/{code}/draft-picks", ROOM_CODE)
+                .header("X-Room-Action-Token", GUEST_TOKEN)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    {
+                      "playerName": "선수3"
+                    }
+                    """
+                )
+        );
+
+        result.assertThat().hasStatus(HttpStatus.CONFLICT);
+        assertThat(readBody(result, VoidApiResponse.class))
+            .satisfies(response -> {
+                assertThat(response.resultType()).isEqualTo("ERROR");
+                assertThat(response.error().code()).isEqualTo("ROOM_CONCURRENT_MODIFICATION");
+            });
+    }
+
+    @Test
+    void auctionProgress는_settle된_room의_latest_snapshot을_반환한다() throws Exception {
+        Room room = inProgressAuctionRoom();
+        given(settleAuction.settleIfDue(ROOM_CODE)).willReturn(room);
+
+        var result = mockMvcTester().perform(
+            post("/api/v1/rooms/{code}/auction/progress", ROOM_CODE)
+        );
+
+        result.assertThat().hasStatusOk();
+        assertThat(readBody(result, RoomResponseApiResponse.class))
+            .satisfies(response -> {
+                assertThat(response.resultType()).isEqualTo("SUCCESS");
+                assertThat(response.success().status()).isEqualTo("IN_PROGRESS");
+                assertThat(response.success().progress().currentRound()).isEqualTo(2);
+                assertThat(response.success().progress().currentAuctionRoundEndsAt())
+                    .isEqualTo("2026-04-09T00:00:30Z");
             });
     }
 
@@ -470,7 +728,7 @@ class RoomApiWebMvcTest {
 
     private Room startedAuctionRoom() {
         Room room = joinedAuctionRoom();
-        room.start(new TeamLeaderId(HOST_ID));
+        room.start(new TeamLeaderId(HOST_ID), CREATED_AT);
         return room;
     }
 
@@ -495,11 +753,11 @@ class RoomApiWebMvcTest {
                     )
                 ),
                 CREATED_AT
-            );
+        );
         room.join(new TeamLeaderId(GUEST_ID), "게스트", GUEST_TOKEN);
-        room.start(new TeamLeaderId(HOST_ID));
-        room.placeBid(new TeamLeaderId(HOST_ID), 100);
-        room.settleAuction();
+        room.start(new TeamLeaderId(HOST_ID), CREATED_AT);
+        room.placeBid(new TeamLeaderId(HOST_ID), 100, CREATED_AT.plusSeconds(1));
+        room.settleAuction(CREATED_AT.plusSeconds(15));
         return room;
     }
 
@@ -524,11 +782,11 @@ class RoomApiWebMvcTest {
                     )
                 ),
                 CREATED_AT
-            );
+        );
         room.join(new TeamLeaderId(GUEST_ID), "게스트", GUEST_TOKEN);
         room.selectDraftPosition(new TeamLeaderId(HOST_ID), 1);
         room.selectDraftPosition(new TeamLeaderId(GUEST_ID), 2);
-        room.start(new TeamLeaderId(HOST_ID));
+        room.start(new TeamLeaderId(HOST_ID), CREATED_AT);
         room.pick(new TeamLeaderId(HOST_ID), "선수1");
         room.pick(new TeamLeaderId(GUEST_ID), "선수2");
         return room;
@@ -537,7 +795,7 @@ class RoomApiWebMvcTest {
     private Room completedDraftRoom() {
         Room room = waitingDraftRoom();
         room.selectDraftPosition(new TeamLeaderId(GUEST_ID), 2);
-        room.start(new TeamLeaderId(HOST_ID));
+        room.start(new TeamLeaderId(HOST_ID), CREATED_AT);
         room.pick(new TeamLeaderId(HOST_ID), "선수1");
         room.pick(new TeamLeaderId(GUEST_ID), "선수2");
         return room;
