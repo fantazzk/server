@@ -10,6 +10,9 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.Delayed;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -196,19 +199,19 @@ class RoomAuctionIntegrationTest {
         private final List<ScheduledTask> scheduledTasks = new ArrayList<>();
 
         @Override
-        public java.util.concurrent.ScheduledFuture<?> schedule(Runnable task, Trigger trigger) {
+        public ScheduledFuture<?> schedule(Runnable task, Trigger trigger) {
             return new ScheduledTask(null);
         }
 
         @Override
-        public java.util.concurrent.ScheduledFuture<?> schedule(Runnable task, Instant startTime) {
+        public ScheduledFuture<?> schedule(Runnable task, Instant startTime) {
             ScheduledTask scheduledTask = new ScheduledTask(startTime);
             scheduledTasks.add(scheduledTask);
             return scheduledTask;
         }
 
         @Override
-        public java.util.concurrent.ScheduledFuture<?> scheduleAtFixedRate(
+        public ScheduledFuture<?> scheduleAtFixedRate(
             Runnable task,
             Instant startTime,
             Duration period
@@ -217,12 +220,12 @@ class RoomAuctionIntegrationTest {
         }
 
         @Override
-        public java.util.concurrent.ScheduledFuture<?> scheduleAtFixedRate(Runnable task, Duration period) {
+        public ScheduledFuture<?> scheduleAtFixedRate(Runnable task, Duration period) {
             return new ScheduledTask(null);
         }
 
         @Override
-        public java.util.concurrent.ScheduledFuture<?> scheduleWithFixedDelay(
+        public ScheduledFuture<?> scheduleWithFixedDelay(
             Runnable task,
             Instant startTime,
             Duration delay
@@ -231,7 +234,7 @@ class RoomAuctionIntegrationTest {
         }
 
         @Override
-        public java.util.concurrent.ScheduledFuture<?> scheduleWithFixedDelay(Runnable task, Duration delay) {
+        public ScheduledFuture<?> scheduleWithFixedDelay(Runnable task, Duration delay) {
             return new ScheduledTask(null);
         }
 
@@ -249,7 +252,7 @@ class RoomAuctionIntegrationTest {
         }
     }
 
-    static final class ScheduledTask implements java.util.concurrent.ScheduledFuture<Object> {
+    static final class ScheduledTask implements ScheduledFuture<Object> {
         private final Instant scheduledAt;
         private boolean cancelled;
 
@@ -262,12 +265,12 @@ class RoomAuctionIntegrationTest {
         }
 
         @Override
-        public long getDelay(java.util.concurrent.TimeUnit unit) {
+        public long getDelay(TimeUnit unit) {
             return 0;
         }
 
         @Override
-        public int compareTo(java.util.concurrent.Delayed other) {
+        public int compareTo(Delayed other) {
             return 0;
         }
 
@@ -293,7 +296,7 @@ class RoomAuctionIntegrationTest {
         }
 
         @Override
-        public Object get(long timeout, java.util.concurrent.TimeUnit unit) {
+        public Object get(long timeout, TimeUnit unit) {
             return null;
         }
     }

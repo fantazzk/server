@@ -2,8 +2,10 @@ package com.naminhyeok.fantazzk.room;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.groups.Tuple.tuple;
 
 import com.naminhyeok.fantazzk.CoreException;
+import com.naminhyeok.fantazzk.template.TemplateCatalog.DraftOrderStrategy;
 import com.naminhyeok.fantazzk.template.TemplateFixture;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -72,7 +74,7 @@ class RoomServiceIntegrationTest {
     @Test
     void 드래프트_자리가_모두_확정되면_시작_가능_상태가_된다() {
         var template =
-            templateFixture.createDraftTemplateId("드래프트전", 2, 2, com.naminhyeok.fantazzk.template.TemplateCatalog.DraftOrderStrategy.SNAKE, List.of("선수1", "선수2"));
+            templateFixture.createDraftTemplateId("드래프트전", 2, 2, DraftOrderStrategy.SNAKE, List.of("선수1", "선수2"));
 
         Room created = createRoom.create(template, "호스트");
         RoomTeamLeader guest = joinRoom.join(created.getCode(), "게스트");
@@ -86,15 +88,15 @@ class RoomServiceIntegrationTest {
         assertThat(reloaded.getLeaders())
             .extracting(RoomTeamLeader::getId, RoomTeamLeader::getDraftPosition)
             .containsExactlyInAnyOrder(
-                org.assertj.core.groups.Tuple.tuple(created.getLeaders().getFirst().getId(), 2),
-                org.assertj.core.groups.Tuple.tuple(guest.getId(), 1)
+                tuple(created.getLeaders().getFirst().getId(), 2),
+                tuple(guest.getId(), 1)
             );
     }
 
     @Test
     void 드래프트_자리가_미확정이면_방을_시작할_수_없다() {
         var template =
-            templateFixture.createDraftTemplateId("드래프트전", 2, 2, com.naminhyeok.fantazzk.template.TemplateCatalog.DraftOrderStrategy.SNAKE, List.of("선수1", "선수2"));
+            templateFixture.createDraftTemplateId("드래프트전", 2, 2, DraftOrderStrategy.SNAKE, List.of("선수1", "선수2"));
 
         Room created = createRoom.create(template, "호스트");
         joinRoom.join(created.getCode(), "게스트");
@@ -112,7 +114,7 @@ class RoomServiceIntegrationTest {
     @Test
     void 드래프트_자리를_취소하면_다시_미선택이_된다() {
         var template =
-            templateFixture.createDraftTemplateId("드래프트전", 2, 2, com.naminhyeok.fantazzk.template.TemplateCatalog.DraftOrderStrategy.SNAKE, List.of("선수1", "선수2"));
+            templateFixture.createDraftTemplateId("드래프트전", 2, 2, DraftOrderStrategy.SNAKE, List.of("선수1", "선수2"));
 
         Room created = createRoom.create(template, "호스트");
 

@@ -1,6 +1,7 @@
 package com.naminhyeok.fantazzk.room;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.groups.Tuple.tuple;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -68,7 +69,7 @@ class RoomApiIntegrationTest {
                 JoinableRoomResponse::startReadiness
             )
             .containsExactly(
-                org.assertj.core.groups.Tuple.tuple(
+                tuple(
                     "ROOM99",
                     "AUCTION",
                     2,
@@ -76,7 +77,7 @@ class RoomApiIntegrationTest {
                     1,
                     "WAITING_FOR_LEADERS"
                 ),
-                org.assertj.core.groups.Tuple.tuple(
+                tuple(
                     "ROOM01",
                     "DRAFT",
                     2,

@@ -4,12 +4,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.naminhyeok.fantazzk.CoreException;
+import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.data.domain.Pageable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
@@ -81,12 +83,12 @@ class RoomAuctionTest {
                 taskScheduler,
                 unsupportedSettleAuction(),
                 rooms,
-                java.time.Clock.fixed(CREATED_AT, ZoneOffset.UTC)
+                Clock.fixed(CREATED_AT, ZoneOffset.UTC)
             );
         SettleAuction settleAuction =
             new SettleAuction(
                 rooms,
-                java.time.Clock.fixed(CREATED_AT, ZoneOffset.UTC),
+                Clock.fixed(CREATED_AT, ZoneOffset.UTC),
                 new StubTransactionManager(),
                 singletonProvider(scheduler)
             );
@@ -248,9 +250,9 @@ class RoomAuctionTest {
                     new FakeTaskScheduler(),
                     unsupportedSettleAuction(),
                     rooms,
-                    java.time.Clock.fixed(CREATED_AT, ZoneOffset.UTC)
+                    Clock.fixed(CREATED_AT, ZoneOffset.UTC)
                 ),
-                java.time.Clock.fixed(CREATED_AT, ZoneOffset.UTC),
+                Clock.fixed(CREATED_AT, ZoneOffset.UTC),
                 new StubTransactionManager()
             );
 
@@ -271,9 +273,9 @@ class RoomAuctionTest {
                     new FakeTaskScheduler(),
                     unsupportedSettleAuction(),
                     rooms,
-                    java.time.Clock.fixed(CREATED_AT, ZoneOffset.UTC)
+                    Clock.fixed(CREATED_AT, ZoneOffset.UTC)
                 ),
-                java.time.Clock.fixed(CREATED_AT.plusSeconds(1), ZoneOffset.UTC),
+                Clock.fixed(CREATED_AT.plusSeconds(1), ZoneOffset.UTC),
                 new StubTransactionManager()
             );
 
@@ -387,7 +389,7 @@ class RoomAuctionTest {
     private static SettleAuction unsupportedSettleAuction() {
         return new SettleAuction(
             new InMemoryRooms(),
-            java.time.Clock.fixed(CREATED_AT, ZoneOffset.UTC),
+            Clock.fixed(CREATED_AT, ZoneOffset.UTC),
             new StubTransactionManager(),
             new ObjectProvider<>() {
                 @Override
@@ -481,12 +483,12 @@ class RoomAuctionTest {
         }
 
         @Override
-        public List<Room> findJoinableWaitingRooms(org.springframework.data.domain.Pageable pageable) {
+        public List<Room> findJoinableWaitingRooms(Pageable pageable) {
             return List.of();
         }
 
         @Override
-        public List<Room> findSchedulableAuctionRooms(org.springframework.data.domain.Pageable pageable) {
+        public List<Room> findSchedulableAuctionRooms(Pageable pageable) {
             return Optional.ofNullable(room).stream().toList();
         }
     }

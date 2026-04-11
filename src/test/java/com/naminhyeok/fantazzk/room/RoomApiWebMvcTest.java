@@ -1,5 +1,7 @@
 package com.naminhyeok.fantazzk.room;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
@@ -78,7 +80,7 @@ class RoomApiWebMvcTest {
     @Test
     void create는_room과_teamLeaderSession을_반환한다() throws Exception {
         Room room = waitingAuctionRoom();
-        given(createRoom.create(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.eq("호스트")))
+        given(createRoom.create(any(), eq("호스트")))
             .willReturn(room);
 
         var result = mockMvcTester().perform(
@@ -108,7 +110,7 @@ class RoomApiWebMvcTest {
 
     @Test
     void create는_템플릿이_없으면_404를_반환한다() throws Exception {
-        given(createRoom.create(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.eq("호스트")))
+        given(createRoom.create(any(), eq("호스트")))
             .willThrow(CoreException.of(RoomErrorType.ROOM_TEMPLATE_NOT_FOUND));
 
         var result = mockMvcTester().perform(

@@ -6,6 +6,7 @@ import java.time.Instant;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -34,7 +35,7 @@ class SettleAuction {
             Room room = inTransaction(() -> settleIfDueInTransaction(code, now));
             scheduleIfNeeded(room);
             return room;
-        } catch (org.springframework.dao.OptimisticLockingFailureException ex) {
+        } catch (OptimisticLockingFailureException ex) {
             return rooms.findByCode(code).orElseThrow(() -> CoreException.of(RoomErrorType.ROOM_NOT_FOUND));
         }
     }

@@ -1,5 +1,6 @@
 package com.naminhyeok.fantazzk.room;
 
+import java.time.Instant;
 import java.util.List;
 
 record RoomProgressResponse(
@@ -7,7 +8,7 @@ record RoomProgressResponse(
     Integer currentRound,
     String currentLeaderId,
     List<String> currentRoundLeaderIds,
-    java.time.Instant currentAuctionRoundEndsAt
+    Instant currentAuctionRoundEndsAt
 ) {
     static RoomProgressResponse from(Room room) {
         if (room.getStatus() != RoomStatus.IN_PROGRESS) {

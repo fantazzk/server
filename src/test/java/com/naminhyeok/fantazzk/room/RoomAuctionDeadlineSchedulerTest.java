@@ -10,6 +10,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Pageable;
 
@@ -220,13 +221,13 @@ class RoomAuctionDeadlineSchedulerTest {
         }
 
         @Override
-        public java.util.Optional<Room> findById(RoomId id) {
-            return java.util.Optional.empty();
+        public Optional<Room> findById(RoomId id) {
+            return Optional.empty();
         }
 
         @Override
-        public java.util.Optional<Room> findByCode(String code) {
-            return java.util.Optional.empty();
+        public Optional<Room> findByCode(String code) {
+            return Optional.empty();
         }
 
         @Override
