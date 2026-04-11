@@ -212,7 +212,7 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           TARGET_PATH: ${{ steps.sync-config.outputs.web_fe_openapi_path }}
         run: |
-          pr_number="$(gh pr list --repo "${WEB_FE_REPOSITORY}" --head "${WEB_FE_BRANCH}" --base main --json number --jq '.[0].number')"
+          pr_number="$(gh pr list --repo "${WEB_FE_REPOSITORY}" --head "${WEB_FE_BRANCH}" --base dev --json number --jq '.[0].number')"
           pr_body="$(cat <<EOF
           Automated OpenAPI sync from ${GITHUB_REPOSITORY}.
 
@@ -231,7 +231,7 @@ jobs:
 
           gh pr create \
             --repo "${WEB_FE_REPOSITORY}" \
-            --base main \
+            --base dev \
             --head "${WEB_FE_BRANCH}" \
             --title "chore(api): sync OpenAPI spec" \
             --body "${pr_body}"
