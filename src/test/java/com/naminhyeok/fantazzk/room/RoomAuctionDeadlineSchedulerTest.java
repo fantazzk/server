@@ -2,6 +2,7 @@ package com.naminhyeok.fantazzk.room;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
@@ -13,6 +14,7 @@ import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Pageable;
+import org.mockito.InOrder;
 
 class RoomAuctionDeadlineSchedulerTest {
     private static final Instant NOW = Instant.parse("2026-04-09T00:00:10Z");
@@ -108,6 +110,37 @@ class RoomAuctionDeadlineSchedulerTest {
 
         verify(settleAuction).settleIfDue("LEGACY01");
         assertThat(taskScheduler.activeScheduledInstants()).containsExactly(Instant.parse("2026-04-09T00:00:25Z"));
+    }
+
+    @Test
+    void 애플리케이션_시작시_schedulable_room은_application_layer_정렬규칙으로_처리한다() {
+        FakeTaskScheduler taskScheduler = new FakeTaskScheduler();
+        SettleAuction settleAuction = mock(SettleAuction.class);
+        Room legacyRoom = auctionRoomWithDeadline("LEGACY01", Instant.parse("2026-04-09T00:00:25Z"));
+        setCurrentAuctionRoundEndsAt(legacyRoom, null);
+        Room dueRoom = auctionRoomWithDeadline("DUE01", Instant.parse("2026-04-09T00:00:05Z"));
+        Room futureRoom = auctionRoomWithDeadline("FUTURE01", Instant.parse("2026-04-09T00:00:15Z"));
+        RecordingRooms rooms = new RecordingRooms(List.of(futureRoom, dueRoom, legacyRoom));
+        given(settleAuction.settleIfDue("LEGACY01")).willReturn(auctionRoomWithDeadline("LEGACY01", Instant.parse("2026-04-09T00:00:20Z")));
+        given(settleAuction.settleIfDue("DUE01")).willReturn(completedAuctionRoom("DUE01"));
+        RoomAuctionDeadlineScheduler scheduler =
+            new RoomAuctionDeadlineScheduler(
+                taskScheduler,
+                settleAuction,
+                rooms,
+                Clock.fixed(NOW, ZoneOffset.UTC)
+            );
+
+        scheduler.catchUpAndReschedule();
+
+        InOrder inOrder = inOrder(settleAuction);
+        inOrder.verify(settleAuction).settleIfDue("LEGACY01");
+        inOrder.verify(settleAuction).settleIfDue("DUE01");
+        assertThat(taskScheduler.activeScheduledInstants())
+            .containsExactly(
+                Instant.parse("2026-04-09T00:00:20Z"),
+                Instant.parse("2026-04-09T00:00:15Z")
+            );
     }
 
     @Test
@@ -231,12 +264,12 @@ class RoomAuctionDeadlineSchedulerTest {
         }
 
         @Override
-        public List<Room> findJoinableWaitingRooms(Pageable pageable) {
+        public List<Room> findByStatusOrderByCreatedAtDescCodeDesc(RoomStatus status, Pageable pageable) {
             return List.of();
         }
 
         @Override
-        public List<Room> findSchedulableAuctionRooms(Pageable pageable) {
+        public List<Room> findByStatusAndModeOrderByCodeAsc(RoomStatus status, RoomMode mode, Pageable pageable) {
             int start = Math.toIntExact(pageable.getOffset());
             if (start >= schedulableRooms.size()) {
                 return List.of();

@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Instant;
 import java.util.List;
-import org.springframework.data.domain.PageRequest;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -43,10 +42,6 @@ class FindJoinableRoomsIntegrationTest {
         rooms.save(fullWaitingRoom("ROOM02", createdAt));
         rooms.save(waitingRoom("ROOM01", createdAt));
 
-        assertThat(rooms.findJoinableWaitingRooms(PageRequest.of(0, 5)))
-            .extracting(Room::getCode)
-            .containsExactly("ROOM09", "ROOM07", "ROOM05", "ROOM03", "ROOM01");
-
         assertThat(findJoinableRooms.list())
             .hasSize(5)
             .extracting(Room::getCode)
@@ -58,10 +53,6 @@ class FindJoinableRoomsIntegrationTest {
         rooms.save(waitingRoom("ROOM99", Instant.parse("2026-04-09T00:00:00Z")));
         rooms.save(waitingRoom("ROOM01", Instant.parse("2026-04-09T00:02:00Z")));
         rooms.save(waitingRoom("ROOM50", Instant.parse("2026-04-09T00:01:00Z")));
-
-        assertThat(rooms.findJoinableWaitingRooms(PageRequest.of(0, 5)))
-            .extracting(Room::getCode)
-            .containsExactly("ROOM01", "ROOM50", "ROOM99");
 
         assertThat(findJoinableRooms.list())
             .extracting(Room::getCode)

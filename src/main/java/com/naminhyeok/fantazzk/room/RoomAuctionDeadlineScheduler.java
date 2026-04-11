@@ -3,6 +3,7 @@ package com.naminhyeok.fantazzk.room;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -74,15 +75,31 @@ class RoomAuctionDeadlineScheduler {
         List<Room> schedulableRooms = new ArrayList<>();
         int page = 0;
         while (true) {
-            List<Room> batch = rooms.findSchedulableAuctionRooms(PageRequest.of(page, CATCH_UP_BATCH_SIZE));
+            List<Room> batch =
+                rooms.findByStatusAndModeOrderByCodeAsc(
+                    RoomStatus.IN_PROGRESS,
+                    RoomMode.AUCTION,
+                    PageRequest.of(page, CATCH_UP_BATCH_SIZE)
+                );
             if (batch.isEmpty()) {
-                return schedulableRooms;
+                return sortSchedulableRooms(schedulableRooms);
             }
             schedulableRooms.addAll(batch);
             if (batch.size() < CATCH_UP_BATCH_SIZE) {
-                return schedulableRooms;
+                return sortSchedulableRooms(schedulableRooms);
             }
             page += 1;
         }
+    }
+
+    private List<Room> sortSchedulableRooms(List<Room> rooms) {
+        return rooms.stream()
+            .sorted(
+                Comparator.comparing(
+                    Room::getCurrentAuctionRoundEndsAt,
+                    Comparator.nullsFirst(Comparator.naturalOrder())
+                ).thenComparing(Room::getCode)
+            )
+            .toList();
     }
 }

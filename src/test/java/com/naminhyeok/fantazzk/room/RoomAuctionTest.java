@@ -483,12 +483,12 @@ class RoomAuctionTest {
         }
 
         @Override
-        public List<Room> findJoinableWaitingRooms(Pageable pageable) {
+        public List<Room> findByStatusOrderByCreatedAtDescCodeDesc(RoomStatus status, Pageable pageable) {
             return List.of();
         }
 
         @Override
-        public List<Room> findSchedulableAuctionRooms(Pageable pageable) {
+        public List<Room> findByStatusAndModeOrderByCodeAsc(RoomStatus status, RoomMode mode, Pageable pageable) {
             return Optional.ofNullable(room).stream().toList();
         }
     }
