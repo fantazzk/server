@@ -1,20 +1,28 @@
 package com.naminhyeok.fantazzk.room;
 
+import java.time.Instant;
 import java.util.List;
 
 record RoomProgressResponse(
     Integer currentTurnIndex,
     Integer currentRound,
     String currentLeaderId,
-    List<String> currentRoundLeaderIds
+    List<String> currentRoundLeaderIds,
+    Instant currentAuctionRoundEndsAt
 ) {
     static RoomProgressResponse from(Room room) {
         if (room.getStatus() != RoomStatus.IN_PROGRESS) {
-            return new RoomProgressResponse(null, null, null, null);
+            return new RoomProgressResponse(null, null, null, null, null);
         }
 
         if (room.getMode() == RoomMode.AUCTION) {
-            return new RoomProgressResponse(null, room.getCurrentAuctionRound(), null, null);
+            return new RoomProgressResponse(
+                null,
+                room.getCurrentAuctionRound(),
+                null,
+                null,
+                room.getCurrentAuctionRoundEndsAt()
+            );
         }
 
         DraftProgress progress = room.currentDraftProgress();
@@ -22,7 +30,8 @@ record RoomProgressResponse(
             room.getCurrentTurnIndex(),
             progress.currentRound(),
             progress.currentLeaderId(),
-            progress.currentRoundLeaderIds()
+            progress.currentRoundLeaderIds(),
+            null
         );
     }
 }

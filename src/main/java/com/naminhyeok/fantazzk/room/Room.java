@@ -11,6 +11,7 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -26,6 +27,8 @@ import org.jmolecules.ddd.types.AggregateRoot;
 class Room implements AggregateRoot<Room, RoomId> {
     private final RoomId id;
     private final String code;
+    @Version
+    private long version;
     @Column(nullable = false, updatable = false)
     private final Instant createdAt;
     @Column(name = "host_id")
@@ -42,6 +45,8 @@ class Room implements AggregateRoot<Room, RoomId> {
     private final RoomTemplateSpec.DraftOrderStrategy draftOrderStrategy;
     private Integer currentTurnIndex;
     private Integer currentAuctionRound;
+    @Column(name = "current_auction_round_ends_at")
+    private Instant currentAuctionRoundEndsAt;
     @ElementCollection
     @CollectionTable(name = "room_player", joinColumns = @JoinColumn(name = "players_room_id"))
     private final List<RoomPlayer> players;
@@ -77,6 +82,7 @@ class Room implements AggregateRoot<Room, RoomId> {
         this.draftOrderStrategy = draftOrderStrategy;
         this.currentTurnIndex = null;
         this.currentAuctionRound = null;
+        this.currentAuctionRoundEndsAt = null;
         this.players = new ArrayList<>();
         this.leaders = new ArrayList<>();
         this.members = new ArrayList<>();
@@ -172,6 +178,10 @@ class Room implements AggregateRoot<Room, RoomId> {
     }
 
     void start(TeamLeaderId callerLeaderId) {
+        start(callerLeaderId, Instant.now());
+    }
+
+    void start(TeamLeaderId callerLeaderId, Instant now) {
         if (!hostLeaderId.equals(callerLeaderId)) {
             throw CoreException.of(RoomErrorType.ROOM_START_FORBIDDEN);
         }
@@ -191,13 +201,19 @@ class Room implements AggregateRoot<Room, RoomId> {
         if (mode == RoomMode.AUCTION) {
             currentAuctionRound = 1;
             currentTurnIndex = null;
+            currentAuctionRoundEndsAt = now.plusSeconds(15);
         } else {
             currentTurnIndex = 0;
             currentAuctionRound = null;
+            currentAuctionRoundEndsAt = null;
         }
     }
 
     RoomBid placeBid(TeamLeaderId teamLeaderId, int amount) {
+        return placeBid(teamLeaderId, amount, Instant.now());
+    }
+
+    RoomBid placeBid(TeamLeaderId teamLeaderId, int amount, Instant now) {
         if (status != RoomStatus.IN_PROGRESS) {
             throw CoreException.of(RoomErrorType.ROOM_PLAY_REQUIRES_IN_PROGRESS);
         }
@@ -206,6 +222,9 @@ class Room implements AggregateRoot<Room, RoomId> {
         }
         if (currentAuctionRound == null) {
             throw new IllegalStateException("현재 경매 라운드가 없습니다");
+        }
+        if (currentAuctionRoundEndsAt != null && !now.isBefore(currentAuctionRoundEndsAt)) {
+            throw CoreException.of(RoomErrorType.ROOM_BID_REQUIRES_OPEN_ROUND);
         }
         if (amount <= 0) {
             throw CoreException.of(RoomErrorType.ROOM_BID_AMOUNT_NOT_POSITIVE);
@@ -242,10 +261,26 @@ class Room implements AggregateRoot<Room, RoomId> {
             );
         RoomBid bid = new RoomBid(currentAuctionRound, nextSequence, teamLeaderId, amount);
         bids.add(bid);
+        repairMissingAuctionDeadline(now);
         return bid;
     }
 
+    boolean repairMissingAuctionDeadline(Instant now) {
+        if (status != RoomStatus.IN_PROGRESS || mode != RoomMode.AUCTION || currentAuctionRound == null) {
+            return false;
+        }
+        if (currentAuctionRoundEndsAt != null) {
+            return false;
+        }
+        currentAuctionRoundEndsAt = now.plusSeconds(15);
+        return true;
+    }
+
     public AuctionSettlement settleAuction() {
+        return settleAuction(Instant.now());
+    }
+
+    public AuctionSettlement settleAuction(Instant now) {
         if (status != RoomStatus.IN_PROGRESS) {
             throw CoreException.of(RoomErrorType.ROOM_PLAY_REQUIRES_IN_PROGRESS);
         }
@@ -254,6 +289,12 @@ class Room implements AggregateRoot<Room, RoomId> {
         }
         if (currentAuctionRound == null) {
             throw new IllegalStateException("현재 경매 라운드가 없습니다");
+        }
+        if (currentAuctionRoundEndsAt == null) {
+            currentAuctionRoundEndsAt = now;
+        }
+        if (now.isBefore(currentAuctionRoundEndsAt)) {
+            throw CoreException.of(RoomErrorType.ROOM_AUCTION_ROUND_NOT_ENDED);
         }
 
         RoomPlayer target =
@@ -268,11 +309,11 @@ class Room implements AggregateRoot<Room, RoomId> {
                 .max(Comparator.comparingInt(RoomBid::amount))
                 .orElse(null);
 
-        currentAuctionRound += 1;
-
         if (winningBid == null) {
             int maxOrder = players.stream().mapToInt(RoomPlayer::getDisplayOrder).max().orElse(0);
             target.moveToBack(maxOrder + 1);
+            currentAuctionRound += 1;
+            currentAuctionRoundEndsAt = now.plusSeconds(15);
             return new AuctionSettlement(target.getName(), AuctionOutcome.PASSED);
         }
 
@@ -288,6 +329,10 @@ class Room implements AggregateRoot<Room, RoomId> {
 
         if (members.size() == teamCount * (teamSize - 1)) {
             status = RoomStatus.COMPLETED;
+            currentAuctionRoundEndsAt = null;
+        } else {
+            currentAuctionRound += 1;
+            currentAuctionRoundEndsAt = now.plusSeconds(15);
         }
 
         return new AuctionSettlement(target.getName(), AuctionOutcome.SOLD);

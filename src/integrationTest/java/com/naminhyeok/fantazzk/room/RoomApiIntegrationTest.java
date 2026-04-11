@@ -1,15 +1,26 @@
 package com.naminhyeok.fantazzk.room;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.groups.Tuple.tuple;
 
+import java.time.Clock;
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.resttestclient.TestRestTemplate;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
+import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.TestConstructor;
 
 @SpringBootTest(
@@ -25,9 +36,12 @@ import org.springframework.test.context.TestConstructor;
     }
 )
 @AutoConfigureTestRestTemplate
+@Import(RoomApiIntegrationTest.FixedClockConfiguration.class)
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
 @RequiredArgsConstructor
 class RoomApiIntegrationTest {
+    private static final Instant CREATED_AT = Instant.parse("2026-04-09T00:00:00Z");
+
     private final TestRestTemplate restTemplate;
     private final Rooms rooms;
 
@@ -55,7 +69,7 @@ class RoomApiIntegrationTest {
                 JoinableRoomResponse::startReadiness
             )
             .containsExactly(
-                org.assertj.core.groups.Tuple.tuple(
+                tuple(
                     "ROOM99",
                     "AUCTION",
                     2,
@@ -63,15 +77,83 @@ class RoomApiIntegrationTest {
                     1,
                     "WAITING_FOR_LEADERS"
                 ),
-                org.assertj.core.groups.Tuple.tuple(
+                tuple(
                     "ROOM01",
                     "DRAFT",
                     2,
                     1,
                     1,
                     "WAITING_FOR_LEADERS"
-                )
+            )
             );
+    }
+
+    @Test
+    void auctionProgress는_due된_경매를_정산한_latest_snapshot을_반환한다() {
+        Room room = startedAuctionRoom("ROOM10", CREATED_AT);
+        room.placeBid(new TeamLeaderId("host-ROOM10"), 100, CREATED_AT.plusSeconds(1));
+        rooms.save(room);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        var response = restTemplate.exchange(
+            "/api/v1/rooms/ROOM10/auction/progress",
+            HttpMethod.POST,
+            new HttpEntity<>("", headers),
+            RoomResponseApiResponse.class
+        );
+        RoomResponseApiResponse body = response.getBody();
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(body).isNotNull();
+        assertThat(body.resultType()).isEqualTo("SUCCESS");
+        assertThat(body.success().status()).isEqualTo("IN_PROGRESS");
+        assertThat(body.success().progress().currentRound()).isEqualTo(2);
+        assertThat(body.success().progress().currentAuctionRoundEndsAt())
+            .isAfter(CREATED_AT.plusSeconds(15));
+        assertThat(body.success().members()).singleElement()
+            .extracting(RoomMemberResponse::playerName)
+            .isEqualTo("선수1");
+    }
+
+    @Test
+    void get은_경매의_deadline_projection을_반환한다() {
+        Room room = startedAuctionRoom("ROOM11", CREATED_AT);
+        rooms.save(room);
+
+        var response = restTemplate.getForEntity("/api/v1/rooms/ROOM11", RoomResponseApiResponse.class);
+        RoomResponseApiResponse body = response.getBody();
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(body).isNotNull();
+        assertThat(body.resultType()).isEqualTo("SUCCESS");
+        assertThat(body.success().progress().currentRound()).isEqualTo(1);
+        assertThat(body.success().progress().currentAuctionRoundEndsAt())
+            .isEqualTo(Instant.parse("2026-04-09T00:00:15Z"));
+    }
+
+    private Room startedAuctionRoom(String code, Instant createdAt) {
+        Room room = Room.createFromTemplate(
+            code,
+            new TeamLeaderId("host-" + code),
+            "호스트-" + code,
+            "host-action-token-" + code,
+            new RoomTemplateSpec(
+                RoomTemplateSpec.Mode.AUCTION,
+                2,
+                2,
+                300,
+                null,
+                List.of(
+                    new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", 0),
+                    new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", 1)
+                )
+            ),
+            createdAt
+        );
+        room.join(new TeamLeaderId("guest-" + code), "게스트-" + code, "guest-action-token-" + code);
+        room.start(new TeamLeaderId("host-" + code), createdAt);
+        return room;
     }
 
     private Room joinableAuctionRoom(String code, Instant createdAt) {
@@ -133,5 +215,21 @@ class RoomApiIntegrationTest {
         List<JoinableRoomResponse> success,
         Object error
     ) {
+    }
+
+    private record RoomResponseApiResponse(
+        String resultType,
+        RoomResponse success,
+        Object error
+    ) {
+    }
+
+    @TestConfiguration
+    static class FixedClockConfiguration {
+        @Bean
+        @Primary
+        Clock roomApiTestClock() {
+            return Clock.fixed(Instant.parse("2026-04-09T00:00:20Z"), ZoneOffset.UTC);
+        }
     }
 }

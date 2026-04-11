@@ -16,6 +16,7 @@ import java.util.Queue;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.hibernate.exception.ConstraintViolationException;
+import org.springframework.data.domain.Pageable;
 import org.springframework.dao.DataIntegrityViolationException;
 
 class CreateRoomTest {
@@ -147,7 +148,12 @@ class CreateRoomTest {
         }
 
         @Override
-        public List<Room> findJoinableWaitingRooms(org.springframework.data.domain.Pageable pageable) {
+        public List<Room> findByStatusOrderByCreatedAtDescCodeDesc(RoomStatus status, Pageable pageable) {
+            return List.of();
+        }
+
+        @Override
+        public List<Room> findByStatusAndModeOrderByCodeAsc(RoomStatus status, RoomMode mode, Pageable pageable) {
             return List.of();
         }
 
