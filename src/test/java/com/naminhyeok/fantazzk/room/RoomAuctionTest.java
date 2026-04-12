@@ -248,6 +248,16 @@ class RoomAuctionTest {
     }
 
     @Test
+    void 시작한_경매_방의_현재_라운드가_null이면_낙찰_처리도_room_state_invalid를_던진다() throws Exception {
+        Room room = startedAuctionRoom();
+        setCurrentAuctionRound(room, null);
+
+        assertThatThrownBy(() -> room.settleAuction(CREATED_AT.plusSeconds(PICK_BAN_TIME)))
+            .isInstanceOf(RoomStateInvalidException.class)
+            .isInstanceOfSatisfying(RoomStateInvalidException.class, ex -> assertThat(ex.getError()).isEqualTo(RoomErrorType.ROOM_STATE_INVALID));
+    }
+
+    @Test
     void start는_optimistic_lock을_room_conflict로_번역한다() {
         Room room = waitingAuctionRoom();
         room.join(new TeamLeaderId(GUEST_ID), "게스트", GUEST_ACTION_TOKEN);

@@ -69,6 +69,16 @@ class RoomDraftTest {
     }
 
     @Test
+    void 대기_중인_드래프트_방에서_호스트_팀장이_사라지면_draft_position_변경은_room_state_invalid를_던진다() throws Exception {
+        Room room = waitingDraftRoom();
+        removeLeader(room, new TeamLeaderId(HOST_ID));
+
+        assertThatThrownBy(() -> room.clearDraftPosition(new TeamLeaderId(HOST_ID)))
+            .isInstanceOf(RoomStateInvalidException.class)
+            .isInstanceOfSatisfying(RoomStateInvalidException.class, ex -> assertThat(ex.getError()).isEqualTo(RoomErrorType.ROOM_STATE_INVALID));
+    }
+
+    @Test
     void 이미_배정된_선수는_픽할_수_없다() {
         Room room = startedDraftRoom();
 
@@ -155,6 +165,14 @@ class RoomDraftTest {
         var field = Room.class.getDeclaredField("currentTurnIndex");
         field.setAccessible(true);
         field.set(room, value);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void removeLeader(Room room, TeamLeaderId leaderId) throws Exception {
+        var field = Room.class.getDeclaredField("leaders");
+        field.setAccessible(true);
+        List<RoomTeamLeader> leaders = (List<RoomTeamLeader>) field.get(room);
+        leaders.removeIf(leader -> leader.getId().equals(leaderId));
     }
 
     private static Room startedDraftRoom() {
