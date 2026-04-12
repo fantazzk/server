@@ -37,6 +37,14 @@ final class RoomStateInvalidException extends InvalidDomainStateException {
         return new RoomStateInvalidException("드래프트 턴 정보를 찾을 수 없습니다");
     }
 
+    static RoomStateInvalidException draftPositionMissing(TeamLeaderId leaderId) {
+        return new RoomStateInvalidException("드래프트 순서를 계산할 수 없습니다: draftPosition missing, leaderId=" + leaderIdValue(leaderId));
+    }
+
+    static RoomStateInvalidException draftLeaderOrderEmpty() {
+        return new RoomStateInvalidException("드래프트 순서가 비어 있습니다");
+    }
+
     static RoomStateInvalidException leaderMissing(TeamLeaderId leaderId) {
         return new RoomStateInvalidException("팀장을 찾을 수 없습니다: " + leaderIdValue(leaderId));
     }

@@ -53,7 +53,11 @@ class RoomAuctionDeadlineScheduler {
         Instant now = Instant.now(clock);
         for (Room room : collectSchedulableRooms()) {
             if (room.getCurrentAuctionRoundEndsAt() == null || !room.getCurrentAuctionRoundEndsAt().isAfter(now)) {
-                schedule(settleAuction.settleIfDue(room.getCode()));
+                try {
+                    schedule(settleAuction.settleIfDue(room.getCode()));
+                } catch (RoomStateInvalidException ignored) {
+                    continue;
+                }
                 continue;
             }
             schedule(room);

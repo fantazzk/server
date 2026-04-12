@@ -380,7 +380,11 @@ class Room implements AggregateRoot<Room, RoomId> {
             return null;
         }
 
-        return DraftProgress.from(getLeaderIdsInDraftOrder(), draftOrderStrategy, currentTurnIndex);
+        try {
+            return DraftProgress.from(getLeaderIdsInDraftOrder(), draftOrderStrategy, currentTurnIndex);
+        } catch (IllegalArgumentException ex) {
+            throw RoomStateInvalidException.draftLeaderOrderEmpty();
+        }
     }
 
     private void validateDraftPositionChange(int draftPosition) {
@@ -405,6 +409,14 @@ class Room implements AggregateRoot<Room, RoomId> {
     }
 
     private List<RoomTeamLeader> getLeadersInDraftOrder() {
+        if (leaders.isEmpty()) {
+            throw RoomStateInvalidException.draftLeaderOrderEmpty();
+        }
+        RoomTeamLeader leaderWithoutDraftPosition =
+            leaders.stream().filter(leader -> leader.getDraftPosition() == null).findFirst().orElse(null);
+        if (leaderWithoutDraftPosition != null) {
+            throw RoomStateInvalidException.draftPositionMissing(leaderWithoutDraftPosition.getId());
+        }
         return leaders.stream()
             .sorted(Comparator.comparingInt(RoomTeamLeader::getDraftPosition))
             .toList();
