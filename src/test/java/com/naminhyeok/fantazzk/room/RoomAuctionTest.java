@@ -538,6 +538,7 @@ class RoomAuctionTest {
                     2,
                     null,
                     PICK_BAN_TIME,
+                    null,
                     RoomTemplateSpec.DraftOrderStrategy.SNAKE,
                     List.of(
                         new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
