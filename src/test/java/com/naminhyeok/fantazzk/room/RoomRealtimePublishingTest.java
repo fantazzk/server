@@ -22,7 +22,7 @@ class RoomRealtimePublishingTest {
     void join은_저장된_room_스냅샷을_publish한다() {
         Room room = waitingAuctionRoom();
         RecordingRoomRealtimePublisher publisher = new RecordingRoomRealtimePublisher();
-        JoinRoom joinRoom = new JoinRoom(new InMemoryRooms(room), fixedLeaderIdentityIssuer(), publisher);
+        JoinRoom joinRoom = new JoinRoom(new SaveAndFlushOnlyRooms(room), fixedLeaderIdentityIssuer(), publisher);
 
         RoomTeamLeader joined = joinRoom.join(room.getCode(), "게스트");
 
@@ -112,6 +112,19 @@ class RoomRealtimePublishingTest {
         assertThat(event.room().progress().currentAuctionRoundEndsAt()).isEqualTo(PUBLISHED_AT.plusSeconds(30));
     }
 
+    @Test
+    void settleIfDue는_기한이_아직_아니면_publish하지_않는다() {
+        Room room = startedAuctionRoom();
+        RecordingRoomRealtimePublisher publisher = new RecordingRoomRealtimePublisher();
+        SettleAuctionAttempt settleAuctionAttempt =
+            new SettleAuctionAttempt(new InMemoryRooms(room), Clock.fixed(CREATED_AT.plusSeconds(10), ZoneOffset.UTC), publisher);
+
+        Room current = settleAuctionAttempt.settleIfDue(room.getCode());
+
+        assertThat(current.getCurrentAuctionRound()).isEqualTo(1);
+        assertThat(publisher.events).isEmpty();
+    }
+
     private static TeamLeaderIdentityIssuer fixedLeaderIdentityIssuer() {
         return () -> new TeamLeaderIdentityIssuer.TeamLeaderIdentity(GUEST_ID, GUEST_ACTION_TOKEN);
     }
@@ -191,6 +204,34 @@ class RoomRealtimePublishingTest {
         @Override
         public void publishAfterCommit(Room room) {
             events.add(RoomRealtimeSnapshotEvent.from(room, PUBLISHED_AT));
+        }
+    }
+
+    private static final class SaveAndFlushOnlyRooms implements Rooms {
+        private final Room room;
+
+        private SaveAndFlushOnlyRooms(Room room) {
+            this.room = room;
+        }
+
+        @Override
+        public Room save(Room room) {
+            throw new UnsupportedOperationException("JoinRoom should use saveAndFlush");
+        }
+
+        @Override
+        public Room saveAndFlush(Room room) {
+            return room;
+        }
+
+        @Override
+        public Optional<Room> findById(RoomId id) {
+            return Optional.ofNullable(room).filter(it -> it.getId().equals(id));
+        }
+
+        @Override
+        public Optional<Room> findByCode(String code) {
+            return Optional.ofNullable(room).filter(it -> it.getCode().equals(code));
         }
     }
 
