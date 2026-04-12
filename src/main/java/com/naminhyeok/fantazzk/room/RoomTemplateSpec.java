@@ -12,18 +12,6 @@ record RoomTemplateSpec(
     DraftOrderStrategy draftOrderStrategy,
     List<Player> players
 ) {
-    RoomTemplateSpec(
-        Mode mode,
-        int teamCount,
-        int teamSize,
-        Integer budget,
-        int pickBanTime,
-        DraftOrderStrategy draftOrderStrategy,
-        List<Player> players
-    ) {
-        this(mode, teamCount, teamSize, budget, pickBanTime, mode == Mode.AUCTION ? 10 : null, draftOrderStrategy, players);
-    }
-
     public enum Mode {
         AUCTION,
         DRAFT
