@@ -153,6 +153,12 @@ class RoomApiWebMvcTest {
         assertThat(body.at("/success/startReadiness").asText()).isEqualTo("WAITING_FOR_DRAFT_POSITIONS");
         assertThat(body.at("/success/teamLeaders/0/draftPosition").asInt()).isEqualTo(1);
         assertThat(body.at("/success/teamLeaders/1/draftPosition").isNull()).isTrue();
+        assertThat(body.at("/success/draftOrderPreview/slots/0/draftPosition").asInt()).isEqualTo(1);
+        assertThat(body.at("/success/draftOrderPreview/slots/0/leaderId").asText()).isEqualTo(HOST_ID);
+        assertThat(body.at("/success/draftOrderPreview/slots/0/nickname").asText()).isEqualTo("호스트");
+        assertThat(body.at("/success/draftOrderPreview/slots/1/draftPosition").asInt()).isEqualTo(2);
+        assertThat(body.at("/success/draftOrderPreview/slots/1/leaderId").isNull()).isTrue();
+        assertThat(body.at("/success/draftOrderPreview/slots/1/nickname").isNull()).isTrue();
         assertThat(body.at("/success/players/0/name").asText()).isEqualTo("선수1");
         assertThat(body.at("/success/players/0/position").asText()).isEqualTo("TOP");
         assertThat(body.at("/success/players/0/displayOrder").asInt()).isEqualTo(0);
@@ -224,6 +230,7 @@ class RoomApiWebMvcTest {
         assertThat(body.at("/success/status").asText()).isEqualTo("IN_PROGRESS");
         assertThat(body.at("/success/budget").asInt()).isEqualTo(300);
         assertThat(body.at("/success/draftOrderStrategy").isNull()).isTrue();
+        assertThat(body.at("/success/draftOrderPreview").isNull()).isTrue();
         assertThat(body.at("/success/players/0/position").asText()).isEqualTo("TOP");
         assertThat(body.at("/success/players/0/status").asText()).isEqualTo("ASSIGNED");
         assertThat(body.at("/success/players/1/status").asText()).isEqualTo("AVAILABLE");
@@ -609,12 +616,19 @@ class RoomApiWebMvcTest {
                 assertThat(response.success().startReadiness()).isEqualTo("STARTABLE");
                 assertThat(response.success().teamLeaders()).extracting(TeamLeaderResponse::draftPosition)
                     .containsExactly(1, 2);
+                assertThat(response.success().draftOrderPreview().slots())
+                    .extracting(DraftOrderSlotResponse::draftPosition, DraftOrderSlotResponse::leaderId, DraftOrderSlotResponse::nickname)
+                    .containsExactly(
+                        org.assertj.core.groups.Tuple.tuple(1, HOST_ID, "호스트"),
+                        org.assertj.core.groups.Tuple.tuple(2, GUEST_ID, "게스트")
+                    );
             });
     }
 
     @Test
     void clearDraftPosition은_header가_있으면_성공한다() throws Exception {
         Room room = waitingDraftRoom();
+        room.clearDraftPosition(new TeamLeaderId(HOST_ID));
         doNothing().when(clearDraftPosition).clear(ROOM_CODE, HOST_TOKEN);
         given(getRoom.get(ROOM_CODE)).willReturn(room);
 
@@ -628,7 +642,13 @@ class RoomApiWebMvcTest {
             .satisfies(response -> {
                 assertThat(response.success().startReadiness()).isEqualTo("WAITING_FOR_DRAFT_POSITIONS");
                 assertThat(response.success().teamLeaders()).extracting(TeamLeaderResponse::draftPosition)
-                    .containsExactly(1, null);
+                    .containsExactly(null, null);
+                assertThat(response.success().draftOrderPreview().slots())
+                    .extracting(DraftOrderSlotResponse::draftPosition, DraftOrderSlotResponse::leaderId, DraftOrderSlotResponse::nickname)
+                    .containsExactly(
+                        org.assertj.core.groups.Tuple.tuple(1, null, null),
+                        org.assertj.core.groups.Tuple.tuple(2, null, null)
+                    );
             });
     }
 
