@@ -146,10 +146,10 @@ class SupabaseRoomRealtimePublisherTest {
             context.getEnvironment()
                 .getPropertySources()
                 .addFirst(new MapPropertySource("test", java.util.Map.of("fantazzk.supabase.realtime.enabled", "false")));
-            context.register(빈선택지원설정.class, RoomRealtimePublisherConfiguration.class);
+            context.register(빈선택지원설정.class, RoomSnapshotPublisherConfiguration.class);
             context.refresh();
 
-            assertThat(context.getBean(RoomRealtimePublisher.class)).isInstanceOf(NoopRoomRealtimePublisher.class);
+            assertThat(context.getBean(RoomSnapshotPublisher.class)).isInstanceOf(NoopRoomSnapshotPublisher.class);
         }
     }
 
@@ -171,15 +171,15 @@ class SupabaseRoomRealtimePublisherTest {
                         )
                     )
                 );
-            context.register(빈선택지원설정.class, RoomRealtimePublisherConfiguration.class);
+            context.register(빈선택지원설정.class, RoomSnapshotPublisherConfiguration.class);
             context.refresh();
 
-            assertThat(context.getBean(RoomRealtimePublisher.class)).isInstanceOf(SupabaseRoomRealtimePublisher.class);
+            assertThat(context.getBean(RoomSnapshotPublisher.class)).isInstanceOf(SupabaseRoomRealtimePublisher.class);
         }
     }
 
     @Test
-    void 다른_roomRealtimePublisher가_있으면_supabase_publisher를_추가로_등록하지_않는다() {
+    void 다른_roomSnapshotPublisher가_있으면_supabase_publisher를_추가로_등록하지_않는다() {
         try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext()) {
             context.getEnvironment()
                 .getPropertySources()
@@ -196,11 +196,11 @@ class SupabaseRoomRealtimePublisherTest {
                         )
                     )
                 );
-            context.register(빈선택지원설정.class, 대체퍼블리셔설정.class, RoomRealtimePublisherConfiguration.class);
+            context.register(빈선택지원설정.class, 대체퍼블리셔설정.class, RoomSnapshotPublisherConfiguration.class);
             context.refresh();
 
-            assertThat(context.getBeansOfType(RoomRealtimePublisher.class)).hasSize(1);
-            assertThat(context.getBean(RoomRealtimePublisher.class)).isSameAs(context.getBean("otherPublisher"));
+            assertThat(context.getBeansOfType(RoomSnapshotPublisher.class)).hasSize(1);
+            assertThat(context.getBean(RoomSnapshotPublisher.class)).isSameAs(context.getBean("otherPublisher"));
         }
     }
 
@@ -243,8 +243,8 @@ class SupabaseRoomRealtimePublisherTest {
     @Configuration(proxyBeanMethods = false)
     static class 대체퍼블리셔설정 {
         @Bean
-        RoomRealtimePublisher otherPublisher() {
-            return new NoopRoomRealtimePublisher();
+        RoomSnapshotPublisher otherPublisher() {
+            return new NoopRoomSnapshotPublisher();
         }
     }
 

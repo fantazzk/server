@@ -278,7 +278,7 @@ class RoomAuctionTest {
         Room room = waitingAuctionRoom();
         room.join(new TeamLeaderId(GUEST_ID), "게스트", GUEST_ACTION_TOKEN);
         InMemoryRooms rooms = new InMemoryRooms(room);
-        RecordingRoomRealtimePublisher publisher = new RecordingRoomRealtimePublisher();
+        RecordingRoomSnapshotPublisher publisher = new RecordingRoomSnapshotPublisher();
         FakeTaskScheduler taskScheduler = new FakeTaskScheduler();
         StartRoom startRoom =
             new StartRoom(
@@ -334,7 +334,7 @@ class RoomAuctionTest {
                     emptyAuctionScheduleReader(),
                     Clock.fixed(CREATED_AT, ZoneOffset.UTC)
                 ),
-                noopRoomRealtimePublisher(),
+                noopRoomSnapshotPublisher(),
                 Clock.fixed(CREATED_AT, ZoneOffset.UTC)
             );
 
@@ -346,7 +346,7 @@ class RoomAuctionTest {
     void placeBid는_저장후_realtime_publish하고_deadline_scheduling은_afterCommit에_유지한다() {
         Room room = startedAuctionRoom();
         InMemoryRooms rooms = new InMemoryRooms(room);
-        RecordingRoomRealtimePublisher publisher = new RecordingRoomRealtimePublisher();
+        RecordingRoomSnapshotPublisher publisher = new RecordingRoomSnapshotPublisher();
         FakeTaskScheduler taskScheduler = new FakeTaskScheduler();
         PlaceBid placeBid =
             new PlaceBid(
@@ -403,7 +403,7 @@ class RoomAuctionTest {
                     emptyAuctionScheduleReader(),
                     Clock.fixed(CREATED_AT, ZoneOffset.UTC)
                 ),
-                noopRoomRealtimePublisher(),
+                noopRoomSnapshotPublisher(),
                 Clock.fixed(CREATED_AT.plusSeconds(1), ZoneOffset.UTC)
             );
 
@@ -416,7 +416,7 @@ class RoomAuctionTest {
         Room room = inProgressDraftRoomForOptimisticLock();
         InMemoryRooms rooms = new InMemoryRooms(room);
         rooms.failOnSave(new ObjectOptimisticLockingFailureException(Room.class, room.getId()));
-        PickDraft pickDraft = new PickDraft(rooms, new RoomActionAuthorizer(), noopRoomRealtimePublisher());
+        PickDraft pickDraft = new PickDraft(rooms, new RoomActionAuthorizer(), noopRoomSnapshotPublisher());
 
         assertThatThrownBy(() -> pickDraft.pick(room.getCode(), HOST_ACTION_TOKEN, "선수1"))
             .isInstanceOfSatisfying(CoreException.class, ex -> assertRoomError(ex, RoomErrorType.ROOM_CONCURRENT_MODIFICATION));
@@ -430,7 +430,7 @@ class RoomAuctionTest {
         SelectDraftPosition selectDraftPosition = new SelectDraftPosition(
             rooms,
             new RoomActionAuthorizer(),
-            noopRoomRealtimePublisher()
+            noopRoomSnapshotPublisher()
         );
 
         assertThatThrownBy(() -> selectDraftPosition.select(room.getCode(), HOST_ACTION_TOKEN, 1))
@@ -446,7 +446,7 @@ class RoomAuctionTest {
         ClearDraftPosition clearDraftPosition = new ClearDraftPosition(
             rooms,
             new RoomActionAuthorizer(),
-            noopRoomRealtimePublisher()
+            noopRoomSnapshotPublisher()
         );
 
         assertThatThrownBy(() -> clearDraftPosition.clear(room.getCode(), HOST_ACTION_TOKEN))
@@ -457,8 +457,8 @@ class RoomAuctionTest {
         assertThat(ex.getError()).isEqualTo(expected);
     }
 
-    private static RoomRealtimePublisher noopRoomRealtimePublisher() {
-        return new NoopRoomRealtimePublisher();
+    private static RoomSnapshotPublisher noopRoomSnapshotPublisher() {
+        return new NoopRoomSnapshotPublisher();
     }
 
     private static void setCurrentAuctionRoundEndsAt(Room room, Instant value) throws Exception {
@@ -601,7 +601,7 @@ class RoomAuctionTest {
     private static SettleAuction unsupportedSettleAuction() {
         InMemoryRooms rooms = new InMemoryRooms();
         return new SettleAuction(
-            new SettleAuctionAttempt(rooms, Clock.fixed(CREATED_AT, ZoneOffset.UTC), noopRoomRealtimePublisher()),
+            new SettleAuctionAttempt(rooms, Clock.fixed(CREATED_AT, ZoneOffset.UTC), noopRoomSnapshotPublisher()),
             rooms,
             new ObjectProvider<>() {
                 @Override
@@ -705,7 +705,7 @@ class RoomAuctionTest {
         }
     }
 
-    private static final class RecordingRoomRealtimePublisher implements RoomRealtimePublisher {
+    private static final class RecordingRoomSnapshotPublisher implements RoomSnapshotPublisher {
         private final java.util.ArrayList<RoomRealtimeSnapshotEvent> events = new java.util.ArrayList<>();
 
         @Override

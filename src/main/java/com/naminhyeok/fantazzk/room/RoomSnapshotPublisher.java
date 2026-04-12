@@ -1,5 +1,5 @@
 package com.naminhyeok.fantazzk.room;
 
-interface RoomRealtimePublisher {
+interface RoomSnapshotPublisher {
     void publishAfterCommit(Room room);
 }

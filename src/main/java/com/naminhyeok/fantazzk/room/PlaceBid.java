@@ -16,7 +16,7 @@ class PlaceBid {
     private final Rooms rooms;
     private final RoomActionAuthorizer roomActionAuthorizer;
     private final RoomAuctionDeadlineScheduler roomAuctionDeadlineScheduler;
-    private final RoomRealtimePublisher roomRealtimePublisher;
+    private final RoomSnapshotPublisher roomSnapshotPublisher;
     private final Clock clock;
 
     @Transactional
@@ -26,7 +26,7 @@ class PlaceBid {
             RoomTeamLeader caller = roomActionAuthorizer.authenticate(room, actionToken);
             RoomBid bid = room.placeBid(caller.getId(), amount, Instant.now(clock));
             Room saved = rooms.saveAndFlush(room);
-            roomRealtimePublisher.publishAfterCommit(saved);
+            roomSnapshotPublisher.publishAfterCommit(saved);
             scheduleAfterCommit(saved);
             return bid;
         } catch (OptimisticLockingFailureException ex) {

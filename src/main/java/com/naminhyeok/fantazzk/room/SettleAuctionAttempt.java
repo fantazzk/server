@@ -12,7 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 class SettleAuctionAttempt {
     private final Rooms rooms;
     private final Clock clock;
-    private final RoomRealtimePublisher roomRealtimePublisher;
+    private final RoomSnapshotPublisher roomSnapshotPublisher;
 
     @Transactional
     AuctionSettlement settle(String code) {
@@ -20,7 +20,7 @@ class SettleAuctionAttempt {
         Room room = rooms.findByCode(code).orElseThrow(() -> CoreException.of(RoomErrorType.ROOM_NOT_FOUND));
         AuctionSettlement settlement = room.settleAuction(now);
         Room saved = rooms.saveAndFlush(room);
-        roomRealtimePublisher.publishAfterCommit(saved);
+        roomSnapshotPublisher.publishAfterCommit(saved);
         return settlement;
     }
 
@@ -34,7 +34,7 @@ class SettleAuctionAttempt {
 
         room.settleAuction(now);
         Room saved = rooms.saveAndFlush(room);
-        roomRealtimePublisher.publishAfterCommit(saved);
+        roomSnapshotPublisher.publishAfterCommit(saved);
         return saved;
     }
 

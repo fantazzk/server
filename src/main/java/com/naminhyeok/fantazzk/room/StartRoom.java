@@ -16,7 +16,7 @@ class StartRoom {
     private final Rooms rooms;
     private final RoomActionAuthorizer roomActionAuthorizer;
     private final RoomAuctionDeadlineScheduler roomAuctionDeadlineScheduler;
-    private final RoomRealtimePublisher roomRealtimePublisher;
+    private final RoomSnapshotPublisher roomSnapshotPublisher;
     private final Clock clock;
 
     @Transactional
@@ -26,7 +26,7 @@ class StartRoom {
             RoomTeamLeader caller = roomActionAuthorizer.authenticate(loaded, actionToken);
             loaded.start(caller.getId(), Instant.now(clock));
             Room saved = rooms.saveAndFlush(loaded);
-            roomRealtimePublisher.publishAfterCommit(saved);
+            roomSnapshotPublisher.publishAfterCommit(saved);
             scheduleAfterCommit(saved);
         } catch (OptimisticLockingFailureException ex) {
             throw CoreException.of(RoomErrorType.ROOM_CONCURRENT_MODIFICATION);

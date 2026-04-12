@@ -17,7 +17,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
-class SupabaseRoomRealtimePublisher implements RoomRealtimePublisher {
+class SupabaseRoomRealtimePublisher implements RoomSnapshotPublisher {
     private static final Logger log = LoggerFactory.getLogger(SupabaseRoomRealtimePublisher.class);
     private static final String BROADCAST_URI = "/realtime/v1/api/broadcast";
     private static final String SNAPSHOT_UPDATED_EVENT = "snapshot.updated";
@@ -101,15 +101,15 @@ class SupabaseRoomRealtimePublisher implements RoomRealtimePublisher {
 }
 
 @Configuration(proxyBeanMethods = false)
-class RoomRealtimePublisherConfiguration {
+class RoomSnapshotPublisherConfiguration {
     @Bean
-    @ConditionalOnMissingBean(RoomRealtimePublisher.class)
+    @ConditionalOnMissingBean(RoomSnapshotPublisher.class)
     @ConditionalOnExpression(
         "T(Boolean).parseBoolean('${fantazzk.supabase.realtime.enabled:false}') and " +
         "T(org.springframework.util.StringUtils).hasText('${fantazzk.supabase.url:}') and " +
         "T(org.springframework.util.StringUtils).hasText('${fantazzk.supabase.service-role-key:}')"
     )
-    RoomRealtimePublisher supabaseRoomRealtimePublisher(
+    RoomSnapshotPublisher supabaseRoomSnapshotPublisher(
         RestClient.Builder restClientBuilder,
         Clock clock,
         @Value("${fantazzk.supabase.url}") String supabaseUrl,
@@ -120,8 +120,8 @@ class RoomRealtimePublisherConfiguration {
     }
 
     @Bean
-    @ConditionalOnMissingBean(RoomRealtimePublisher.class)
-    RoomRealtimePublisher noopRoomRealtimePublisher() {
-        return new NoopRoomRealtimePublisher();
+    @ConditionalOnMissingBean(RoomSnapshotPublisher.class)
+    RoomSnapshotPublisher noopRoomSnapshotPublisher() {
+        return new NoopRoomSnapshotPublisher();
     }
 }

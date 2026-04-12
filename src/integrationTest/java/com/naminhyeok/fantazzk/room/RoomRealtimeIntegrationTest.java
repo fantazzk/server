@@ -44,12 +44,12 @@ class RoomRealtimeIntegrationTest {
     private final CreateRoom createRoom;
     private final JoinRoom joinRoom;
     private final Rooms rooms;
-    private final RecordingRoomRealtimePublisher recordingRoomRealtimePublisher;
+    private final RecordingRoomSnapshotPublisher recordingRoomSnapshotPublisher;
     private final PlatformTransactionManager transactionManager;
 
     @BeforeEach
     void clearPublishedEvents() {
-        recordingRoomRealtimePublisher.clear();
+        recordingRoomSnapshotPublisher.clear();
     }
 
     @Test
@@ -71,7 +71,7 @@ class RoomRealtimeIntegrationTest {
 
         Room reloaded = rooms.findByCode(created.getCode()).orElseThrow();
 
-        assertThat(recordingRoomRealtimePublisher.publishedEvents()).singleElement()
+        assertThat(recordingRoomSnapshotPublisher.publishedEvents()).singleElement()
             .satisfies(event -> {
                 assertThat(event.roomCode()).isEqualTo(created.getCode());
                 assertThat(event.snapshotVersion()).isEqualTo(reloaded.getVersion());
@@ -113,7 +113,7 @@ class RoomRealtimeIntegrationTest {
             .map(RoomTeamLeader::getNickname)
             .toList());
 
-        assertThat(recordingRoomRealtimePublisher.publishedEvents()).isEmpty();
+        assertThat(recordingRoomSnapshotPublisher.publishedEvents()).isEmpty();
         assertThat(leaderNicknames).containsExactly("호스트");
     }
 
@@ -121,22 +121,22 @@ class RoomRealtimeIntegrationTest {
     static class TestConfig {
         @Bean
         @Primary
-        Clock roomRealtimeTestClock() {
+        Clock roomSnapshotTestClock() {
             return Clock.fixed(PUBLISHED_AT, ZoneOffset.UTC);
         }
 
         @Bean
         @Primary
-        RecordingRoomRealtimePublisher recordingRoomRealtimePublisher(Clock clock) {
-            return new RecordingRoomRealtimePublisher(clock);
+        RecordingRoomSnapshotPublisher recordingRoomSnapshotPublisher(Clock clock) {
+            return new RecordingRoomSnapshotPublisher(clock);
         }
     }
 
-    static final class RecordingRoomRealtimePublisher implements RoomRealtimePublisher {
+    static final class RecordingRoomSnapshotPublisher implements RoomSnapshotPublisher {
         private final Clock clock;
         private final List<RoomRealtimeSnapshotEvent> events = new ArrayList<>();
 
-        RecordingRoomRealtimePublisher(Clock clock) {
+        RecordingRoomSnapshotPublisher(Clock clock) {
             this.clock = clock;
         }
 

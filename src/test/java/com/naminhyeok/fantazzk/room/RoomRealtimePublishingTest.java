@@ -24,7 +24,7 @@ class RoomRealtimePublishingTest {
     @Test
     void join은_저장된_room_스냅샷을_publish한다() {
         Room room = waitingAuctionRoom();
-        RecordingRoomRealtimePublisher publisher = new RecordingRoomRealtimePublisher();
+        RecordingRoomSnapshotPublisher publisher = new RecordingRoomSnapshotPublisher();
         JoinRoom joinRoom = new JoinRoom(new SaveAndFlushOnlyRooms(room), fixedLeaderIdentityIssuer(), publisher);
 
         RoomTeamLeader joined = joinRoom.join(room.getCode(), "게스트");
@@ -38,7 +38,7 @@ class RoomRealtimePublishingTest {
     @Test
     void join은_optimistic_lock을_room_concurrent_modification으로_번역한다() {
         Room room = waitingAuctionRoom();
-        RecordingRoomRealtimePublisher publisher = new RecordingRoomRealtimePublisher();
+        RecordingRoomSnapshotPublisher publisher = new RecordingRoomSnapshotPublisher();
         JoinRoom joinRoom = new JoinRoom(new OptimisticLockFailureRooms(room), fixedLeaderIdentityIssuer(), publisher);
 
         assertThatThrownBy(() -> joinRoom.join(room.getCode(), "게스트"))
@@ -49,7 +49,7 @@ class RoomRealtimePublishingTest {
     @Test
     void pickDraft는_저장된_room_스냅샷을_publish한다() {
         Room room = startedDraftRoom();
-        RecordingRoomRealtimePublisher publisher = new RecordingRoomRealtimePublisher();
+        RecordingRoomSnapshotPublisher publisher = new RecordingRoomSnapshotPublisher();
         PickDraft pickDraft = new PickDraft(new InMemoryRooms(room), new RoomActionAuthorizer(), publisher);
 
         RoomTeamMember member = pickDraft.pick(room.getCode(), HOST_ACTION_TOKEN, "선수1");
@@ -65,7 +65,7 @@ class RoomRealtimePublishingTest {
     @Test
     void selectDraftPosition은_저장된_room_스냅샷을_publish한다() {
         Room room = waitingDraftRoomForPositionChange();
-        RecordingRoomRealtimePublisher publisher = new RecordingRoomRealtimePublisher();
+        RecordingRoomSnapshotPublisher publisher = new RecordingRoomSnapshotPublisher();
         SelectDraftPosition selectDraftPosition =
             new SelectDraftPosition(new InMemoryRooms(room), new RoomActionAuthorizer(), publisher);
 
@@ -81,7 +81,7 @@ class RoomRealtimePublishingTest {
     void clearDraftPosition은_저장된_room_스냅샷을_publish한다() {
         Room room = waitingDraftRoomForPositionChange();
         room.selectDraftPosition(new TeamLeaderId(HOST_ID), 1);
-        RecordingRoomRealtimePublisher publisher = new RecordingRoomRealtimePublisher();
+        RecordingRoomSnapshotPublisher publisher = new RecordingRoomSnapshotPublisher();
         ClearDraftPosition clearDraftPosition =
             new ClearDraftPosition(new InMemoryRooms(room), new RoomActionAuthorizer(), publisher);
 
@@ -96,7 +96,7 @@ class RoomRealtimePublishingTest {
     @Test
     void settle는_저장된_latest_room_스냅샷을_publish한다() {
         Room room = startedAuctionRoom();
-        RecordingRoomRealtimePublisher publisher = new RecordingRoomRealtimePublisher();
+        RecordingRoomSnapshotPublisher publisher = new RecordingRoomSnapshotPublisher();
         SettleAuctionAttempt settleAuctionAttempt =
             new SettleAuctionAttempt(new InMemoryRooms(room), Clock.fixed(PUBLISHED_AT, ZoneOffset.UTC), publisher);
 
@@ -112,7 +112,7 @@ class RoomRealtimePublishingTest {
     @Test
     void settleIfDue는_기한이_지나면_정산된_latest_room_스냅샷을_publish한다() {
         Room room = startedAuctionRoom();
-        RecordingRoomRealtimePublisher publisher = new RecordingRoomRealtimePublisher();
+        RecordingRoomSnapshotPublisher publisher = new RecordingRoomSnapshotPublisher();
         SettleAuctionAttempt settleAuctionAttempt =
             new SettleAuctionAttempt(new InMemoryRooms(room), Clock.fixed(PUBLISHED_AT, ZoneOffset.UTC), publisher);
 
@@ -129,7 +129,7 @@ class RoomRealtimePublishingTest {
     @Test
     void settleIfDue는_기한이_아직_아니면_publish하지_않는다() {
         Room room = startedAuctionRoom();
-        RecordingRoomRealtimePublisher publisher = new RecordingRoomRealtimePublisher();
+        RecordingRoomSnapshotPublisher publisher = new RecordingRoomSnapshotPublisher();
         SettleAuctionAttempt settleAuctionAttempt =
             new SettleAuctionAttempt(new InMemoryRooms(room), Clock.fixed(CREATED_AT.plusSeconds(10), ZoneOffset.UTC), publisher);
 
@@ -216,7 +216,7 @@ class RoomRealtimePublishingTest {
         return room;
     }
 
-    private static final class RecordingRoomRealtimePublisher implements RoomRealtimePublisher {
+    private static final class RecordingRoomSnapshotPublisher implements RoomSnapshotPublisher {
         private final List<RoomRealtimeSnapshotEvent> events = new ArrayList<>();
 
         @Override

@@ -11,7 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 class JoinRoom {
     private final Rooms rooms;
     private final TeamLeaderIdentityIssuer teamLeaderIdentityIssuer;
-    private final RoomRealtimePublisher roomRealtimePublisher;
+    private final RoomSnapshotPublisher roomSnapshotPublisher;
 
     @Transactional
     public RoomTeamLeader join(String code, String nickname) {
@@ -20,7 +20,7 @@ class JoinRoom {
             TeamLeaderIdentityIssuer.TeamLeaderIdentity identity = teamLeaderIdentityIssuer.issue();
             room.join(new TeamLeaderId(identity.leaderId()), nickname, identity.actionToken());
             Room saved = rooms.saveAndFlush(room);
-            roomRealtimePublisher.publishAfterCommit(saved);
+            roomSnapshotPublisher.publishAfterCommit(saved);
             return saved.getLeaders().getLast();
         } catch (OptimisticLockingFailureException ex) {
             throw CoreException.of(RoomErrorType.ROOM_CONCURRENT_MODIFICATION);
