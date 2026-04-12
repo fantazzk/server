@@ -231,6 +231,13 @@ def render_comment(input_dir: Path) -> str:
 
 def render_pr_body_section(input_dir: Path) -> str:
     modules, relationships = parse_components(input_dir / "components.puml")
+    module_rows: dict[str, dict[str, str]] = {}
+
+    for canvas_path in sorted(input_dir.glob("module-*.adoc")):
+        module_name = canvas_path.stem.removeprefix("module-").replace("-", " ").title()
+        module_rows[module_name] = parse_module_canvas(canvas_path)
+
+    available_modules = sorted(set(modules) | set(module_rows.keys()))
 
     lines = [
         BODY_SECTION_START,
@@ -258,9 +265,16 @@ def render_pr_body_section(input_dir: Path) -> str:
             "",
             *render_relationships(relationships),
             "",
-            BODY_SECTION_END,
+            "### 모듈 세부사항",
+            "",
         ]
     )
+
+    for module_name in available_modules:
+        lines.append(render_module_details(module_name, module_rows.get(module_name, {})))
+        lines.append("")
+
+    lines.append(BODY_SECTION_END)
     return "\n".join(lines).strip() + "\n"
 
 

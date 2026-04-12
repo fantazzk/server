@@ -30,6 +30,39 @@ class ModulithPr본문렌더링테스트(unittest.TestCase):
                 ),
                 encoding="utf-8",
             )
+            input_dir.joinpath("module-room.adoc").write_text(
+                textwrap.dedent(
+                    """\
+                    [%autowidth.stretch, cols="h,a"]
+                    |===
+                    |Base package
+                    |`com.example.room`
+                    |Spring components
+                    |_Services_
+
+                    * `CreateRoom`
+                    * `JoinRoom`
+                    |===
+                    """
+                ),
+                encoding="utf-8",
+            )
+            input_dir.joinpath("module-template.adoc").write_text(
+                textwrap.dedent(
+                    """\
+                    [%autowidth.stretch, cols="h,a"]
+                    |===
+                    |Base package
+                    |`com.example.template`
+                    |Spring components
+                    |_Services_
+
+                    * `CreateTemplate`
+                    |===
+                    """
+                ),
+                encoding="utf-8",
+            )
 
             rendered = MODULE.render_pr_body_section(input_dir)
 
@@ -38,6 +71,12 @@ class ModulithPr본문렌더링테스트(unittest.TestCase):
             self.assertIn("```mermaid", rendered)
             self.assertIn('room["Room"]', rendered)
             self.assertIn('room -->|"uses"| template', rendered)
+            self.assertIn("### 모듈 세부사항", rendered)
+            self.assertIn("<summary><code>Room</code></summary>", rendered)
+            self.assertIn("**Base package**", rendered)
+            self.assertIn("CreateRoom", rendered)
+            self.assertIn("<summary><code>Template</code></summary>", rendered)
+            self.assertIn("CreateTemplate", rendered)
 
     def test_본문_섹션은_산출물이_없을때도_안내_문구를_보존한다(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
