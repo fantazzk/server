@@ -21,7 +21,7 @@ record RoomTemplateSpec(
         DraftOrderStrategy draftOrderStrategy,
         List<Player> players
     ) {
-        this(mode, teamCount, teamSize, budget, pickBanTime, null, draftOrderStrategy, players);
+        this(mode, teamCount, teamSize, budget, pickBanTime, mode == Mode.AUCTION ? 10 : null, draftOrderStrategy, players);
     }
 
     public enum Mode {
