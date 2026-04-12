@@ -9,6 +9,8 @@ from pathlib import Path
 
 
 COMMENT_MARKER = "<!-- modulith-pr-comment -->"
+BODY_SECTION_START = "<!-- modulith-pr-body:start -->"
+BODY_SECTION_END = "<!-- modulith-pr-body:end -->"
 
 
 def parse_args() -> argparse.Namespace:
@@ -19,6 +21,12 @@ def parse_args() -> argparse.Namespace:
         "--input-dir",
         default="build/spring-modulith",
         help="Directory containing Spring Modulith generated files.",
+    )
+    parser.add_argument(
+        "--target",
+        choices=("comment", "body"),
+        default="comment",
+        help="Select the Markdown target format to render.",
     )
     return parser.parse_args()
 
@@ -131,6 +139,13 @@ def render_mermaid(modules: list[str], relationships: list[tuple[str, str, str]]
     return "\n".join(lines)
 
 
+def render_relationships(relationships: list[tuple[str, str, str]]) -> list[str]:
+    if relationships:
+        return [f"- `{source}` -> `{target}` (`{label}`)" for source, target, label in relationships]
+
+    return ["- 감지된 모듈 간 의존성이 없습니다."]
+
+
 def render_module_details(module_name: str, rows: dict[str, str]) -> str:
     if not rows:
         return (
@@ -195,10 +210,9 @@ def render_comment(input_dir: Path) -> str:
     )
 
     if relationships:
-        for source, target, label in relationships:
-            lines.append(f"- `{source}` -> `{target}` (`{label}`)")
+        lines.extend(render_relationships(relationships))
     else:
-        lines.append("- 감지된 모듈 간 의존성이 없습니다.")
+        lines.extend(render_relationships(relationships))
 
     lines.extend(
         [
@@ -215,9 +229,48 @@ def render_comment(input_dir: Path) -> str:
     return "\n".join(lines).strip() + "\n"
 
 
+def render_pr_body_section(input_dir: Path) -> str:
+    modules, relationships = parse_components(input_dir / "components.puml")
+
+    lines = [
+        BODY_SECTION_START,
+        "## Spring Modulith 구조도",
+        "",
+        "_이 섹션은 CI가 자동으로 갱신합니다._",
+        "",
+    ]
+
+    if not input_dir.exists() or not modules:
+        lines.extend(
+            [
+                "이번 실행에서는 `build/spring-modulith` 산출물을 찾지 못했습니다.",
+                "`./gradlew check` 단계가 Modulith 문서 생성 전에 실패했는지 확인해 주세요.",
+                BODY_SECTION_END,
+            ]
+        )
+        return "\n".join(lines).strip() + "\n"
+
+    lines.extend(
+        [
+            render_mermaid(modules, relationships),
+            "",
+            "### 모듈 의존성",
+            "",
+            *render_relationships(relationships),
+            "",
+            BODY_SECTION_END,
+        ]
+    )
+    return "\n".join(lines).strip() + "\n"
+
+
 def main() -> None:
     args = parse_args()
     input_dir = Path(args.input_dir)
+    if args.target == "body":
+        print(render_pr_body_section(input_dir), end="")
+        return
+
     print(render_comment(input_dir), end="")
 
 
