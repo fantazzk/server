@@ -1,7 +1,9 @@
 package com.naminhyeok.fantazzk.room;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.naminhyeok.fantazzk.CoreException;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -9,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
 class RoomRealtimePublishingTest {
     private static final Instant CREATED_AT = Instant.parse("2024-01-01T10:00:00Z");
@@ -30,6 +33,17 @@ class RoomRealtimePublishingTest {
         assertThat(publisher.events).hasSize(1);
         assertPublishedRoom(publisher.events.getFirst(), room.getCode());
         assertThat(publisher.events.getFirst().room().teamLeaders()).hasSize(2);
+    }
+
+    @Test
+    void join은_optimistic_lock을_room_concurrent_modification으로_번역한다() {
+        Room room = waitingAuctionRoom();
+        RecordingRoomRealtimePublisher publisher = new RecordingRoomRealtimePublisher();
+        JoinRoom joinRoom = new JoinRoom(new OptimisticLockFailureRooms(room), fixedLeaderIdentityIssuer(), publisher);
+
+        assertThatThrownBy(() -> joinRoom.join(room.getCode(), "게스트"))
+            .isInstanceOfSatisfying(CoreException.class, ex -> assertRoomError(ex, RoomErrorType.ROOM_CONCURRENT_MODIFICATION));
+        assertThat(publisher.events).isEmpty();
     }
 
     @Test
@@ -127,6 +141,10 @@ class RoomRealtimePublishingTest {
 
     private static TeamLeaderIdentityIssuer fixedLeaderIdentityIssuer() {
         return () -> new TeamLeaderIdentityIssuer.TeamLeaderIdentity(GUEST_ID, GUEST_ACTION_TOKEN);
+    }
+
+    private static void assertRoomError(CoreException exception, RoomErrorType errorType) {
+        assertThat(exception.getError()).isSameAs(errorType);
     }
 
     private static void assertPublishedRoom(RoomRealtimeSnapshotEvent event, String roomCode) {
@@ -252,6 +270,34 @@ class RoomRealtimePublishingTest {
         public Room saveAndFlush(Room room) {
             this.room = room;
             return room;
+        }
+
+        @Override
+        public Optional<Room> findById(RoomId id) {
+            return Optional.ofNullable(room).filter(it -> it.getId().equals(id));
+        }
+
+        @Override
+        public Optional<Room> findByCode(String code) {
+            return Optional.ofNullable(room).filter(it -> it.getCode().equals(code));
+        }
+    }
+
+    private static final class OptimisticLockFailureRooms implements Rooms {
+        private final Room room;
+
+        private OptimisticLockFailureRooms(Room room) {
+            this.room = room;
+        }
+
+        @Override
+        public Room save(Room room) {
+            throw new UnsupportedOperationException("JoinRoom should use saveAndFlush");
+        }
+
+        @Override
+        public Room saveAndFlush(Room room) {
+            throw new ObjectOptimisticLockingFailureException(Room.class, room.getId());
         }
 
         @Override

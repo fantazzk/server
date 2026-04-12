@@ -86,6 +86,45 @@ class SupabaseRoomRealtimePublisherTest {
     }
 
     @Test
+    void publishAfterCommit는_스냅샷은_등록시점을_유지하고_publishedAt은_실제_전송시각을_쓴다() {
+        RestClient.Builder builder = RestClient.builder();
+        MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
+        Room room = waitingAuctionRoom();
+        long snapshotVersion = room.getVersion();
+        MutableClock clock = new MutableClock(PUBLISHED_AT);
+        SupabaseRoomRealtimePublisher publisher =
+            new SupabaseRoomRealtimePublisher(builder, clock, BASE_URL, SERVICE_ROLE_KEY, "room");
+
+        server.expect(requestTo(BASE_URL + "/realtime/v1/api/broadcast"))
+            .andExpect(method(POST))
+            .andExpect(jsonPath("$.messages[0].payload.roomCode").value(room.getCode()))
+            .andExpect(jsonPath("$.messages[0].payload.snapshotVersion").value(snapshotVersion))
+            .andExpect(jsonPath("$.messages[0].payload.room.teamLeaders.length()").value(1))
+            .andExpect(jsonPath("$.messages[0].payload.room.teamLeaders[0].nickname").value("호스트"))
+            .andExpect(jsonPath("$.messages[0].payload.publishedAt").value(PUBLISHED_AT.plusSeconds(30).toString()))
+            .andRespond(withSuccess());
+
+        TransactionSynchronizationManager.initSynchronization();
+        try {
+            publisher.publishAfterCommit(room);
+            room.join(new TeamLeaderId("leader-guest"), "게스트", "guest-token");
+            clock.advanceSeconds(30);
+
+            List<TransactionSynchronization> synchronizations = TransactionSynchronizationManager.getSynchronizations();
+            assertThat(synchronizations).hasSize(1);
+
+            TransactionSynchronizationManager.clearSynchronization();
+            synchronizations.forEach(TransactionSynchronization::afterCommit);
+        } finally {
+            if (TransactionSynchronizationManager.isSynchronizationActive()) {
+                TransactionSynchronizationManager.clearSynchronization();
+            }
+        }
+
+        server.verify();
+    }
+
+    @Test
     void publishAfterCommit는_전송_실패를_호출자에게_전파하지_않는다() {
         RestClient.Builder builder = RestClient.builder();
         MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
@@ -206,6 +245,33 @@ class SupabaseRoomRealtimePublisherTest {
         @Bean
         RoomRealtimePublisher otherPublisher() {
             return new NoopRoomRealtimePublisher();
+        }
+    }
+
+    private static final class MutableClock extends Clock {
+        private Instant currentInstant;
+
+        private MutableClock(Instant currentInstant) {
+            this.currentInstant = currentInstant;
+        }
+
+        @Override
+        public ZoneOffset getZone() {
+            return ZoneOffset.UTC;
+        }
+
+        @Override
+        public Clock withZone(java.time.ZoneId zone) {
+            return this;
+        }
+
+        @Override
+        public Instant instant() {
+            return currentInstant;
+        }
+
+        private void advanceSeconds(long seconds) {
+            currentInstant = currentInstant.plusSeconds(seconds);
         }
     }
 }

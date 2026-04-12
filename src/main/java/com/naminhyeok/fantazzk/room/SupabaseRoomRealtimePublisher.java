@@ -50,20 +50,21 @@ class SupabaseRoomRealtimePublisher implements RoomRealtimePublisher {
 
     @Override
     public void publishAfterCommit(Room room) {
-        RoomRealtimeSnapshotEvent event = RoomRealtimeSnapshotEvent.from(room, Instant.now(clock));
+        PendingBroadcastSnapshot snapshot = PendingBroadcastSnapshot.from(room);
         if (!TransactionSynchronizationManager.isSynchronizationActive()) {
-            send(event);
+            send(snapshot);
             return;
         }
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {
-                send(event);
+                send(snapshot);
             }
         });
     }
 
-    private void send(RoomRealtimeSnapshotEvent event) {
+    private void send(PendingBroadcastSnapshot snapshot) {
+        RoomRealtimeSnapshotEvent event = snapshot.toEvent(Instant.now(clock));
         try {
             restClient.post()
                 .uri(BROADCAST_URI)
@@ -86,6 +87,16 @@ class SupabaseRoomRealtimePublisher implements RoomRealtimePublisher {
     }
 
     private record BroadcastMessage(String topic, String event, RoomRealtimeSnapshotEvent payload) {
+    }
+
+    private record PendingBroadcastSnapshot(String roomCode, long snapshotVersion, RoomResponse room) {
+        private static PendingBroadcastSnapshot from(Room room) {
+            return new PendingBroadcastSnapshot(room.getCode(), room.getVersion(), RoomResponse.from(room));
+        }
+
+        private RoomRealtimeSnapshotEvent toEvent(Instant publishedAt) {
+            return new RoomRealtimeSnapshotEvent("ROOM_SNAPSHOT_UPDATED", roomCode, snapshotVersion, publishedAt, room);
+        }
     }
 }
 
