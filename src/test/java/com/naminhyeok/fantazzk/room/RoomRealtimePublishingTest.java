@@ -7,6 +7,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 class RoomRealtimePublishingTest {
@@ -20,47 +21,104 @@ class RoomRealtimePublishingTest {
     @Test
     void join은_저장된_room_스냅샷을_publish한다() {
         Room room = waitingAuctionRoom();
-        InMemoryRooms rooms = new InMemoryRooms(room);
-        RecordingRoomRealtimePublisher roomRealtimePublisher = new RecordingRoomRealtimePublisher();
-        JoinRoom joinRoom =
-            new JoinRoom(
-                rooms,
-                fixedLeaderIdentityIssuer(),
-                roomRealtimePublisher
-            );
+        RecordingRoomRealtimePublisher publisher = new RecordingRoomRealtimePublisher();
+        JoinRoom joinRoom = new JoinRoom(new InMemoryRooms(room), fixedLeaderIdentityIssuer(), publisher);
 
         RoomTeamLeader joined = joinRoom.join(room.getCode(), "게스트");
 
         assertThat(joined.getId().value()).isEqualTo(GUEST_ID);
-        assertThat(roomRealtimePublisher.events).hasSize(1);
-        RoomRealtimeSnapshotEvent event = roomRealtimePublisher.events.getFirst();
-        assertThat(event.roomCode()).isEqualTo(room.getCode());
-        assertThat(event.publishedAt()).isEqualTo(PUBLISHED_AT);
-        assertThat(event.room().teamLeaders()).hasSize(2);
-        assertThat(event.room().teamLeaders().get(1).nickname()).isEqualTo("게스트");
+        assertThat(publisher.events).hasSize(1);
+        assertPublishedRoom(publisher.events.getFirst(), room.getCode());
+        assertThat(publisher.events.getFirst().room().teamLeaders()).hasSize(2);
+    }
+
+    @Test
+    void pickDraft는_저장된_room_스냅샷을_publish한다() {
+        Room room = startedDraftRoom();
+        RecordingRoomRealtimePublisher publisher = new RecordingRoomRealtimePublisher();
+        PickDraft pickDraft = new PickDraft(new InMemoryRooms(room), new RoomActionAuthorizer(), publisher);
+
+        RoomTeamMember member = pickDraft.pick(room.getCode(), HOST_ACTION_TOKEN, "선수1");
+
+        assertThat(member.playerName()).isEqualTo("선수1");
+        assertThat(publisher.events).hasSize(1);
+        RoomRealtimeSnapshotEvent event = publisher.events.getFirst();
+        assertPublishedRoom(event, room.getCode());
+        assertThat(event.room().members()).hasSize(1);
+        assertThat(event.room().progress().currentTurnIndex()).isEqualTo(1);
+    }
+
+    @Test
+    void selectDraftPosition은_저장된_room_스냅샷을_publish한다() {
+        Room room = waitingDraftRoomForPositionChange();
+        RecordingRoomRealtimePublisher publisher = new RecordingRoomRealtimePublisher();
+        SelectDraftPosition selectDraftPosition =
+            new SelectDraftPosition(new InMemoryRooms(room), new RoomActionAuthorizer(), publisher);
+
+        selectDraftPosition.select(room.getCode(), HOST_ACTION_TOKEN, 1);
+
+        assertThat(publisher.events).hasSize(1);
+        RoomRealtimeSnapshotEvent event = publisher.events.getFirst();
+        assertPublishedRoom(event, room.getCode());
+        assertThat(event.room().teamLeaders().getFirst().draftPosition()).isEqualTo(1);
+    }
+
+    @Test
+    void clearDraftPosition은_저장된_room_스냅샷을_publish한다() {
+        Room room = waitingDraftRoomForPositionChange();
+        room.selectDraftPosition(new TeamLeaderId(HOST_ID), 1);
+        RecordingRoomRealtimePublisher publisher = new RecordingRoomRealtimePublisher();
+        ClearDraftPosition clearDraftPosition =
+            new ClearDraftPosition(new InMemoryRooms(room), new RoomActionAuthorizer(), publisher);
+
+        clearDraftPosition.clear(room.getCode(), HOST_ACTION_TOKEN);
+
+        assertThat(publisher.events).hasSize(1);
+        RoomRealtimeSnapshotEvent event = publisher.events.getFirst();
+        assertPublishedRoom(event, room.getCode());
+        assertThat(event.room().teamLeaders().getFirst().draftPosition()).isNull();
+    }
+
+    @Test
+    void settle는_저장된_latest_room_스냅샷을_publish한다() {
+        Room room = startedAuctionRoom();
+        RecordingRoomRealtimePublisher publisher = new RecordingRoomRealtimePublisher();
+        SettleAuctionAttempt settleAuctionAttempt =
+            new SettleAuctionAttempt(new InMemoryRooms(room), Clock.fixed(PUBLISHED_AT, ZoneOffset.UTC), publisher);
+
+        AuctionSettlement settlement = settleAuctionAttempt.settle(room.getCode());
+
+        assertThat(settlement).isEqualTo(new AuctionSettlement("선수1", AuctionOutcome.PASSED));
+        assertThat(publisher.events).hasSize(1);
+        RoomRealtimeSnapshotEvent event = publisher.events.getFirst();
+        assertPublishedRoom(event, room.getCode());
+        assertThat(event.room().progress().currentRound()).isEqualTo(2);
     }
 
     @Test
     void settleIfDue는_기한이_지나면_정산된_latest_room_스냅샷을_publish한다() {
         Room room = startedAuctionRoom();
-        InMemoryRooms rooms = new InMemoryRooms(room);
-        RecordingRoomRealtimePublisher roomRealtimePublisher = new RecordingRoomRealtimePublisher();
+        RecordingRoomRealtimePublisher publisher = new RecordingRoomRealtimePublisher();
         SettleAuctionAttempt settleAuctionAttempt =
-            new SettleAuctionAttempt(rooms, Clock.fixed(PUBLISHED_AT, ZoneOffset.UTC), roomRealtimePublisher);
+            new SettleAuctionAttempt(new InMemoryRooms(room), Clock.fixed(PUBLISHED_AT, ZoneOffset.UTC), publisher);
 
         Room settled = settleAuctionAttempt.settleIfDue(room.getCode());
 
         assertThat(settled.getCurrentAuctionRound()).isEqualTo(2);
-        assertThat(roomRealtimePublisher.events).hasSize(1);
-        RoomRealtimeSnapshotEvent event = roomRealtimePublisher.events.getFirst();
-        assertThat(event.roomCode()).isEqualTo(room.getCode());
-        assertThat(event.publishedAt()).isEqualTo(PUBLISHED_AT);
+        assertThat(publisher.events).hasSize(1);
+        RoomRealtimeSnapshotEvent event = publisher.events.getFirst();
+        assertPublishedRoom(event, room.getCode());
         assertThat(event.room().progress().currentRound()).isEqualTo(2);
         assertThat(event.room().progress().currentAuctionRoundEndsAt()).isEqualTo(PUBLISHED_AT.plusSeconds(30));
     }
 
     private static TeamLeaderIdentityIssuer fixedLeaderIdentityIssuer() {
         return () -> new TeamLeaderIdentityIssuer.TeamLeaderIdentity(GUEST_ID, GUEST_ACTION_TOKEN);
+    }
+
+    private static void assertPublishedRoom(RoomRealtimeSnapshotEvent event, String roomCode) {
+        assertThat(event.roomCode()).isEqualTo(roomCode);
+        assertThat(event.publishedAt()).isEqualTo(PUBLISHED_AT);
     }
 
     private static Room waitingAuctionRoom() {
@@ -93,6 +151,40 @@ class RoomRealtimePublishingTest {
         return room;
     }
 
+    private static Room startedDraftRoom() {
+        Room room = waitingDraftRoomForPositionChange();
+        room.selectDraftPosition(new TeamLeaderId(HOST_ID), 1);
+        room.selectDraftPosition(new TeamLeaderId(GUEST_ID), 2);
+        room.start(new TeamLeaderId(HOST_ID), CREATED_AT);
+        return room;
+    }
+
+    private static Room waitingDraftRoomForPositionChange() {
+        Room room =
+            Room.createFromTemplate(
+                "DRF001",
+                new TeamLeaderId(HOST_ID),
+                "호스트",
+                HOST_ACTION_TOKEN,
+                new RoomTemplateSpec(
+                    RoomTemplateSpec.Mode.DRAFT,
+                    2,
+                    2,
+                    null,
+                    30,
+                    null,
+                    RoomTemplateSpec.DraftOrderStrategy.SNAKE,
+                    List.of(
+                        new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
+                        new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
+                    )
+                ),
+                CREATED_AT
+            );
+        room.join(new TeamLeaderId(GUEST_ID), "게스트", GUEST_ACTION_TOKEN);
+        return room;
+    }
+
     private static final class RecordingRoomRealtimePublisher implements RoomRealtimePublisher {
         private final List<RoomRealtimeSnapshotEvent> events = new ArrayList<>();
 
@@ -122,13 +214,13 @@ class RoomRealtimePublishingTest {
         }
 
         @Override
-        public java.util.Optional<Room> findById(RoomId id) {
-            return java.util.Optional.ofNullable(room).filter(it -> it.getId().equals(id));
+        public Optional<Room> findById(RoomId id) {
+            return Optional.ofNullable(room).filter(it -> it.getId().equals(id));
         }
 
         @Override
-        public java.util.Optional<Room> findByCode(String code) {
-            return java.util.Optional.ofNullable(room).filter(it -> it.getCode().equals(code));
+        public Optional<Room> findByCode(String code) {
+            return Optional.ofNullable(room).filter(it -> it.getCode().equals(code));
         }
     }
 }
