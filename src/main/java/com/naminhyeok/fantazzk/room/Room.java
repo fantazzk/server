@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Locale;
 import java.util.UUID;
 import lombok.Getter;
 import org.jmolecules.ddd.types.AggregateRoot;
@@ -43,6 +44,7 @@ class Room implements AggregateRoot<Room, RoomId> {
     private final Integer budget;
     @Column(name = "pick_ban_time")
     private final int pickBanTime;
+    private final Integer minBidUnit;
     @Enumerated(EnumType.STRING)
     private final RoomTemplateSpec.DraftOrderStrategy draftOrderStrategy;
     private Integer currentTurnIndex;
@@ -71,6 +73,7 @@ class Room implements AggregateRoot<Room, RoomId> {
         int teamSize,
         Integer budget,
         int pickBanTime,
+        Integer minBidUnit,
         RoomTemplateSpec.DraftOrderStrategy draftOrderStrategy
     ) {
         this.id = new RoomId(UUID.randomUUID());
@@ -83,6 +86,7 @@ class Room implements AggregateRoot<Room, RoomId> {
         this.teamSize = teamSize;
         this.budget = budget;
         this.pickBanTime = pickBanTime;
+        this.minBidUnit = minBidUnit;
         this.draftOrderStrategy = draftOrderStrategy;
         this.currentTurnIndex = null;
         this.currentAuctionRound = null;
@@ -111,6 +115,7 @@ class Room implements AggregateRoot<Room, RoomId> {
                 spec.teamSize(),
                 spec.budget(),
                 spec.pickBanTime(),
+                spec.minBidUnit(),
                 spec.draftOrderStrategy()
             );
 
@@ -119,7 +124,7 @@ class Room implements AggregateRoot<Room, RoomId> {
             .map(player -> new RoomPlayer(player.id(), player.name(), player.position(), player.displayOrder()))
             .forEach(room.players::add);
 
-        room.leaders.add(new RoomTeamLeader(hostLeaderId, hostNickname, hostActionToken, spec.budget()));
+        room.leaders.add(new RoomTeamLeader(hostLeaderId, hostNickname.trim(), hostActionToken, spec.budget()));
         return room;
     }
 
@@ -159,7 +164,22 @@ class Room implements AggregateRoot<Room, RoomId> {
         if (leaders.size() >= teamCount) {
             throw CoreException.of(RoomErrorType.ROOM_FULL);
         }
-        leaders.add(new RoomTeamLeader(teamLeaderId, nickname, actionToken, budget));
+
+        String normalizedNickname = normalizeNickname(nickname);
+        boolean taken =
+            leaders.stream()
+                .map(RoomTeamLeader::getNickname)
+                .map(this::normalizeNickname)
+                .anyMatch(normalizedNickname::equals);
+        if (taken) {
+            throw CoreException.of(RoomErrorType.ROOM_NICKNAME_ALREADY_TAKEN);
+        }
+
+        leaders.add(new RoomTeamLeader(teamLeaderId, nickname.trim(), actionToken, budget));
+    }
+
+    private String normalizeNickname(String nickname) {
+        return nickname.trim().toLowerCase(Locale.ROOT);
     }
 
     void selectDraftPosition(TeamLeaderId callerLeaderId, int draftPosition) {
@@ -245,15 +265,25 @@ class Room implements AggregateRoot<Room, RoomId> {
             throw CoreException.of(RoomErrorType.ROOM_BID_BUDGET_EXCEEDED);
         }
 
-        bids.stream()
-            .filter(it -> it.round() == currentAuctionRound)
-            .mapToInt(RoomBid::amount)
-            .max()
-            .ifPresent(highest -> {
-                if (amount <= highest) {
-                    throw CoreException.of(RoomErrorType.ROOM_BID_TOO_LOW);
-                }
-            });
+        Integer highestBidAmount =
+            bids.stream()
+                .filter(it -> it.round() == currentAuctionRound)
+                .map(RoomBid::amount)
+                .max(Integer::compareTo)
+                .orElse(null);
+
+        if (highestBidAmount == null) {
+            if (minBidUnit != null && amount < minBidUnit) {
+                throw CoreException.of(RoomErrorType.ROOM_BID_MIN_UNIT_NOT_MET);
+            }
+        } else {
+            if (amount <= highestBidAmount) {
+                throw CoreException.of(RoomErrorType.ROOM_BID_TOO_LOW);
+            }
+            if (minBidUnit != null && amount < highestBidAmount + minBidUnit) {
+                throw CoreException.of(RoomErrorType.ROOM_BID_MIN_UNIT_NOT_MET);
+            }
+        }
 
         BidSequence nextSequence =
             new BidSequence(

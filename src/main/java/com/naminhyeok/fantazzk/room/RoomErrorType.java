@@ -33,6 +33,12 @@ enum RoomErrorType implements ErrorDescriptor {
         Level.INFO
     ),
     ROOM_FULL(HttpStatus.CONFLICT, "ROOM_FULL", "방이 가득 찼습니다", Level.INFO),
+    ROOM_NICKNAME_ALREADY_TAKEN(
+        HttpStatus.CONFLICT,
+        "ROOM_NICKNAME_ALREADY_TAKEN",
+        "이미 사용 중인 닉네임입니다",
+        Level.INFO
+    ),
     ROOM_ACTION_TOKEN_REQUIRED(
         HttpStatus.UNAUTHORIZED,
         "ROOM_ACTION_TOKEN_REQUIRED",
@@ -121,6 +127,12 @@ enum RoomErrorType implements ErrorDescriptor {
         HttpStatus.CONFLICT,
         "ROOM_BID_TOO_LOW",
         "현재 최고가보다 높은 금액만 입찰할 수 있습니다",
+        Level.INFO
+    ),
+    ROOM_BID_MIN_UNIT_NOT_MET(
+        HttpStatus.CONFLICT,
+        "ROOM_BID_MIN_UNIT_NOT_MET",
+        "최소 입찰 증가폭을 만족하는 금액만 입찰할 수 있습니다",
         Level.INFO
     ),
     ROOM_AUCTION_ROUND_NOT_ENDED(

@@ -146,6 +146,7 @@ class RoomApiIntegrationTest {
                 2,
                 300,
                 45,
+                10,
                 null,
                 List.of(
                     new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
@@ -171,6 +172,7 @@ class RoomApiIntegrationTest {
                 2,
                 300,
                 45,
+                10,
                 null,
                 List.of(
                     new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
@@ -205,6 +207,7 @@ class RoomApiIntegrationTest {
                 2,
                 null,
                 30,
+                null,
                 RoomTemplateSpec.DraftOrderStrategy.SNAKE,
                 List.of(
                     new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),

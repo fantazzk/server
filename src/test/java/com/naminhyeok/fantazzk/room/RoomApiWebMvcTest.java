@@ -175,6 +175,18 @@ class RoomApiWebMvcTest {
     }
 
     @Test
+    void get은_경매_방_public_room_snapshot에_minBidUnit을_포함한다() throws Exception {
+        given(getRoom.get(ROOM_CODE)).willReturn(waitingAuctionRoom());
+
+        var result = mockMvcTester().perform(get("/api/v1/rooms/{code}", ROOM_CODE));
+
+        result.assertThat().hasStatusOk();
+        JsonNode body = readTree(result);
+        assertThat(body.at("/success/mode").asText()).isEqualTo("AUCTION");
+        assertThat(body.at("/success/minBidUnit").asInt()).isEqualTo(10);
+    }
+
+    @Test
     void get은_드래프트_진행중_스냅샷을_반환한다() throws Exception {
         given(getRoom.get(ROOM_CODE)).willReturn(inProgressDraftRoom());
 
@@ -302,10 +314,36 @@ class RoomApiWebMvcTest {
             .satisfies(response -> {
                 assertThat(response.resultType()).isEqualTo("SUCCESS");
                 assertThat(response.success().room().code()).isEqualTo(ROOM_CODE);
+                assertThat(response.success().room().minBidUnit()).isEqualTo(10);
                 assertThat(response.success().room().teamLeaders()).hasSize(2);
                 assertThat(response.success().teamLeaderSession().leaderId()).isEqualTo(GUEST_ID);
                 assertThat(response.success().teamLeaderSession().role()).isEqualTo("LEADER");
                 assertThat(response.success().teamLeaderSession().actionToken()).isEqualTo(GUEST_TOKEN);
+            });
+    }
+
+    @Test
+    void join은_닉네임이_중복되면_409를_반환한다() throws Exception {
+        given(joinRoom.join(ROOM_CODE, "게스트"))
+            .willThrow(CoreException.of(RoomErrorType.ROOM_NICKNAME_ALREADY_TAKEN));
+
+        var result = mockMvcTester().perform(
+            post("/api/v1/rooms/{code}/join", ROOM_CODE)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    {
+                      "nickname": "게스트"
+                    }
+                    """
+                )
+        );
+
+        result.assertThat().hasStatus(HttpStatus.CONFLICT);
+        assertThat(readBody(result, VoidApiResponse.class))
+            .satisfies(response -> {
+                assertThat(response.resultType()).isEqualTo("ERROR");
+                assertThat(response.error().code()).isEqualTo("ROOM_NICKNAME_ALREADY_TAKEN");
             });
     }
 
@@ -388,6 +426,7 @@ class RoomApiWebMvcTest {
             .satisfies(response -> {
                 assertThat(response.resultType()).isEqualTo("SUCCESS");
                 assertThat(response.success().status()).isEqualTo("IN_PROGRESS");
+                assertThat(response.success().minBidUnit()).isEqualTo(10);
                 assertThat(response.success().progress().currentRound()).isEqualTo(1);
                 assertThat(response.success().progress().currentAuctionRoundEndsAt())
                     .isEqualTo("2026-04-09T00:00:15Z");
@@ -513,6 +552,33 @@ class RoomApiWebMvcTest {
                 assertThat(response.error().code()).isEqualTo("ROOM_STATE_INVALID");
                 assertThat(response.error().message()).isEqualTo("방 상태가 올바르지 않습니다. 잠시 후 다시 시도해 주세요");
                 assertThat(response.error().data()).isNull();
+            });
+    }
+
+    @Test
+    void placeBid는_최소_입찰_증가폭을_만족하지_못하면_409를_반환한다() throws Exception {
+        doThrow(CoreException.of(RoomErrorType.ROOM_BID_MIN_UNIT_NOT_MET))
+            .when(placeBid)
+            .place(ROOM_CODE, HOST_TOKEN, 105);
+
+        var result = mockMvcTester().perform(
+            post("/api/v1/rooms/{code}/bids", ROOM_CODE)
+                .header("X-Room-Action-Token", HOST_TOKEN)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    {
+                      "amount": 105
+                    }
+                    """
+                )
+        );
+
+        result.assertThat().hasStatus(HttpStatus.CONFLICT);
+        assertThat(readBody(result, VoidApiResponse.class))
+            .satisfies(response -> {
+                assertThat(response.resultType()).isEqualTo("ERROR");
+                assertThat(response.error().code()).isEqualTo("ROOM_BID_MIN_UNIT_NOT_MET");
             });
     }
 
@@ -735,6 +801,7 @@ class RoomApiWebMvcTest {
                 2,
                 300,
                 15,
+                10,
                 null,
                 List.of(
                     new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
@@ -768,6 +835,7 @@ class RoomApiWebMvcTest {
                     2,
                     null,
                     30,
+                    null,
                     RoomTemplateSpec.DraftOrderStrategy.SNAKE,
                     List.of(
                         new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
@@ -800,6 +868,7 @@ class RoomApiWebMvcTest {
                     3,
                     300,
                     15,
+                    10,
                     null,
                     List.of(
                         new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
@@ -830,6 +899,7 @@ class RoomApiWebMvcTest {
                     3,
                     null,
                     30,
+                    null,
                     RoomTemplateSpec.DraftOrderStrategy.SNAKE,
                     List.of(
                         new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),

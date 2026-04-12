@@ -69,6 +69,7 @@ class RoomResponseTest {
                     2,
                     300,
                     15,
+                    10,
                     null,
                     List.of(
                         new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
@@ -95,6 +96,7 @@ class RoomResponseTest {
                 2,
                 null,
                 30,
+                null,
                 RoomTemplateSpec.DraftOrderStrategy.SNAKE,
                 List.of(
                     new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),

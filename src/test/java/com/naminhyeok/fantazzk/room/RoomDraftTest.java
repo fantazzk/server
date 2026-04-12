@@ -267,6 +267,7 @@ class RoomDraftTest {
                 teamSize,
                 null,
                 30,
+                null,
                 draftOrderStrategy,
                 IntStream.range(0, playerNames.size())
                     .mapToObj(index -> new RoomTemplateSpec.Player(
@@ -293,6 +294,7 @@ class RoomDraftTest {
                 2,
                 300,
                 15,
+                10,
                 null,
                 List.of(
                     new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),

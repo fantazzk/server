@@ -22,6 +22,7 @@ import org.springframework.transaction.support.SimpleTransactionStatus;
 class RoomAuctionTest {
     private static final Instant CREATED_AT = Instant.parse("2026-04-09T00:00:00Z");
     private static final int PICK_BAN_TIME = 45;
+    private static final int MIN_BID_UNIT = 10;
     private static final String HOST_ID = "host-1";
     private static final String HOST_ACTION_TOKEN = "host-action-token";
     private static final String GUEST_ID = "guest-1";
@@ -111,6 +112,57 @@ class RoomAuctionTest {
         assertThatThrownBy(() -> room.placeBid(guestLeaderId, 100, CREATED_AT.plusSeconds(2)))
             .isInstanceOf(CoreException.class)
             .isInstanceOfSatisfying(CoreException.class, ex -> assertRoomError(ex, RoomErrorType.ROOM_BID_TOO_LOW));
+    }
+
+    @Test
+    void 첫_입찰은_최소_입찰_단위_이상이어야_한다() {
+        Room room = startedAuctionRoom();
+        TeamLeaderId hostLeaderId = room.getLeaders().getFirst().getId();
+
+        assertThatThrownBy(() -> room.placeBid(hostLeaderId, 5, CREATED_AT.plusSeconds(1)))
+            .isInstanceOf(CoreException.class)
+            .isInstanceOfSatisfying(CoreException.class, ex -> assertRoomError(ex, RoomErrorType.ROOM_BID_MIN_UNIT_NOT_MET));
+    }
+
+    @Test
+    void 이후_입찰은_현재_최고가보다_최소_입찰_단위만큼_높아야_한다() {
+        Room room = startedAuctionRoom();
+        TeamLeaderId hostLeaderId = room.getLeaders().getFirst().getId();
+        TeamLeaderId guestLeaderId = room.getLeaders().getLast().getId();
+
+        room.placeBid(hostLeaderId, 100, CREATED_AT.plusSeconds(1));
+
+        assertThatThrownBy(() -> room.placeBid(guestLeaderId, 105, CREATED_AT.plusSeconds(2)))
+            .isInstanceOf(CoreException.class)
+            .isInstanceOfSatisfying(CoreException.class, ex -> assertRoomError(ex, RoomErrorType.ROOM_BID_MIN_UNIT_NOT_MET));
+    }
+
+    @Test
+    void 레거시_경매_방은_minBidUnit이_null이면_최고가보다_높은_입찰을_허용한다() {
+        Room room = startedLegacyAuctionRoom();
+        TeamLeaderId hostLeaderId = room.getLeaders().getFirst().getId();
+        TeamLeaderId guestLeaderId = room.getLeaders().getLast().getId();
+
+        room.placeBid(hostLeaderId, 100, CREATED_AT.plusSeconds(1));
+
+        RoomBid bid = room.placeBid(guestLeaderId, 105, CREATED_AT.plusSeconds(2));
+
+        assertThat(bid.amount()).isEqualTo(105);
+        assertThat(bid.sequence()).isEqualTo(new BidSequence(2));
+    }
+
+    @Test
+    void 최소_입찰_단위를_만족하면_다음_입찰을_할_수_있다() {
+        Room room = startedAuctionRoom();
+        TeamLeaderId hostLeaderId = room.getLeaders().getFirst().getId();
+        TeamLeaderId guestLeaderId = room.getLeaders().getLast().getId();
+
+        room.placeBid(hostLeaderId, 100, CREATED_AT.plusSeconds(1));
+
+        RoomBid bid = room.placeBid(guestLeaderId, 110, CREATED_AT.plusSeconds(2));
+
+        assertThat(bid.amount()).isEqualTo(110);
+        assertThat(bid.sequence()).isEqualTo(new BidSequence(2));
     }
 
     @Test
@@ -411,6 +463,7 @@ class RoomAuctionTest {
                 2,
                 300,
                 PICK_BAN_TIME,
+                MIN_BID_UNIT,
                 null,
                 List.of(
                     new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
@@ -434,6 +487,7 @@ class RoomAuctionTest {
                     2,
                     null,
                     30,
+                    null,
                     RoomTemplateSpec.DraftOrderStrategy.SNAKE,
                     List.of(
                         new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
@@ -456,6 +510,33 @@ class RoomAuctionTest {
         return room;
     }
 
+    private static Room startedLegacyAuctionRoom() {
+        Room room =
+            Room.createFromTemplate(
+                "ROOM04",
+                new TeamLeaderId(HOST_ID),
+                "호스트",
+                HOST_ACTION_TOKEN,
+                new RoomTemplateSpec(
+                    RoomTemplateSpec.Mode.AUCTION,
+                    2,
+                    2,
+                    300,
+                    PICK_BAN_TIME,
+                    null,
+                    null,
+                    List.of(
+                        new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
+                        new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
+                    )
+                ),
+                CREATED_AT
+            );
+        room.join(new TeamLeaderId(GUEST_ID), "게스트", GUEST_ACTION_TOKEN);
+        room.start(new TeamLeaderId(HOST_ID), CREATED_AT);
+        return room;
+    }
+
     private static Room inProgressDraftRoomForOptimisticLock() {
         Room room =
             Room.createFromTemplate(
@@ -469,6 +550,7 @@ class RoomAuctionTest {
                     2,
                     null,
                     30,
+                    null,
                     RoomTemplateSpec.DraftOrderStrategy.SNAKE,
                     List.of(
                         new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
@@ -497,6 +579,7 @@ class RoomAuctionTest {
                     2,
                     null,
                     PICK_BAN_TIME,
+                    null,
                     RoomTemplateSpec.DraftOrderStrategy.SNAKE,
                     List.of(
                         new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),

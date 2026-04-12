@@ -33,6 +33,8 @@ class LiquibasePostgresSmokeTest {
     void liquibase_실제_postgresql_스키마에서_rooms_변경을_검증한다() {
         assertThat(countTable("rooms")).isEqualTo(1);
         assertThat(countColumn("rooms", "created_at")).isEqualTo(1);
+        assertThat(countColumn("rooms", "min_bid_unit")).isEqualTo(1);
+        assertThat(isNullable("rooms", "min_bid_unit")).isTrue();
         assertThat(countIndex("rooms", "idx_rooms_status_created_at")).isEqualTo(1);
         assertThat(indexColumns("rooms", "idx_rooms_status_created_at")).containsExactly("status", "created_at");
     }
@@ -61,6 +63,17 @@ class LiquibasePostgresSmokeTest {
             tableName,
             indexName
         );
+    }
+
+    private boolean isNullable(String tableName, String columnName) {
+        String nullable =
+            jdbcTemplate.queryForObject(
+                "select is_nullable from information_schema.columns where table_schema = current_schema() and table_name = ? and column_name = ?",
+                String.class,
+                tableName,
+                columnName
+            );
+        return "YES".equalsIgnoreCase(nullable);
     }
 
     private List<String> indexColumns(String tableName, String indexName) {

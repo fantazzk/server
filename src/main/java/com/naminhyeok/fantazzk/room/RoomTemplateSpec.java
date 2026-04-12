@@ -8,6 +8,7 @@ record RoomTemplateSpec(
     int teamSize,
     Integer budget,
     int pickBanTime,
+    Integer minBidUnit,
     DraftOrderStrategy draftOrderStrategy,
     List<Player> players
 ) {

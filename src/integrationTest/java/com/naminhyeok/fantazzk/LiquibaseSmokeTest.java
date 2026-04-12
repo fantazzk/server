@@ -37,6 +37,8 @@ class LiquibaseSmokeTest {
         assertThat(countTable("template_player")).isEqualTo(1);
         assertThat(countTable("rooms")).isEqualTo(1);
         assertThat(countColumn("rooms", "created_at")).isEqualTo(1);
+        assertThat(countColumn("rooms", "min_bid_unit")).isEqualTo(1);
+        assertThat(isNullable("rooms", "min_bid_unit")).isTrue();
         assertThat(countIndex("rooms", "idx_rooms_status_created_at")).isEqualTo(1);
         assertThat(indexColumns("rooms", "idx_rooms_status_created_at")).containsExactly("STATUS", "CREATED_AT");
         assertThat(countTable("room_player")).isEqualTo(1);
@@ -75,6 +77,17 @@ class LiquibaseSmokeTest {
             tableName,
             indexName
         );
+    }
+
+    private boolean isNullable(String tableName, String columnName) {
+        String nullable =
+            jdbcTemplate.queryForObject(
+                "select is_nullable from information_schema.columns where table_name = upper(?) and column_name = upper(?)",
+                String.class,
+                tableName,
+                columnName
+            );
+        return "YES".equalsIgnoreCase(nullable);
     }
 
     private List<String> indexColumns(String tableName, String indexName) {
