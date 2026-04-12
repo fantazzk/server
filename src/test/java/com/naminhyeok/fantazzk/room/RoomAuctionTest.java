@@ -131,6 +131,16 @@ class RoomAuctionTest {
     }
 
     @Test
+    void 시작한_경매_방의_현재_라운드가_null이면_room_state_invalid를_던진다() throws Exception {
+        Room room = startedAuctionRoom();
+        setCurrentAuctionRound(room, null);
+
+        assertThatThrownBy(() -> room.placeBid(new TeamLeaderId(HOST_ID), 100, CREATED_AT.plusSeconds(1)))
+            .isInstanceOf(RoomStateInvalidException.class)
+            .isInstanceOfSatisfying(RoomStateInvalidException.class, ex -> assertThat(ex.getError()).isEqualTo(RoomErrorType.ROOM_STATE_INVALID));
+    }
+
+    @Test
     void 예산이_부족하면_입찰할_수_없다() {
         Room room = startedAuctionRoom();
 
@@ -301,6 +311,12 @@ class RoomAuctionTest {
 
     private static void setCurrentAuctionRoundEndsAt(Room room, Instant value) throws Exception {
         var field = Room.class.getDeclaredField("currentAuctionRoundEndsAt");
+        field.setAccessible(true);
+        field.set(room, value);
+    }
+
+    private static void setCurrentAuctionRound(Room room, Integer value) throws Exception {
+        var field = Room.class.getDeclaredField("currentAuctionRound");
         field.setAccessible(true);
         field.set(room, value);
     }

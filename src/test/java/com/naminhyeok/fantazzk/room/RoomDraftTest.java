@@ -59,6 +59,16 @@ class RoomDraftTest {
     }
 
     @Test
+    void 시작한_드래프트_방의_현재_턴이_null이면_room_state_invalid를_던진다() throws Exception {
+        Room room = startedDraftRoom();
+        setCurrentTurnIndex(room, null);
+
+        assertThatThrownBy(() -> room.pick(new TeamLeaderId(HOST_ID), "선수1"))
+            .isInstanceOf(RoomStateInvalidException.class)
+            .isInstanceOfSatisfying(RoomStateInvalidException.class, ex -> assertThat(ex.getError()).isEqualTo(RoomErrorType.ROOM_STATE_INVALID));
+    }
+
+    @Test
     void 이미_배정된_선수는_픽할_수_없다() {
         Room room = startedDraftRoom();
 
@@ -139,6 +149,12 @@ class RoomDraftTest {
 
     private static void assertRoomError(CoreException ex, RoomErrorType expected) {
         assertThat(ex.getError()).isEqualTo(expected);
+    }
+
+    private static void setCurrentTurnIndex(Room room, Integer value) throws Exception {
+        var field = Room.class.getDeclaredField("currentTurnIndex");
+        field.setAccessible(true);
+        field.set(room, value);
     }
 
     private static Room startedDraftRoom() {
