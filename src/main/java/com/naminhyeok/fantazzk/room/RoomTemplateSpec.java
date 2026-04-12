@@ -7,6 +7,7 @@ record RoomTemplateSpec(
     int teamCount,
     int teamSize,
     Integer budget,
+    int pickBanTime,
     DraftOrderStrategy draftOrderStrategy,
     List<Player> players
 ) {
@@ -20,6 +21,6 @@ record RoomTemplateSpec(
         FIXED
     }
 
-    public record Player(RoomPlayerId id, String name, int displayOrder) {
+    public record Player(RoomPlayerId id, String name, String position, int displayOrder) {
     }
 }

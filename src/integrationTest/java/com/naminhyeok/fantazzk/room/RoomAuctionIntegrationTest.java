@@ -63,7 +63,16 @@ class RoomAuctionIntegrationTest {
     @Transactional
     void 입찰과_정산을_처리하면_선수_배정과_예산_차감이_반영된다() {
         var template =
-            templateFixture.createAuctionTemplateId("경매전", 2, 2, 300, List.of("선수1", "선수2"));
+            templateFixture.createAuctionTemplateId(
+                "경매전",
+                2,
+                2,
+                300,
+                List.of(
+                    new TemplateFixture.PlayerSpec("선수1", "TOP"),
+                    new TemplateFixture.PlayerSpec("선수2", "JUNGLE")
+                )
+            );
 
         Room created = createRoom.create(template, "호스트");
         RoomTeamLeader guest = joinRoom.join(created.getCode(), "게스트");
@@ -84,6 +93,7 @@ class RoomAuctionIntegrationTest {
         assertThat(reloaded.getBids()).singleElement()
             .extracting(RoomBid::teamLeaderId, RoomBid::amount)
             .containsExactly(guest.getId(), 150);
+        assertThat(reloaded.getPlayers().getFirst().getPosition()).isEqualTo("TOP");
         assertThat(reloaded.getMembers()).singleElement()
             .extracting(RoomTeamMember::teamLeaderId, RoomTeamMember::playerName)
             .containsExactly(guest.getId(), "선수1");
@@ -95,7 +105,16 @@ class RoomAuctionIntegrationTest {
     @Test
     void 같은_라운드의_입찰_순번은_재조회_후에도_누적된다() {
         var template =
-            templateFixture.createAuctionTemplateId("경매전", 2, 2, 300, List.of("선수1", "선수2"));
+            templateFixture.createAuctionTemplateId(
+                "경매전",
+                2,
+                2,
+                300,
+                List.of(
+                    new TemplateFixture.PlayerSpec("선수1", "TOP"),
+                    new TemplateFixture.PlayerSpec("선수2", "JUNGLE")
+                )
+            );
 
         Room created = createRoom.create(template, "호스트");
         RoomTeamLeader guest = joinRoom.join(created.getCode(), "게스트");
@@ -113,7 +132,16 @@ class RoomAuctionIntegrationTest {
     @Test
     void catchUpAndReschedule는_due_room을_즉시_정산한다() {
         var template =
-            templateFixture.createAuctionTemplateId("경매전", 2, 2, 300, List.of("선수1", "선수2"));
+            templateFixture.createAuctionTemplateId(
+                "경매전",
+                2,
+                2,
+                300,
+                List.of(
+                    new TemplateFixture.PlayerSpec("선수1", "TOP"),
+                    new TemplateFixture.PlayerSpec("선수2", "JUNGLE")
+                )
+            );
 
         Room created = createRoom.create(template, "호스트");
         RoomTeamLeader guest = joinRoom.join(created.getCode(), "게스트");
@@ -128,13 +156,22 @@ class RoomAuctionIntegrationTest {
 
         Room reloaded = rooms.findByCode(created.getCode()).orElseThrow();
         assertThat(reloaded.getCurrentAuctionRound()).isEqualTo(2);
-        assertThat(reloaded.getCurrentAuctionRoundEndsAt()).isEqualTo(Instant.parse("2000-01-01T00:00:15Z"));
+        assertThat(reloaded.getCurrentAuctionRoundEndsAt()).isEqualTo(Instant.parse("2000-01-01T00:00:45Z"));
     }
 
     @Test
     void legacy_null_deadline_방에_입찰하면_deadline을_복구하고_commit후_재예약한다() {
         var template =
-            templateFixture.createAuctionTemplateId("경매전", 2, 2, 300, List.of("선수1", "선수2"));
+            templateFixture.createAuctionTemplateId(
+                "경매전",
+                2,
+                2,
+                300,
+                List.of(
+                    new TemplateFixture.PlayerSpec("선수1", "TOP"),
+                    new TemplateFixture.PlayerSpec("선수2", "JUNGLE")
+                )
+            );
 
         Room created = createRoom.create(template, "호스트");
         RoomTeamLeader guest = joinRoom.join(created.getCode(), "게스트");
@@ -148,14 +185,23 @@ class RoomAuctionIntegrationTest {
         placeBid.place(created.getCode(), guest.getActionToken(), 150);
 
         Room reloaded = rooms.findByCode(created.getCode()).orElseThrow();
-        assertThat(reloaded.getCurrentAuctionRoundEndsAt()).isEqualTo(Instant.parse("2000-01-01T00:00:15Z"));
-        assertThat(recordingTaskScheduler.scheduledInstants()).containsExactly(Instant.parse("2000-01-01T00:00:15Z"));
+        assertThat(reloaded.getCurrentAuctionRoundEndsAt()).isEqualTo(Instant.parse("2000-01-01T00:00:45Z"));
+        assertThat(recordingTaskScheduler.scheduledInstants()).containsExactly(Instant.parse("2000-01-01T00:00:45Z"));
     }
 
     @Test
     void start_rollback되면_deadline_task는_등록되지_않는다() {
         var template =
-            templateFixture.createAuctionTemplateId("경매전", 2, 2, 300, List.of("선수1", "선수2"));
+            templateFixture.createAuctionTemplateId(
+                "경매전",
+                2,
+                2,
+                300,
+                List.of(
+                    new TemplateFixture.PlayerSpec("선수1", "TOP"),
+                    new TemplateFixture.PlayerSpec("선수2", "JUNGLE")
+                )
+            );
 
         Room created = createRoom.create(template, "호스트");
         joinRoom.join(created.getCode(), "게스트");

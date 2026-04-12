@@ -21,3 +21,45 @@ databaseChangeLog:
             path: db/changelog/db.changelog-room-auction-deadline.sql
             splitStatements: true
             stripComments: false
+  - changeSet:
+      id: 3-template-game-type-position
+      author: codex
+      preConditions:
+        - sqlCheck:
+            onFail: HALT
+            onError: HALT
+            expectedResult: "0"
+            sql: SELECT COUNT(*) FROM template
+        - sqlCheck:
+            expectedResult: "0"
+            sql: SELECT COUNT(*) FROM template_player
+      changes:
+        - sqlFile:
+            dbms: h2,postgresql
+            encoding: UTF-8
+            endDelimiter: ;
+            path: db/changelog/db.changelog-template-game-type-position.sql
+            splitStatements: true
+            stripComments: false
+  - changeSet:
+      id: 4-room-pick-ban-time
+      author: codex
+      changes:
+        - sqlFile:
+            dbms: h2,postgresql
+            encoding: UTF-8
+            endDelimiter: ;
+            path: db/changelog/db.changelog-room-pick-ban-time.sql
+            splitStatements: true
+            stripComments: false
+  - changeSet:
+      id: 5-room-player-position
+      author: codex
+      changes:
+        - sqlFile:
+            dbms: h2,postgresql
+            encoding: UTF-8
+            endDelimiter: ;
+            path: db/changelog/db.changelog-room-player-position.sql
+            splitStatements: true
+            stripComments: false

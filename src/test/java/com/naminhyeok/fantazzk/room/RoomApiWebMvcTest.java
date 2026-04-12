@@ -154,6 +154,7 @@ class RoomApiWebMvcTest {
         assertThat(body.at("/success/teamLeaders/0/draftPosition").asInt()).isEqualTo(1);
         assertThat(body.at("/success/teamLeaders/1/draftPosition").isNull()).isTrue();
         assertThat(body.at("/success/players/0/name").asText()).isEqualTo("선수1");
+        assertThat(body.at("/success/players/0/position").asText()).isEqualTo("TOP");
         assertThat(body.at("/success/players/0/displayOrder").asInt()).isEqualTo(0);
         assertThat(body.at("/success/players/0/status").asText()).isEqualTo("AVAILABLE");
         assertThat(body.at("/success/players/1/name").asText()).isEqualTo("선수2");
@@ -223,6 +224,7 @@ class RoomApiWebMvcTest {
         assertThat(body.at("/success/status").asText()).isEqualTo("IN_PROGRESS");
         assertThat(body.at("/success/budget").asInt()).isEqualTo(300);
         assertThat(body.at("/success/draftOrderStrategy").isNull()).isTrue();
+        assertThat(body.at("/success/players/0/position").asText()).isEqualTo("TOP");
         assertThat(body.at("/success/players/0/status").asText()).isEqualTo("ASSIGNED");
         assertThat(body.at("/success/players/1/status").asText()).isEqualTo("AVAILABLE");
         assertThat(body.at("/success/members/0/teamLeaderId").asText()).isEqualTo(HOST_ID);
@@ -683,10 +685,11 @@ class RoomApiWebMvcTest {
                 2,
                 2,
                 300,
+                15,
                 null,
                 List.of(
-                    new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", 0),
-                    new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", 1)
+                    new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
+                    new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
                 )
             ),
             createdAt
@@ -715,10 +718,11 @@ class RoomApiWebMvcTest {
                     2,
                     2,
                     null,
+                    30,
                     RoomTemplateSpec.DraftOrderStrategy.SNAKE,
                     List.of(
-                        new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", 0),
-                        new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", 1)
+                        new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
+                        new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
                     )
                 ),
                 createdAt
@@ -746,12 +750,13 @@ class RoomApiWebMvcTest {
                     2,
                     3,
                     300,
+                    15,
                     null,
                     List.of(
-                        new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", 0),
-                        new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", 1),
-                        new RoomTemplateSpec.Player(new RoomPlayerId(2), "선수3", 2),
-                        new RoomTemplateSpec.Player(new RoomPlayerId(3), "선수4", 3)
+                        new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
+                        new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", "JUNGLE", 1),
+                        new RoomTemplateSpec.Player(new RoomPlayerId(2), "선수3", "MID", 2),
+                        new RoomTemplateSpec.Player(new RoomPlayerId(3), "선수4", "ADC", 3)
                     )
                 ),
                 CREATED_AT
@@ -775,12 +780,13 @@ class RoomApiWebMvcTest {
                     2,
                     3,
                     null,
+                    30,
                     RoomTemplateSpec.DraftOrderStrategy.SNAKE,
                     List.of(
-                        new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", 0),
-                        new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", 1),
-                        new RoomTemplateSpec.Player(new RoomPlayerId(2), "선수3", 2),
-                        new RoomTemplateSpec.Player(new RoomPlayerId(3), "선수4", 3)
+                        new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
+                        new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", "JUNGLE", 1),
+                        new RoomTemplateSpec.Player(new RoomPlayerId(2), "선수3", "MID", 2),
+                        new RoomTemplateSpec.Player(new RoomPlayerId(3), "선수4", "ADC", 3)
                     )
                 ),
                 CREATED_AT

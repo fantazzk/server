@@ -32,28 +32,38 @@ class Template implements AggregateRoot<Template, TemplateId> {
 
     public static Template createAuction(
         String name,
+        GameType gameType,
         int teamCount,
         int teamSize,
         int budget,
-        List<String> playerNames
+        int pickBanTime,
+        int minBidUnit,
+        Integer positionLimit,
+        List<TemplatePlayer> players
     ) {
-        return new Template(name, TemplateConfiguration.auction(teamCount, teamSize, budget))
-            .registerPlayers(playerNames);
+        return new Template(name, TemplateConfiguration.auction(gameType, teamCount, teamSize, budget, pickBanTime, minBidUnit, positionLimit))
+            .registerPlayers(players);
     }
 
     public static Template createDraft(
         String name,
+        GameType gameType,
         int teamCount,
         int teamSize,
+        int pickBanTime,
         DraftOrderStrategy strategy,
-        List<String> playerNames
+        List<TemplatePlayer> players
     ) {
-        return new Template(name, TemplateConfiguration.draft(teamCount, teamSize, strategy))
-            .registerPlayers(playerNames);
+        return new Template(name, TemplateConfiguration.draft(gameType, teamCount, teamSize, pickBanTime, strategy))
+            .registerPlayers(players);
     }
 
     public TemplateMode getMode() {
         return configuration.getMode();
+    }
+
+    public GameType getGameType() {
+        return configuration.getGameType();
     }
 
     public int getTeamCount() {
@@ -68,13 +78,25 @@ class Template implements AggregateRoot<Template, TemplateId> {
         return configuration.getBudget();
     }
 
+    public Integer getPickBanTime() {
+        return configuration.getPickBanTime();
+    }
+
+    public Integer getMinBidUnit() {
+        return configuration.getMinBidUnit();
+    }
+
+    public Integer getPositionLimit() {
+        return configuration.getPositionLimit();
+    }
+
     public DraftOrderStrategy getDraftOrderStrategy() {
         return configuration.getDraftOrderStrategy();
     }
 
     public List<TemplatePlayer> getPlayers() {
         return players.stream()
-            .sorted(Comparator.comparingInt(TemplatePlayer::playerIndex))
+            .sorted(Comparator.comparingInt(TemplatePlayer::displayOrder))
             .toList();
     }
 
@@ -82,14 +104,15 @@ class Template implements AggregateRoot<Template, TemplateId> {
         return configuration.getTeamSize() - 1;
     }
 
-    private Template registerPlayers(List<String> playerNames) {
-        if (playerNames.size() != configuration.requiredPlayerCount()) {
+    private Template registerPlayers(List<TemplatePlayer> templatePlayers) {
+        if (templatePlayers.size() != configuration.requiredPlayerCount()) {
             throw new IllegalArgumentException("선수 수는 정확히 " + configuration.requiredPlayerCount() + "명이어야 합니다");
         }
 
         players.clear();
-        for (int index = 0; index < playerNames.size(); index++) {
-            players.add(new TemplatePlayer(playerNames.get(index), index));
+        for (TemplatePlayer player : templatePlayers) {
+            configuration.getGameType().validatePosition(player.position());
+            players.add(player);
         }
 
         return this;

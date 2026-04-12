@@ -6,6 +6,11 @@ import java.util.UUID;
 public interface TemplateCatalog {
     TemplateBlueprint getTemplate(UUID templateId);
 
+    enum GameType {
+        LEAGUE_OF_LEGENDS,
+        OVERWATCH_2
+    }
+
     enum Mode {
         AUCTION,
         DRAFT
@@ -18,10 +23,14 @@ public interface TemplateCatalog {
 
     record TemplateBlueprint(
         UUID templateId,
+        GameType gameType,
         Mode mode,
         int teamCount,
         int teamSize,
         Integer budget,
+        Integer pickBanTime,
+        Integer minBidUnit,
+        Integer positionLimit,
         DraftOrderStrategy draftOrderStrategy,
         List<PlayerBlueprint> players
     ) {
@@ -29,6 +38,7 @@ public interface TemplateCatalog {
 
     record PlayerBlueprint(
         String name,
+        String position,
         int playerIndex
     ) {
     }

@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 
 class RoomDraftTest {
     private static final Instant CREATED_AT = Instant.parse("2026-04-09T00:00:00Z");
+    private static final List<String> POSITIONS = List.of("TOP", "JUNGLE", "MID", "ADC", "SUPPORT");
     private static final String HOST_ID = "host-1";
     private static final String HOST_ACTION_TOKEN = "host-action-token";
     private static final String GUEST_ID = "guest-1";
@@ -188,9 +189,15 @@ class RoomDraftTest {
                 2,
                 teamSize,
                 null,
+                30,
                 draftOrderStrategy,
                 IntStream.range(0, playerNames.size())
-                    .mapToObj(index -> new RoomTemplateSpec.Player(new RoomPlayerId(index), playerNames.get(index), index))
+                    .mapToObj(index -> new RoomTemplateSpec.Player(
+                        new RoomPlayerId(index),
+                        playerNames.get(index),
+                        POSITIONS.get(index % POSITIONS.size()),
+                        index
+                    ))
                     .toList()
             ),
             CREATED_AT
@@ -208,10 +215,11 @@ class RoomDraftTest {
                 2,
                 2,
                 300,
+                15,
                 null,
                 List.of(
-                    new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", 0),
-                    new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", 1)
+                    new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
+                    new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
                 )
             ),
             CREATED_AT

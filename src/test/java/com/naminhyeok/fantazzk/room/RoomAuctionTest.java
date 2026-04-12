@@ -21,6 +21,7 @@ import org.springframework.transaction.support.SimpleTransactionStatus;
 
 class RoomAuctionTest {
     private static final Instant CREATED_AT = Instant.parse("2026-04-09T00:00:00Z");
+    private static final int PICK_BAN_TIME = 45;
     private static final String HOST_ID = "host-1";
     private static final String HOST_ACTION_TOKEN = "host-action-token";
     private static final String GUEST_ID = "guest-1";
@@ -34,7 +35,7 @@ class RoomAuctionTest {
         room.start(new TeamLeaderId(HOST_ID), CREATED_AT);
 
         assertThat(room.getCurrentAuctionRound()).isEqualTo(1);
-        assertThat(room.getCurrentAuctionRoundEndsAt()).isEqualTo(CREATED_AT.plusSeconds(15));
+        assertThat(room.getCurrentAuctionRoundEndsAt()).isEqualTo(CREATED_AT.plusSeconds(PICK_BAN_TIME));
     }
 
     @Test
@@ -50,7 +51,7 @@ class RoomAuctionTest {
     void deadline_가_지나면_입찰할_수_없다() {
         Room room = startedAuctionRoom();
 
-        assertThatThrownBy(() -> room.placeBid(new TeamLeaderId(HOST_ID), 100, CREATED_AT.plusSeconds(15)))
+        assertThatThrownBy(() -> room.placeBid(new TeamLeaderId(HOST_ID), 100, CREATED_AT.plusSeconds(PICK_BAN_TIME)))
             .isInstanceOf(CoreException.class)
             .isInstanceOfSatisfying(CoreException.class, ex -> assertRoomError(ex, RoomErrorType.ROOM_BID_REQUIRES_OPEN_ROUND));
     }
@@ -65,11 +66,11 @@ class RoomAuctionTest {
         room.placeBid(hostLeaderId, 100, CREATED_AT.plusSeconds(1));
         room.placeBid(guestLeaderId, 150, CREATED_AT.plusSeconds(2));
 
-        AuctionSettlement settlement = room.settleAuction(CREATED_AT.plusSeconds(16));
+        AuctionSettlement settlement = room.settleAuction(CREATED_AT.plusSeconds(PICK_BAN_TIME + 1L));
 
         assertThat(settlement.outcome()).isEqualTo(AuctionOutcome.SOLD);
         assertThat(room.getCurrentAuctionRound()).isEqualTo(2);
-        assertThat(room.getCurrentAuctionRoundEndsAt()).isEqualTo(CREATED_AT.plusSeconds(31));
+        assertThat(room.getCurrentAuctionRoundEndsAt()).isEqualTo(CREATED_AT.plusSeconds((PICK_BAN_TIME * 2L) + 1));
     }
 
     @Test
@@ -95,8 +96,8 @@ class RoomAuctionTest {
 
         Room repaired = settleAuction.settleIfDue(room.getCode());
 
-        assertThat(repaired.getCurrentAuctionRoundEndsAt()).isEqualTo(CREATED_AT.plusSeconds(15));
-        assertThat(taskScheduler.activeScheduledInstants()).containsExactly(CREATED_AT.plusSeconds(15));
+        assertThat(repaired.getCurrentAuctionRoundEndsAt()).isEqualTo(CREATED_AT.plusSeconds(PICK_BAN_TIME));
+        assertThat(taskScheduler.activeScheduledInstants()).containsExactly(CREATED_AT.plusSeconds(PICK_BAN_TIME));
     }
 
     @Test
@@ -168,7 +169,7 @@ class RoomAuctionTest {
         RoomBid firstBid = room.placeBid(hostLeaderId, 100, CREATED_AT.plusSeconds(1));
         RoomBid secondBid = room.placeBid(guestLeaderId, 150, CREATED_AT.plusSeconds(2));
 
-        AuctionSettlement settlement = room.settleAuction(CREATED_AT.plusSeconds(15));
+        AuctionSettlement settlement = room.settleAuction(CREATED_AT.plusSeconds(PICK_BAN_TIME));
 
         assertThat(firstBid.sequence()).isEqualTo(new BidSequence(1));
         assertThat(secondBid.sequence()).isEqualTo(new BidSequence(2));
@@ -181,7 +182,7 @@ class RoomAuctionTest {
             .isEqualTo(150);
         assertThat(room.getPlayers().getFirst().getStatus()).isEqualTo(PlayerStatus.ASSIGNED);
         assertThat(room.getCurrentAuctionRound()).isEqualTo(2);
-        assertThat(room.getCurrentAuctionRoundEndsAt()).isEqualTo(CREATED_AT.plusSeconds(30));
+        assertThat(room.getCurrentAuctionRoundEndsAt()).isEqualTo(CREATED_AT.plusSeconds(PICK_BAN_TIME * 2L));
     }
 
     @Test
@@ -190,9 +191,9 @@ class RoomAuctionTest {
         TeamLeaderId hostLeaderId = room.getLeaders().getFirst().getId();
 
         room.placeBid(hostLeaderId, 100, CREATED_AT.plusSeconds(1));
-        room.settleAuction(CREATED_AT.plusSeconds(15));
+        room.settleAuction(CREATED_AT.plusSeconds(PICK_BAN_TIME));
 
-        RoomBid nextRoundBid = room.placeBid(hostLeaderId, 120, CREATED_AT.plusSeconds(16));
+        RoomBid nextRoundBid = room.placeBid(hostLeaderId, 120, CREATED_AT.plusSeconds(PICK_BAN_TIME + 1L));
 
         assertThat(nextRoundBid.sequence()).isEqualTo(new BidSequence(1));
         assertThat(nextRoundBid.round()).isEqualTo(2);
@@ -209,11 +210,11 @@ class RoomAuctionTest {
 
         room.placeBid(hostLeaderId, 100, CREATED_AT.plusSeconds(1));
         room.placeBid(guestLeaderId, 150, CREATED_AT.plusSeconds(2));
-        room.settleAuction(CREATED_AT.plusSeconds(15));
+        room.settleAuction(CREATED_AT.plusSeconds(PICK_BAN_TIME));
 
-        room.placeBid(hostLeaderId, 120, CREATED_AT.plusSeconds(16));
-        room.placeBid(guestLeaderId, 130, CREATED_AT.plusSeconds(17));
-        room.settleAuction(CREATED_AT.plusSeconds(30));
+        room.placeBid(hostLeaderId, 120, CREATED_AT.plusSeconds(PICK_BAN_TIME + 1L));
+        room.placeBid(guestLeaderId, 130, CREATED_AT.plusSeconds(PICK_BAN_TIME + 2L));
+        room.settleAuction(CREATED_AT.plusSeconds(PICK_BAN_TIME * 2L));
 
         assertThat(room.getStatus()).isEqualTo(RoomStatus.COMPLETED);
         assertThat(room.getCurrentAuctionRoundEndsAt()).isNull();
@@ -315,10 +316,11 @@ class RoomAuctionTest {
                 2,
                 2,
                 300,
+                PICK_BAN_TIME,
                 null,
                 List.of(
-                    new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", 0),
-                    new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", 1)
+                    new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
+                    new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
                 )
             ),
             CREATED_AT
@@ -337,10 +339,11 @@ class RoomAuctionTest {
                     2,
                     2,
                     null,
+                    30,
                     RoomTemplateSpec.DraftOrderStrategy.SNAKE,
                     List.of(
-                        new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", 0),
-                        new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", 1)
+                        new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
+                        new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
                     )
                 ),
                 CREATED_AT
@@ -371,10 +374,11 @@ class RoomAuctionTest {
                     2,
                     2,
                     null,
+                    30,
                     RoomTemplateSpec.DraftOrderStrategy.SNAKE,
                     List.of(
-                        new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", 0),
-                        new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", 1)
+                        new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
+                        new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
                     )
                 ),
                 CREATED_AT

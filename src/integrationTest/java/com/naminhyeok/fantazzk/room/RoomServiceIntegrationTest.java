@@ -40,7 +40,16 @@ class RoomServiceIntegrationTest {
     @Test
     void 템플릿으로_방을_생성하면_호스트_액션_토큰을_발급하고_저장한다() {
         var template =
-            templateFixture.createAuctionTemplateId("경매전", 2, 2, 300, List.of("선수1", "선수2"));
+            templateFixture.createAuctionTemplateId(
+                "경매전",
+                2,
+                2,
+                300,
+                List.of(
+                    new TemplateFixture.PlayerSpec("선수1", "TOP"),
+                    new TemplateFixture.PlayerSpec("선수2", "JUNGLE")
+                )
+            );
 
         Room created = createRoom.create(template, "호스트");
         Room reloaded = rooms.findById(created.getId()).orElseThrow();
@@ -57,7 +66,16 @@ class RoomServiceIntegrationTest {
     @Test
     void 호스트가_아닌_액션_토큰으로는_방을_시작할_수_없다() {
         var template =
-            templateFixture.createAuctionTemplateId("경매전", 2, 2, 300, List.of("선수1", "선수2"));
+            templateFixture.createAuctionTemplateId(
+                "경매전",
+                2,
+                2,
+                300,
+                List.of(
+                    new TemplateFixture.PlayerSpec("선수1", "TOP"),
+                    new TemplateFixture.PlayerSpec("선수2", "JUNGLE")
+                )
+            );
 
         Room created = createRoom.create(template, "호스트");
         RoomTeamLeader guest = joinRoom.join(created.getCode(), "게스트");
@@ -74,7 +92,16 @@ class RoomServiceIntegrationTest {
     @Test
     void 드래프트_자리가_모두_확정되면_시작_가능_상태가_된다() {
         var template =
-            templateFixture.createDraftTemplateId("드래프트전", 2, 2, DraftOrderStrategy.SNAKE, List.of("선수1", "선수2"));
+            templateFixture.createDraftTemplateId(
+                "드래프트전",
+                2,
+                2,
+                DraftOrderStrategy.SNAKE,
+                List.of(
+                    new TemplateFixture.PlayerSpec("선수1", "TOP"),
+                    new TemplateFixture.PlayerSpec("선수2", "JUNGLE")
+                )
+            );
 
         Room created = createRoom.create(template, "호스트");
         RoomTeamLeader guest = joinRoom.join(created.getCode(), "게스트");
@@ -96,7 +123,16 @@ class RoomServiceIntegrationTest {
     @Test
     void 드래프트_자리가_미확정이면_방을_시작할_수_없다() {
         var template =
-            templateFixture.createDraftTemplateId("드래프트전", 2, 2, DraftOrderStrategy.SNAKE, List.of("선수1", "선수2"));
+            templateFixture.createDraftTemplateId(
+                "드래프트전",
+                2,
+                2,
+                DraftOrderStrategy.SNAKE,
+                List.of(
+                    new TemplateFixture.PlayerSpec("선수1", "TOP"),
+                    new TemplateFixture.PlayerSpec("선수2", "JUNGLE")
+                )
+            );
 
         Room created = createRoom.create(template, "호스트");
         joinRoom.join(created.getCode(), "게스트");
@@ -114,7 +150,16 @@ class RoomServiceIntegrationTest {
     @Test
     void 드래프트_자리를_취소하면_다시_미선택이_된다() {
         var template =
-            templateFixture.createDraftTemplateId("드래프트전", 2, 2, DraftOrderStrategy.SNAKE, List.of("선수1", "선수2"));
+            templateFixture.createDraftTemplateId(
+                "드래프트전",
+                2,
+                2,
+                DraftOrderStrategy.SNAKE,
+                List.of(
+                    new TemplateFixture.PlayerSpec("선수1", "TOP"),
+                    new TemplateFixture.PlayerSpec("선수2", "JUNGLE")
+                )
+            );
 
         Room created = createRoom.create(template, "호스트");
 

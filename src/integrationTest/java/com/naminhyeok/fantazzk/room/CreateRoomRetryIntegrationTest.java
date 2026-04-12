@@ -69,7 +69,16 @@ class CreateRoomRetryIntegrationTest {
         assertThat(TestTransaction.isFlaggedForRollback()).isFalse();
 
         var template =
-            templateFixture.createAuctionTemplateId("경매전", 2, 2, 300, List.of("선수1", "선수2"));
+            templateFixture.createAuctionTemplateId(
+                "경매전",
+                2,
+                2,
+                300,
+                List.of(
+                    new TemplateFixture.PlayerSpec("선수1", "TOP"),
+                    new TemplateFixture.PlayerSpec("선수2", "JUNGLE")
+                )
+            );
 
         inNewTransaction(() -> rooms.saveAndFlush(existingRoom("ROOM01")));
         roomCodeGenerator.reset("ROOM01", "ROOM02");
@@ -100,7 +109,16 @@ class CreateRoomRetryIntegrationTest {
     @Test
     void 중복_방코드_충돌이_반복되면_방_코드_생성_실패를_반환한다() {
         var template =
-            templateFixture.createAuctionTemplateId("경매전", 2, 2, 300, List.of("선수1", "선수2"));
+            templateFixture.createAuctionTemplateId(
+                "경매전",
+                2,
+                2,
+                300,
+                List.of(
+                    new TemplateFixture.PlayerSpec("선수1", "TOP"),
+                    new TemplateFixture.PlayerSpec("선수2", "JUNGLE")
+                )
+            );
 
         inNewTransaction(() -> rooms.saveAndFlush(existingRoom("ROOM01")));
         roomCodeGenerator.reset("ROOM01", "ROOM01", "ROOM01");
@@ -127,10 +145,11 @@ class CreateRoomRetryIntegrationTest {
                 2,
                 2,
                 300,
+                15,
                 null,
                 List.of(
-                    new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", 0),
-                    new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", 1)
+                    new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
+                    new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
                 )
             ),
             java.time.Instant.parse("2026-04-10T00:00:00Z")

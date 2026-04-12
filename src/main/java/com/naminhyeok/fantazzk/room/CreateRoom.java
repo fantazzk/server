@@ -72,6 +72,7 @@ class CreateRoom {
                 template.teamCount(),
                 template.teamSize(),
                 template.budget(),
+                template.pickBanTime(),
                 template.draftOrderStrategy() == null
                     ? null
                     : RoomTemplateSpec.DraftOrderStrategy.valueOf(template.draftOrderStrategy().name()),
@@ -79,6 +80,7 @@ class CreateRoom {
                     .map(player -> new RoomTemplateSpec.Player(
                         new RoomPlayerId(player.playerIndex()),
                         player.name(),
+                        player.position(),
                         player.playerIndex()
                     ))
                     .toList()

@@ -90,7 +90,7 @@ class RoomApiIntegrationTest {
 
     @Test
     void auctionProgress는_due된_경매를_정산한_latest_snapshot을_반환한다() {
-        Room room = startedAuctionRoom("ROOM10", CREATED_AT);
+        Room room = startedAuctionRoom("ROOM10", CREATED_AT.minusSeconds(30));
         room.placeBid(new TeamLeaderId("host-ROOM10"), 100, CREATED_AT.plusSeconds(1));
         rooms.save(room);
 
@@ -110,7 +110,8 @@ class RoomApiIntegrationTest {
         assertThat(body.success().status()).isEqualTo("IN_PROGRESS");
         assertThat(body.success().progress().currentRound()).isEqualTo(2);
         assertThat(body.success().progress().currentAuctionRoundEndsAt())
-            .isAfter(CREATED_AT.plusSeconds(15));
+            .isAfter(CREATED_AT.plusSeconds(45));
+        assertThat(body.success().players().getFirst().position()).isEqualTo("TOP");
         assertThat(body.success().members()).singleElement()
             .extracting(RoomMemberResponse::playerName)
             .isEqualTo("선수1");
@@ -129,7 +130,8 @@ class RoomApiIntegrationTest {
         assertThat(body.resultType()).isEqualTo("SUCCESS");
         assertThat(body.success().progress().currentRound()).isEqualTo(1);
         assertThat(body.success().progress().currentAuctionRoundEndsAt())
-            .isEqualTo(Instant.parse("2026-04-09T00:00:15Z"));
+            .isEqualTo(Instant.parse("2026-04-09T00:00:45Z"));
+        assertThat(body.success().players().getFirst().position()).isEqualTo("TOP");
     }
 
     private Room startedAuctionRoom(String code, Instant createdAt) {
@@ -143,10 +145,11 @@ class RoomApiIntegrationTest {
                 2,
                 2,
                 300,
+                45,
                 null,
                 List.of(
-                    new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", 0),
-                    new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", 1)
+                    new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
+                    new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
                 )
             ),
             createdAt
@@ -167,10 +170,11 @@ class RoomApiIntegrationTest {
                 2,
                 2,
                 300,
+                45,
                 null,
                 List.of(
-                    new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", 0),
-                    new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", 1)
+                    new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
+                    new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
                 )
             ),
             createdAt
@@ -200,10 +204,11 @@ class RoomApiIntegrationTest {
                 2,
                 2,
                 null,
+                30,
                 RoomTemplateSpec.DraftOrderStrategy.SNAKE,
                 List.of(
-                    new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", 0),
-                    new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", 1)
+                    new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
+                    new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
                 )
             ),
             createdAt

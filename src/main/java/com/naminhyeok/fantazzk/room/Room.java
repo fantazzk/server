@@ -41,6 +41,8 @@ class Room implements AggregateRoot<Room, RoomId> {
     private final int teamCount;
     private final int teamSize;
     private final Integer budget;
+    @Column(name = "pick_ban_time")
+    private final int pickBanTime;
     @Enumerated(EnumType.STRING)
     private final RoomTemplateSpec.DraftOrderStrategy draftOrderStrategy;
     private Integer currentTurnIndex;
@@ -68,6 +70,7 @@ class Room implements AggregateRoot<Room, RoomId> {
         int teamCount,
         int teamSize,
         Integer budget,
+        int pickBanTime,
         RoomTemplateSpec.DraftOrderStrategy draftOrderStrategy
     ) {
         this.id = new RoomId(UUID.randomUUID());
@@ -79,6 +82,7 @@ class Room implements AggregateRoot<Room, RoomId> {
         this.teamCount = teamCount;
         this.teamSize = teamSize;
         this.budget = budget;
+        this.pickBanTime = pickBanTime;
         this.draftOrderStrategy = draftOrderStrategy;
         this.currentTurnIndex = null;
         this.currentAuctionRound = null;
@@ -106,12 +110,13 @@ class Room implements AggregateRoot<Room, RoomId> {
                 spec.teamCount(),
                 spec.teamSize(),
                 spec.budget(),
+                spec.pickBanTime(),
                 spec.draftOrderStrategy()
             );
 
         spec.players().stream()
             .sorted(Comparator.comparingInt(RoomTemplateSpec.Player::displayOrder))
-            .map(player -> new RoomPlayer(player.id(), player.name(), player.displayOrder()))
+            .map(player -> new RoomPlayer(player.id(), player.name(), player.position(), player.displayOrder()))
             .forEach(room.players::add);
 
         room.leaders.add(new RoomTeamLeader(hostLeaderId, hostNickname, hostActionToken, spec.budget()));
@@ -201,7 +206,7 @@ class Room implements AggregateRoot<Room, RoomId> {
         if (mode == RoomMode.AUCTION) {
             currentAuctionRound = 1;
             currentTurnIndex = null;
-            currentAuctionRoundEndsAt = now.plusSeconds(15);
+            currentAuctionRoundEndsAt = now.plusSeconds(pickBanTime);
         } else {
             currentTurnIndex = 0;
             currentAuctionRound = null;
@@ -272,7 +277,7 @@ class Room implements AggregateRoot<Room, RoomId> {
         if (currentAuctionRoundEndsAt != null) {
             return false;
         }
-        currentAuctionRoundEndsAt = now.plusSeconds(15);
+        currentAuctionRoundEndsAt = now.plusSeconds(pickBanTime);
         return true;
     }
 
@@ -313,7 +318,7 @@ class Room implements AggregateRoot<Room, RoomId> {
             int maxOrder = players.stream().mapToInt(RoomPlayer::getDisplayOrder).max().orElse(0);
             target.moveToBack(maxOrder + 1);
             currentAuctionRound += 1;
-            currentAuctionRoundEndsAt = now.plusSeconds(15);
+            currentAuctionRoundEndsAt = now.plusSeconds(pickBanTime);
             return new AuctionSettlement(target.getName(), AuctionOutcome.PASSED);
         }
 
@@ -332,7 +337,7 @@ class Room implements AggregateRoot<Room, RoomId> {
             currentAuctionRoundEndsAt = null;
         } else {
             currentAuctionRound += 1;
-            currentAuctionRoundEndsAt = now.plusSeconds(15);
+            currentAuctionRoundEndsAt = now.plusSeconds(pickBanTime);
         }
 
         return new AuctionSettlement(target.getName(), AuctionOutcome.SOLD);
