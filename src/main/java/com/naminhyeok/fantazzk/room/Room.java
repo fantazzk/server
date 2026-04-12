@@ -120,7 +120,7 @@ class Room implements AggregateRoot<Room, RoomId> {
             .map(player -> new RoomPlayer(player.id(), player.name(), player.position(), player.displayOrder()))
             .forEach(room.players::add);
 
-        room.leaders.add(new RoomTeamLeader(hostLeaderId, hostNickname, hostActionToken, spec.budget()));
+        room.leaders.add(new RoomTeamLeader(hostLeaderId, hostNickname.trim(), hostActionToken, spec.budget()));
         return room;
     }
 

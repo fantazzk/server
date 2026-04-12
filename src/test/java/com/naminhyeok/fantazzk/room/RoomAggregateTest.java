@@ -23,7 +23,7 @@ class RoomAggregateTest {
             Room.createFromTemplate(
                 "ROOM01",
                 new TeamLeaderId(HOST_ID),
-                "호스트",
+                "  호스트  ",
                 HOST_ACTION_TOKEN,
                 new RoomTemplateSpec(
                     RoomTemplateSpec.Mode.AUCTION,
