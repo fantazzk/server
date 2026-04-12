@@ -12,6 +12,8 @@ import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 class RoomAuctionTest {
     private static final Instant CREATED_AT = Instant.parse("2026-04-09T00:00:00Z");
@@ -272,6 +274,51 @@ class RoomAuctionTest {
     }
 
     @Test
+    void start는_저장후_realtime_publish하고_deadline_scheduling은_afterCommit에_유지한다() {
+        Room room = waitingAuctionRoom();
+        room.join(new TeamLeaderId(GUEST_ID), "게스트", GUEST_ACTION_TOKEN);
+        InMemoryRooms rooms = new InMemoryRooms(room);
+        RecordingRoomSnapshotPublisher publisher = new RecordingRoomSnapshotPublisher();
+        FakeTaskScheduler taskScheduler = new FakeTaskScheduler();
+        StartRoom startRoom =
+            new StartRoom(
+                rooms,
+                new RoomActionAuthorizer(),
+                new RoomAuctionDeadlineScheduler(
+                    taskScheduler,
+                    unsupportedSettleAuction(),
+                    emptyAuctionScheduleReader(),
+                    Clock.fixed(CREATED_AT, ZoneOffset.UTC)
+                ),
+                publisher,
+                Clock.fixed(CREATED_AT, ZoneOffset.UTC)
+            );
+
+        TransactionSynchronizationManager.initSynchronization();
+        try {
+            startRoom.start(room.getCode(), HOST_ACTION_TOKEN);
+
+            assertThat(publisher.events).hasSize(1);
+            RoomRealtimeSnapshotEvent event = publisher.events.getFirst();
+            assertThat(event.roomCode()).isEqualTo(room.getCode());
+            assertThat(event.snapshotVersion()).isEqualTo(1L);
+            assertThat(event.room().progress().currentRound()).isEqualTo(1);
+            assertThat(event.room().progress().currentAuctionRoundEndsAt()).isEqualTo(CREATED_AT.plusSeconds(PICK_BAN_TIME));
+            assertThat(taskScheduler.scheduledInstants()).isEmpty();
+
+            List<TransactionSynchronization> synchronizations = TransactionSynchronizationManager.getSynchronizations();
+            TransactionSynchronizationManager.clearSynchronization();
+            synchronizations.forEach(TransactionSynchronization::afterCommit);
+        } finally {
+            if (TransactionSynchronizationManager.isSynchronizationActive()) {
+                TransactionSynchronizationManager.clearSynchronization();
+            }
+        }
+
+        assertThat(taskScheduler.scheduledInstants()).containsExactly(CREATED_AT.plusSeconds(PICK_BAN_TIME));
+    }
+
+    @Test
     void start는_optimistic_lock을_room_conflict로_번역한다() {
         Room room = waitingAuctionRoom();
         room.join(new TeamLeaderId(GUEST_ID), "게스트", GUEST_ACTION_TOKEN);
@@ -287,11 +334,58 @@ class RoomAuctionTest {
                     emptyAuctionScheduleReader(),
                     Clock.fixed(CREATED_AT, ZoneOffset.UTC)
                 ),
+                noopRoomSnapshotPublisher(),
                 Clock.fixed(CREATED_AT, ZoneOffset.UTC)
             );
 
         assertThatThrownBy(() -> startRoom.start(room.getCode(), HOST_ACTION_TOKEN))
             .isInstanceOfSatisfying(CoreException.class, ex -> assertRoomError(ex, RoomErrorType.ROOM_CONCURRENT_MODIFICATION));
+    }
+
+    @Test
+    void placeBid는_저장후_realtime_publish하고_deadline_scheduling은_afterCommit에_유지한다() {
+        Room room = startedAuctionRoom();
+        InMemoryRooms rooms = new InMemoryRooms(room);
+        RecordingRoomSnapshotPublisher publisher = new RecordingRoomSnapshotPublisher();
+        FakeTaskScheduler taskScheduler = new FakeTaskScheduler();
+        PlaceBid placeBid =
+            new PlaceBid(
+                rooms,
+                new RoomActionAuthorizer(),
+                new RoomAuctionDeadlineScheduler(
+                    taskScheduler,
+                    unsupportedSettleAuction(),
+                    emptyAuctionScheduleReader(),
+                    Clock.fixed(CREATED_AT, ZoneOffset.UTC)
+                ),
+                publisher,
+                Clock.fixed(CREATED_AT.plusSeconds(1), ZoneOffset.UTC)
+            );
+
+        TransactionSynchronizationManager.initSynchronization();
+        try {
+            RoomBid bid = placeBid.place(room.getCode(), HOST_ACTION_TOKEN, 100);
+
+            assertThat(bid.amount()).isEqualTo(100);
+            assertThat(publisher.events).hasSize(1);
+            RoomRealtimeSnapshotEvent event = publisher.events.getFirst();
+            assertThat(event.roomCode()).isEqualTo(room.getCode());
+            assertThat(event.snapshotVersion()).isEqualTo(1L);
+            assertThat(event.room().progress().currentRound()).isEqualTo(1);
+            assertThat(event.room().progress().highestBidAmount()).isEqualTo(100);
+            assertThat(event.room().progress().bidCount()).isEqualTo(1);
+            assertThat(taskScheduler.scheduledInstants()).isEmpty();
+
+            List<TransactionSynchronization> synchronizations = TransactionSynchronizationManager.getSynchronizations();
+            TransactionSynchronizationManager.clearSynchronization();
+            synchronizations.forEach(TransactionSynchronization::afterCommit);
+        } finally {
+            if (TransactionSynchronizationManager.isSynchronizationActive()) {
+                TransactionSynchronizationManager.clearSynchronization();
+            }
+        }
+
+        assertThat(taskScheduler.scheduledInstants()).containsExactly(CREATED_AT.plusSeconds(PICK_BAN_TIME));
     }
 
     @Test
@@ -309,6 +403,7 @@ class RoomAuctionTest {
                     emptyAuctionScheduleReader(),
                     Clock.fixed(CREATED_AT, ZoneOffset.UTC)
                 ),
+                noopRoomSnapshotPublisher(),
                 Clock.fixed(CREATED_AT.plusSeconds(1), ZoneOffset.UTC)
             );
 
@@ -321,7 +416,7 @@ class RoomAuctionTest {
         Room room = inProgressDraftRoomForOptimisticLock();
         InMemoryRooms rooms = new InMemoryRooms(room);
         rooms.failOnSave(new ObjectOptimisticLockingFailureException(Room.class, room.getId()));
-        PickDraft pickDraft = new PickDraft(rooms, new RoomActionAuthorizer());
+        PickDraft pickDraft = new PickDraft(rooms, new RoomActionAuthorizer(), noopRoomSnapshotPublisher());
 
         assertThatThrownBy(() -> pickDraft.pick(room.getCode(), HOST_ACTION_TOKEN, "선수1"))
             .isInstanceOfSatisfying(CoreException.class, ex -> assertRoomError(ex, RoomErrorType.ROOM_CONCURRENT_MODIFICATION));
@@ -334,7 +429,8 @@ class RoomAuctionTest {
         rooms.failOnSave(new ObjectOptimisticLockingFailureException(Room.class, room.getId()));
         SelectDraftPosition selectDraftPosition = new SelectDraftPosition(
             rooms,
-            new RoomActionAuthorizer()
+            new RoomActionAuthorizer(),
+            noopRoomSnapshotPublisher()
         );
 
         assertThatThrownBy(() -> selectDraftPosition.select(room.getCode(), HOST_ACTION_TOKEN, 1))
@@ -349,7 +445,8 @@ class RoomAuctionTest {
         rooms.failOnSave(new ObjectOptimisticLockingFailureException(Room.class, room.getId()));
         ClearDraftPosition clearDraftPosition = new ClearDraftPosition(
             rooms,
-            new RoomActionAuthorizer()
+            new RoomActionAuthorizer(),
+            noopRoomSnapshotPublisher()
         );
 
         assertThatThrownBy(() -> clearDraftPosition.clear(room.getCode(), HOST_ACTION_TOKEN))
@@ -358,6 +455,10 @@ class RoomAuctionTest {
 
     private static void assertRoomError(CoreException ex, RoomErrorType expected) {
         assertThat(ex.getError()).isEqualTo(expected);
+    }
+
+    private static RoomSnapshotPublisher noopRoomSnapshotPublisher() {
+        return new NoopRoomSnapshotPublisher();
     }
 
     private static void setCurrentAuctionRoundEndsAt(Room room, Instant value) throws Exception {
@@ -500,7 +601,7 @@ class RoomAuctionTest {
     private static SettleAuction unsupportedSettleAuction() {
         InMemoryRooms rooms = new InMemoryRooms();
         return new SettleAuction(
-            new SettleAuctionAttempt(rooms, Clock.fixed(CREATED_AT, ZoneOffset.UTC)),
+            new SettleAuctionAttempt(rooms, Clock.fixed(CREATED_AT, ZoneOffset.UTC), noopRoomSnapshotPublisher()),
             rooms,
             new ObjectProvider<>() {
                 @Override
@@ -570,16 +671,17 @@ class RoomAuctionTest {
 
         @Override
         public Room save(Room room) {
-            if (saveFailure != null) {
-                throw saveFailure;
-            }
-            this.room = room;
-            return room;
+            throw new UnsupportedOperationException("start and bid should use saveAndFlush");
         }
 
         @Override
         public Room saveAndFlush(Room room) {
-            return save(room);
+            if (saveFailure != null) {
+                throw saveFailure;
+            }
+            this.room = room;
+            markFlushed(room);
+            return room;
         }
 
         @Override
@@ -590,6 +692,25 @@ class RoomAuctionTest {
         @Override
         public Optional<Room> findByCode(String code) {
             return Optional.ofNullable(room).filter(it -> it.getCode().equals(code));
+        }
+
+        private void markFlushed(Room room) {
+            try {
+                var field = Room.class.getDeclaredField("version");
+                field.setAccessible(true);
+                field.setLong(room, 1L);
+            } catch (ReflectiveOperationException ex) {
+                throw new AssertionError(ex);
+            }
+        }
+    }
+
+    private static final class RecordingRoomSnapshotPublisher implements RoomSnapshotPublisher {
+        private final java.util.ArrayList<RoomRealtimeSnapshotEvent> events = new java.util.ArrayList<>();
+
+        @Override
+        public void publishAfterCommit(Room room) {
+            events.add(RoomRealtimeSnapshotEvent.from(room, CREATED_AT));
         }
     }
 }

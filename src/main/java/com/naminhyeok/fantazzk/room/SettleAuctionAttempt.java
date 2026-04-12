@@ -12,13 +12,15 @@ import org.springframework.transaction.annotation.Transactional;
 class SettleAuctionAttempt {
     private final Rooms rooms;
     private final Clock clock;
+    private final RoomSnapshotPublisher roomSnapshotPublisher;
 
     @Transactional
     AuctionSettlement settle(String code) {
         Instant now = Instant.now(clock);
         Room room = rooms.findByCode(code).orElseThrow(() -> CoreException.of(RoomErrorType.ROOM_NOT_FOUND));
         AuctionSettlement settlement = room.settleAuction(now);
-        rooms.saveAndFlush(room);
+        Room saved = rooms.saveAndFlush(room);
+        roomSnapshotPublisher.publishAfterCommit(saved);
         return settlement;
     }
 
@@ -31,7 +33,9 @@ class SettleAuctionAttempt {
         }
 
         room.settleAuction(now);
-        return rooms.saveAndFlush(room);
+        Room saved = rooms.saveAndFlush(room);
+        roomSnapshotPublisher.publishAfterCommit(saved);
+        return saved;
     }
 
     private static boolean isDue(Room room, Instant now) {
