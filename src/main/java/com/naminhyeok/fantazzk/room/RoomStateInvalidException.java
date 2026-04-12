@@ -2,7 +2,7 @@ package com.naminhyeok.fantazzk.room;
 
 import com.naminhyeok.fantazzk.InvalidDomainStateException;
 
-class RoomStateInvalidException extends InvalidDomainStateException {
+final class RoomStateInvalidException extends InvalidDomainStateException {
     private RoomStateInvalidException(String message) {
         super(message, RoomErrorType.ROOM_STATE_INVALID);
     }

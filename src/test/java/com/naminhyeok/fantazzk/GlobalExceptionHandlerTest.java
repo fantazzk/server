@@ -281,22 +281,31 @@ class GlobalExceptionHandlerTest {
         }
     }
 
-    private static final class TestInvalidDomainStateException extends InvalidDomainStateException {
-        private TestInvalidDomainStateException(String detailMessage) {
-            super(detailMessage, roomStateInvalidError());
+    private static final class TestInvalidDomainStateErrorDescriptor implements ErrorDescriptor {
+        @Override
+        public HttpStatus getStatus() {
+            return HttpStatus.INTERNAL_SERVER_ERROR;
         }
 
-        @SuppressWarnings({"unchecked", "rawtypes"})
-        private static ErrorDescriptor roomStateInvalidError() {
-            try {
-                Class<?> roomErrorTypeClass = Class.forName("com.naminhyeok.fantazzk.room.RoomErrorType");
-                return (ErrorDescriptor) Enum.valueOf(
-                    (Class<Enum>) roomErrorTypeClass.asSubclass(Enum.class),
-                    "ROOM_STATE_INVALID"
-                );
-            } catch (ReflectiveOperationException ex) {
-                throw new AssertionError(ex);
-            }
+        @Override
+        public String getCode() {
+            return "ROOM_STATE_INVALID";
+        }
+
+        @Override
+        public String getMessage() {
+            return "방 상태가 올바르지 않습니다. 잠시 후 다시 시도해 주세요";
+        }
+
+        @Override
+        public org.slf4j.event.Level getLogLevel() {
+            return org.slf4j.event.Level.ERROR;
+        }
+    }
+
+    private static final class TestInvalidDomainStateException extends InvalidDomainStateException {
+        private TestInvalidDomainStateException(String detailMessage) {
+            super(detailMessage, new TestInvalidDomainStateErrorDescriptor());
         }
     }
 
