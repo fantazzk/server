@@ -38,6 +38,14 @@ sentry:
   dsn: ${SENTRY_DSN:}
   send-default-pii: false
 
+fantazzk:
+  supabase:
+    url: ${SUPABASE_URL:}
+    service-role-key: ${SUPABASE_SERVICE_ROLE_KEY:}
+    realtime:
+      enabled: ${SUPABASE_REALTIME_ENABLED:false}
+      topic-prefix: ${SUPABASE_REALTIME_TOPIC_PREFIX:room}
+
 ---
 
 spring:
