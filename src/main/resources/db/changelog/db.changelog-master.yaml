@@ -74,3 +74,14 @@ databaseChangeLog:
             path: db/changelog/db.changelog-room-min-bid-unit.sql
             splitStatements: true
             stripComments: false
+  - changeSet:
+      id: 7-room-position-limit
+      author: codex
+      changes:
+        - sqlFile:
+            dbms: h2,postgresql
+            encoding: UTF-8
+            endDelimiter: ;
+            path: db/changelog/db.changelog-room-position-limit.sql
+            splitStatements: true
+            stripComments: false

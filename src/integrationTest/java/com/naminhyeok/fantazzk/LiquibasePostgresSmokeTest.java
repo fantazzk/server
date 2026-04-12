@@ -35,6 +35,8 @@ class LiquibasePostgresSmokeTest {
         assertThat(countColumn("rooms", "created_at")).isEqualTo(1);
         assertThat(countColumn("rooms", "min_bid_unit")).isEqualTo(1);
         assertThat(isNullable("rooms", "min_bid_unit")).isTrue();
+        assertThat(countColumn("rooms", "position_limit")).isEqualTo(1);
+        assertThat(isNullable("rooms", "position_limit")).isTrue();
         assertThat(countIndex("rooms", "idx_rooms_status_created_at")).isEqualTo(1);
         assertThat(indexColumns("rooms", "idx_rooms_status_created_at")).containsExactly("status", "created_at");
     }

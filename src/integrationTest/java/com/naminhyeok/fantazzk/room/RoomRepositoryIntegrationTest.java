@@ -119,7 +119,7 @@ class RoomRepositoryIntegrationTest {
 
     @Test
     @Transactional
-    void 경매_방의_minBidUnit을_저장하고_다시_읽는다() {
+    void 경매_방의_minBidUnit과_positionLimit을_저장하고_다시_읽는다() {
         Room room =
             Room.createFromTemplate(
                 "ROOM04",
@@ -133,6 +133,7 @@ class RoomRepositoryIntegrationTest {
                     300,
                     30,
                     10,
+                    1,
                     null,
                     List.of(
                         new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
@@ -149,6 +150,7 @@ class RoomRepositoryIntegrationTest {
         Room reloaded = rooms.findById(saved.getId()).orElseThrow();
 
         assertThat(reloaded.getMinBidUnit()).isEqualTo(10);
+        assertThat(reloaded.getPositionLimit()).isEqualTo(1);
     }
 
     @Test

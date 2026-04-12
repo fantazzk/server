@@ -9,9 +9,23 @@ record RoomTemplateSpec(
     Integer budget,
     int pickBanTime,
     Integer minBidUnit,
+    Integer positionLimit,
     DraftOrderStrategy draftOrderStrategy,
     List<Player> players
 ) {
+    RoomTemplateSpec(
+        Mode mode,
+        int teamCount,
+        int teamSize,
+        Integer budget,
+        int pickBanTime,
+        Integer minBidUnit,
+        DraftOrderStrategy draftOrderStrategy,
+        List<Player> players
+    ) {
+        this(mode, teamCount, teamSize, budget, pickBanTime, minBidUnit, null, draftOrderStrategy, players);
+    }
+
     public enum Mode {
         AUCTION,
         DRAFT

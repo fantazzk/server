@@ -74,6 +74,7 @@ class CreateRoom {
                 template.budget(),
                 template.pickBanTime(),
                 template.minBidUnit(),
+                template.positionLimit(),
                 template.draftOrderStrategy() == null
                     ? null
                     : RoomTemplateSpec.DraftOrderStrategy.valueOf(template.draftOrderStrategy().name()),

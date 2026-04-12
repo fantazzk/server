@@ -45,6 +45,8 @@ class Room implements AggregateRoot<Room, RoomId> {
     @Column(name = "pick_ban_time")
     private final int pickBanTime;
     private final Integer minBidUnit;
+    @Column(name = "position_limit")
+    private final Integer positionLimit;
     @Enumerated(EnumType.STRING)
     private final RoomTemplateSpec.DraftOrderStrategy draftOrderStrategy;
     private Integer currentTurnIndex;
@@ -74,6 +76,7 @@ class Room implements AggregateRoot<Room, RoomId> {
         Integer budget,
         int pickBanTime,
         Integer minBidUnit,
+        Integer positionLimit,
         RoomTemplateSpec.DraftOrderStrategy draftOrderStrategy
     ) {
         this.id = new RoomId(UUID.randomUUID());
@@ -87,6 +90,7 @@ class Room implements AggregateRoot<Room, RoomId> {
         this.budget = budget;
         this.pickBanTime = pickBanTime;
         this.minBidUnit = minBidUnit;
+        this.positionLimit = positionLimit;
         this.draftOrderStrategy = draftOrderStrategy;
         this.currentTurnIndex = null;
         this.currentAuctionRound = null;
@@ -116,6 +120,7 @@ class Room implements AggregateRoot<Room, RoomId> {
                 spec.budget(),
                 spec.pickBanTime(),
                 spec.minBidUnit(),
+                spec.positionLimit(),
                 spec.draftOrderStrategy()
             );
 
@@ -261,6 +266,9 @@ class Room implements AggregateRoot<Room, RoomId> {
                 .findFirst()
                 .orElseThrow(() -> CoreException.of(RoomErrorType.ROOM_BIDDER_NOT_FOUND));
 
+        RoomPlayer target = requireCurrentAuctionTarget();
+        validateAuctionPositionLimit(leader.getId(), target);
+
         if (leader.getRemainingBudget() != null && leader.getRemainingBudget() < amount) {
             throw CoreException.of(RoomErrorType.ROOM_BID_BUDGET_EXCEEDED);
         }
@@ -320,11 +328,7 @@ class Room implements AggregateRoot<Room, RoomId> {
             throw CoreException.of(RoomErrorType.ROOM_AUCTION_ROUND_NOT_ENDED);
         }
 
-        RoomPlayer target =
-            players.stream()
-                .filter(it -> it.getStatus() == PlayerStatus.AVAILABLE)
-                .min(Comparator.comparingInt(RoomPlayer::getDisplayOrder))
-                .orElseThrow(RoomStateInvalidException::auctionTargetMissing);
+        RoomPlayer target = requireCurrentAuctionTarget();
 
         RoomBid winningBid =
             bids.stream()
@@ -346,6 +350,7 @@ class Room implements AggregateRoot<Room, RoomId> {
                 .findFirst()
                 .orElseThrow(() -> RoomStateInvalidException.auctionWinnerMissing(winningBid.teamLeaderId()));
 
+        validateAuctionPositionLimit(winner.getId(), target);
         target.assign();
         winner.spend(winningBid.amount());
         members.add(new RoomTeamMember(winningBid.teamLeaderId(), target.getName(), members.size()));
@@ -450,6 +455,37 @@ class Room implements AggregateRoot<Room, RoomId> {
 
     private List<String> getLeaderIdsInDraftOrder() {
         return getLeadersInDraftOrder().stream().map(RoomTeamLeader::getTeamLeaderId).toList();
+    }
+
+    private RoomPlayer requireCurrentAuctionTarget() {
+        return players.stream()
+            .filter(it -> it.getStatus() == PlayerStatus.AVAILABLE)
+            .min(Comparator.comparingInt(RoomPlayer::getDisplayOrder))
+            .orElseThrow(RoomStateInvalidException::auctionTargetMissing);
+    }
+
+    private void validateAuctionPositionLimit(TeamLeaderId leaderId, RoomPlayer target) {
+        if (positionLimit == null) {
+            return;
+        }
+
+        long assignedCount =
+            members.stream()
+                .filter(member -> member.teamLeaderId().equals(leaderId))
+                .map(this::findAssignedPlayerPosition)
+                .filter(target.getPosition()::equals)
+                .count();
+        if (assignedCount >= positionLimit) {
+            throw CoreException.of(RoomErrorType.ROOM_AUCTION_POSITION_LIMIT_EXCEEDED);
+        }
+    }
+
+    private String findAssignedPlayerPosition(RoomTeamMember member) {
+        return players.stream()
+            .filter(player -> player.getName().equals(member.playerName()))
+            .findFirst()
+            .map(RoomPlayer::getPosition)
+            .orElse(null);
     }
 
     private RoomTeamLeader getLeader(TeamLeaderId teamLeaderId) {
