@@ -172,4 +172,49 @@ class RoomServiceIntegrationTest {
             .extracting(RoomTeamLeader::getDraftPosition)
             .isNull();
     }
+
+    @Test
+    void 드래프트_자리_선택과_취소는_응답_preview와_시작가능_상태를_함께_갱신한다() {
+        var template =
+            templateFixture.createDraftTemplateId(
+                "드래프트전",
+                2,
+                2,
+                DraftOrderStrategy.SNAKE,
+                List.of(
+                    new TemplateFixture.PlayerSpec("선수1", "TOP"),
+                    new TemplateFixture.PlayerSpec("선수2", "JUNGLE")
+                )
+            );
+
+        Room created = createRoom.create(template, "호스트");
+        RoomTeamLeader guest = joinRoom.join(created.getCode(), "게스트");
+
+        selectDraftPosition.select(created.getCode(), created.getLeaders().getFirst().getActionToken(), 2);
+        selectDraftPosition.select(created.getCode(), guest.getActionToken(), 1);
+
+        Room afterSelect = rooms.findByCode(created.getCode()).orElseThrow();
+        RoomResponse selectableResponse = RoomResponse.from(afterSelect);
+
+        assertThat(selectableResponse.startReadiness()).isEqualTo("STARTABLE");
+        assertThat(selectableResponse.draftOrderPreview().slots())
+            .extracting(DraftOrderSlotResponse::draftPosition, DraftOrderSlotResponse::leaderId, DraftOrderSlotResponse::nickname)
+            .containsExactly(
+                tuple(1, guest.getId().value(), "게스트"),
+                tuple(2, created.getLeaders().getFirst().getId().value(), "호스트")
+            );
+
+        clearDraftPosition.clear(created.getCode(), guest.getActionToken());
+
+        Room afterClear = rooms.findByCode(created.getCode()).orElseThrow();
+        RoomResponse clearedResponse = RoomResponse.from(afterClear);
+
+        assertThat(clearedResponse.startReadiness()).isEqualTo(RoomStartReadiness.WAITING_FOR_DRAFT_POSITIONS.name());
+        assertThat(clearedResponse.draftOrderPreview().slots())
+            .extracting(DraftOrderSlotResponse::draftPosition, DraftOrderSlotResponse::leaderId, DraftOrderSlotResponse::nickname)
+            .containsExactly(
+                tuple(1, null, null),
+                tuple(2, created.getLeaders().getFirst().getId().value(), "호스트")
+            );
+    }
 }

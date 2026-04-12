@@ -295,6 +295,37 @@ class RoomAuctionTest {
             .isInstanceOfSatisfying(CoreException.class, ex -> assertRoomError(ex, RoomErrorType.ROOM_CONCURRENT_MODIFICATION));
     }
 
+    @Test
+    void selectDraftPosition은_optimistic_lock을_room_conflict로_번역한다() {
+        Room room = waitingDraftRoomForPositionChange();
+        InMemoryRooms rooms = new InMemoryRooms(room);
+        rooms.failOnSave(new ObjectOptimisticLockingFailureException(Room.class, room.getId()));
+        SelectDraftPosition selectDraftPosition = new SelectDraftPosition(
+            rooms,
+            new RoomActionAuthorizer(),
+            new StubTransactionManager()
+        );
+
+        assertThatThrownBy(() -> selectDraftPosition.select(room.getCode(), HOST_ACTION_TOKEN, 1))
+            .isInstanceOfSatisfying(CoreException.class, ex -> assertRoomError(ex, RoomErrorType.ROOM_CONCURRENT_MODIFICATION));
+    }
+
+    @Test
+    void clearDraftPosition은_optimistic_lock을_room_conflict로_번역한다() {
+        Room room = waitingDraftRoomForPositionChange();
+        room.selectDraftPosition(new TeamLeaderId(HOST_ID), 1);
+        InMemoryRooms rooms = new InMemoryRooms(room);
+        rooms.failOnSave(new ObjectOptimisticLockingFailureException(Room.class, room.getId()));
+        ClearDraftPosition clearDraftPosition = new ClearDraftPosition(
+            rooms,
+            new RoomActionAuthorizer(),
+            new StubTransactionManager()
+        );
+
+        assertThatThrownBy(() -> clearDraftPosition.clear(room.getCode(), HOST_ACTION_TOKEN))
+            .isInstanceOfSatisfying(CoreException.class, ex -> assertRoomError(ex, RoomErrorType.ROOM_CONCURRENT_MODIFICATION));
+    }
+
     private static void assertRoomError(CoreException ex, RoomErrorType expected) {
         assertThat(ex.getError()).isEqualTo(expected);
     }
@@ -387,6 +418,31 @@ class RoomAuctionTest {
         room.selectDraftPosition(new TeamLeaderId(HOST_ID), 1);
         room.selectDraftPosition(new TeamLeaderId(GUEST_ID), 2);
         room.start(new TeamLeaderId(HOST_ID), CREATED_AT);
+        return room;
+    }
+
+    private static Room waitingDraftRoomForPositionChange() {
+        Room room =
+            Room.createFromTemplate(
+                "DRF001",
+                new TeamLeaderId(HOST_ID),
+                "호스트",
+                HOST_ACTION_TOKEN,
+                new RoomTemplateSpec(
+                    RoomTemplateSpec.Mode.DRAFT,
+                    2,
+                    2,
+                    null,
+                    PICK_BAN_TIME,
+                    RoomTemplateSpec.DraftOrderStrategy.SNAKE,
+                    List.of(
+                        new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
+                        new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
+                    )
+                ),
+                CREATED_AT
+            );
+        room.join(new TeamLeaderId(GUEST_ID), "게스트", GUEST_ACTION_TOKEN);
         return room;
     }
 

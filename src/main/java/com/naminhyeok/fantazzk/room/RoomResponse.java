@@ -1,4 +1,5 @@
 package com.naminhyeok.fantazzk.room;
+
 import java.util.List;
 
 record RoomResponse(
@@ -10,6 +11,7 @@ record RoomResponse(
     Integer budget,
     String draftOrderStrategy,
     String startReadiness,
+    DraftOrderPreviewResponse draftOrderPreview,
     List<TeamLeaderResponse> teamLeaders,
     List<RoomPlayerResponse> players,
     List<RoomMemberResponse> members,
@@ -25,6 +27,7 @@ record RoomResponse(
             room.getBudget(),
             room.getDraftOrderStrategy() == null ? null : room.getDraftOrderStrategy().name(),
             room.getStartReadiness().name(),
+            DraftOrderPreviewResponse.from(room),
             room.getLeaders().stream().map(TeamLeaderResponse::from).toList(),
             room.getPlayers().stream().map(RoomPlayerResponse::from).toList(),
             room.getMembers().stream().map(RoomMemberResponse::from).toList(),
