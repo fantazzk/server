@@ -16,6 +16,13 @@ public class GlobalExceptionHandler {
         return respond(ex, ex.getError(), ex.getData());
     }
 
+    @ExceptionHandler(InvalidDomainStateException.class)
+    ResponseEntity<ApiResponse<Void>> handleInvalidDomainStateException(InvalidDomainStateException ex) {
+        log.error("Invalid domain state: {}", ex.getMessage(), ex);
+        return ResponseEntity.status(ex.getError().getStatus())
+            .body(ApiResponse.error(ex.getError()));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     ResponseEntity<ApiResponse<Void>> handleValidationException(MethodArgumentNotValidException ex) {
         LinkedHashMap<String, String> errors = new LinkedHashMap<>();

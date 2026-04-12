@@ -131,6 +131,16 @@ class RoomAuctionTest {
     }
 
     @Test
+    void 시작한_경매_방의_현재_라운드가_null이면_room_state_invalid를_던진다() throws Exception {
+        Room room = startedAuctionRoom();
+        setCurrentAuctionRound(room, null);
+
+        assertThatThrownBy(() -> room.placeBid(new TeamLeaderId(HOST_ID), 100, CREATED_AT.plusSeconds(1)))
+            .isInstanceOf(RoomStateInvalidException.class)
+            .isInstanceOfSatisfying(RoomStateInvalidException.class, ex -> assertThat(ex.getError()).isEqualTo(RoomErrorType.ROOM_STATE_INVALID));
+    }
+
+    @Test
     void 예산이_부족하면_입찰할_수_없다() {
         Room room = startedAuctionRoom();
 
@@ -238,6 +248,42 @@ class RoomAuctionTest {
     }
 
     @Test
+    void 시작한_경매_방의_현재_라운드가_null이면_낙찰_처리도_room_state_invalid를_던진다() throws Exception {
+        Room room = startedAuctionRoom();
+        setCurrentAuctionRound(room, null);
+
+        assertThatThrownBy(() -> room.settleAuction(CREATED_AT.plusSeconds(PICK_BAN_TIME)))
+            .isInstanceOf(RoomStateInvalidException.class)
+            .isInstanceOfSatisfying(RoomStateInvalidException.class, ex -> assertThat(ex.getError()).isEqualTo(RoomErrorType.ROOM_STATE_INVALID));
+    }
+
+    @Test
+    void 낙찰_팀장의_남은_예산이_null로_손상되면_정산은_room_state_invalid를_던진다() throws Exception {
+        Room room = startedAuctionRoom();
+        TeamLeaderId guestLeaderId = room.getLeaders().getLast().getId();
+
+        room.placeBid(guestLeaderId, 150, CREATED_AT.plusSeconds(1));
+        setRemainingBudget(room, guestLeaderId, null);
+
+        assertThatThrownBy(() -> room.settleAuction(CREATED_AT.plusSeconds(PICK_BAN_TIME)))
+            .isInstanceOf(RoomStateInvalidException.class)
+            .isInstanceOfSatisfying(RoomStateInvalidException.class, ex -> assertThat(ex.getError()).isEqualTo(RoomErrorType.ROOM_STATE_INVALID));
+    }
+
+    @Test
+    void 낙찰_팀장의_남은_예산이_입찰가보다_작게_손상되면_정산은_room_state_invalid를_던진다() throws Exception {
+        Room room = startedAuctionRoom();
+        TeamLeaderId guestLeaderId = room.getLeaders().getLast().getId();
+
+        room.placeBid(guestLeaderId, 150, CREATED_AT.plusSeconds(1));
+        setRemainingBudget(room, guestLeaderId, 100);
+
+        assertThatThrownBy(() -> room.settleAuction(CREATED_AT.plusSeconds(PICK_BAN_TIME)))
+            .isInstanceOf(RoomStateInvalidException.class)
+            .isInstanceOfSatisfying(RoomStateInvalidException.class, ex -> assertThat(ex.getError()).isEqualTo(RoomErrorType.ROOM_STATE_INVALID));
+    }
+
+    @Test
     void start는_optimistic_lock을_room_conflict로_번역한다() {
         Room room = waitingAuctionRoom();
         room.join(new TeamLeaderId(GUEST_ID), "게스트", GUEST_ACTION_TOKEN);
@@ -334,6 +380,23 @@ class RoomAuctionTest {
         var field = Room.class.getDeclaredField("currentAuctionRoundEndsAt");
         field.setAccessible(true);
         field.set(room, value);
+    }
+
+    private static void setCurrentAuctionRound(Room room, Integer value) throws Exception {
+        var field = Room.class.getDeclaredField("currentAuctionRound");
+        field.setAccessible(true);
+        field.set(room, value);
+    }
+
+    private static void setRemainingBudget(Room room, TeamLeaderId leaderId, Integer value) throws Exception {
+        RoomTeamLeader leader =
+            room.getLeaders().stream()
+                .filter(it -> it.getId().equals(leaderId))
+                .findFirst()
+                .orElseThrow();
+        var field = RoomTeamLeader.class.getDeclaredField("remainingBudget");
+        field.setAccessible(true);
+        field.set(leader, value);
     }
 
     private static Room waitingAuctionRoom() {

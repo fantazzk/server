@@ -113,6 +113,36 @@ class RoomAuctionDeadlineSchedulerTest {
     }
 
     @Test
+    void 애플리케이션_시작시_손상된_due_room이_있어도_뒤따르는_정상_room은_계속_처리한다() {
+        FakeTaskScheduler taskScheduler = new FakeTaskScheduler();
+        SettleAuction settleAuction = mock(SettleAuction.class);
+        Room brokenDueRoom = auctionRoomWithDeadline("BROKEN01", Instant.parse("2026-04-09T00:00:05Z"));
+        Room healthyDueRoom = auctionRoomWithDeadline("DUE02", Instant.parse("2026-04-09T00:00:06Z"));
+        Room futureRoom = auctionRoomWithDeadline("FUTURE01", Instant.parse("2026-04-09T00:00:15Z"));
+        RecordingRooms rooms = new RecordingRooms(List.of(brokenDueRoom, healthyDueRoom, futureRoom));
+        given(settleAuction.settleIfDue("BROKEN01")).willThrow(RoomStateInvalidException.auctionRoundMissing());
+        given(settleAuction.settleIfDue("DUE02"))
+            .willReturn(auctionRoomWithDeadline("DUE02", Instant.parse("2026-04-09T00:00:25Z")));
+        RoomAuctionDeadlineScheduler scheduler =
+            new RoomAuctionDeadlineScheduler(
+                taskScheduler,
+                settleAuction,
+                rooms,
+                Clock.fixed(NOW, ZoneOffset.UTC)
+            );
+
+        scheduler.catchUpAndReschedule();
+
+        verify(settleAuction).settleIfDue("BROKEN01");
+        verify(settleAuction).settleIfDue("DUE02");
+        assertThat(taskScheduler.activeScheduledInstants())
+            .containsExactly(
+                Instant.parse("2026-04-09T00:00:25Z"),
+                Instant.parse("2026-04-09T00:00:15Z")
+            );
+    }
+
+    @Test
     void 애플리케이션_시작시_schedulable_room은_application_layer_정렬규칙으로_처리한다() {
         FakeTaskScheduler taskScheduler = new FakeTaskScheduler();
         SettleAuction settleAuction = mock(SettleAuction.class);

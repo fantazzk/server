@@ -226,7 +226,7 @@ class Room implements AggregateRoot<Room, RoomId> {
             throw CoreException.of(RoomErrorType.ROOM_BID_REQUIRES_AUCTION_MODE);
         }
         if (currentAuctionRound == null) {
-            throw new IllegalStateException("현재 경매 라운드가 없습니다");
+            throw RoomStateInvalidException.auctionRoundMissing();
         }
         if (currentAuctionRoundEndsAt != null && !now.isBefore(currentAuctionRoundEndsAt)) {
             throw CoreException.of(RoomErrorType.ROOM_BID_REQUIRES_OPEN_ROUND);
@@ -293,7 +293,7 @@ class Room implements AggregateRoot<Room, RoomId> {
             throw CoreException.of(RoomErrorType.ROOM_BID_REQUIRES_AUCTION_MODE);
         }
         if (currentAuctionRound == null) {
-            throw new IllegalStateException("현재 경매 라운드가 없습니다");
+            throw RoomStateInvalidException.auctionRoundMissing();
         }
         if (currentAuctionRoundEndsAt == null) {
             currentAuctionRoundEndsAt = now;
@@ -306,7 +306,7 @@ class Room implements AggregateRoot<Room, RoomId> {
             players.stream()
                 .filter(it -> it.getStatus() == PlayerStatus.AVAILABLE)
                 .min(Comparator.comparingInt(RoomPlayer::getDisplayOrder))
-                .orElseThrow(() -> new IllegalStateException("경매할 선수를 찾을 수 없습니다"));
+                .orElseThrow(RoomStateInvalidException::auctionTargetMissing);
 
         RoomBid winningBid =
             bids.stream()
@@ -326,7 +326,7 @@ class Room implements AggregateRoot<Room, RoomId> {
             leaders.stream()
                 .filter(it -> it.getId().equals(winningBid.teamLeaderId()))
                 .findFirst()
-                .orElseThrow(() -> new IllegalStateException("낙찰한 팀장을 찾을 수 없습니다"));
+                .orElseThrow(() -> RoomStateInvalidException.auctionWinnerMissing(winningBid.teamLeaderId()));
 
         target.assign();
         winner.spend(winningBid.amount());
@@ -380,7 +380,11 @@ class Room implements AggregateRoot<Room, RoomId> {
             return null;
         }
 
-        return DraftProgress.from(getLeaderIdsInDraftOrder(), draftOrderStrategy, currentTurnIndex);
+        try {
+            return DraftProgress.from(getLeaderIdsInDraftOrder(), draftOrderStrategy, currentTurnIndex);
+        } catch (IllegalArgumentException ex) {
+            throw RoomStateInvalidException.draftLeaderOrderEmpty();
+        }
     }
 
     private void validateDraftPositionChange(int draftPosition) {
@@ -405,6 +409,14 @@ class Room implements AggregateRoot<Room, RoomId> {
     }
 
     private List<RoomTeamLeader> getLeadersInDraftOrder() {
+        if (leaders.isEmpty()) {
+            throw RoomStateInvalidException.draftLeaderOrderEmpty();
+        }
+        RoomTeamLeader leaderWithoutDraftPosition =
+            leaders.stream().filter(leader -> leader.getDraftPosition() == null).findFirst().orElse(null);
+        if (leaderWithoutDraftPosition != null) {
+            throw RoomStateInvalidException.draftPositionMissing(leaderWithoutDraftPosition.getId());
+        }
         return leaders.stream()
             .sorted(Comparator.comparingInt(RoomTeamLeader::getDraftPosition))
             .toList();
@@ -413,7 +425,7 @@ class Room implements AggregateRoot<Room, RoomId> {
     private DraftProgress requireCurrentDraftProgress() {
         DraftProgress progress = currentDraftProgress();
         if (progress == null) {
-            throw new IllegalStateException("현재 드래프트 턴이 없습니다");
+            throw RoomStateInvalidException.draftTurnMissing();
         }
         return progress;
     }
@@ -426,6 +438,6 @@ class Room implements AggregateRoot<Room, RoomId> {
         return leaders.stream()
             .filter(leader -> leader.getId().equals(teamLeaderId))
             .findFirst()
-            .orElseThrow(() -> new IllegalStateException("팀장을 찾을 수 없습니다"));
+            .orElseThrow(() -> RoomStateInvalidException.leaderMissing(teamLeaderId));
     }
 }
