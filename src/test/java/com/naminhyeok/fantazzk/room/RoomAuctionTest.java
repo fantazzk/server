@@ -12,6 +12,8 @@ import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 class RoomAuctionTest {
     private static final Instant CREATED_AT = Instant.parse("2026-04-09T00:00:00Z");
@@ -272,6 +274,50 @@ class RoomAuctionTest {
     }
 
     @Test
+    void start는_저장후_realtime_publish하고_deadline_scheduling은_afterCommit에_유지한다() {
+        Room room = waitingAuctionRoom();
+        room.join(new TeamLeaderId(GUEST_ID), "게스트", GUEST_ACTION_TOKEN);
+        InMemoryRooms rooms = new InMemoryRooms(room);
+        RecordingRoomRealtimePublisher publisher = new RecordingRoomRealtimePublisher();
+        FakeTaskScheduler taskScheduler = new FakeTaskScheduler();
+        StartRoom startRoom =
+            new StartRoom(
+                rooms,
+                new RoomActionAuthorizer(),
+                new RoomAuctionDeadlineScheduler(
+                    taskScheduler,
+                    unsupportedSettleAuction(),
+                    emptyAuctionScheduleReader(),
+                    Clock.fixed(CREATED_AT, ZoneOffset.UTC)
+                ),
+                publisher,
+                Clock.fixed(CREATED_AT, ZoneOffset.UTC)
+            );
+
+        TransactionSynchronizationManager.initSynchronization();
+        try {
+            startRoom.start(room.getCode(), HOST_ACTION_TOKEN);
+
+            assertThat(publisher.events).hasSize(1);
+            RoomRealtimeSnapshotEvent event = publisher.events.getFirst();
+            assertThat(event.roomCode()).isEqualTo(room.getCode());
+            assertThat(event.room().progress().currentRound()).isEqualTo(1);
+            assertThat(event.room().progress().currentAuctionRoundEndsAt()).isEqualTo(CREATED_AT.plusSeconds(PICK_BAN_TIME));
+            assertThat(taskScheduler.scheduledInstants()).isEmpty();
+
+            List<TransactionSynchronization> synchronizations = TransactionSynchronizationManager.getSynchronizations();
+            TransactionSynchronizationManager.clearSynchronization();
+            synchronizations.forEach(TransactionSynchronization::afterCommit);
+        } finally {
+            if (TransactionSynchronizationManager.isSynchronizationActive()) {
+                TransactionSynchronizationManager.clearSynchronization();
+            }
+        }
+
+        assertThat(taskScheduler.scheduledInstants()).containsExactly(CREATED_AT.plusSeconds(PICK_BAN_TIME));
+    }
+
+    @Test
     void start는_optimistic_lock을_room_conflict로_번역한다() {
         Room room = waitingAuctionRoom();
         room.join(new TeamLeaderId(GUEST_ID), "게스트", GUEST_ACTION_TOKEN);
@@ -287,11 +333,57 @@ class RoomAuctionTest {
                     emptyAuctionScheduleReader(),
                     Clock.fixed(CREATED_AT, ZoneOffset.UTC)
                 ),
+                noopRoomRealtimePublisher(),
                 Clock.fixed(CREATED_AT, ZoneOffset.UTC)
             );
 
         assertThatThrownBy(() -> startRoom.start(room.getCode(), HOST_ACTION_TOKEN))
             .isInstanceOfSatisfying(CoreException.class, ex -> assertRoomError(ex, RoomErrorType.ROOM_CONCURRENT_MODIFICATION));
+    }
+
+    @Test
+    void placeBid는_저장후_realtime_publish하고_deadline_scheduling은_afterCommit에_유지한다() {
+        Room room = startedAuctionRoom();
+        InMemoryRooms rooms = new InMemoryRooms(room);
+        RecordingRoomRealtimePublisher publisher = new RecordingRoomRealtimePublisher();
+        FakeTaskScheduler taskScheduler = new FakeTaskScheduler();
+        PlaceBid placeBid =
+            new PlaceBid(
+                rooms,
+                new RoomActionAuthorizer(),
+                new RoomAuctionDeadlineScheduler(
+                    taskScheduler,
+                    unsupportedSettleAuction(),
+                    emptyAuctionScheduleReader(),
+                    Clock.fixed(CREATED_AT, ZoneOffset.UTC)
+                ),
+                publisher,
+                Clock.fixed(CREATED_AT.plusSeconds(1), ZoneOffset.UTC)
+            );
+
+        TransactionSynchronizationManager.initSynchronization();
+        try {
+            RoomBid bid = placeBid.place(room.getCode(), HOST_ACTION_TOKEN, 100);
+
+            assertThat(bid.amount()).isEqualTo(100);
+            assertThat(publisher.events).hasSize(1);
+            RoomRealtimeSnapshotEvent event = publisher.events.getFirst();
+            assertThat(event.roomCode()).isEqualTo(room.getCode());
+            assertThat(event.room().progress().currentRound()).isEqualTo(1);
+            assertThat(event.room().progress().highestBidAmount()).isEqualTo(100);
+            assertThat(event.room().progress().bidCount()).isEqualTo(1);
+            assertThat(taskScheduler.scheduledInstants()).isEmpty();
+
+            List<TransactionSynchronization> synchronizations = TransactionSynchronizationManager.getSynchronizations();
+            TransactionSynchronizationManager.clearSynchronization();
+            synchronizations.forEach(TransactionSynchronization::afterCommit);
+        } finally {
+            if (TransactionSynchronizationManager.isSynchronizationActive()) {
+                TransactionSynchronizationManager.clearSynchronization();
+            }
+        }
+
+        assertThat(taskScheduler.scheduledInstants()).containsExactly(CREATED_AT.plusSeconds(PICK_BAN_TIME));
     }
 
     @Test
@@ -309,6 +401,7 @@ class RoomAuctionTest {
                     emptyAuctionScheduleReader(),
                     Clock.fixed(CREATED_AT, ZoneOffset.UTC)
                 ),
+                noopRoomRealtimePublisher(),
                 Clock.fixed(CREATED_AT.plusSeconds(1), ZoneOffset.UTC)
             );
 
@@ -360,6 +453,10 @@ class RoomAuctionTest {
 
     private static void assertRoomError(CoreException ex, RoomErrorType expected) {
         assertThat(ex.getError()).isEqualTo(expected);
+    }
+
+    private static RoomRealtimePublisher noopRoomRealtimePublisher() {
+        return new NoopRoomRealtimePublisher();
     }
 
     private static void setCurrentAuctionRoundEndsAt(Room room, Instant value) throws Exception {
@@ -556,11 +653,6 @@ class RoomAuctionTest {
         return List::of;
     }
 
-    private static RoomRealtimePublisher noopRoomRealtimePublisher() {
-        return room -> {
-        };
-    }
-
     private static final class InMemoryRooms implements Rooms {
         private Room room;
         private RuntimeException saveFailure;
@@ -597,6 +689,15 @@ class RoomAuctionTest {
         @Override
         public Optional<Room> findByCode(String code) {
             return Optional.ofNullable(room).filter(it -> it.getCode().equals(code));
+        }
+    }
+
+    private static final class RecordingRoomRealtimePublisher implements RoomRealtimePublisher {
+        private final java.util.ArrayList<RoomRealtimeSnapshotEvent> events = new java.util.ArrayList<>();
+
+        @Override
+        public void publishAfterCommit(Room room) {
+            events.add(RoomRealtimeSnapshotEvent.from(room, CREATED_AT));
         }
     }
 }
