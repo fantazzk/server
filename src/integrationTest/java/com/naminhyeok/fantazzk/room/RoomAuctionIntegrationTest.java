@@ -160,36 +160,6 @@ class RoomAuctionIntegrationTest {
     }
 
     @Test
-    void legacy_null_deadline_방에_입찰하면_deadline을_복구하고_commit후_재예약한다() {
-        var template =
-            templateFixture.createAuctionTemplateId(
-                "경매전",
-                2,
-                2,
-                300,
-                List.of(
-                    new TemplateFixture.PlayerSpec("선수1", "TOP"),
-                    new TemplateFixture.PlayerSpec("선수2", "JUNGLE")
-                )
-            );
-
-        Room created = createRoom.create(template, "호스트");
-        RoomTeamLeader guest = joinRoom.join(created.getCode(), "게스트");
-        startRoom.start(created.getCode(), created.getLeaders().getFirst().getActionToken());
-
-        Room room = rooms.findByCode(created.getCode()).orElseThrow();
-        setCurrentAuctionRoundEndsAt(room, null);
-        rooms.saveAndFlush(room);
-        recordingTaskScheduler.clear();
-
-        placeBid.place(created.getCode(), guest.getActionToken(), 150);
-
-        Room reloaded = rooms.findByCode(created.getCode()).orElseThrow();
-        assertThat(reloaded.getCurrentAuctionRoundEndsAt()).isEqualTo(Instant.parse("2000-01-01T00:00:45Z"));
-        assertThat(recordingTaskScheduler.scheduledInstants()).containsExactly(Instant.parse("2000-01-01T00:00:45Z"));
-    }
-
-    @Test
     void start_rollback되면_deadline_task는_등록되지_않는다() {
         var template =
             templateFixture.createAuctionTemplateId(

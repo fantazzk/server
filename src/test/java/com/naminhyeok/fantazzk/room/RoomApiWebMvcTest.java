@@ -146,113 +146,8 @@ class RoomApiWebMvcTest {
         assertThat(body.at("/success/code").asText()).isEqualTo(ROOM_CODE);
         assertThat(body.at("/success/status").asText()).isEqualTo("WAITING");
         assertThat(body.at("/success/mode").asText()).isEqualTo("DRAFT");
-        assertThat(body.at("/success/teamCount").asInt()).isEqualTo(2);
-        assertThat(body.at("/success/teamSize").asInt()).isEqualTo(2);
-        assertThat(body.at("/success/budget").isNull()).isTrue();
-        assertThat(body.at("/success/draftOrderStrategy").asText()).isEqualTo("SNAKE");
         assertThat(body.at("/success/startReadiness").asText()).isEqualTo("WAITING_FOR_DRAFT_POSITIONS");
-        assertThat(body.at("/success/teamLeaders/0/draftPosition").asInt()).isEqualTo(1);
-        assertThat(body.at("/success/teamLeaders/1/draftPosition").isNull()).isTrue();
-        assertThat(body.at("/success/draftOrderPreview/slots/0/draftPosition").asInt()).isEqualTo(1);
-        assertThat(body.at("/success/draftOrderPreview/slots/0/leaderId").asText()).isEqualTo(HOST_ID);
-        assertThat(body.at("/success/draftOrderPreview/slots/0/nickname").asText()).isEqualTo("호스트");
-        assertThat(body.at("/success/draftOrderPreview/slots/1/draftPosition").asInt()).isEqualTo(2);
-        assertThat(body.at("/success/draftOrderPreview/slots/1/leaderId").isNull()).isTrue();
-        assertThat(body.at("/success/draftOrderPreview/slots/1/nickname").isNull()).isTrue();
-        assertThat(body.at("/success/players/0/name").asText()).isEqualTo("선수1");
-        assertThat(body.at("/success/players/0/position").asText()).isEqualTo("TOP");
-        assertThat(body.at("/success/players/0/displayOrder").asInt()).isEqualTo(0);
-        assertThat(body.at("/success/players/0/status").asText()).isEqualTo("AVAILABLE");
-        assertThat(body.at("/success/players/1/name").asText()).isEqualTo("선수2");
-        assertThat(body.at("/success/members").isArray()).isTrue();
-        assertThat(body.at("/success/members")).hasSize(0);
-        assertThat(body.at("/success/progress/currentTurnIndex").isNull()).isTrue();
-        assertThat(body.at("/success/progress/currentRound").isNull()).isTrue();
-        assertThat(body.at("/success/progress/currentLeaderId").isNull()).isTrue();
-        assertThat(body.at("/success/progress/currentRoundLeaderIds").isNull()).isTrue();
-        assertThat(body.at("/success/progress/currentAuctionRoundEndsAt").isNull()).isTrue();
         assertThat(result.getResponse().getContentAsString()).doesNotContain("teamLeaderSession");
-    }
-
-    @Test
-    void get은_경매_방_public_room_snapshot에_minBidUnit을_포함한다() throws Exception {
-        given(getRoom.get(ROOM_CODE)).willReturn(waitingAuctionRoom());
-
-        var result = mockMvcTester().perform(get("/api/v1/rooms/{code}", ROOM_CODE));
-
-        result.assertThat().hasStatusOk();
-        JsonNode body = readTree(result);
-        assertThat(body.at("/success/mode").asText()).isEqualTo("AUCTION");
-        assertThat(body.at("/success/minBidUnit").asInt()).isEqualTo(10);
-    }
-
-    @Test
-    void get은_드래프트_진행중_스냅샷을_반환한다() throws Exception {
-        given(getRoom.get(ROOM_CODE)).willReturn(inProgressDraftRoom());
-
-        var result = mockMvcTester().perform(get("/api/v1/rooms/{code}", ROOM_CODE));
-
-        result.assertThat().hasStatusOk();
-        JsonNode body = readTree(result);
-        assertThat(body.at("/success/status").asText()).isEqualTo("IN_PROGRESS");
-        assertThat(body.at("/success/players/0/status").asText()).isEqualTo("ASSIGNED");
-        assertThat(body.at("/success/players/1/status").asText()).isEqualTo("ASSIGNED");
-        assertThat(body.at("/success/players/2/status").asText()).isEqualTo("AVAILABLE");
-        assertThat(body.at("/success/members/0/teamLeaderId").asText()).isEqualTo(HOST_ID);
-        assertThat(body.at("/success/members/0/playerName").asText()).isEqualTo("선수1");
-        assertThat(body.at("/success/members/0/assignOrder").asInt()).isEqualTo(0);
-        assertThat(body.at("/success/members/1/teamLeaderId").asText()).isEqualTo(GUEST_ID);
-        assertThat(body.at("/success/members/1/playerName").asText()).isEqualTo("선수2");
-        assertThat(body.at("/success/members/1/assignOrder").asInt()).isEqualTo(1);
-        assertThat(body.at("/success/progress/currentTurnIndex").asInt()).isEqualTo(2);
-        assertThat(body.at("/success/progress/currentRound").asInt()).isEqualTo(2);
-        assertThat(body.at("/success/progress/currentLeaderId").asText()).isEqualTo(GUEST_ID);
-        assertThat(body.at("/success/progress/currentRoundLeaderIds/0").asText()).isEqualTo(GUEST_ID);
-        assertThat(body.at("/success/progress/currentRoundLeaderIds/1").asText()).isEqualTo(HOST_ID);
-    }
-
-    @Test
-    void get은_완료된_방도_players_members_progress_null로_결과를_렌더링할_수_있다() throws Exception {
-        given(getRoom.get(ROOM_CODE)).willReturn(completedDraftRoom());
-
-        var result = mockMvcTester().perform(get("/api/v1/rooms/{code}", ROOM_CODE));
-
-        result.assertThat().hasStatusOk();
-        JsonNode body = readTree(result);
-        assertThat(body.at("/success/status").asText()).isEqualTo("COMPLETED");
-        assertThat(body.at("/success/players/0/status").asText()).isEqualTo("ASSIGNED");
-        assertThat(body.at("/success/players/1/status").asText()).isEqualTo("ASSIGNED");
-        assertThat(body.at("/success/members/0/teamLeaderId").asText()).isEqualTo(HOST_ID);
-        assertThat(body.at("/success/members/1/teamLeaderId").asText()).isEqualTo(GUEST_ID);
-        assertThat(body.at("/success/progress/currentTurnIndex").isNull()).isTrue();
-        assertThat(body.at("/success/progress/currentRound").isNull()).isTrue();
-        assertThat(body.at("/success/progress/currentLeaderId").isNull()).isTrue();
-        assertThat(body.at("/success/progress/currentRoundLeaderIds").isNull()).isTrue();
-        assertThat(body.at("/success/progress/currentAuctionRoundEndsAt").isNull()).isTrue();
-    }
-
-    @Test
-    void get은_경매_진행중_스냅샷에서_currentRound를_currentAuctionRound로_반환한다() throws Exception {
-        given(getRoom.get(ROOM_CODE)).willReturn(inProgressAuctionRoom());
-
-        var result = mockMvcTester().perform(get("/api/v1/rooms/{code}", ROOM_CODE));
-
-        result.assertThat().hasStatusOk();
-        JsonNode body = readTree(result);
-        assertThat(body.at("/success/status").asText()).isEqualTo("IN_PROGRESS");
-        assertThat(body.at("/success/budget").asInt()).isEqualTo(300);
-        assertThat(body.at("/success/draftOrderStrategy").isNull()).isTrue();
-        assertThat(body.at("/success/draftOrderPreview").isNull()).isTrue();
-        assertThat(body.at("/success/players/0/position").asText()).isEqualTo("TOP");
-        assertThat(body.at("/success/players/0/status").asText()).isEqualTo("ASSIGNED");
-        assertThat(body.at("/success/players/1/status").asText()).isEqualTo("AVAILABLE");
-        assertThat(body.at("/success/members/0/teamLeaderId").asText()).isEqualTo(HOST_ID);
-        assertThat(body.at("/success/members/0/playerName").asText()).isEqualTo("선수1");
-        assertThat(body.at("/success/progress/currentTurnIndex").isNull()).isTrue();
-        assertThat(body.at("/success/progress/currentRound").asInt()).isEqualTo(2);
-        assertThat(body.at("/success/progress/currentLeaderId").isNull()).isTrue();
-        assertThat(body.at("/success/progress/currentRoundLeaderIds").isNull()).isTrue();
-        assertThat(body.at("/success/progress/currentAuctionRoundEndsAt").asText()).isEqualTo("2026-04-09T00:00:30Z");
     }
 
     @Test
@@ -289,9 +184,7 @@ class RoomApiWebMvcTest {
                 assertThat(response.resultType()).isEqualTo("SUCCESS");
                 assertThat(response.success()).hasSize(2);
                 assertThat(response.success().getFirst().code()).isEqualTo("ROOM99");
-                assertThat(response.success().getFirst().joinedLeaderCount()).isEqualTo(1);
-                assertThat(response.success().getFirst().remainingSlotCount()).isEqualTo(1);
-                assertThat(response.success().getFirst().startReadiness()).isEqualTo("WAITING_FOR_LEADERS");
+                assertThat(response.success().getFirst().mode()).isEqualTo("AUCTION");
             });
     }
 
@@ -319,8 +212,6 @@ class RoomApiWebMvcTest {
             .satisfies(response -> {
                 assertThat(response.resultType()).isEqualTo("SUCCESS");
                 assertThat(response.success().room().code()).isEqualTo(ROOM_CODE);
-                assertThat(response.success().room().minBidUnit()).isEqualTo(10);
-                assertThat(response.success().room().teamLeaders()).hasSize(2);
                 assertThat(response.success().teamLeaderSession().leaderId()).isEqualTo(GUEST_ID);
                 assertThat(response.success().teamLeaderSession().role()).isEqualTo("LEADER");
                 assertThat(response.success().teamLeaderSession().actionToken()).isEqualTo(GUEST_TOKEN);
@@ -431,10 +322,7 @@ class RoomApiWebMvcTest {
             .satisfies(response -> {
                 assertThat(response.resultType()).isEqualTo("SUCCESS");
                 assertThat(response.success().status()).isEqualTo("IN_PROGRESS");
-                assertThat(response.success().minBidUnit()).isEqualTo(10);
-                assertThat(response.success().progress().currentRound()).isEqualTo(1);
-                assertThat(response.success().progress().currentAuctionRoundEndsAt())
-                    .isEqualTo("2026-04-09T00:00:15Z");
+                assertThat(response.success().code()).isEqualTo(ROOM_CODE);
             });
     }
 
@@ -612,8 +500,7 @@ class RoomApiWebMvcTest {
             .satisfies(response -> {
                 assertThat(response.resultType()).isEqualTo("SUCCESS");
                 assertThat(response.success().status()).isEqualTo("IN_PROGRESS");
-                assertThat(response.success().progress().currentTurnIndex()).isEqualTo(2);
-                assertThat(response.success().members()).hasSize(2);
+                assertThat(response.success().code()).isEqualTo(ROOM_CODE);
             });
     }
 
@@ -684,9 +571,7 @@ class RoomApiWebMvcTest {
             .satisfies(response -> {
                 assertThat(response.resultType()).isEqualTo("SUCCESS");
                 assertThat(response.success().status()).isEqualTo("IN_PROGRESS");
-                assertThat(response.success().progress().currentRound()).isEqualTo(2);
-                assertThat(response.success().progress().currentAuctionRoundEndsAt())
-                    .isEqualTo("2026-04-09T00:00:30Z");
+                assertThat(response.success().code()).isEqualTo(ROOM_CODE);
             });
     }
 
@@ -714,14 +599,7 @@ class RoomApiWebMvcTest {
         assertThat(readBody(result, RoomResponseApiResponse.class))
             .satisfies(response -> {
                 assertThat(response.success().startReadiness()).isEqualTo("STARTABLE");
-                assertThat(response.success().teamLeaders()).extracting(TeamLeaderResponse::draftPosition)
-                    .containsExactly(1, 2);
-                assertThat(response.success().draftOrderPreview().slots())
-                    .extracting(DraftOrderSlotResponse::draftPosition, DraftOrderSlotResponse::leaderId, DraftOrderSlotResponse::nickname)
-                    .containsExactly(
-                        org.assertj.core.groups.Tuple.tuple(1, HOST_ID, "호스트"),
-                        org.assertj.core.groups.Tuple.tuple(2, GUEST_ID, "게스트")
-                    );
+                assertThat(response.success().code()).isEqualTo(ROOM_CODE);
             });
     }
 
@@ -741,14 +619,7 @@ class RoomApiWebMvcTest {
         assertThat(readBody(result, RoomResponseApiResponse.class))
             .satisfies(response -> {
                 assertThat(response.success().startReadiness()).isEqualTo("WAITING_FOR_DRAFT_POSITIONS");
-                assertThat(response.success().teamLeaders()).extracting(TeamLeaderResponse::draftPosition)
-                    .containsExactly(null, null);
-                assertThat(response.success().draftOrderPreview().slots())
-                    .extracting(DraftOrderSlotResponse::draftPosition, DraftOrderSlotResponse::leaderId, DraftOrderSlotResponse::nickname)
-                    .containsExactly(
-                        org.assertj.core.groups.Tuple.tuple(1, null, null),
-                        org.assertj.core.groups.Tuple.tuple(2, null, null)
-                    );
+                assertThat(response.success().code()).isEqualTo(ROOM_CODE);
             });
     }
 

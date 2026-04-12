@@ -26,9 +26,6 @@ class SettleAuctionAttempt {
     Room settleIfDue(String code) {
         Instant now = Instant.now(clock);
         Room room = rooms.findByCode(code).orElseThrow(() -> CoreException.of(RoomErrorType.ROOM_NOT_FOUND));
-        if (room.repairMissingAuctionDeadline(now)) {
-            return rooms.saveAndFlush(room);
-        }
         if (!isDue(room, now)) {
             return room;
         }

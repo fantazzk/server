@@ -273,14 +273,14 @@ class Room implements AggregateRoot<Room, RoomId> {
                 .orElse(null);
 
         if (highestBidAmount == null) {
-            if (minBidUnit != null && amount < minBidUnit) {
+            if (amount < minBidUnit) {
                 throw CoreException.of(RoomErrorType.ROOM_BID_MIN_UNIT_NOT_MET);
             }
         } else {
             if (amount <= highestBidAmount) {
                 throw CoreException.of(RoomErrorType.ROOM_BID_TOO_LOW);
             }
-            if (minBidUnit != null && amount < highestBidAmount + minBidUnit) {
+            if (amount < highestBidAmount + minBidUnit) {
                 throw CoreException.of(RoomErrorType.ROOM_BID_MIN_UNIT_NOT_MET);
             }
         }
@@ -296,19 +296,7 @@ class Room implements AggregateRoot<Room, RoomId> {
             );
         RoomBid bid = new RoomBid(currentAuctionRound, nextSequence, teamLeaderId, amount);
         bids.add(bid);
-        repairMissingAuctionDeadline(now);
         return bid;
-    }
-
-    boolean repairMissingAuctionDeadline(Instant now) {
-        if (status != RoomStatus.IN_PROGRESS || mode != RoomMode.AUCTION || currentAuctionRound == null) {
-            return false;
-        }
-        if (currentAuctionRoundEndsAt != null) {
-            return false;
-        }
-        currentAuctionRoundEndsAt = now.plusSeconds(pickBanTime);
-        return true;
     }
 
     public AuctionSettlement settleAuction() {
@@ -326,7 +314,7 @@ class Room implements AggregateRoot<Room, RoomId> {
             throw RoomStateInvalidException.auctionRoundMissing();
         }
         if (currentAuctionRoundEndsAt == null) {
-            currentAuctionRoundEndsAt = now;
+            throw RoomStateInvalidException.auctionRoundMissing();
         }
         if (now.isBefore(currentAuctionRoundEndsAt)) {
             throw CoreException.of(RoomErrorType.ROOM_AUCTION_ROUND_NOT_ENDED);

@@ -86,27 +86,6 @@ class RoomAuctionDeadlineSchedulerTest {
     }
 
     @Test
-    void 애플리케이션_시작시_null_deadline_legacy_room도_복구_대상에_포함한다() {
-        FakeTaskScheduler taskScheduler = new FakeTaskScheduler();
-        SettleAuction settleAuction = mock(SettleAuction.class);
-        AuctionScheduleReader scheduleReader = new RecordingRooms(schedule("LEGACY01", null));
-        given(settleAuction.settleIfDue("LEGACY01"))
-            .willReturn(auctionRoomWithDeadline("LEGACY01", Instant.parse("2026-04-09T00:00:25Z")));
-        RoomAuctionDeadlineScheduler scheduler =
-            new RoomAuctionDeadlineScheduler(
-                taskScheduler,
-                settleAuction,
-                scheduleReader,
-                Clock.fixed(NOW, ZoneOffset.UTC)
-            );
-
-        scheduler.catchUpAndReschedule();
-
-        verify(settleAuction).settleIfDue("LEGACY01");
-        assertThat(taskScheduler.activeScheduledInstants()).containsExactly(Instant.parse("2026-04-09T00:00:25Z"));
-    }
-
-    @Test
     void 애플리케이션_시작시_손상된_due_room이_있어도_뒤따르는_정상_room은_계속_처리한다() {
         FakeTaskScheduler taskScheduler = new FakeTaskScheduler();
         SettleAuction settleAuction = mock(SettleAuction.class);
@@ -149,7 +128,7 @@ class RoomAuctionDeadlineSchedulerTest {
                 List.of(
                     schedule("FUTURE01", Instant.parse("2026-04-09T00:00:15Z")),
                     schedule("DUE01", Instant.parse("2026-04-09T00:00:05Z")),
-                    schedule("LEGACY01", null)
+                    schedule("LEGACY01", Instant.parse("2026-04-09T00:00:01Z"))
                 )
             );
         given(settleAuction.settleIfDue("LEGACY01")).willReturn(auctionRoomWithDeadline("LEGACY01", Instant.parse("2026-04-09T00:00:20Z")));
