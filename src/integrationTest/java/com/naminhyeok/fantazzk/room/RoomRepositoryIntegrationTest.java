@@ -70,6 +70,7 @@ class RoomRepositoryIntegrationTest {
         assertThat(reloaded.getCode()).isEqualTo("ROOM01");
         assertThat(reloaded.getCreatedAt()).isEqualTo(CREATED_AT);
         assertThat(reloaded.getPickBanTime()).isEqualTo(30);
+        assertThat(reloaded.getMinBidUnit()).isNull();
         assertThat(reloaded.getPlayers()).extracting(RoomPlayer::getId)
             .containsExactly(new RoomPlayerId(0), new RoomPlayerId(1));
         assertThat(reloaded.getPlayers().stream().map(RoomPlayer::getName)).containsExactly("선수1", "선수2");
@@ -114,6 +115,40 @@ class RoomRepositoryIntegrationTest {
         Room reloaded = rooms.findById(saved.getId()).orElseThrow();
 
         assertThat(reloaded.getCreatedAt()).isEqualTo(CREATED_AT);
+    }
+
+    @Test
+    @Transactional
+    void 경매_방의_minBidUnit을_저장하고_다시_읽는다() {
+        Room room =
+            Room.createFromTemplate(
+                "ROOM04",
+                new TeamLeaderId("host-1"),
+                "호스트",
+                "host-action-token",
+                new RoomTemplateSpec(
+                    RoomTemplateSpec.Mode.AUCTION,
+                    2,
+                    2,
+                    300,
+                    30,
+                    10,
+                    null,
+                    List.of(
+                        new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
+                        new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
+                    )
+                ),
+                CREATED_AT
+            );
+
+        Room saved = rooms.save(room);
+        entityManager.flush();
+        entityManager.clear();
+
+        Room reloaded = rooms.findById(saved.getId()).orElseThrow();
+
+        assertThat(reloaded.getMinBidUnit()).isEqualTo(10);
     }
 
     @Test
