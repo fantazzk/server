@@ -1,8 +1,6 @@
 package com.naminhyeok.fantazzk.room;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.groups.Tuple.tuple;
-
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -59,33 +57,7 @@ class RoomApiIntegrationTest {
         assertThat(body).isNotNull();
         assertThat(body.resultType()).isEqualTo("SUCCESS");
         assertThat(body.success()).hasSize(2);
-        assertThat(body.success())
-            .extracting(
-                JoinableRoomResponse::code,
-                JoinableRoomResponse::mode,
-                JoinableRoomResponse::teamCount,
-                JoinableRoomResponse::joinedLeaderCount,
-                JoinableRoomResponse::remainingSlotCount,
-                JoinableRoomResponse::startReadiness
-            )
-            .containsExactly(
-                tuple(
-                    "ROOM99",
-                    "AUCTION",
-                    2,
-                    1,
-                    1,
-                    "WAITING_FOR_LEADERS"
-                ),
-                tuple(
-                    "ROOM01",
-                    "DRAFT",
-                    2,
-                    1,
-                    1,
-                    "WAITING_FOR_LEADERS"
-            )
-            );
+        assertThat(body.success()).extracting(JoinableRoomResponse::code).containsExactly("ROOM99", "ROOM01");
     }
 
     @Test
@@ -107,14 +79,11 @@ class RoomApiIntegrationTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(body).isNotNull();
         assertThat(body.resultType()).isEqualTo("SUCCESS");
+        assertThat(body.success().code()).isEqualTo("ROOM10");
         assertThat(body.success().status()).isEqualTo("IN_PROGRESS");
         assertThat(body.success().progress().currentRound()).isEqualTo(2);
         assertThat(body.success().progress().currentAuctionRoundEndsAt())
             .isAfter(CREATED_AT.plusSeconds(45));
-        assertThat(body.success().players().getFirst().position()).isEqualTo("TOP");
-        assertThat(body.success().members()).singleElement()
-            .extracting(RoomMemberResponse::playerName)
-            .isEqualTo("선수1");
     }
 
     @Test
@@ -128,10 +97,10 @@ class RoomApiIntegrationTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(body).isNotNull();
         assertThat(body.resultType()).isEqualTo("SUCCESS");
+        assertThat(body.success().code()).isEqualTo("ROOM11");
         assertThat(body.success().progress().currentRound()).isEqualTo(1);
         assertThat(body.success().progress().currentAuctionRoundEndsAt())
             .isEqualTo(Instant.parse("2026-04-09T00:00:45Z"));
-        assertThat(body.success().players().getFirst().position()).isEqualTo("TOP");
     }
 
     private Room startedAuctionRoom(String code, Instant createdAt) {

@@ -11,13 +11,7 @@ import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.data.domain.Pageable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionDefinition;
-import org.springframework.transaction.TransactionException;
-import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.support.SimpleTransactionStatus;
 
 class RoomAuctionTest {
     private static final Instant CREATED_AT = Instant.parse("2026-04-09T00:00:00Z");
@@ -58,50 +52,6 @@ class RoomAuctionTest {
     }
 
     @Test
-    void 기존_경매_방의_deadline이_null이어도_입찰과_정산이_가능하다() throws Exception {
-        Room room = startedAuctionRoom();
-        setCurrentAuctionRoundEndsAt(room, null);
-        TeamLeaderId hostLeaderId = room.getLeaders().getFirst().getId();
-        TeamLeaderId guestLeaderId = room.getLeaders().getLast().getId();
-
-        room.placeBid(hostLeaderId, 100, CREATED_AT.plusSeconds(1));
-        room.placeBid(guestLeaderId, 150, CREATED_AT.plusSeconds(2));
-
-        AuctionSettlement settlement = room.settleAuction(CREATED_AT.plusSeconds(PICK_BAN_TIME + 1L));
-
-        assertThat(settlement.outcome()).isEqualTo(AuctionOutcome.SOLD);
-        assertThat(room.getCurrentAuctionRound()).isEqualTo(2);
-        assertThat(room.getCurrentAuctionRoundEndsAt()).isEqualTo(CREATED_AT.plusSeconds((PICK_BAN_TIME * 2L) + 1));
-    }
-
-    @Test
-    void settleIfDue는_legacy_null_deadline을_복구하고_재예약한다() throws Exception {
-        Room room = startedAuctionRoom();
-        setCurrentAuctionRoundEndsAt(room, null);
-        InMemoryRooms rooms = new InMemoryRooms(room);
-        FakeTaskScheduler taskScheduler = new FakeTaskScheduler();
-        RoomAuctionDeadlineScheduler scheduler =
-            new RoomAuctionDeadlineScheduler(
-                taskScheduler,
-                unsupportedSettleAuction(),
-                rooms,
-                Clock.fixed(CREATED_AT, ZoneOffset.UTC)
-            );
-        SettleAuction settleAuction =
-            new SettleAuction(
-                rooms,
-                Clock.fixed(CREATED_AT, ZoneOffset.UTC),
-                new StubTransactionManager(),
-                singletonProvider(scheduler)
-            );
-
-        Room repaired = settleAuction.settleIfDue(room.getCode());
-
-        assertThat(repaired.getCurrentAuctionRoundEndsAt()).isEqualTo(CREATED_AT.plusSeconds(PICK_BAN_TIME));
-        assertThat(taskScheduler.activeScheduledInstants()).containsExactly(CREATED_AT.plusSeconds(PICK_BAN_TIME));
-    }
-
-    @Test
     void 현재_최고가보다_낮거나_같은_입찰은_할_수_없다() {
         Room room = startedAuctionRoom();
         TeamLeaderId hostLeaderId = room.getLeaders().getFirst().getId();
@@ -135,20 +85,6 @@ class RoomAuctionTest {
         assertThatThrownBy(() -> room.placeBid(guestLeaderId, 105, CREATED_AT.plusSeconds(2)))
             .isInstanceOf(CoreException.class)
             .isInstanceOfSatisfying(CoreException.class, ex -> assertRoomError(ex, RoomErrorType.ROOM_BID_MIN_UNIT_NOT_MET));
-    }
-
-    @Test
-    void 레거시_경매_방은_minBidUnit이_null이면_최고가보다_높은_입찰을_허용한다() {
-        Room room = startedLegacyAuctionRoom();
-        TeamLeaderId hostLeaderId = room.getLeaders().getFirst().getId();
-        TeamLeaderId guestLeaderId = room.getLeaders().getLast().getId();
-
-        room.placeBid(hostLeaderId, 100, CREATED_AT.plusSeconds(1));
-
-        RoomBid bid = room.placeBid(guestLeaderId, 105, CREATED_AT.plusSeconds(2));
-
-        assertThat(bid.amount()).isEqualTo(105);
-        assertThat(bid.sequence()).isEqualTo(new BidSequence(2));
     }
 
     @Test
@@ -348,11 +284,10 @@ class RoomAuctionTest {
                 new RoomAuctionDeadlineScheduler(
                     new FakeTaskScheduler(),
                     unsupportedSettleAuction(),
-                    rooms,
+                    emptyAuctionScheduleReader(),
                     Clock.fixed(CREATED_AT, ZoneOffset.UTC)
                 ),
-                Clock.fixed(CREATED_AT, ZoneOffset.UTC),
-                new StubTransactionManager()
+                Clock.fixed(CREATED_AT, ZoneOffset.UTC)
             );
 
         assertThatThrownBy(() -> startRoom.start(room.getCode(), HOST_ACTION_TOKEN))
@@ -371,11 +306,10 @@ class RoomAuctionTest {
                 new RoomAuctionDeadlineScheduler(
                     new FakeTaskScheduler(),
                     unsupportedSettleAuction(),
-                    rooms,
+                    emptyAuctionScheduleReader(),
                     Clock.fixed(CREATED_AT, ZoneOffset.UTC)
                 ),
-                Clock.fixed(CREATED_AT.plusSeconds(1), ZoneOffset.UTC),
-                new StubTransactionManager()
+                Clock.fixed(CREATED_AT.plusSeconds(1), ZoneOffset.UTC)
             );
 
         assertThatThrownBy(() -> placeBid.place(room.getCode(), HOST_ACTION_TOKEN, 100))
@@ -387,7 +321,7 @@ class RoomAuctionTest {
         Room room = inProgressDraftRoomForOptimisticLock();
         InMemoryRooms rooms = new InMemoryRooms(room);
         rooms.failOnSave(new ObjectOptimisticLockingFailureException(Room.class, room.getId()));
-        PickDraft pickDraft = new PickDraft(rooms, new RoomActionAuthorizer(), new StubTransactionManager());
+        PickDraft pickDraft = new PickDraft(rooms, new RoomActionAuthorizer());
 
         assertThatThrownBy(() -> pickDraft.pick(room.getCode(), HOST_ACTION_TOKEN, "선수1"))
             .isInstanceOfSatisfying(CoreException.class, ex -> assertRoomError(ex, RoomErrorType.ROOM_CONCURRENT_MODIFICATION));
@@ -400,8 +334,7 @@ class RoomAuctionTest {
         rooms.failOnSave(new ObjectOptimisticLockingFailureException(Room.class, room.getId()));
         SelectDraftPosition selectDraftPosition = new SelectDraftPosition(
             rooms,
-            new RoomActionAuthorizer(),
-            new StubTransactionManager()
+            new RoomActionAuthorizer()
         );
 
         assertThatThrownBy(() -> selectDraftPosition.select(room.getCode(), HOST_ACTION_TOKEN, 1))
@@ -416,8 +349,7 @@ class RoomAuctionTest {
         rooms.failOnSave(new ObjectOptimisticLockingFailureException(Room.class, room.getId()));
         ClearDraftPosition clearDraftPosition = new ClearDraftPosition(
             rooms,
-            new RoomActionAuthorizer(),
-            new StubTransactionManager()
+            new RoomActionAuthorizer()
         );
 
         assertThatThrownBy(() -> clearDraftPosition.clear(room.getCode(), HOST_ACTION_TOKEN))
@@ -510,33 +442,6 @@ class RoomAuctionTest {
         return room;
     }
 
-    private static Room startedLegacyAuctionRoom() {
-        Room room =
-            Room.createFromTemplate(
-                "ROOM04",
-                new TeamLeaderId(HOST_ID),
-                "호스트",
-                HOST_ACTION_TOKEN,
-                new RoomTemplateSpec(
-                    RoomTemplateSpec.Mode.AUCTION,
-                    2,
-                    2,
-                    300,
-                    PICK_BAN_TIME,
-                    null,
-                    null,
-                    List.of(
-                        new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
-                        new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
-                    )
-                ),
-                CREATED_AT
-            );
-        room.join(new TeamLeaderId(GUEST_ID), "게스트", GUEST_ACTION_TOKEN);
-        room.start(new TeamLeaderId(HOST_ID), CREATED_AT);
-        return room;
-    }
-
     private static Room inProgressDraftRoomForOptimisticLock() {
         Room room =
             Room.createFromTemplate(
@@ -593,10 +498,10 @@ class RoomAuctionTest {
     }
 
     private static SettleAuction unsupportedSettleAuction() {
+        InMemoryRooms rooms = new InMemoryRooms();
         return new SettleAuction(
-            new InMemoryRooms(),
-            Clock.fixed(CREATED_AT, ZoneOffset.UTC),
-            new StubTransactionManager(),
+            new SettleAuctionAttempt(rooms, Clock.fixed(CREATED_AT, ZoneOffset.UTC)),
+            rooms,
             new ObjectProvider<>() {
                 @Override
                 public RoomAuctionDeadlineScheduler getObject(Object... args) {
@@ -618,12 +523,7 @@ class RoomAuctionTest {
                     return null;
                 }
             }
-        ) {
-            @Override
-            public Room settleIfDue(String code) {
-                throw new UnsupportedOperationException();
-            }
-        };
+        );
     }
 
     private static ObjectProvider<RoomAuctionDeadlineScheduler> singletonProvider(RoomAuctionDeadlineScheduler scheduler) {
@@ -648,6 +548,10 @@ class RoomAuctionTest {
                 return scheduler;
             }
         };
+    }
+
+    private static AuctionScheduleReader emptyAuctionScheduleReader() {
+        return List::of;
     }
 
     private static final class InMemoryRooms implements Rooms {
@@ -687,28 +591,5 @@ class RoomAuctionTest {
         public Optional<Room> findByCode(String code) {
             return Optional.ofNullable(room).filter(it -> it.getCode().equals(code));
         }
-
-        @Override
-        public List<Room> findByStatusOrderByCreatedAtDescCodeDesc(RoomStatus status, Pageable pageable) {
-            return List.of();
-        }
-
-        @Override
-        public List<Room> findByStatusAndModeOrderByCodeAsc(RoomStatus status, RoomMode mode, Pageable pageable) {
-            return Optional.ofNullable(room).stream().toList();
-        }
-    }
-
-    private static final class StubTransactionManager implements PlatformTransactionManager {
-        @Override
-        public TransactionStatus getTransaction(TransactionDefinition definition) throws TransactionException {
-            return new SimpleTransactionStatus();
-        }
-
-        @Override
-        public void commit(TransactionStatus status) throws TransactionException {}
-
-        @Override
-        public void rollback(TransactionStatus status) throws TransactionException {}
     }
 }

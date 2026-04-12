@@ -11,9 +11,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import org.junit.jupiter.api.Test;
-import org.springframework.data.domain.Pageable;
 import org.mockito.InOrder;
 
 class RoomAuctionDeadlineSchedulerTest {
@@ -23,7 +21,6 @@ class RoomAuctionDeadlineSchedulerTest {
     void schedule는_경매_room_deadline에_맞춰_정산_task를_등록하고_다음_deadline을_재예약한다() {
         FakeTaskScheduler taskScheduler = new FakeTaskScheduler();
         SettleAuction settleAuction = mock(SettleAuction.class);
-        Rooms rooms = mock(Rooms.class);
         Room room = auctionRoomWithDeadline("ROOM01", Instant.parse("2026-04-09T00:00:15Z"));
         Room nextRoundRoom = auctionRoomWithDeadline("ROOM01", Instant.parse("2026-04-09T00:00:30Z"));
         given(settleAuction.settleIfDue("ROOM01")).willReturn(nextRoundRoom);
@@ -31,7 +28,7 @@ class RoomAuctionDeadlineSchedulerTest {
             new RoomAuctionDeadlineScheduler(
                 taskScheduler,
                 settleAuction,
-                rooms,
+                new RecordingRooms(),
                 Clock.fixed(NOW, ZoneOffset.UTC)
             );
 
@@ -49,12 +46,11 @@ class RoomAuctionDeadlineSchedulerTest {
     void schedule는_같은_room의_기존_deadline_예약을_취소하고_새_deadline만_남긴다() {
         FakeTaskScheduler taskScheduler = new FakeTaskScheduler();
         SettleAuction settleAuction = mock(SettleAuction.class);
-        Rooms rooms = mock(Rooms.class);
         RoomAuctionDeadlineScheduler scheduler =
             new RoomAuctionDeadlineScheduler(
                 taskScheduler,
                 settleAuction,
-                rooms,
+                new RecordingRooms(),
                 Clock.fixed(NOW, ZoneOffset.UTC)
             );
 
@@ -69,17 +65,17 @@ class RoomAuctionDeadlineSchedulerTest {
     void 애플리케이션_시작시_due_room은_즉시_catch_up하고_future_deadline은_재예약한다() {
         FakeTaskScheduler taskScheduler = new FakeTaskScheduler();
         SettleAuction settleAuction = mock(SettleAuction.class);
-        RecordingRooms rooms =
+        AuctionScheduleReader scheduleReader =
             new RecordingRooms(
-                auctionRoomWithDeadline("DUE01", Instant.parse("2026-04-09T00:00:05Z")),
-                auctionRoomWithDeadline("FUTURE01", Instant.parse("2026-04-09T00:00:15Z"))
+                schedule("DUE01", Instant.parse("2026-04-09T00:00:05Z")),
+                schedule("FUTURE01", Instant.parse("2026-04-09T00:00:15Z"))
             );
         given(settleAuction.settleIfDue("DUE01")).willReturn(completedAuctionRoom("DUE01"));
         RoomAuctionDeadlineScheduler scheduler =
             new RoomAuctionDeadlineScheduler(
                 taskScheduler,
                 settleAuction,
-                rooms,
+                scheduleReader,
                 Clock.fixed(NOW, ZoneOffset.UTC)
             );
 
@@ -90,36 +86,17 @@ class RoomAuctionDeadlineSchedulerTest {
     }
 
     @Test
-    void 애플리케이션_시작시_null_deadline_legacy_room도_복구_대상에_포함한다() {
-        FakeTaskScheduler taskScheduler = new FakeTaskScheduler();
-        SettleAuction settleAuction = mock(SettleAuction.class);
-        Room legacyRoom = auctionRoomWithDeadline("LEGACY01", Instant.parse("2026-04-09T00:00:15Z"));
-        setCurrentAuctionRoundEndsAt(legacyRoom, null);
-        RecordingRooms rooms = new RecordingRooms(legacyRoom);
-        given(settleAuction.settleIfDue("LEGACY01"))
-            .willReturn(auctionRoomWithDeadline("LEGACY01", Instant.parse("2026-04-09T00:00:25Z")));
-        RoomAuctionDeadlineScheduler scheduler =
-            new RoomAuctionDeadlineScheduler(
-                taskScheduler,
-                settleAuction,
-                rooms,
-                Clock.fixed(NOW, ZoneOffset.UTC)
-            );
-
-        scheduler.catchUpAndReschedule();
-
-        verify(settleAuction).settleIfDue("LEGACY01");
-        assertThat(taskScheduler.activeScheduledInstants()).containsExactly(Instant.parse("2026-04-09T00:00:25Z"));
-    }
-
-    @Test
     void 애플리케이션_시작시_손상된_due_room이_있어도_뒤따르는_정상_room은_계속_처리한다() {
         FakeTaskScheduler taskScheduler = new FakeTaskScheduler();
         SettleAuction settleAuction = mock(SettleAuction.class);
-        Room brokenDueRoom = auctionRoomWithDeadline("BROKEN01", Instant.parse("2026-04-09T00:00:05Z"));
-        Room healthyDueRoom = auctionRoomWithDeadline("DUE02", Instant.parse("2026-04-09T00:00:06Z"));
-        Room futureRoom = auctionRoomWithDeadline("FUTURE01", Instant.parse("2026-04-09T00:00:15Z"));
-        RecordingRooms rooms = new RecordingRooms(List.of(brokenDueRoom, healthyDueRoom, futureRoom));
+        AuctionScheduleReader scheduleReader =
+            new RecordingRooms(
+                List.of(
+                    schedule("BROKEN01", Instant.parse("2026-04-09T00:00:05Z")),
+                    schedule("DUE02", Instant.parse("2026-04-09T00:00:06Z")),
+                    schedule("FUTURE01", Instant.parse("2026-04-09T00:00:15Z"))
+                )
+            );
         given(settleAuction.settleIfDue("BROKEN01")).willThrow(RoomStateInvalidException.auctionRoundMissing());
         given(settleAuction.settleIfDue("DUE02"))
             .willReturn(auctionRoomWithDeadline("DUE02", Instant.parse("2026-04-09T00:00:25Z")));
@@ -127,7 +104,7 @@ class RoomAuctionDeadlineSchedulerTest {
             new RoomAuctionDeadlineScheduler(
                 taskScheduler,
                 settleAuction,
-                rooms,
+                scheduleReader,
                 Clock.fixed(NOW, ZoneOffset.UTC)
             );
 
@@ -146,18 +123,21 @@ class RoomAuctionDeadlineSchedulerTest {
     void 애플리케이션_시작시_schedulable_room은_application_layer_정렬규칙으로_처리한다() {
         FakeTaskScheduler taskScheduler = new FakeTaskScheduler();
         SettleAuction settleAuction = mock(SettleAuction.class);
-        Room legacyRoom = auctionRoomWithDeadline("LEGACY01", Instant.parse("2026-04-09T00:00:25Z"));
-        setCurrentAuctionRoundEndsAt(legacyRoom, null);
-        Room dueRoom = auctionRoomWithDeadline("DUE01", Instant.parse("2026-04-09T00:00:05Z"));
-        Room futureRoom = auctionRoomWithDeadline("FUTURE01", Instant.parse("2026-04-09T00:00:15Z"));
-        RecordingRooms rooms = new RecordingRooms(List.of(futureRoom, dueRoom, legacyRoom));
+        AuctionScheduleReader scheduleReader =
+            new RecordingRooms(
+                List.of(
+                    schedule("FUTURE01", Instant.parse("2026-04-09T00:00:15Z")),
+                    schedule("DUE01", Instant.parse("2026-04-09T00:00:05Z")),
+                    schedule("LEGACY01", Instant.parse("2026-04-09T00:00:01Z"))
+                )
+            );
         given(settleAuction.settleIfDue("LEGACY01")).willReturn(auctionRoomWithDeadline("LEGACY01", Instant.parse("2026-04-09T00:00:20Z")));
         given(settleAuction.settleIfDue("DUE01")).willReturn(completedAuctionRoom("DUE01"));
         RoomAuctionDeadlineScheduler scheduler =
             new RoomAuctionDeadlineScheduler(
                 taskScheduler,
                 settleAuction,
-                rooms,
+                scheduleReader,
                 Clock.fixed(NOW, ZoneOffset.UTC)
             );
 
@@ -177,12 +157,12 @@ class RoomAuctionDeadlineSchedulerTest {
     void 애플리케이션_시작시_첫_페이지를_넘는_future_deadline도_모두_재예약한다() {
         FakeTaskScheduler taskScheduler = new FakeTaskScheduler();
         SettleAuction settleAuction = mock(SettleAuction.class);
-        RecordingRooms rooms = new RecordingRooms(manyFutureRooms(205));
+        AuctionScheduleReader scheduleReader = new RecordingRooms(manyFutureSchedules(205));
         RoomAuctionDeadlineScheduler scheduler =
             new RoomAuctionDeadlineScheduler(
                 taskScheduler,
                 settleAuction,
-                rooms,
+                scheduleReader,
                 Clock.fixed(NOW, ZoneOffset.UTC)
             );
 
@@ -250,64 +230,38 @@ class RoomAuctionDeadlineSchedulerTest {
         }
     }
 
-    private static List<Room> manyFutureRooms(int count) {
-        List<Room> rooms = new ArrayList<>();
+    private static AuctionScheduleCandidate schedule(String code, Instant deadline) {
+        return new AuctionScheduleCandidate(code, deadline);
+    }
+
+    private static List<AuctionScheduleCandidate> manyFutureSchedules(int count) {
+        List<AuctionScheduleCandidate> candidates = new ArrayList<>();
         for (int index = 0; index < count; index++) {
             int second = 60 + index;
-            rooms.add(
-                auctionRoomWithDeadline(
+            candidates.add(
+                schedule(
                     "ROOM%03d".formatted(index),
                     Instant.parse("2026-04-09T00:%02d:%02dZ".formatted(second / 60, second % 60))
                 )
             );
         }
-        return rooms;
+        return candidates;
     }
 
-    private static final class RecordingRooms implements Rooms {
-        private final List<Room> schedulableRooms;
+    private static final class RecordingRooms implements AuctionScheduleReader {
+        private final List<AuctionScheduleCandidate> schedulableRooms;
 
-        private RecordingRooms(Room... schedulableRooms) {
+        private RecordingRooms(AuctionScheduleCandidate... schedulableRooms) {
             this.schedulableRooms = List.of(schedulableRooms);
         }
 
-        private RecordingRooms(List<Room> schedulableRooms) {
+        private RecordingRooms(List<AuctionScheduleCandidate> schedulableRooms) {
             this.schedulableRooms = List.copyOf(schedulableRooms);
         }
 
         @Override
-        public Room save(Room room) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public Room saveAndFlush(Room room) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public Optional<Room> findById(RoomId id) {
-            return Optional.empty();
-        }
-
-        @Override
-        public Optional<Room> findByCode(String code) {
-            return Optional.empty();
-        }
-
-        @Override
-        public List<Room> findByStatusOrderByCreatedAtDescCodeDesc(RoomStatus status, Pageable pageable) {
-            return List.of();
-        }
-
-        @Override
-        public List<Room> findByStatusAndModeOrderByCodeAsc(RoomStatus status, RoomMode mode, Pageable pageable) {
-            int start = Math.toIntExact(pageable.getOffset());
-            if (start >= schedulableRooms.size()) {
-                return List.of();
-            }
-            int end = Math.min(start + pageable.getPageSize(), schedulableRooms.size());
-            return schedulableRooms.subList(start, end);
+        public List<AuctionScheduleCandidate> findInProgressAuctionSchedules() {
+            return schedulableRooms;
         }
     }
 }

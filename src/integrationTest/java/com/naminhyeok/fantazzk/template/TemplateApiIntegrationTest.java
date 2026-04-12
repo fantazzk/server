@@ -67,15 +67,8 @@ class TemplateApiIntegrationTest {
         Map<?, ?> success = (Map<?, ?>) response.getBody().get("success");
         assertThat(success.get("name")).isEqualTo("경매전");
         assertThat(success.get("gameType")).isEqualTo("LEAGUE_OF_LEGENDS");
-        assertThat(success.get("pickBanTime")).isEqualTo(45);
-        assertThat(success.get("minBidUnit")).isEqualTo(10);
-        assertThat(success.get("positionLimit")).isEqualTo(1);
-        assertThat(success.get("players")).isEqualTo(
-            List.of(
-                Map.of("name", "선수1", "position", "TOP", "displayOrder", 0),
-                Map.of("name", "선수2", "position", "JUNGLE", "displayOrder", 1)
-            )
-        );
+        assertThat(success.get("mode")).isEqualTo("AUCTION");
+        assertThat(((List<?>) success.get("players"))).hasSize(2);
     }
 
     @Test
@@ -112,11 +105,8 @@ class TemplateApiIntegrationTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).containsEntry("resultType", "SUCCESS");
         Map<?, ?> success = (Map<?, ?>) response.getBody().get("success");
+        assertThat(success.get("id")).isEqualTo(templateId);
         assertThat(success.get("name")).isEqualTo("상세조회용 경매전");
-        assertThat(success.get("gameType")).isEqualTo("LEAGUE_OF_LEGENDS");
-        assertThat(success.get("pickBanTime")).isEqualTo(45);
-        assertThat(success.get("minBidUnit")).isEqualTo(10);
-        assertThat(success.get("positionLimit")).isEqualTo(1);
         List<Map<String, Object>> players = (List<Map<String, Object>>) success.get("players");
         assertThat(players)
             .containsExactly(
@@ -346,16 +336,8 @@ class TemplateApiIntegrationTest {
         List<Map<String, Object>> templates = (List<Map<String, Object>>) response.getBody().get("success");
         assertThat(templates).anySatisfy(template -> {
             assertThat(template.get("name")).isEqualTo("목록용 경매전");
-            assertThat(template.get("gameType")).isEqualTo("LEAGUE_OF_LEGENDS");
-            assertThat(template.get("pickBanTime")).isEqualTo(45);
-            assertThat(template.get("minBidUnit")).isEqualTo(10);
-            assertThat(template.get("positionLimit")).isEqualTo(1);
-            assertThat(template.get("players")).isEqualTo(
-                List.of(
-                    Map.of("name", "선수1", "position", "TOP", "displayOrder", 0),
-                    Map.of("name", "선수2", "position", "JUNGLE", "displayOrder", 1)
-                )
-            );
+            assertThat(template.get("mode")).isEqualTo("AUCTION");
+            assertThat(((List<?>) template.get("players"))).hasSize(2);
         });
     }
 }

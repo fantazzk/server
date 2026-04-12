@@ -44,7 +44,7 @@ class FindJoinableRoomsIntegrationTest {
 
         assertThat(findJoinableRooms.list())
             .hasSize(5)
-            .extracting(Room::getCode)
+            .extracting(JoinableRoomResponse::code)
             .containsExactly("ROOM09", "ROOM07", "ROOM05", "ROOM03", "ROOM01");
     }
 
@@ -55,7 +55,7 @@ class FindJoinableRoomsIntegrationTest {
         rooms.save(waitingRoom("ROOM50", Instant.parse("2026-04-09T00:01:00Z")));
 
         assertThat(findJoinableRooms.list())
-            .extracting(Room::getCode)
+            .extracting(JoinableRoomResponse::code)
             .containsExactly("ROOM01", "ROOM50", "ROOM99");
     }
 
