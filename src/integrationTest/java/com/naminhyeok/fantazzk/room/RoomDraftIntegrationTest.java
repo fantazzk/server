@@ -47,7 +47,10 @@ class RoomDraftIntegrationTest {
                 2,
                 2,
                 DraftOrderStrategy.SNAKE,
-                List.of("선수1", "선수2")
+                List.of(
+                    new TemplateFixture.PlayerSpec("선수1", "TOP"),
+                    new TemplateFixture.PlayerSpec("선수2", "JUNGLE")
+                )
             );
 
         Room created = createRoom.create(template, "호스트");
@@ -77,7 +80,10 @@ class RoomDraftIntegrationTest {
                 2,
                 2,
                 DraftOrderStrategy.SNAKE,
-                List.of("선수1", "선수2")
+                List.of(
+                    new TemplateFixture.PlayerSpec("선수1", "TOP"),
+                    new TemplateFixture.PlayerSpec("선수2", "JUNGLE")
+                )
             );
 
         Room created = createRoom.create(template, "호스트");
@@ -100,7 +106,12 @@ class RoomDraftIntegrationTest {
                 2,
                 3,
                 DraftOrderStrategy.SNAKE,
-                List.of("선수1", "선수2", "선수3", "선수4")
+                List.of(
+                    new TemplateFixture.PlayerSpec("선수1", "TOP"),
+                    new TemplateFixture.PlayerSpec("선수2", "JUNGLE"),
+                    new TemplateFixture.PlayerSpec("선수3", "MID"),
+                    new TemplateFixture.PlayerSpec("선수4", "ADC")
+                )
             );
 
         Room created = createRoom.create(template, "호스트");

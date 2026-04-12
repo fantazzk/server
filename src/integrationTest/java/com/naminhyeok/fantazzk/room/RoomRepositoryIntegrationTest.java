@@ -45,10 +45,11 @@ class RoomRepositoryIntegrationTest {
                     2,
                     2,
                     null,
+                    30,
                     RoomTemplateSpec.DraftOrderStrategy.SNAKE,
                     List.of(
-                        new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", 0),
-                        new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", 1)
+                        new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
+                        new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
                     )
                 ),
                 CREATED_AT
@@ -67,9 +68,11 @@ class RoomRepositoryIntegrationTest {
         assertThat(reloaded.getId()).isEqualTo(saved.getId());
         assertThat(reloaded.getCode()).isEqualTo("ROOM01");
         assertThat(reloaded.getCreatedAt()).isEqualTo(CREATED_AT);
+        assertThat(reloaded.getPickBanTime()).isEqualTo(30);
         assertThat(reloaded.getPlayers()).extracting(RoomPlayer::getId)
             .containsExactly(new RoomPlayerId(0), new RoomPlayerId(1));
         assertThat(reloaded.getPlayers().stream().map(RoomPlayer::getName)).containsExactly("선수1", "선수2");
+        assertThat(reloaded.getPlayers().stream().map(RoomPlayer::getPosition)).containsExactly("TOP", "JUNGLE");
         assertThat(reloaded.getLeaders())
             .extracting(RoomTeamLeader::getId, RoomTeamLeader::getNickname, RoomTeamLeader::getActionToken, RoomTeamLeader::getDraftPosition)
             .containsExactlyInAnyOrder(
@@ -92,10 +95,11 @@ class RoomRepositoryIntegrationTest {
                     2,
                     2,
                     null,
+                    30,
                     RoomTemplateSpec.DraftOrderStrategy.SNAKE,
                     List.of(
-                        new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", 0),
-                        new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", 1)
+                        new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
+                        new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
                     )
                 ),
                 CREATED_AT
@@ -123,10 +127,11 @@ class RoomRepositoryIntegrationTest {
                     2,
                     2,
                     null,
+                    30,
                     RoomTemplateSpec.DraftOrderStrategy.SNAKE,
                     List.of(
-                        new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", 0),
-                        new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", 1)
+                        new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
+                        new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
                     )
                 ),
                 null

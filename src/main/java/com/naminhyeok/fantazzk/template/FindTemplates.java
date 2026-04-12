@@ -18,7 +18,9 @@ class FindTemplates {
     }
 
     @Transactional(readOnly = true)
-    public List<Template> list() {
-        return templates.findAll();
+    public List<TemplateDetail> list() {
+        return templates.findAll().stream()
+            .map(template -> new TemplateDetail(template, template.getPlayers()))
+            .toList();
     }
 }

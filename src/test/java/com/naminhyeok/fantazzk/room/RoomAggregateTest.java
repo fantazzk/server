@@ -30,10 +30,11 @@ class RoomAggregateTest {
                     2,
                     3,
                     300,
+                    45,
                     null,
                     List.of(
-                        new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수B", 1),
-                        new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수A", 0)
+                        new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수B", "JUNGLE", 1),
+                        new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수A", "TOP", 0)
                     )
                 ),
                 CREATED_AT
@@ -43,7 +44,9 @@ class RoomAggregateTest {
         assertThat(room.getCreatedAt()).isEqualTo(CREATED_AT);
         assertThat(room.getStatus()).isEqualTo(RoomStatus.WAITING);
         assertThat(room.getMode()).isEqualTo(RoomMode.AUCTION);
+        assertThat(room.getPickBanTime()).isEqualTo(45);
         assertThat(room.getPlayers().stream().map(RoomPlayer::getName)).containsExactly("선수A", "선수B");
+        assertThat(room.getPlayers().stream().map(RoomPlayer::getPosition)).containsExactly("TOP", "JUNGLE");
         assertThat(room.getPlayers().stream().map(RoomPlayer::getId))
             .containsExactly(new RoomPlayerId(0), new RoomPlayerId(1));
 
@@ -155,10 +158,11 @@ class RoomAggregateTest {
                     1,
                     2,
                     300,
+                    45,
                     null,
                     List.of(
-                        new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", 0),
-                        new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", 1)
+                        new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
+                        new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
                     )
                 ),
                 CREATED_AT
@@ -260,10 +264,11 @@ class RoomAggregateTest {
                 2,
                 2,
                 300,
+                15,
                 null,
                 List.of(
-                    new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", 0),
-                    new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", 1)
+                    new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
+                    new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
                 )
             ),
             createdAt
@@ -292,10 +297,11 @@ class RoomAggregateTest {
                 2,
                 2,
                 null,
+                30,
                 RoomTemplateSpec.DraftOrderStrategy.SNAKE,
                 List.of(
-                    new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", 0),
-                    new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", 1)
+                    new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
+                    new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
                 )
             ),
             createdAt

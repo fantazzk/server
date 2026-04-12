@@ -2,6 +2,7 @@ package com.naminhyeok.fantazzk.template;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.IntStream;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -10,9 +11,22 @@ import org.springframework.stereotype.Component;
 public class TemplateFixture {
     private final CreateTemplate createTemplate;
 
-    public UUID createAuctionTemplateId(String name, int teamCount, int teamSize, int budget, List<String> playerNames) {
+    public record PlayerSpec(String name, String position) {
+    }
+
+    public UUID createAuctionTemplateId(String name, int teamCount, int teamSize, int budget, List<PlayerSpec> players) {
         return createTemplate.create(
-            new CreateTemplateCommand.Auction(name, teamCount, teamSize, budget, playerNames)
+            new CreateTemplateCommand.Auction(
+                name,
+                GameType.LEAGUE_OF_LEGENDS,
+                teamCount,
+                teamSize,
+                budget,
+                45,
+                10,
+                1,
+                toPlayers(players)
+            )
         ).getId().templateId();
     }
 
@@ -21,16 +35,24 @@ public class TemplateFixture {
         int teamCount,
         int teamSize,
         TemplateCatalog.DraftOrderStrategy strategy,
-        List<String> playerNames
+        List<PlayerSpec> players
     ) {
         return createTemplate.create(
             new CreateTemplateCommand.Draft(
                 name,
+                GameType.LEAGUE_OF_LEGENDS,
                 teamCount,
                 teamSize,
+                30,
                 DraftOrderStrategy.valueOf(strategy.name()),
-                playerNames
+                toPlayers(players)
             )
         ).getId().templateId();
+    }
+
+    private static List<CreateTemplateCommand.Player> toPlayers(List<PlayerSpec> players) {
+        return IntStream.range(0, players.size())
+            .mapToObj(index -> new CreateTemplateCommand.Player(players.get(index).name(), players.get(index).position(), index))
+            .toList();
     }
 }

@@ -5,27 +5,40 @@ import java.util.List;
 sealed interface CreateTemplateCommand permits CreateTemplateCommand.Auction, CreateTemplateCommand.Draft {
     String name();
 
+    GameType gameType();
+
     int teamCount();
 
     int teamSize();
 
-    List<String> playerNames();
+    int pickBanTime();
+
+    List<Player> players();
+
+    record Player(String name, String position, int displayOrder) {
+    }
 
     record Auction(
         String name,
+        GameType gameType,
         int teamCount,
         int teamSize,
         int budget,
-        List<String> playerNames
+        int pickBanTime,
+        int minBidUnit,
+        Integer positionLimit,
+        List<Player> players
     ) implements CreateTemplateCommand {
     }
 
     record Draft(
         String name,
+        GameType gameType,
         int teamCount,
         int teamSize,
+        int pickBanTime,
         DraftOrderStrategy strategy,
-        List<String> playerNames
+        List<Player> players
     ) implements CreateTemplateCommand {
     }
 }

@@ -15,18 +15,28 @@ class CreateTemplate {
             case CreateTemplateCommand.Auction auction ->
                 Template.createAuction(
                     auction.name(),
+                    auction.gameType(),
                     auction.teamCount(),
                     auction.teamSize(),
                     auction.budget(),
-                    auction.playerNames()
+                    auction.pickBanTime(),
+                    auction.minBidUnit(),
+                    auction.positionLimit(),
+                    auction.players().stream()
+                        .map(player -> new TemplatePlayer(player.name(), player.position(), player.displayOrder()))
+                        .toList()
                 );
             case CreateTemplateCommand.Draft draft ->
                 Template.createDraft(
                     draft.name(),
+                    draft.gameType(),
                     draft.teamCount(),
                     draft.teamSize(),
+                    draft.pickBanTime(),
                     draft.strategy(),
-                    draft.playerNames()
+                    draft.players().stream()
+                        .map(player -> new TemplatePlayer(player.name(), player.position(), player.displayOrder()))
+                        .toList()
                 );
         };
 

@@ -18,6 +18,8 @@ class RoomPlayer {
     private RoomPlayerId id;
     @Column(name = "name")
     private String name;
+    @Column(name = "position")
+    private String position;
     @Column(name = "display_order")
     private int displayOrder;
     @Column(name = "status")
@@ -27,9 +29,10 @@ class RoomPlayer {
     RoomPlayer() {
     }
 
-    RoomPlayer(RoomPlayerId id, String name, int displayOrder) {
+    RoomPlayer(RoomPlayerId id, String name, String position, int displayOrder) {
         this.id = id;
         this.name = name;
+        this.position = position;
         this.displayOrder = displayOrder;
         this.status = PlayerStatus.AVAILABLE;
     }

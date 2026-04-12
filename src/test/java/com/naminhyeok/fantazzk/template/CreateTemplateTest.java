@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 class CreateTemplateTest {
     @Test
-    void 경매_생성_command로_템플릿과_선수_컬렉션을_저장한다() {
+    void 경매_생성_command로_확장된_설정과_타입드_선수_컬렉션을_저장한다() {
         InMemoryTemplates templates = new InMemoryTemplates();
 
         CreateTemplate cut = new CreateTemplate(templates);
@@ -22,25 +22,33 @@ class CreateTemplateTest {
             cut.create(
                 new CreateTemplateCommand.Auction(
                     "경매전",
+                    GameType.LEAGUE_OF_LEGENDS,
                     2,
                     2,
                     500,
-                    List.of("선수A", "선수B")
+                    45,
+                    10,
+                    1,
+                    List.of(
+                        new CreateTemplateCommand.Player("선수A", "TOP", 0),
+                        new CreateTemplateCommand.Player("선수B", "JUNGLE", 1)
+                    )
                 )
             );
 
         assertThat(template.getName()).isEqualTo("경매전");
-        assertThat(template.getConfiguration()).isEqualTo(TemplateConfiguration.auction(2, 2, 500));
+        assertThat(template.getConfiguration())
+            .isEqualTo(TemplateConfiguration.auction(GameType.LEAGUE_OF_LEGENDS, 2, 2, 500, 45, 10, 1));
         assertThat(template.getPlayers())
-            .extracting("playerIndex", "name")
+            .extracting(TemplatePlayer::displayOrder, TemplatePlayer::name, TemplatePlayer::position)
             .containsExactly(
-                tuple(0, "선수A"),
-                tuple(1, "선수B")
+                tuple(0, "선수A", "TOP"),
+                tuple(1, "선수B", "JUNGLE")
             );
     }
 
     @Test
-    void 드래프트_생성_command로_드래프트_설정을_저장한다() {
+    void 드래프트_생성_command로_게임타입과_픽밴시간을_포함한_설정을_저장한다() {
         InMemoryTemplates templates = new InMemoryTemplates();
 
         CreateTemplate cut = new CreateTemplate(templates);
@@ -49,14 +57,20 @@ class CreateTemplateTest {
             cut.create(
                 new CreateTemplateCommand.Draft(
                     "드래프트전",
+                    GameType.OVERWATCH_2,
                     2,
                     2,
+                    30,
                     DraftOrderStrategy.SNAKE,
-                    List.of("선수1", "선수2")
+                    List.of(
+                        new CreateTemplateCommand.Player("선수1", "TANK", 0),
+                        new CreateTemplateCommand.Player("선수2", "SUPPORT", 1)
+                    )
                 )
             );
 
-        assertThat(template.getConfiguration()).isEqualTo(TemplateConfiguration.draft(2, 2, DraftOrderStrategy.SNAKE));
+        assertThat(template.getConfiguration())
+            .isEqualTo(TemplateConfiguration.draft(GameType.OVERWATCH_2, 2, 2, 30, DraftOrderStrategy.SNAKE));
         assertThat(template.getBudget()).isNull();
     }
 
@@ -68,10 +82,14 @@ class CreateTemplateTest {
             cut.create(
                 new CreateTemplateCommand.Auction(
                     "실패",
+                    GameType.LEAGUE_OF_LEGENDS,
                     2,
                     2,
                     300,
-                    List.of("선수1")
+                    45,
+                    10,
+                    1,
+                    List.of(new CreateTemplateCommand.Player("선수1", "TOP", 0))
                 )
             )
         )

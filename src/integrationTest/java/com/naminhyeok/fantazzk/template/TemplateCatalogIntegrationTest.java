@@ -34,26 +34,37 @@ class TemplateCatalogIntegrationTest {
             createTemplate.create(
                 new CreateTemplateCommand.Draft(
                     "사내 리그 드래프트",
+                    GameType.OVERWATCH_2,
                     2,
                     3,
+                    30,
                     DraftOrderStrategy.FIXED,
-                    List.of("선수4", "선수1", "선수3", "선수2")
+                    List.of(
+                        new CreateTemplateCommand.Player("선수4", "TANK", 0),
+                        new CreateTemplateCommand.Player("선수1", "SUPPORT", 1),
+                        new CreateTemplateCommand.Player("선수3", "DPS", 2),
+                        new CreateTemplateCommand.Player("선수2", "DPS", 3)
+                    )
                 )
             );
 
         TemplateCatalog.TemplateBlueprint blueprint = templateCatalog.getTemplate(created.getId().templateId());
 
+        assertThat(blueprint.gameType()).isEqualTo(TemplateCatalog.GameType.OVERWATCH_2);
         assertThat(blueprint.mode()).isEqualTo(TemplateCatalog.Mode.DRAFT);
         assertThat(blueprint.teamCount()).isEqualTo(2);
         assertThat(blueprint.teamSize()).isEqualTo(3);
+        assertThat(blueprint.pickBanTime()).isEqualTo(30);
+        assertThat(blueprint.minBidUnit()).isNull();
+        assertThat(blueprint.positionLimit()).isNull();
         assertThat(blueprint.draftOrderStrategy()).isEqualTo(TemplateCatalog.DraftOrderStrategy.FIXED);
         assertThat(blueprint.players())
-            .extracting("playerIndex", "name")
+            .extracting("playerIndex", "name", "position")
             .containsExactly(
-                tuple(0, "선수4"),
-                tuple(1, "선수1"),
-                tuple(2, "선수3"),
-                tuple(3, "선수2")
+                tuple(0, "선수4", "TANK"),
+                tuple(1, "선수1", "SUPPORT"),
+                tuple(2, "선수3", "DPS"),
+                tuple(3, "선수2", "DPS")
             );
     }
 

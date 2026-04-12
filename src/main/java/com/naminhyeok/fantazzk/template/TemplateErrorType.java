@@ -20,10 +20,28 @@ enum TemplateErrorType implements ErrorDescriptor {
         "경매 템플릿에는 예산이 필요합니다",
         Level.INFO
     ),
+    TEMPLATE_AUCTION_MIN_BID_UNIT_REQUIRED(
+        HttpStatus.BAD_REQUEST,
+        "TEMPLATE_AUCTION_MIN_BID_UNIT_REQUIRED",
+        "경매 템플릿에는 최소 입찰 단위가 필요합니다",
+        Level.INFO
+    ),
     TEMPLATE_DRAFT_BUDGET_NOT_ALLOWED(
         HttpStatus.BAD_REQUEST,
         "TEMPLATE_DRAFT_BUDGET_NOT_ALLOWED",
         "드래프트 템플릿에는 예산을 지정할 수 없습니다",
+        Level.INFO
+    ),
+    TEMPLATE_DRAFT_MIN_BID_UNIT_NOT_ALLOWED(
+        HttpStatus.BAD_REQUEST,
+        "TEMPLATE_DRAFT_MIN_BID_UNIT_NOT_ALLOWED",
+        "드래프트 템플릿에는 최소 입찰 단위를 지정할 수 없습니다",
+        Level.INFO
+    ),
+    TEMPLATE_DRAFT_POSITION_LIMIT_NOT_ALLOWED(
+        HttpStatus.BAD_REQUEST,
+        "TEMPLATE_DRAFT_POSITION_LIMIT_NOT_ALLOWED",
+        "드래프트 템플릿에는 포지션 제한을 지정할 수 없습니다",
         Level.INFO
     ),
     TEMPLATE_DRAFT_ORDER_STRATEGY_REQUIRED(

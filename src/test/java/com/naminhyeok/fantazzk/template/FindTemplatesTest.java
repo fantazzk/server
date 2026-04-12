@@ -32,8 +32,36 @@ class FindTemplatesTest {
     @Test
     void 목록_조회는_저장된_템플릿을_반환한다() {
         InMemoryTemplates templates = new InMemoryTemplates();
-        templates.save(Template.createAuction("첫째", 2, 2, 300, List.of("선수1", "선수2")));
-        templates.save(Template.createDraft("둘째", 2, 2, DraftOrderStrategy.SNAKE, List.of("선수1", "선수2")));
+        templates.save(
+            Template.createAuction(
+                "첫째",
+                GameType.LEAGUE_OF_LEGENDS,
+                2,
+                2,
+                300,
+                45,
+                10,
+                1,
+                List.of(
+                    new TemplatePlayer("선수1", "TOP", 0),
+                    new TemplatePlayer("선수2", "JUNGLE", 1)
+                )
+            )
+        );
+        templates.save(
+            Template.createDraft(
+                "둘째",
+                GameType.OVERWATCH_2,
+                2,
+                2,
+                30,
+                DraftOrderStrategy.SNAKE,
+                List.of(
+                    new TemplatePlayer("선수1", "TANK", 0),
+                    new TemplatePlayer("선수2", "SUPPORT", 1)
+                )
+            )
+        );
 
         FindTemplates cut = new FindTemplates(templates);
 
@@ -43,36 +71,72 @@ class FindTemplatesTest {
     @Test
     void 상세_조회는_템플릿과_선수_목록을_함께_반환한다() {
         InMemoryTemplates templates = new InMemoryTemplates();
-        Template template = Template.createAuction("첫째", 2, 2, 300, List.of("선수1", "선수2"));
+        Template template =
+            Template.createAuction(
+                "첫째",
+                GameType.LEAGUE_OF_LEGENDS,
+                2,
+                2,
+                300,
+                45,
+                10,
+                1,
+                List.of(
+                    new TemplatePlayer("선수1", "TOP", 0),
+                    new TemplatePlayer("선수2", "JUNGLE", 1)
+                )
+            );
         templates.save(template);
 
         FindTemplates cut = new FindTemplates(templates);
         TemplateDetail detail = cut.getDetail(template.getId());
 
         assertThat(detail.template().getId()).isEqualTo(template.getId());
+        assertThat(detail.template().getGameType()).isEqualTo(GameType.LEAGUE_OF_LEGENDS);
+        assertThat(detail.template().getPickBanTime()).isEqualTo(45);
+        assertThat(detail.template().getMinBidUnit()).isEqualTo(10);
+        assertThat(detail.template().getPositionLimit()).isEqualTo(1);
         assertThat(detail.players())
-            .extracting("playerIndex", "name")
+            .extracting(TemplatePlayer::displayOrder, TemplatePlayer::name, TemplatePlayer::position)
             .containsExactly(
-                tuple(0, "선수1"),
-                tuple(1, "선수2")
+                tuple(0, "선수1", "TOP"),
+                tuple(1, "선수2", "JUNGLE")
             );
     }
 
     @Test
-    void 템플릿_카탈로그는_플레이어_blueprint에_aggregate_local_player_index를_노출한다() {
+    void 템플릿_카탈로그는_게임과_플레이어_blueprint를_확장된_형태로_노출한다() {
         InMemoryTemplates templates = new InMemoryTemplates();
-        Template template = Template.createAuction("첫째", 2, 2, 300, List.of("선수1", "선수2"));
+        Template template =
+            Template.createAuction(
+                "첫째",
+                GameType.LEAGUE_OF_LEGENDS,
+                2,
+                2,
+                300,
+                45,
+                10,
+                1,
+                List.of(
+                    new TemplatePlayer("선수1", "TOP", 0),
+                    new TemplatePlayer("선수2", "JUNGLE", 1)
+                )
+            );
         templates.save(template);
 
         ProvideTemplateCatalog catalog = new ProvideTemplateCatalog(new FindTemplates(templates));
 
         TemplateCatalog.TemplateBlueprint blueprint = catalog.getTemplate(template.getId().templateId());
 
+        assertThat(blueprint.gameType()).isEqualTo(TemplateCatalog.GameType.LEAGUE_OF_LEGENDS);
+        assertThat(blueprint.pickBanTime()).isEqualTo(45);
+        assertThat(blueprint.minBidUnit()).isEqualTo(10);
+        assertThat(blueprint.positionLimit()).isEqualTo(1);
         assertThat(blueprint.players())
-            .extracting("playerIndex", "name")
+            .extracting("playerIndex", "name", "position")
             .containsExactly(
-                tuple(0, "선수1"),
-                tuple(1, "선수2")
+                tuple(0, "선수1", "TOP"),
+                tuple(1, "선수2", "JUNGLE")
             );
     }
     private static final class InMemoryTemplates implements Templates {

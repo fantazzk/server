@@ -1,0 +1,1 @@
+ALTER TABLE rooms ADD COLUMN pick_ban_time INT NOT NULL DEFAULT 15;

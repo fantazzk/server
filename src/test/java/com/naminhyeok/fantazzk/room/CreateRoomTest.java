@@ -41,8 +41,9 @@ class CreateRoomTest {
         assertThat(created).isSameAs(rooms.savedRoom());
         assertThat(rooms.flushAttemptCount()).isEqualTo(3);
         assertThat(rooms.attemptedRoomIds()).doesNotHaveDuplicates();
+        assertThat(created.getPickBanTime()).isEqualTo(45);
         assertThat(created.getPlayers().stream().map(RoomPlayer::getId))
-            .containsExactly(new RoomPlayerId(1), new RoomPlayerId(2));
+            .containsExactly(new RoomPlayerId(0), new RoomPlayerId(1));
     }
 
     @Test
@@ -175,12 +176,19 @@ class CreateRoomTest {
         public TemplateBlueprint getTemplate(UUID templateId) {
             return new TemplateBlueprint(
                 templateId,
+                GameType.LEAGUE_OF_LEGENDS,
                 Mode.AUCTION,
                 2,
                 2,
                 300,
+                45,
+                10,
+                1,
                 null,
-                List.of(new PlayerBlueprint("선수1", 1), new PlayerBlueprint("선수2", 2))
+                List.of(
+                    new PlayerBlueprint("선수1", "TOP", 0),
+                    new PlayerBlueprint("선수2", "JUNGLE", 1)
+                )
             );
         }
     }

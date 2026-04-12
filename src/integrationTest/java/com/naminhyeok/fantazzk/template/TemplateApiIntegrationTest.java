@@ -24,6 +24,7 @@ import org.springframework.test.context.TestConstructor;
         "spring.datasource.username=sa",
         "spring.datasource.password=",
         "spring.jpa.hibernate.ddl-auto=validate",
+        "spring.jpa.open-in-view=false",
         "spring.liquibase.enabled=true",
         "sentry.enabled=false"
     }
@@ -43,11 +44,18 @@ class TemplateApiIntegrationTest {
                     """
                     {
                       "name": "경매전",
+                      "gameType": "LEAGUE_OF_LEGENDS",
                       "mode": "AUCTION",
                       "teamCount": 2,
                       "teamSize": 2,
                       "budget": 300,
-                      "playerNames": ["선수1", "선수2"]
+                      "pickBanTime": 45,
+                      "minBidUnit": 10,
+                      "positionLimit": 1,
+                      "players": [
+                        {"name": "선수1", "position": "TOP"},
+                        {"name": "선수2", "position": "JUNGLE"}
+                      ]
                     }
                     """
                 ),
@@ -56,7 +64,18 @@ class TemplateApiIntegrationTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         assertThat(response.getBody()).containsEntry("resultType", "SUCCESS");
-        assertThat(((Map<?, ?>) response.getBody().get("success")).get("name")).isEqualTo("경매전");
+        Map<?, ?> success = (Map<?, ?>) response.getBody().get("success");
+        assertThat(success.get("name")).isEqualTo("경매전");
+        assertThat(success.get("gameType")).isEqualTo("LEAGUE_OF_LEGENDS");
+        assertThat(success.get("pickBanTime")).isEqualTo(45);
+        assertThat(success.get("minBidUnit")).isEqualTo(10);
+        assertThat(success.get("positionLimit")).isEqualTo(1);
+        assertThat(success.get("players")).isEqualTo(
+            List.of(
+                Map.of("name", "선수1", "position", "TOP", "displayOrder", 0),
+                Map.of("name", "선수2", "position", "JUNGLE", "displayOrder", 1)
+            )
+        );
     }
 
     @Test
@@ -68,11 +87,18 @@ class TemplateApiIntegrationTest {
                     """
                     {
                       "name": "상세조회용 경매전",
+                      "gameType": "LEAGUE_OF_LEGENDS",
                       "mode": "AUCTION",
                       "teamCount": 2,
                       "teamSize": 2,
                       "budget": 300,
-                      "playerNames": ["선수1", "선수2"]
+                      "pickBanTime": 45,
+                      "minBidUnit": 10,
+                      "positionLimit": 1,
+                      "players": [
+                        {"name": "선수1", "position": "TOP"},
+                        {"name": "선수2", "position": "JUNGLE"}
+                      ]
                     }
                     """
                 ),
@@ -87,11 +113,15 @@ class TemplateApiIntegrationTest {
         assertThat(response.getBody()).containsEntry("resultType", "SUCCESS");
         Map<?, ?> success = (Map<?, ?>) response.getBody().get("success");
         assertThat(success.get("name")).isEqualTo("상세조회용 경매전");
+        assertThat(success.get("gameType")).isEqualTo("LEAGUE_OF_LEGENDS");
+        assertThat(success.get("pickBanTime")).isEqualTo(45);
+        assertThat(success.get("minBidUnit")).isEqualTo(10);
+        assertThat(success.get("positionLimit")).isEqualTo(1);
         List<Map<String, Object>> players = (List<Map<String, Object>>) success.get("players");
         assertThat(players)
             .containsExactly(
-                Map.of("name", "선수1", "displayOrder", 0),
-                Map.of("name", "선수2", "displayOrder", 1)
+                Map.of("name", "선수1", "position", "TOP", "displayOrder", 0),
+                Map.of("name", "선수2", "position", "JUNGLE", "displayOrder", 1)
             );
     }
 
@@ -104,12 +134,17 @@ class TemplateApiIntegrationTest {
                     """
                     {
                       "name": "드래프트전",
+                      "gameType": "OVERWATCH_2",
                       "mode": "DRAFT",
                       "teamCount": 2,
                       "teamSize": 2,
                       "budget": 300,
+                      "pickBanTime": 30,
                       "draftOrderStrategy": "SNAKE",
-                      "playerNames": ["선수1", "선수2"]
+                      "players": [
+                        {"name": "선수1", "position": "TANK"},
+                        {"name": "선수2", "position": "SUPPORT"}
+                      ]
                     }
                     """
                 ),
@@ -125,6 +160,108 @@ class TemplateApiIntegrationTest {
     }
 
     @Test
+    void 경매_요청에_최소_입찰_단위가_없으면_400을_반환한다() {
+        ResponseEntity<Map> response = restTemplate.exchange(
+            RequestEntity.post("/api/v1/templates")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                    """
+                    {
+                      "name": "경매전",
+                      "gameType": "LEAGUE_OF_LEGENDS",
+                      "mode": "AUCTION",
+                      "teamCount": 2,
+                      "teamSize": 2,
+                      "budget": 300,
+                      "pickBanTime": 45,
+                      "positionLimit": 1,
+                      "players": [
+                        {"name": "선수1", "position": "TOP"},
+                        {"name": "선수2", "position": "JUNGLE"}
+                      ]
+                    }
+                    """
+                ),
+            Map.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody()).containsEntry("resultType", "ERROR");
+        Map<?, ?> error = (Map<?, ?>) response.getBody().get("error");
+        assertThat(error.get("code")).isEqualTo("TEMPLATE_AUCTION_MIN_BID_UNIT_REQUIRED");
+        assertThat(error.get("message")).isEqualTo("경매 템플릿에는 최소 입찰 단위가 필요합니다");
+        assertThat(error.get("data")).isNull();
+    }
+
+    @Test
+    void 드래프트_요청에_최소_입찰_단위가_있으면_400을_반환한다() {
+        ResponseEntity<Map> response = restTemplate.exchange(
+            RequestEntity.post("/api/v1/templates")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                    """
+                    {
+                      "name": "드래프트전",
+                      "gameType": "OVERWATCH_2",
+                      "mode": "DRAFT",
+                      "teamCount": 2,
+                      "teamSize": 2,
+                      "pickBanTime": 30,
+                      "minBidUnit": 10,
+                      "draftOrderStrategy": "SNAKE",
+                      "players": [
+                        {"name": "선수1", "position": "TANK"},
+                        {"name": "선수2", "position": "SUPPORT"}
+                      ]
+                    }
+                    """
+                ),
+            Map.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody()).containsEntry("resultType", "ERROR");
+        Map<?, ?> error = (Map<?, ?>) response.getBody().get("error");
+        assertThat(error.get("code")).isEqualTo("TEMPLATE_DRAFT_MIN_BID_UNIT_NOT_ALLOWED");
+        assertThat(error.get("message")).isEqualTo("드래프트 템플릿에는 최소 입찰 단위를 지정할 수 없습니다");
+        assertThat(error.get("data")).isNull();
+    }
+
+    @Test
+    void 드래프트_요청에_포지션_제한이_있으면_400을_반환한다() {
+        ResponseEntity<Map> response = restTemplate.exchange(
+            RequestEntity.post("/api/v1/templates")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                    """
+                    {
+                      "name": "드래프트전",
+                      "gameType": "OVERWATCH_2",
+                      "mode": "DRAFT",
+                      "teamCount": 2,
+                      "teamSize": 2,
+                      "pickBanTime": 30,
+                      "positionLimit": 1,
+                      "draftOrderStrategy": "SNAKE",
+                      "players": [
+                        {"name": "선수1", "position": "TANK"},
+                        {"name": "선수2", "position": "SUPPORT"}
+                      ]
+                    }
+                    """
+                ),
+            Map.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody()).containsEntry("resultType", "ERROR");
+        Map<?, ?> error = (Map<?, ?>) response.getBody().get("error");
+        assertThat(error.get("code")).isEqualTo("TEMPLATE_DRAFT_POSITION_LIMIT_NOT_ALLOWED");
+        assertThat(error.get("message")).isEqualTo("드래프트 템플릿에는 포지션 제한을 지정할 수 없습니다");
+        assertThat(error.get("data")).isNull();
+    }
+
+    @Test
     void 요청_필드_검증에_실패하면_400과_필드_에러를_반환한다() {
         ResponseEntity<Map> response = restTemplate.exchange(
             RequestEntity.post("/api/v1/templates")
@@ -133,11 +270,15 @@ class TemplateApiIntegrationTest {
                     """
                     {
                       "name": "",
+                      "gameType": "LEAGUE_OF_LEGENDS",
                       "mode": "AUCTION",
                       "teamCount": 0,
                       "teamSize": 0,
                       "budget": 300,
-                      "playerNames": []
+                      "pickBanTime": 0,
+                      "minBidUnit": 10,
+                      "positionLimit": 1,
+                      "players": []
                     }
                     """
                 ),
@@ -153,7 +294,8 @@ class TemplateApiIntegrationTest {
         assertThat(data.get("name")).isEqualTo("템플릿 이름은 비어 있을 수 없습니다");
         assertThat(data.get("teamCount")).isEqualTo("팀 수는 1 이상이어야 합니다");
         assertThat(data.get("teamSize")).isEqualTo("팀 크기는 1 이상이어야 합니다");
-        assertThat(data.get("playerNames")).isEqualTo("선수 목록은 비어 있을 수 없습니다");
+        assertThat(data.get("pickBanTime")).isEqualTo("픽밴 시간은 1 이상이어야 합니다");
+        assertThat(data.get("players")).isEqualTo("선수 목록은 비어 있을 수 없습니다");
     }
 
     @Test
@@ -179,11 +321,18 @@ class TemplateApiIntegrationTest {
                     """
                     {
                       "name": "목록용 경매전",
+                      "gameType": "LEAGUE_OF_LEGENDS",
                       "mode": "AUCTION",
                       "teamCount": 2,
                       "teamSize": 2,
                       "budget": 300,
-                      "playerNames": ["선수1", "선수2"]
+                      "pickBanTime": 45,
+                      "minBidUnit": 10,
+                      "positionLimit": 1,
+                      "players": [
+                        {"name": "선수1", "position": "TOP"},
+                        {"name": "선수2", "position": "JUNGLE"}
+                      ]
                     }
                     """
                 ),
@@ -194,7 +343,19 @@ class TemplateApiIntegrationTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).containsEntry("resultType", "SUCCESS");
-        List<?> templates = (List<?>) response.getBody().get("success");
-        assertThat(templates).isNotEmpty();
+        List<Map<String, Object>> templates = (List<Map<String, Object>>) response.getBody().get("success");
+        assertThat(templates).anySatisfy(template -> {
+            assertThat(template.get("name")).isEqualTo("목록용 경매전");
+            assertThat(template.get("gameType")).isEqualTo("LEAGUE_OF_LEGENDS");
+            assertThat(template.get("pickBanTime")).isEqualTo(45);
+            assertThat(template.get("minBidUnit")).isEqualTo(10);
+            assertThat(template.get("positionLimit")).isEqualTo(1);
+            assertThat(template.get("players")).isEqualTo(
+                List.of(
+                    Map.of("name", "선수1", "position", "TOP", "displayOrder", 0),
+                    Map.of("name", "선수2", "position", "JUNGLE", "displayOrder", 1)
+                )
+            );
+        });
     }
 }

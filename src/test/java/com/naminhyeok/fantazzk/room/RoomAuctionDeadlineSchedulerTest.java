@@ -177,10 +177,11 @@ class RoomAuctionDeadlineSchedulerTest {
                     2,
                     2,
                     300,
+                    15,
                     null,
                     List.of(
-                        new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", 0),
-                        new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", 1)
+                        new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
+                        new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
                     )
                 ),
                 Instant.parse("2026-04-09T00:00:00Z")
