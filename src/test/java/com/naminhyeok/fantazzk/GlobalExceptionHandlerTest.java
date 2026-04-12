@@ -148,6 +148,23 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    void 내부_상태_예외는_500과_room_state_invalid로_응답한다() throws Exception {
+        String response = mockMvc.perform(get("/invalid-room-state"))
+            .andExpect(status().isInternalServerError())
+            .andExpect(jsonPath("$.resultType").value("ERROR"))
+            .andExpect(jsonPath("$.error.code").value("ROOM_STATE_INVALID"))
+            .andExpect(jsonPath("$.error.message").value("방 상태가 올바르지 않습니다. 잠시 후 다시 시도해 주세요"))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+        JsonNode json = objectMapper.readTree(response);
+
+        assertThat(json.get("error").get("data").isNull()).isTrue();
+        assertLastLog(Level.ERROR, "broken room state");
+    }
+
+    @Test
     void validation_exception_renders_field_error_map_in_data() throws Exception {
         String response = mockMvc.perform(
                 post("/validation")
@@ -201,6 +218,11 @@ class GlobalExceptionHandlerTest {
         @GetMapping("/generic")
         String generic() {
             throw new RuntimeException("boom");
+        }
+
+        @GetMapping("/invalid-room-state")
+        String invalidRoomState() {
+            throw new TestInvalidDomainStateException("broken room state");
         }
 
         @PostMapping("/validation")
@@ -259,8 +281,34 @@ class GlobalExceptionHandlerTest {
         }
     }
 
+    private static final class TestInvalidDomainStateException extends InvalidDomainStateException {
+        private TestInvalidDomainStateException(String detailMessage) {
+            super(detailMessage, roomStateInvalidError());
+        }
+
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        private static ErrorDescriptor roomStateInvalidError() {
+            try {
+                Class<?> roomErrorTypeClass = Class.forName("com.naminhyeok.fantazzk.room.RoomErrorType");
+                return (ErrorDescriptor) Enum.valueOf(
+                    (Class<Enum>) roomErrorTypeClass.asSubclass(Enum.class),
+                    "ROOM_STATE_INVALID"
+                );
+            } catch (ReflectiveOperationException ex) {
+                throw new AssertionError(ex);
+            }
+        }
+    }
+
     private void assertLastLog(Level expectedLevel) {
         assertThat(logAppender.list).isNotEmpty();
         assertThat(logAppender.list.get(logAppender.list.size() - 1).getLevel()).isEqualTo(expectedLevel);
+    }
+
+    private void assertLastLog(Level expectedLevel, String messageFragment) {
+        assertThat(logAppender.list).isNotEmpty();
+        ILoggingEvent lastLog = logAppender.list.get(logAppender.list.size() - 1);
+        assertThat(lastLog.getLevel()).isEqualTo(expectedLevel);
+        assertThat(lastLog.getFormattedMessage()).contains(messageFragment);
     }
 }

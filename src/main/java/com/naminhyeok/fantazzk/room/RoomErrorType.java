@@ -20,6 +20,12 @@ enum RoomErrorType implements ErrorDescriptor {
         "방 코드를 생성하지 못했습니다",
         Level.ERROR
     ),
+    ROOM_STATE_INVALID(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "ROOM_STATE_INVALID",
+        "방 상태가 올바르지 않습니다. 잠시 후 다시 시도해 주세요",
+        Level.ERROR
+    ),
     ROOM_JOIN_REQUIRES_WAITING(
         HttpStatus.CONFLICT,
         "ROOM_JOIN_REQUIRES_WAITING",

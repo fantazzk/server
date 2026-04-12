@@ -481,6 +481,35 @@ class RoomApiWebMvcTest {
     }
 
     @Test
+    void placeBid는_내부_상태_예외를_500으로_반환한다() throws Exception {
+        doThrow(RoomStateInvalidException.auctionRoundMissing())
+            .when(placeBid)
+            .place(ROOM_CODE, HOST_TOKEN, 150);
+
+        var result = mockMvcTester().perform(
+            post("/api/v1/rooms/{code}/bids", ROOM_CODE)
+                .header("X-Room-Action-Token", HOST_TOKEN)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    {
+                      "amount": 150
+                    }
+                    """
+                )
+        );
+
+        result.assertThat().hasStatus(HttpStatus.INTERNAL_SERVER_ERROR);
+        assertThat(readBody(result, VoidApiResponse.class))
+            .satisfies(response -> {
+                assertThat(response.resultType()).isEqualTo("ERROR");
+                assertThat(response.error().code()).isEqualTo("ROOM_STATE_INVALID");
+                assertThat(response.error().message()).isEqualTo("방 상태가 올바르지 않습니다. 잠시 후 다시 시도해 주세요");
+                assertThat(response.error().data()).isNull();
+            });
+    }
+
+    @Test
     void pickDraft는_header가_있으면_최신_room_snapshot을_반환한다() throws Exception {
         Room room = inProgressDraftRoom();
         given(pickDraft.pick(ROOM_CODE, GUEST_TOKEN, "선수3"))
