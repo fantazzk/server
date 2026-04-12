@@ -301,6 +301,7 @@ class RoomAuctionTest {
             assertThat(publisher.events).hasSize(1);
             RoomRealtimeSnapshotEvent event = publisher.events.getFirst();
             assertThat(event.roomCode()).isEqualTo(room.getCode());
+            assertThat(event.snapshotVersion()).isEqualTo(1L);
             assertThat(event.room().progress().currentRound()).isEqualTo(1);
             assertThat(event.room().progress().currentAuctionRoundEndsAt()).isEqualTo(CREATED_AT.plusSeconds(PICK_BAN_TIME));
             assertThat(taskScheduler.scheduledInstants()).isEmpty();
@@ -369,6 +370,7 @@ class RoomAuctionTest {
             assertThat(publisher.events).hasSize(1);
             RoomRealtimeSnapshotEvent event = publisher.events.getFirst();
             assertThat(event.roomCode()).isEqualTo(room.getCode());
+            assertThat(event.snapshotVersion()).isEqualTo(1L);
             assertThat(event.room().progress().currentRound()).isEqualTo(1);
             assertThat(event.room().progress().highestBidAmount()).isEqualTo(100);
             assertThat(event.room().progress().bidCount()).isEqualTo(1);
@@ -669,16 +671,17 @@ class RoomAuctionTest {
 
         @Override
         public Room save(Room room) {
-            if (saveFailure != null) {
-                throw saveFailure;
-            }
-            this.room = room;
-            return room;
+            throw new UnsupportedOperationException("start and bid should use saveAndFlush");
         }
 
         @Override
         public Room saveAndFlush(Room room) {
-            return save(room);
+            if (saveFailure != null) {
+                throw saveFailure;
+            }
+            this.room = room;
+            markFlushed(room);
+            return room;
         }
 
         @Override
@@ -689,6 +692,16 @@ class RoomAuctionTest {
         @Override
         public Optional<Room> findByCode(String code) {
             return Optional.ofNullable(room).filter(it -> it.getCode().equals(code));
+        }
+
+        private void markFlushed(Room room) {
+            try {
+                var field = Room.class.getDeclaredField("version");
+                field.setAccessible(true);
+                field.setLong(room, 1L);
+            } catch (ReflectiveOperationException ex) {
+                throw new AssertionError(ex);
+            }
         }
     }
 
