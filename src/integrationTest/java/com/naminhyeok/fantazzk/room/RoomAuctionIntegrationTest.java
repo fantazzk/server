@@ -1,7 +1,9 @@
 package com.naminhyeok.fantazzk.room;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.naminhyeok.fantazzk.CoreException;
 import com.naminhyeok.fantazzk.template.TemplateFixture;
 import java.time.Clock;
 import java.time.Duration;
@@ -127,6 +129,42 @@ class RoomAuctionIntegrationTest {
         assertThat(firstBid.sequence()).isEqualTo(new BidSequence(1));
         assertThat(secondBid.sequence()).isEqualTo(new BidSequence(2));
         assertThat(secondBid.round()).isEqualTo(1);
+    }
+
+    @Test
+    void 같은_포지션_제한에_걸리는_선수에게는_재조회_후에도_입찰할_수_없다() {
+        var template =
+            templateFixture.createAuctionTemplateId(
+                "포지션제한경매전",
+                2,
+                3,
+                300,
+                List.of(
+                    new TemplateFixture.PlayerSpec("탑선수1", "TOP"),
+                    new TemplateFixture.PlayerSpec("탑선수2", "TOP"),
+                    new TemplateFixture.PlayerSpec("정글선수1", "JUNGLE"),
+                    new TemplateFixture.PlayerSpec("미드선수1", "MID")
+                )
+            );
+
+        Room created = createRoom.create(template, "호스트");
+        RoomTeamLeader guest = joinRoom.join(created.getCode(), "게스트");
+        startRoom.start(created.getCode(), created.getLeaders().getFirst().getActionToken());
+
+        placeBid.place(created.getCode(), guest.getActionToken(), 150);
+        Room roomBeforeSettlement = rooms.findByCode(created.getCode()).orElseThrow();
+        setCurrentAuctionRoundEndsAt(roomBeforeSettlement, Instant.parse("1999-12-31T23:59:55Z"));
+        rooms.saveAndFlush(roomBeforeSettlement);
+        settleAuction.settle(created.getCode());
+
+        Room reloaded = rooms.findByCode(created.getCode()).orElseThrow();
+
+        assertThatThrownBy(() -> placeBid.place(reloaded.getCode(), guest.getActionToken(), 160))
+            .isInstanceOf(CoreException.class)
+            .isInstanceOfSatisfying(
+                CoreException.class,
+                ex -> assertThat(ex.getError().getCode()).isEqualTo("ROOM_AUCTION_POSITION_LIMIT_EXCEEDED")
+            );
     }
 
     @Test

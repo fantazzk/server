@@ -135,6 +135,12 @@ enum RoomErrorType implements ErrorDescriptor {
         "최소 입찰 증가폭을 만족하는 금액만 입찰할 수 있습니다",
         Level.INFO
     ),
+    ROOM_AUCTION_POSITION_LIMIT_EXCEEDED(
+        HttpStatus.CONFLICT,
+        "ROOM_AUCTION_POSITION_LIMIT_EXCEEDED",
+        "같은 포지션 선수는 팀당 제한 인원까지만 배정할 수 있습니다",
+        Level.INFO
+    ),
     ROOM_AUCTION_ROUND_NOT_ENDED(
         HttpStatus.CONFLICT,
         "ROOM_AUCTION_ROUND_NOT_ENDED",
