@@ -44,10 +44,10 @@ class RoomTeamLeader {
 
     void spend(int amount) {
         if (remainingBudget == null) {
-            throw new IllegalStateException("예산이 없는 팀장은 입찰할 수 없습니다");
+            throw RoomStateInvalidException.auctionWinnerBudgetMissing(id);
         }
         if (remainingBudget < amount) {
-            throw new IllegalArgumentException("예산이 부족합니다");
+            throw RoomStateInvalidException.auctionWinnerBudgetExceeded(id, remainingBudget, amount);
         }
         remainingBudget -= amount;
     }
