@@ -16,9 +16,6 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.List;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -48,6 +45,9 @@ class SupabaseRoomRealtimePublisherTest {
             .andExpect(jsonPath("$.messages[0].topic").value("room:" + room.getCode()))
             .andExpect(jsonPath("$.messages[0].event").value("snapshot.updated"))
             .andExpect(jsonPath("$.messages[0].payload.eventType").value("ROOM_SNAPSHOT_UPDATED"))
+            .andExpect(jsonPath("$.messages[0].payload.snapshotVersion").value(room.getVersion()))
+            .andExpect(jsonPath("$.messages[0].payload.publishedAt").value(PUBLISHED_AT.toString()))
+            .andExpect(jsonPath("$.messages[0].payload.room.code").value(room.getCode()))
             .andRespond(withSuccess());
 
         publisher.publishAfterCommit(room);
@@ -107,7 +107,7 @@ class SupabaseRoomRealtimePublisherTest {
             context.getEnvironment()
                 .getPropertySources()
                 .addFirst(new MapPropertySource("test", java.util.Map.of("fantazzk.supabase.realtime.enabled", "false")));
-            context.register(빈선택테스트설정.class);
+            context.register(빈선택지원설정.class, RoomRealtimePublisherConfiguration.class);
             context.refresh();
 
             assertThat(context.getBean(RoomRealtimePublisher.class)).isInstanceOf(NoopRoomRealtimePublisher.class);
@@ -132,10 +132,36 @@ class SupabaseRoomRealtimePublisherTest {
                         )
                     )
                 );
-            context.register(빈선택테스트설정.class);
+            context.register(빈선택지원설정.class, RoomRealtimePublisherConfiguration.class);
             context.refresh();
 
             assertThat(context.getBean(RoomRealtimePublisher.class)).isInstanceOf(SupabaseRoomRealtimePublisher.class);
+        }
+    }
+
+    @Test
+    void 다른_roomRealtimePublisher가_있으면_supabase_publisher를_추가로_등록하지_않는다() {
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext()) {
+            context.getEnvironment()
+                .getPropertySources()
+                .addFirst(
+                    new MapPropertySource(
+                        "test",
+                        java.util.Map.of(
+                            "fantazzk.supabase.realtime.enabled",
+                            "true",
+                            "fantazzk.supabase.url",
+                            BASE_URL,
+                            "fantazzk.supabase.service-role-key",
+                            SERVICE_ROLE_KEY
+                        )
+                    )
+                );
+            context.register(빈선택지원설정.class, 대체퍼블리셔설정.class, RoomRealtimePublisherConfiguration.class);
+            context.refresh();
+
+            assertThat(context.getBeansOfType(RoomRealtimePublisher.class)).hasSize(1);
+            assertThat(context.getBean(RoomRealtimePublisher.class)).isSameAs(context.getBean("otherPublisher"));
         }
     }
 
@@ -163,7 +189,7 @@ class SupabaseRoomRealtimePublisherTest {
     }
 
     @Configuration(proxyBeanMethods = false)
-    static class 빈선택테스트설정 {
+    static class 빈선택지원설정 {
         @Bean
         Clock clock() {
             return Clock.fixed(PUBLISHED_AT, ZoneOffset.UTC);
@@ -173,26 +199,12 @@ class SupabaseRoomRealtimePublisherTest {
         RestClient.Builder restClientBuilder() {
             return RestClient.builder();
         }
+    }
 
+    @Configuration(proxyBeanMethods = false)
+    static class 대체퍼블리셔설정 {
         @Bean
-        @ConditionalOnExpression(
-            "T(Boolean).parseBoolean('${fantazzk.supabase.realtime.enabled:false}') and " +
-            "T(org.springframework.util.StringUtils).hasText('${fantazzk.supabase.url:}') and " +
-            "T(org.springframework.util.StringUtils).hasText('${fantazzk.supabase.service-role-key:}')"
-        )
-        RoomRealtimePublisher supabaseRoomRealtimePublisher(
-            RestClient.Builder restClientBuilder,
-            Clock clock,
-            @Value("${fantazzk.supabase.url}") String supabaseUrl,
-            @Value("${fantazzk.supabase.service-role-key}") String serviceRoleKey,
-            @Value("${fantazzk.supabase.realtime.topic-prefix:room}") String topicPrefix
-        ) {
-            return new SupabaseRoomRealtimePublisher(restClientBuilder, clock, supabaseUrl, serviceRoleKey, topicPrefix);
-        }
-
-        @Bean
-        @ConditionalOnMissingBean(RoomRealtimePublisher.class)
-        RoomRealtimePublisher noopRoomRealtimePublisher() {
+        RoomRealtimePublisher otherPublisher() {
             return new NoopRoomRealtimePublisher();
         }
     }

@@ -15,6 +15,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
 
 class SupabaseRoomRealtimePublisher implements RoomRealtimePublisher {
     private static final Logger log = LoggerFactory.getLogger(SupabaseRoomRealtimePublisher.class);
@@ -72,7 +73,7 @@ class SupabaseRoomRealtimePublisher implements RoomRealtimePublisher {
                 .body(new BroadcastRequest(List.of(new BroadcastMessage(topic(event.roomCode()), SNAPSHOT_UPDATED_EVENT, event))))
                 .retrieve()
                 .toBodilessEntity();
-        } catch (Exception ex) {
+        } catch (RestClientException ex) {
             log.warn("Supabase realtime broadcast publish failed. roomCode={}", event.roomCode(), ex);
         }
     }
@@ -91,6 +92,7 @@ class SupabaseRoomRealtimePublisher implements RoomRealtimePublisher {
 @Configuration(proxyBeanMethods = false)
 class RoomRealtimePublisherConfiguration {
     @Bean
+    @ConditionalOnMissingBean(RoomRealtimePublisher.class)
     @ConditionalOnExpression(
         "T(Boolean).parseBoolean('${fantazzk.supabase.realtime.enabled:false}') and " +
         "T(org.springframework.util.StringUtils).hasText('${fantazzk.supabase.url:}') and " +
