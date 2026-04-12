@@ -138,6 +138,20 @@ class RoomAuctionTest {
     }
 
     @Test
+    void 레거시_경매_방은_minBidUnit이_null이면_최고가보다_높은_입찰을_허용한다() {
+        Room room = startedLegacyAuctionRoom();
+        TeamLeaderId hostLeaderId = room.getLeaders().getFirst().getId();
+        TeamLeaderId guestLeaderId = room.getLeaders().getLast().getId();
+
+        room.placeBid(hostLeaderId, 100, CREATED_AT.plusSeconds(1));
+
+        RoomBid bid = room.placeBid(guestLeaderId, 105, CREATED_AT.plusSeconds(2));
+
+        assertThat(bid.amount()).isEqualTo(105);
+        assertThat(bid.sequence()).isEqualTo(new BidSequence(2));
+    }
+
+    @Test
     void 최소_입찰_단위를_만족하면_다음_입찰을_할_수_있다() {
         Room room = startedAuctionRoom();
         TeamLeaderId hostLeaderId = room.getLeaders().getFirst().getId();
@@ -491,6 +505,33 @@ class RoomAuctionTest {
 
     private static Room startedAuctionRoom() {
         Room room = waitingAuctionRoom();
+        room.join(new TeamLeaderId(GUEST_ID), "게스트", GUEST_ACTION_TOKEN);
+        room.start(new TeamLeaderId(HOST_ID), CREATED_AT);
+        return room;
+    }
+
+    private static Room startedLegacyAuctionRoom() {
+        Room room =
+            Room.createFromTemplate(
+                "ROOM04",
+                new TeamLeaderId(HOST_ID),
+                "호스트",
+                HOST_ACTION_TOKEN,
+                new RoomTemplateSpec(
+                    RoomTemplateSpec.Mode.AUCTION,
+                    2,
+                    2,
+                    300,
+                    PICK_BAN_TIME,
+                    null,
+                    null,
+                    List.of(
+                        new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
+                        new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
+                    )
+                ),
+                CREATED_AT
+            );
         room.join(new TeamLeaderId(GUEST_ID), "게스트", GUEST_ACTION_TOKEN);
         room.start(new TeamLeaderId(HOST_ID), CREATED_AT);
         return room;
