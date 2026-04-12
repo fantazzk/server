@@ -44,6 +44,7 @@ class Room implements AggregateRoot<Room, RoomId> {
     private final Integer budget;
     @Column(name = "pick_ban_time")
     private final int pickBanTime;
+    private final Integer minBidUnit;
     @Enumerated(EnumType.STRING)
     private final RoomTemplateSpec.DraftOrderStrategy draftOrderStrategy;
     private Integer currentTurnIndex;
@@ -72,6 +73,7 @@ class Room implements AggregateRoot<Room, RoomId> {
         int teamSize,
         Integer budget,
         int pickBanTime,
+        Integer minBidUnit,
         RoomTemplateSpec.DraftOrderStrategy draftOrderStrategy
     ) {
         this.id = new RoomId(UUID.randomUUID());
@@ -84,6 +86,7 @@ class Room implements AggregateRoot<Room, RoomId> {
         this.teamSize = teamSize;
         this.budget = budget;
         this.pickBanTime = pickBanTime;
+        this.minBidUnit = minBidUnit;
         this.draftOrderStrategy = draftOrderStrategy;
         this.currentTurnIndex = null;
         this.currentAuctionRound = null;
@@ -112,6 +115,7 @@ class Room implements AggregateRoot<Room, RoomId> {
                 spec.teamSize(),
                 spec.budget(),
                 spec.pickBanTime(),
+                spec.minBidUnit(),
                 spec.draftOrderStrategy()
             );
 
@@ -261,15 +265,25 @@ class Room implements AggregateRoot<Room, RoomId> {
             throw CoreException.of(RoomErrorType.ROOM_BID_BUDGET_EXCEEDED);
         }
 
-        bids.stream()
-            .filter(it -> it.round() == currentAuctionRound)
-            .mapToInt(RoomBid::amount)
-            .max()
-            .ifPresent(highest -> {
-                if (amount <= highest) {
-                    throw CoreException.of(RoomErrorType.ROOM_BID_TOO_LOW);
-                }
-            });
+        Integer highestBidAmount =
+            bids.stream()
+                .filter(it -> it.round() == currentAuctionRound)
+                .map(RoomBid::amount)
+                .max(Integer::compareTo)
+                .orElse(null);
+
+        if (highestBidAmount == null) {
+            if (minBidUnit != null && amount < minBidUnit) {
+                throw CoreException.of(RoomErrorType.ROOM_BID_MIN_UNIT_NOT_MET);
+            }
+        } else {
+            if (amount <= highestBidAmount) {
+                throw CoreException.of(RoomErrorType.ROOM_BID_TOO_LOW);
+            }
+            if (minBidUnit != null && amount < highestBidAmount + minBidUnit) {
+                throw CoreException.of(RoomErrorType.ROOM_BID_MIN_UNIT_NOT_MET);
+            }
+        }
 
         BidSequence nextSequence =
             new BidSequence(

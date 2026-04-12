@@ -129,6 +129,12 @@ enum RoomErrorType implements ErrorDescriptor {
         "현재 최고가보다 높은 금액만 입찰할 수 있습니다",
         Level.INFO
     ),
+    ROOM_BID_MIN_UNIT_NOT_MET(
+        HttpStatus.CONFLICT,
+        "ROOM_BID_MIN_UNIT_NOT_MET",
+        "최소 입찰 증가폭을 만족하는 금액만 입찰할 수 있습니다",
+        Level.INFO
+    ),
     ROOM_AUCTION_ROUND_NOT_ENDED(
         HttpStatus.CONFLICT,
         "ROOM_AUCTION_ROUND_NOT_ENDED",
