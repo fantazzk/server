@@ -33,6 +33,12 @@ enum RoomErrorType implements ErrorDescriptor {
         Level.INFO
     ),
     ROOM_FULL(HttpStatus.CONFLICT, "ROOM_FULL", "방이 가득 찼습니다", Level.INFO),
+    ROOM_NICKNAME_ALREADY_TAKEN(
+        HttpStatus.CONFLICT,
+        "ROOM_NICKNAME_ALREADY_TAKEN",
+        "이미 사용 중인 닉네임입니다",
+        Level.INFO
+    ),
     ROOM_ACTION_TOKEN_REQUIRED(
         HttpStatus.UNAUTHORIZED,
         "ROOM_ACTION_TOKEN_REQUIRED",

@@ -85,6 +85,37 @@ class RoomAggregateTest {
     }
 
     @Test
+    void 참가자는_공백과_대소문자를_무시하고_중복된_닉네임으로_참가할_수_없다() {
+        Room room =
+            Room.createFromTemplate(
+                "ROOM01",
+                new TeamLeaderId(HOST_ID),
+                "Faker",
+                HOST_ACTION_TOKEN,
+                new RoomTemplateSpec(
+                    RoomTemplateSpec.Mode.AUCTION,
+                    2,
+                    2,
+                    300,
+                    45,
+                    null,
+                    List.of(
+                        new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
+                        new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
+                    )
+                ),
+                CREATED_AT
+            );
+
+        assertThatThrownBy(() -> room.join(new TeamLeaderId(GUEST_ID), "  faker  ", GUEST_ACTION_TOKEN))
+            .isInstanceOf(CoreException.class)
+            .isInstanceOfSatisfying(CoreException.class, ex -> {
+                assertThat(ex.getError()).isEqualTo(RoomErrorType.ROOM_NICKNAME_ALREADY_TAKEN);
+                assertThat(ex.getData()).isNull();
+            });
+    }
+
+    @Test
     void 드래프트_자리를_선택하면_팀장에게_확정된다() {
         Room room = waitingDraftRoom();
         room.join(new TeamLeaderId(GUEST_ID), "게스트", GUEST_ACTION_TOKEN);

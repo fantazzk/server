@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Locale;
 import java.util.UUID;
 import lombok.Getter;
 import org.jmolecules.ddd.types.AggregateRoot;
@@ -159,7 +160,22 @@ class Room implements AggregateRoot<Room, RoomId> {
         if (leaders.size() >= teamCount) {
             throw CoreException.of(RoomErrorType.ROOM_FULL);
         }
-        leaders.add(new RoomTeamLeader(teamLeaderId, nickname, actionToken, budget));
+
+        String normalizedNickname = normalizeNickname(nickname);
+        boolean taken =
+            leaders.stream()
+                .map(RoomTeamLeader::getNickname)
+                .map(this::normalizeNickname)
+                .anyMatch(normalizedNickname::equals);
+        if (taken) {
+            throw CoreException.of(RoomErrorType.ROOM_NICKNAME_ALREADY_TAKEN);
+        }
+
+        leaders.add(new RoomTeamLeader(teamLeaderId, nickname.trim(), actionToken, budget));
+    }
+
+    private String normalizeNickname(String nickname) {
+        return nickname.trim().toLowerCase(Locale.ROOT);
     }
 
     void selectDraftPosition(TeamLeaderId callerLeaderId, int draftPosition) {
