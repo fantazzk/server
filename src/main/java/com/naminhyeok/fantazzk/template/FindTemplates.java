@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 class FindTemplates {
     private final Templates templates;
+    private final TemplateListReader templateListReader;
 
     @Transactional(readOnly = true)
     public TemplateDetail getDetail(TemplateId id) {
@@ -19,8 +20,6 @@ class FindTemplates {
 
     @Transactional(readOnly = true)
     public List<TemplateDetail> list() {
-        return templates.findAll().stream()
-            .map(template -> new TemplateDetail(template, template.getPlayers()))
-            .toList();
+        return templateListReader.list();
     }
 }

@@ -49,6 +49,14 @@ class PublishedContractStructureTest {
         assertClassMissing("com.naminhyeok.fantazzk.template.contract.TemplateCatalog");
     }
 
+    @Test
+    void aggregate_repository는_별도_jpa_seam_클래스를_두지_않는다() {
+        assertClassMissing("com.naminhyeok.fantazzk.room.JpaRoomRepository");
+        assertClassMissing("com.naminhyeok.fantazzk.room.JpaRooms");
+        assertClassMissing("com.naminhyeok.fantazzk.template.JpaTemplateRepository");
+        assertClassMissing("com.naminhyeok.fantazzk.template.JpaTemplates");
+    }
+
     private boolean isPublic(String className) throws Exception {
         return Modifier.isPublic(Class.forName(className).getModifiers());
     }

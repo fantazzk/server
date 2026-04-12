@@ -2,7 +2,6 @@ package com.naminhyeok.fantazzk.room;
 
 import java.time.Clock;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -11,19 +10,15 @@ import java.util.concurrent.ScheduledFuture;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
 class RoomAuctionDeadlineScheduler {
-    private static final int CATCH_UP_BATCH_SIZE = 200;
-    private static final PageRequest CATCH_UP_PAGE = PageRequest.of(0, 200);
-
     private final TaskScheduler taskScheduler;
     private final SettleAuction settleAuction;
-    private final Rooms rooms;
+    private final AuctionScheduleReader auctionScheduleReader;
     private final Clock clock;
     private final ConcurrentMap<String, ScheduledFuture<?>> scheduledTasks = new ConcurrentHashMap<>();
 
@@ -33,9 +28,11 @@ class RoomAuctionDeadlineScheduler {
             return;
         }
 
-        String code = room.getCode();
-        ScheduledFuture<?> future =
-            taskScheduler.schedule(() -> runScheduledSettlement(code), room.getCurrentAuctionRoundEndsAt());
+        schedule(room.getCode(), room.getCurrentAuctionRoundEndsAt());
+    }
+
+    private void schedule(String code, Instant deadline) {
+        ScheduledFuture<?> future = taskScheduler.schedule(() -> runScheduledSettlement(code), deadline);
         if (future != null) {
             scheduledTasks.put(code, future);
         }
@@ -51,16 +48,16 @@ class RoomAuctionDeadlineScheduler {
     @EventListener(ApplicationReadyEvent.class)
     void catchUpAndReschedule() {
         Instant now = Instant.now(clock);
-        for (Room room : collectSchedulableRooms()) {
-            if (room.getCurrentAuctionRoundEndsAt() == null || !room.getCurrentAuctionRoundEndsAt().isAfter(now)) {
+        for (AuctionScheduleCandidate candidate : collectSchedulableRooms()) {
+            if (candidate.deadline() == null || !candidate.deadline().isAfter(now)) {
                 try {
-                    schedule(settleAuction.settleIfDue(room.getCode()));
+                    schedule(settleAuction.settleIfDue(candidate.code()));
                 } catch (RoomStateInvalidException ignored) {
                     continue;
                 }
                 continue;
             }
-            schedule(room);
+            schedule(candidate.code(), candidate.deadline());
         }
     }
 
@@ -75,34 +72,17 @@ class RoomAuctionDeadlineScheduler {
             && room.getCurrentAuctionRoundEndsAt() != null;
     }
 
-    private List<Room> collectSchedulableRooms() {
-        List<Room> schedulableRooms = new ArrayList<>();
-        int page = 0;
-        while (true) {
-            List<Room> batch =
-                rooms.findByStatusAndModeOrderByCodeAsc(
-                    RoomStatus.IN_PROGRESS,
-                    RoomMode.AUCTION,
-                    PageRequest.of(page, CATCH_UP_BATCH_SIZE)
-                );
-            if (batch.isEmpty()) {
-                return sortSchedulableRooms(schedulableRooms);
-            }
-            schedulableRooms.addAll(batch);
-            if (batch.size() < CATCH_UP_BATCH_SIZE) {
-                return sortSchedulableRooms(schedulableRooms);
-            }
-            page += 1;
-        }
+    private List<AuctionScheduleCandidate> collectSchedulableRooms() {
+        return sortSchedulableRooms(auctionScheduleReader.findInProgressAuctionSchedules());
     }
 
-    private List<Room> sortSchedulableRooms(List<Room> rooms) {
-        return rooms.stream()
+    private List<AuctionScheduleCandidate> sortSchedulableRooms(List<AuctionScheduleCandidate> candidates) {
+        return candidates.stream()
             .sorted(
                 Comparator.comparing(
-                    Room::getCurrentAuctionRoundEndsAt,
+                    AuctionScheduleCandidate::deadline,
                     Comparator.nullsFirst(Comparator.naturalOrder())
-                ).thenComparing(Room::getCode)
+                ).thenComparing(AuctionScheduleCandidate::code)
             )
             .toList();
     }

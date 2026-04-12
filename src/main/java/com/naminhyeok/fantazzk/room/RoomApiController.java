@@ -33,11 +33,7 @@ class RoomApiController {
 
     @GetMapping
     ApiResponse<List<JoinableRoomResponse>> list() {
-        return ApiResponse.success(
-            findJoinableRooms.list().stream()
-                .map(JoinableRoomResponse::from)
-                .toList()
-        );
+        return ApiResponse.success(findJoinableRooms.list());
     }
 
     @PostMapping

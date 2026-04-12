@@ -18,7 +18,7 @@ class FindTemplatesTest {
         InMemoryTemplates templates = new InMemoryTemplates();
         TemplateId missingId = new TemplateId(UUID.randomUUID());
 
-        FindTemplates cut = new FindTemplates(templates);
+        FindTemplates cut = new FindTemplates(templates, new InMemoryTemplateListReader(templates));
 
         assertThatThrownBy(() -> cut.getDetail(missingId))
             .isInstanceOf(CoreException.class)
@@ -63,7 +63,7 @@ class FindTemplatesTest {
             )
         );
 
-        FindTemplates cut = new FindTemplates(templates);
+        FindTemplates cut = new FindTemplates(templates, new InMemoryTemplateListReader(templates));
 
         assertThat(cut.list()).hasSize(2);
     }
@@ -88,7 +88,7 @@ class FindTemplatesTest {
             );
         templates.save(template);
 
-        FindTemplates cut = new FindTemplates(templates);
+        FindTemplates cut = new FindTemplates(templates, new InMemoryTemplateListReader(templates));
         TemplateDetail detail = cut.getDetail(template.getId());
 
         assertThat(detail.template().getId()).isEqualTo(template.getId());
@@ -124,7 +124,7 @@ class FindTemplatesTest {
             );
         templates.save(template);
 
-        ProvideTemplateCatalog catalog = new ProvideTemplateCatalog(new FindTemplates(templates));
+        ProvideTemplateCatalog catalog = new ProvideTemplateCatalog(new FindTemplates(templates, new InMemoryTemplateListReader(templates)));
 
         TemplateCatalog.TemplateBlueprint blueprint = catalog.getTemplate(template.getId().templateId());
 
@@ -152,10 +152,20 @@ class FindTemplatesTest {
         public Optional<Template> findById(TemplateId id) {
             return Optional.ofNullable(storage.get(id));
         }
+    }
+
+    private static final class InMemoryTemplateListReader implements TemplateListReader {
+        private final InMemoryTemplates templates;
+
+        private InMemoryTemplateListReader(InMemoryTemplates templates) {
+            this.templates = templates;
+        }
 
         @Override
-        public List<Template> findAll() {
-            return new ArrayList<>(storage.values());
+        public List<TemplateDetail> list() {
+            return new ArrayList<>(templates.storage.values()).stream()
+                .map(template -> new TemplateDetail(template, template.getPlayers()))
+                .toList();
         }
     }
 }

@@ -274,7 +274,12 @@ class RoomApiWebMvcTest {
         Room latest = waitingAuctionRoom("ROOM99", Instant.parse("2026-04-09T00:03:00Z"));
         Room older = waitingDraftRoom("ROOM01", Instant.parse("2026-04-09T00:01:00Z"));
 
-        given(findJoinableRooms.list()).willReturn(List.of(latest, older));
+        given(findJoinableRooms.list()).willReturn(
+            List.of(
+                JoinableRoomResponse.from(latest),
+                JoinableRoomResponse.from(older)
+            )
+        );
 
         var result = mockMvcTester().perform(get("/api/v1/rooms"));
 

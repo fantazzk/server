@@ -110,10 +110,5 @@ class CreateTemplateTest {
         public Optional<Template> findById(TemplateId id) {
             return Optional.ofNullable(storage.get(id));
         }
-
-        @Override
-        public List<Template> findAll() {
-            return new ArrayList<>(storage.values());
-        }
     }
 }
