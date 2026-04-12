@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 class JoinRoom {
     private final Rooms rooms;
     private final TeamLeaderIdentityIssuer teamLeaderIdentityIssuer;
+    private final RoomRealtimePublisher roomRealtimePublisher;
 
     @Transactional
     public RoomTeamLeader join(String code, String nickname) {
@@ -17,6 +18,7 @@ class JoinRoom {
         TeamLeaderIdentityIssuer.TeamLeaderIdentity identity = teamLeaderIdentityIssuer.issue();
         room.join(new TeamLeaderId(identity.leaderId()), nickname, identity.actionToken());
         Room saved = rooms.save(room);
+        roomRealtimePublisher.publishAfterCommit(saved);
         return saved.getLeaders().getLast();
     }
 }

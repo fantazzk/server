@@ -321,7 +321,7 @@ class RoomAuctionTest {
         Room room = inProgressDraftRoomForOptimisticLock();
         InMemoryRooms rooms = new InMemoryRooms(room);
         rooms.failOnSave(new ObjectOptimisticLockingFailureException(Room.class, room.getId()));
-        PickDraft pickDraft = new PickDraft(rooms, new RoomActionAuthorizer());
+        PickDraft pickDraft = new PickDraft(rooms, new RoomActionAuthorizer(), noopRoomRealtimePublisher());
 
         assertThatThrownBy(() -> pickDraft.pick(room.getCode(), HOST_ACTION_TOKEN, "선수1"))
             .isInstanceOfSatisfying(CoreException.class, ex -> assertRoomError(ex, RoomErrorType.ROOM_CONCURRENT_MODIFICATION));
@@ -334,7 +334,8 @@ class RoomAuctionTest {
         rooms.failOnSave(new ObjectOptimisticLockingFailureException(Room.class, room.getId()));
         SelectDraftPosition selectDraftPosition = new SelectDraftPosition(
             rooms,
-            new RoomActionAuthorizer()
+            new RoomActionAuthorizer(),
+            noopRoomRealtimePublisher()
         );
 
         assertThatThrownBy(() -> selectDraftPosition.select(room.getCode(), HOST_ACTION_TOKEN, 1))
@@ -349,7 +350,8 @@ class RoomAuctionTest {
         rooms.failOnSave(new ObjectOptimisticLockingFailureException(Room.class, room.getId()));
         ClearDraftPosition clearDraftPosition = new ClearDraftPosition(
             rooms,
-            new RoomActionAuthorizer()
+            new RoomActionAuthorizer(),
+            noopRoomRealtimePublisher()
         );
 
         assertThatThrownBy(() -> clearDraftPosition.clear(room.getCode(), HOST_ACTION_TOKEN))
@@ -500,7 +502,7 @@ class RoomAuctionTest {
     private static SettleAuction unsupportedSettleAuction() {
         InMemoryRooms rooms = new InMemoryRooms();
         return new SettleAuction(
-            new SettleAuctionAttempt(rooms, Clock.fixed(CREATED_AT, ZoneOffset.UTC)),
+            new SettleAuctionAttempt(rooms, Clock.fixed(CREATED_AT, ZoneOffset.UTC), noopRoomRealtimePublisher()),
             rooms,
             new ObjectProvider<>() {
                 @Override
@@ -552,6 +554,11 @@ class RoomAuctionTest {
 
     private static AuctionScheduleReader emptyAuctionScheduleReader() {
         return List::of;
+    }
+
+    private static RoomRealtimePublisher noopRoomRealtimePublisher() {
+        return room -> {
+        };
     }
 
     private static final class InMemoryRooms implements Rooms {

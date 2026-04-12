@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 class PickDraft {
     private final Rooms rooms;
     private final RoomActionAuthorizer roomActionAuthorizer;
+    private final RoomRealtimePublisher roomRealtimePublisher;
 
     @Transactional
     public RoomTeamMember pick(String code, String actionToken, String playerName) {
@@ -18,7 +19,8 @@ class PickDraft {
             Room room = rooms.findByCode(code).orElseThrow(() -> CoreException.of(RoomErrorType.ROOM_NOT_FOUND));
             RoomTeamLeader caller = roomActionAuthorizer.authenticate(room, actionToken);
             RoomTeamMember member = room.pick(caller.getId(), playerName);
-            rooms.saveAndFlush(room);
+            Room saved = rooms.saveAndFlush(room);
+            roomRealtimePublisher.publishAfterCommit(saved);
             return member;
         } catch (OptimisticLockingFailureException ex) {
             throw CoreException.of(RoomErrorType.ROOM_CONCURRENT_MODIFICATION);
