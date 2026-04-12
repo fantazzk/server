@@ -42,6 +42,7 @@ class CreateRoomTest {
         assertThat(rooms.flushAttemptCount()).isEqualTo(3);
         assertThat(rooms.attemptedRoomIds()).doesNotHaveDuplicates();
         assertThat(created.getPickBanTime()).isEqualTo(45);
+        assertThat(created.getMinBidUnit()).isEqualTo(10);
         assertThat(created.getPlayers().stream().map(RoomPlayer::getId))
             .containsExactly(new RoomPlayerId(0), new RoomPlayerId(1));
     }
