@@ -464,6 +464,36 @@ class Room implements AggregateRoot<Room, RoomId> {
             .orElseThrow(RoomStateInvalidException::auctionTargetMissing);
     }
 
+    RoomPlayer currentAuctionTarget() {
+        if (mode != RoomMode.AUCTION || status != RoomStatus.IN_PROGRESS || currentAuctionRound == null) {
+            return null;
+        }
+
+        return players.stream()
+            .filter(it -> it.getStatus() == PlayerStatus.AVAILABLE)
+            .min(Comparator.comparingInt(RoomPlayer::getDisplayOrder))
+            .orElse(null);
+    }
+
+    RoomBid currentWinningBid() {
+        if (mode != RoomMode.AUCTION || status != RoomStatus.IN_PROGRESS || currentAuctionRound == null) {
+            return null;
+        }
+
+        return bids.stream()
+            .filter(it -> it.round() == currentAuctionRound)
+            .max(Comparator.comparingInt(RoomBid::amount))
+            .orElse(null);
+    }
+
+    int currentBidCount() {
+        if (mode != RoomMode.AUCTION || status != RoomStatus.IN_PROGRESS || currentAuctionRound == null) {
+            return 0;
+        }
+
+        return (int) bids.stream().filter(it -> it.round() == currentAuctionRound).count();
+    }
+
     private void validateAuctionPositionLimit(TeamLeaderId leaderId, RoomPlayer target) {
         if (positionLimit == null) {
             return;

@@ -82,6 +82,11 @@ class RoomApiIntegrationTest {
         assertThat(body.success().code()).isEqualTo("ROOM10");
         assertThat(body.success().status()).isEqualTo("IN_PROGRESS");
         assertThat(body.success().progress().currentRound()).isEqualTo(2);
+        assertThat(body.success().progress().currentAuctionTarget().name()).isEqualTo("선수2");
+        assertThat(body.success().progress().currentAuctionTarget().position()).isEqualTo("JUNGLE");
+        assertThat(body.success().progress().highestBidAmount()).isNull();
+        assertThat(body.success().progress().leadingLeaderId()).isNull();
+        assertThat(body.success().progress().bidCount()).isEqualTo(0);
         assertThat(body.success().progress().currentAuctionRoundEndsAt())
             .isAfter(CREATED_AT.plusSeconds(45));
     }
@@ -89,6 +94,7 @@ class RoomApiIntegrationTest {
     @Test
     void get은_경매의_deadline_projection을_반환한다() {
         Room room = startedAuctionRoom("ROOM11", CREATED_AT);
+        room.placeBid(new TeamLeaderId("host-ROOM11"), 120, CREATED_AT.plusSeconds(1));
         rooms.save(room);
 
         var response = restTemplate.getForEntity("/api/v1/rooms/ROOM11", RoomResponseApiResponse.class);
@@ -99,6 +105,11 @@ class RoomApiIntegrationTest {
         assertThat(body.resultType()).isEqualTo("SUCCESS");
         assertThat(body.success().code()).isEqualTo("ROOM11");
         assertThat(body.success().progress().currentRound()).isEqualTo(1);
+        assertThat(body.success().progress().currentAuctionTarget().name()).isEqualTo("선수1");
+        assertThat(body.success().progress().currentAuctionTarget().position()).isEqualTo("TOP");
+        assertThat(body.success().progress().highestBidAmount()).isEqualTo(120);
+        assertThat(body.success().progress().leadingLeaderId()).isEqualTo("host-ROOM11");
+        assertThat(body.success().progress().bidCount()).isEqualTo(1);
         assertThat(body.success().progress().currentAuctionRoundEndsAt())
             .isEqualTo(Instant.parse("2026-04-09T00:00:45Z"));
     }

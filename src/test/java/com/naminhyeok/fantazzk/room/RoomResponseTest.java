@@ -3,6 +3,7 @@ package com.naminhyeok.fantazzk.room;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.groups.Tuple.tuple;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -15,6 +16,7 @@ class RoomResponseTest {
     private static final String GUEST_ONE_ACTION_TOKEN = "guest-1-action-token";
     private static final String GUEST_TWO_ID = "guest-2";
     private static final String GUEST_TWO_ACTION_TOKEN = "guest-2-action-token";
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper().findAndRegisterModules();
 
     @Test
     void 드래프트_방_응답은_자리_기준_예상_시작_순서를_슬롯으로_반환한다() {
@@ -84,6 +86,21 @@ class RoomResponseTest {
         assertThat(response.draftOrderPreview()).isNull();
     }
 
+    @Test
+    void 진행중인_경매_방_응답은_현재_경매_타깃과_최고_입찰_상태를_포함한다() {
+        Room room = startedAuctionRoom();
+        room.placeBid(new TeamLeaderId(HOST_ID), 100, CREATED_AT.plusSeconds(1));
+        room.placeBid(new TeamLeaderId(GUEST_ONE_ID), 150, CREATED_AT.plusSeconds(2));
+
+        var json = OBJECT_MAPPER.valueToTree(RoomResponse.from(room));
+
+        assertThat(json.at("/progress/currentAuctionTarget/name").asText()).isEqualTo("선수1");
+        assertThat(json.at("/progress/currentAuctionTarget/position").asText()).isEqualTo("TOP");
+        assertThat(json.at("/progress/highestBidAmount").asInt()).isEqualTo(150);
+        assertThat(json.at("/progress/leadingLeaderId").asText()).isEqualTo(GUEST_ONE_ID);
+        assertThat(json.at("/progress/bidCount").asInt()).isEqualTo(2);
+    }
+
     private Room threeTeamDraftRoom() {
         return Room.createFromTemplate(
             "DRF001",
@@ -106,5 +123,32 @@ class RoomResponseTest {
             ),
             CREATED_AT
         );
+    }
+
+    private Room startedAuctionRoom() {
+        Room room =
+            Room.createFromTemplate(
+                "AUC002",
+                new TeamLeaderId(HOST_ID),
+                "호스트",
+                HOST_ACTION_TOKEN,
+                new RoomTemplateSpec(
+                    RoomTemplateSpec.Mode.AUCTION,
+                    2,
+                    2,
+                    300,
+                    15,
+                    10,
+                    null,
+                    List.of(
+                        new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
+                        new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
+                    )
+                ),
+                CREATED_AT
+            );
+        room.join(new TeamLeaderId(GUEST_ONE_ID), "게스트1", GUEST_ONE_ACTION_TOKEN);
+        room.start(new TeamLeaderId(HOST_ID), CREATED_AT);
+        return room;
     }
 }
