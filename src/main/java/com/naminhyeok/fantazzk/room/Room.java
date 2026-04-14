@@ -1,6 +1,10 @@
 package com.naminhyeok.fantazzk.room;
 
 import com.naminhyeok.fantazzk.CoreException;
+import com.naminhyeok.fantazzk.room.event.AuctionSettled;
+import com.naminhyeok.fantazzk.room.event.BidPlaced;
+import com.naminhyeok.fantazzk.room.event.LeaderJoinedRoom;
+import com.naminhyeok.fantazzk.room.event.RoomStarted;
 import jakarta.persistence.Access;
 import jakarta.persistence.AccessType;
 import jakarta.persistence.CollectionTable;
@@ -11,9 +15,11 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import jakarta.persistence.Version;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -21,6 +27,9 @@ import java.util.Locale;
 import java.util.UUID;
 import lombok.Getter;
 import org.jmolecules.ddd.types.AggregateRoot;
+import org.jmolecules.event.types.DomainEvent;
+import org.springframework.data.domain.AfterDomainEventPublication;
+import org.springframework.data.domain.DomainEvents;
 
 @Getter
 @Access(AccessType.FIELD)
@@ -65,6 +74,8 @@ class Room implements AggregateRoot<Room, RoomId> {
     @ElementCollection
     @CollectionTable(name = "room_bid", joinColumns = @JoinColumn(name = "bids_room_id"))
     private final List<RoomBid> bids;
+    @Transient
+    private List<DomainEvent> domainEvents;
 
     Room(
         String code,
@@ -99,6 +110,7 @@ class Room implements AggregateRoot<Room, RoomId> {
         this.leaders = new ArrayList<>();
         this.members = new ArrayList<>();
         this.bids = new ArrayList<>();
+        this.domainEvents = new ArrayList<>();
     }
 
     public static Room createFromTemplate(
@@ -181,6 +193,7 @@ class Room implements AggregateRoot<Room, RoomId> {
         }
 
         leaders.add(new RoomTeamLeader(teamLeaderId, nickname.trim(), actionToken, budget));
+        registerEvent(new LeaderJoinedRoom(code, teamLeaderId.value()));
     }
 
     private String normalizeNickname(String nickname) {
@@ -233,6 +246,8 @@ class Room implements AggregateRoot<Room, RoomId> {
             currentAuctionRound = null;
             currentAuctionRoundEndsAt = null;
         }
+
+        registerEvent(new RoomStarted(code, currentAuctionRoundEndsAt));
     }
 
     RoomBid placeBid(TeamLeaderId teamLeaderId, int amount, Instant now) {
@@ -296,6 +311,7 @@ class Room implements AggregateRoot<Room, RoomId> {
             );
         RoomBid bid = new RoomBid(currentAuctionRound, nextSequence, teamLeaderId, amount);
         bids.add(bid);
+        registerEvent(new BidPlaced(code, teamLeaderId.value(), amount, currentAuctionRound, currentAuctionRoundEndsAt));
         return bid;
     }
 
@@ -329,7 +345,9 @@ class Room implements AggregateRoot<Room, RoomId> {
             target.moveToBack(maxOrder + 1);
             currentAuctionRound += 1;
             currentAuctionRoundEndsAt = now.plusSeconds(pickBanTime);
-            return new AuctionSettlement(target.getName(), AuctionOutcome.PASSED);
+            AuctionSettlement settlement = new AuctionSettlement(target.getName(), AuctionOutcome.PASSED);
+            registerEvent(new AuctionSettled(code, settlement.outcome().name(), currentAuctionRoundEndsAt));
+            return settlement;
         }
 
         RoomTeamLeader winner =
@@ -350,8 +368,9 @@ class Room implements AggregateRoot<Room, RoomId> {
             currentAuctionRound += 1;
             currentAuctionRoundEndsAt = now.plusSeconds(pickBanTime);
         }
-
-        return new AuctionSettlement(target.getName(), AuctionOutcome.SOLD);
+        AuctionSettlement settlement = new AuctionSettlement(target.getName(), AuctionOutcome.SOLD);
+        registerEvent(new AuctionSettled(code, settlement.outcome().name(), currentAuctionRoundEndsAt));
+        return settlement;
     }
 
     RoomTeamMember pick(TeamLeaderId teamLeaderId, String playerName) {
@@ -511,5 +530,27 @@ class Room implements AggregateRoot<Room, RoomId> {
             .filter(leader -> leader.getId().equals(teamLeaderId))
             .findFirst()
             .orElseThrow(() -> RoomStateInvalidException.leaderMissing(teamLeaderId));
+    }
+
+    @DomainEvents
+    Collection<DomainEvent> domainEvents() {
+        return List.copyOf(currentDomainEvents());
+    }
+
+    @AfterDomainEventPublication
+    void clearDomainEvents() {
+        currentDomainEvents().clear();
+    }
+
+    private <T extends DomainEvent> T registerEvent(T event) {
+        currentDomainEvents().add(event);
+        return event;
+    }
+
+    private List<DomainEvent> currentDomainEvents() {
+        if (domainEvents == null) {
+            domainEvents = new ArrayList<>();
+        }
+        return domainEvents;
     }
 }

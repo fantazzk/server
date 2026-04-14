@@ -4,6 +4,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.naminhyeok.fantazzk.CoreException;
+import com.naminhyeok.fantazzk.room.event.AuctionSettled;
+import com.naminhyeok.fantazzk.room.event.BidPlaced;
+import com.naminhyeok.fantazzk.room.event.LeaderJoinedRoom;
+import com.naminhyeok.fantazzk.room.event.RoomStarted;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -83,6 +87,11 @@ class RoomAggregateTest {
         assertThat(room.getLeaders()).hasSize(2);
         assertThat(room.getLeaders().getLast().getNickname()).isEqualTo("게스트");
         assertThat(room.getLeaders().getLast().getActionToken()).isEqualTo(GUEST_ACTION_TOKEN);
+        assertThat(room.domainEvents()).singleElement()
+            .isInstanceOfSatisfying(LeaderJoinedRoom.class, event -> {
+                assertThat(event.roomCode()).isEqualTo("ROOM01");
+                assertThat(event.leaderId()).isEqualTo(GUEST_ID);
+            });
     }
 
     @Test
@@ -223,6 +232,11 @@ class RoomAggregateTest {
             assertThat(room.getStatus()).isEqualTo(RoomStatus.IN_PROGRESS);
             assertThat(room.getCurrentAuctionRound()).isEqualTo(1);
             assertThat(room.getCurrentTurnIndex()).isNull();
+            assertThat(room.domainEvents()).last()
+                .isInstanceOfSatisfying(RoomStarted.class, event -> {
+                    assertThat(event.roomCode()).isEqualTo("ROOM01");
+                    assertThat(event.roundEndsAt()).isEqualTo(CREATED_AT.plusSeconds(15));
+                });
         }
 
         @Test
@@ -314,6 +328,7 @@ class RoomAggregateTest {
         Room room = auctionWaitingRoom();
         room.join(new TeamLeaderId(GUEST_ID), "게스트", GUEST_ACTION_TOKEN);
         room.start(new TeamLeaderId(HOST_ID), CREATED_AT);
+        room.clearDomainEvents();
         return room;
     }
 
