@@ -32,14 +32,14 @@ class RoomQueryApiControllerWebMvcTest {
     private ObjectMapper objectMapper;
 
     @MockitoBean
-    private GetRoom getRoom;
+    private GetRoomDetails getRoomDetails;
 
     @MockitoBean
     private FindJoinableRooms findJoinableRooms;
 
     @Test
     void get은_public_room_snapshot만_반환한다() throws Exception {
-        given(getRoom.get(RoomApiTestFixtures.ROOM_CODE)).willReturn(RoomApiTestFixtures.waitingDraftRoom());
+        given(getRoomDetails.get(RoomApiTestFixtures.ROOM_CODE)).willReturn(RoomDetails.from(RoomApiTestFixtures.waitingDraftRoom()));
 
         var result = mockMvcTester().perform(get("/api/v1/rooms/{code}", RoomApiTestFixtures.ROOM_CODE));
 
@@ -55,7 +55,7 @@ class RoomQueryApiControllerWebMvcTest {
 
     @Test
     void get은_방이_없으면_404를_반환한다() throws Exception {
-        given(getRoom.get(RoomApiTestFixtures.ROOM_CODE)).willThrow(CoreException.of(RoomErrorType.ROOM_NOT_FOUND));
+        given(getRoomDetails.get(RoomApiTestFixtures.ROOM_CODE)).willThrow(CoreException.of(RoomErrorType.ROOM_NOT_FOUND));
 
         var result = mockMvcTester().perform(get("/api/v1/rooms/{code}", RoomApiTestFixtures.ROOM_CODE));
 

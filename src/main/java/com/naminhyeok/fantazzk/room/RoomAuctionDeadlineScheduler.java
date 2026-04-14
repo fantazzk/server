@@ -7,23 +7,47 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledFuture;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Component;
 
 @Component
-@RequiredArgsConstructor
 class RoomAuctionDeadlineScheduler {
     private final TaskScheduler taskScheduler;
     private final SettleAuction settleAuction;
     private final AuctionScheduleReader auctionScheduleReader;
     private final Clock clock;
+    private final Games games;
     private final ConcurrentMap<String, ScheduledFuture<?>> scheduledTasks = new ConcurrentHashMap<>();
 
+    @Autowired
+    RoomAuctionDeadlineScheduler(
+        TaskScheduler taskScheduler,
+        SettleAuction settleAuction,
+        AuctionScheduleReader auctionScheduleReader,
+        Clock clock,
+        Games games
+    ) {
+        this.taskScheduler = taskScheduler;
+        this.settleAuction = settleAuction;
+        this.auctionScheduleReader = auctionScheduleReader;
+        this.clock = clock;
+        this.games = games;
+    }
+
+    RoomAuctionDeadlineScheduler(
+        TaskScheduler taskScheduler,
+        SettleAuction settleAuction,
+        AuctionScheduleReader auctionScheduleReader,
+        Clock clock
+    ) {
+        this(taskScheduler, settleAuction, auctionScheduleReader, clock, null);
+    }
+
     void schedule(Room room) {
-        refresh(room.getCode(), isSchedulable(room) ? room.getCurrentAuctionRoundEndsAt() : null);
+        refresh(room.getCode(), resolveDeadline(room));
     }
 
     void refresh(String code, Instant deadline) {
@@ -31,7 +55,6 @@ class RoomAuctionDeadlineScheduler {
         if (deadline == null) {
             return;
         }
-
         schedule(code, deadline);
     }
 
@@ -70,10 +93,18 @@ class RoomAuctionDeadlineScheduler {
         schedule(settleAuction.settleIfDue(code));
     }
 
-    private static boolean isSchedulable(Room room) {
-        return room.getMode() == RoomMode.AUCTION
-            && room.getStatus() == RoomStatus.IN_PROGRESS
-            && room.getCurrentAuctionRoundEndsAt() != null;
+    private Instant resolveDeadline(Room room) {
+        if (room.getMode() != RoomMode.AUCTION || room.getStatus() != RoomStatus.STARTED) {
+            return null;
+        }
+        if (games == null || room.getStartedGameId() == null) {
+            return null;
+        }
+        return games.findById(room.getStartedGameId())
+            .filter(AuctionGame.class::isInstance)
+            .map(AuctionGame.class::cast)
+            .map(AuctionGame::getCurrentRoundEndsAt)
+            .orElse(null);
     }
 
     private List<AuctionScheduleCandidate> collectSchedulableRooms() {

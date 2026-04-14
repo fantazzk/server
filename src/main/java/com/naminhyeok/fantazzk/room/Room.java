@@ -1,10 +1,6 @@
 package com.naminhyeok.fantazzk.room;
 
 import com.naminhyeok.fantazzk.CoreException;
-import com.naminhyeok.fantazzk.room.event.AuctionSettled;
-import com.naminhyeok.fantazzk.room.event.BidPlaced;
-import com.naminhyeok.fantazzk.room.event.LeaderJoinedRoom;
-import com.naminhyeok.fantazzk.room.event.RoomStarted;
 import jakarta.persistence.Access;
 import jakarta.persistence.AccessType;
 import jakarta.persistence.CollectionTable;
@@ -15,11 +11,9 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
 import jakarta.persistence.Version;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -27,9 +21,6 @@ import java.util.Locale;
 import java.util.UUID;
 import lombok.Getter;
 import org.jmolecules.ddd.types.AggregateRoot;
-import org.jmolecules.event.types.DomainEvent;
-import org.springframework.data.domain.AfterDomainEventPublication;
-import org.springframework.data.domain.DomainEvents;
 
 @Getter
 @Access(AccessType.FIELD)
@@ -58,24 +49,17 @@ class Room implements AggregateRoot<Room, RoomId> {
     private final Integer positionLimit;
     @Enumerated(EnumType.STRING)
     private final RoomTemplateSpec.DraftOrderStrategy draftOrderStrategy;
-    private Integer currentTurnIndex;
-    private Integer currentAuctionRound;
-    @Column(name = "current_auction_round_ends_at")
-    private Instant currentAuctionRoundEndsAt;
+    @Column(name = "started_game_id")
+    @Convert(converter = GameId.JpaConverter.class)
+    private GameId startedGameId;
+    @Column(name = "started_at")
+    private Instant startedAt;
     @ElementCollection
     @CollectionTable(name = "room_player", joinColumns = @JoinColumn(name = "players_room_id"))
     private final List<RoomPlayer> players;
     @ElementCollection
     @CollectionTable(name = "room_team_leader", joinColumns = @JoinColumn(name = "leaders_room_id"))
     private final List<RoomTeamLeader> leaders;
-    @ElementCollection
-    @CollectionTable(name = "room_team_member", joinColumns = @JoinColumn(name = "members_room_id"))
-    private final List<RoomTeamMember> members;
-    @ElementCollection
-    @CollectionTable(name = "room_bid", joinColumns = @JoinColumn(name = "bids_room_id"))
-    private final List<RoomBid> bids;
-    @Transient
-    private List<DomainEvent> domainEvents;
 
     Room(
         String code,
@@ -103,14 +87,10 @@ class Room implements AggregateRoot<Room, RoomId> {
         this.minBidUnit = minBidUnit;
         this.positionLimit = positionLimit;
         this.draftOrderStrategy = draftOrderStrategy;
-        this.currentTurnIndex = null;
-        this.currentAuctionRound = null;
-        this.currentAuctionRoundEndsAt = null;
+        this.startedGameId = null;
+        this.startedAt = null;
         this.players = new ArrayList<>();
         this.leaders = new ArrayList<>();
-        this.members = new ArrayList<>();
-        this.bids = new ArrayList<>();
-        this.domainEvents = new ArrayList<>();
     }
 
     public static Room createFromTemplate(
@@ -153,10 +133,6 @@ class Room implements AggregateRoot<Room, RoomId> {
         return List.copyOf(leaders);
     }
 
-    public List<RoomTeamMember> getMembers() {
-        return List.copyOf(members);
-    }
-
     public RoomStartReadiness getStartReadiness() {
         if (status != RoomStatus.WAITING) {
             return RoomStartReadiness.NOT_WAITING;
@@ -193,7 +169,6 @@ class Room implements AggregateRoot<Room, RoomId> {
         }
 
         leaders.add(new RoomTeamLeader(teamLeaderId, nickname.trim(), actionToken, budget));
-        registerEvent(new LeaderJoinedRoom(code, teamLeaderId.value()));
     }
 
     private String normalizeNickname(String nickname) {
@@ -221,6 +196,10 @@ class Room implements AggregateRoot<Room, RoomId> {
     }
 
     void start(TeamLeaderId callerLeaderId, Instant now) {
+        start(callerLeaderId, new GameId(UUID.randomUUID()), now);
+    }
+
+    StartedGameSnapshot start(TeamLeaderId callerLeaderId, GameId gameId, Instant now) {
         if (!hostLeaderId.equals(callerLeaderId)) {
             throw CoreException.of(RoomErrorType.ROOM_START_FORBIDDEN);
         }
@@ -235,186 +214,25 @@ class Room implements AggregateRoot<Room, RoomId> {
             throw CoreException.of(RoomErrorType.ROOM_DRAFT_POSITIONS_NOT_FULL);
         }
 
-        status = RoomStatus.IN_PROGRESS;
+        startedGameId = Objects.requireNonNull(gameId, "gameId must not be null");
+        startedAt = Objects.requireNonNull(now, "now must not be null");
+        status = RoomStatus.STARTED;
 
-        if (mode == RoomMode.AUCTION) {
-            currentAuctionRound = 1;
-            currentTurnIndex = null;
-            currentAuctionRoundEndsAt = now.plusSeconds(pickBanTime);
-        } else {
-            currentTurnIndex = 0;
-            currentAuctionRound = null;
-            currentAuctionRoundEndsAt = null;
-        }
-
-        registerEvent(new RoomStarted(code, currentAuctionRoundEndsAt));
-    }
-
-    RoomBid placeBid(TeamLeaderId teamLeaderId, int amount, Instant now) {
-        if (status != RoomStatus.IN_PROGRESS) {
-            throw CoreException.of(RoomErrorType.ROOM_PLAY_REQUIRES_IN_PROGRESS);
-        }
-        if (mode != RoomMode.AUCTION) {
-            throw CoreException.of(RoomErrorType.ROOM_BID_REQUIRES_AUCTION_MODE);
-        }
-        if (currentAuctionRound == null) {
-            throw RoomStateInvalidException.auctionRoundMissing();
-        }
-        if (currentAuctionRoundEndsAt != null && !now.isBefore(currentAuctionRoundEndsAt)) {
-            throw CoreException.of(RoomErrorType.ROOM_BID_REQUIRES_OPEN_ROUND);
-        }
-        if (amount <= 0) {
-            throw CoreException.of(RoomErrorType.ROOM_BID_AMOUNT_NOT_POSITIVE);
-        }
-
-        RoomTeamLeader leader =
+        return new StartedGameSnapshot(
+            id,
+            code,
+            startedGameId,
+            startedAt,
+            mode,
+            new GameRules(teamCount, teamSize, budget, pickBanTime, minBidUnit, positionLimit, draftOrderStrategy),
             leaders.stream()
-                .filter(it -> it.getId().equals(teamLeaderId))
-                .findFirst()
-                .orElseThrow(() -> CoreException.of(RoomErrorType.ROOM_BIDDER_NOT_FOUND));
-
-        RoomPlayer target = requireCurrentAuctionTarget();
-        validateAuctionPositionLimit(leader.getId(), target);
-
-        if (leader.getRemainingBudget() != null && leader.getRemainingBudget() < amount) {
-            throw CoreException.of(RoomErrorType.ROOM_BID_BUDGET_EXCEEDED);
-        }
-
-        Integer highestBidAmount =
-            bids.stream()
-                .filter(it -> it.round() == currentAuctionRound)
-                .map(RoomBid::amount)
-                .max(Integer::compareTo)
-                .orElse(null);
-
-        if (highestBidAmount == null) {
-            if (amount < minBidUnit) {
-                throw CoreException.of(RoomErrorType.ROOM_BID_MIN_UNIT_NOT_MET);
-            }
-        } else {
-            if (amount <= highestBidAmount) {
-                throw CoreException.of(RoomErrorType.ROOM_BID_TOO_LOW);
-            }
-            if (amount < highestBidAmount + minBidUnit) {
-                throw CoreException.of(RoomErrorType.ROOM_BID_MIN_UNIT_NOT_MET);
-            }
-        }
-
-        BidSequence nextSequence =
-            new BidSequence(
-                bids.stream()
-                    .filter(it -> it.round() == currentAuctionRound)
-                    .map(RoomBid::sequence)
-                    .mapToInt(BidSequence::value)
-                    .max()
-                    .orElse(0) + 1
-            );
-        RoomBid bid = new RoomBid(currentAuctionRound, nextSequence, teamLeaderId, amount);
-        bids.add(bid);
-        registerEvent(new BidPlaced(code, teamLeaderId.value(), amount, currentAuctionRound, currentAuctionRoundEndsAt));
-        return bid;
-    }
-
-    public AuctionSettlement settleAuction(Instant now) {
-        if (status != RoomStatus.IN_PROGRESS) {
-            throw CoreException.of(RoomErrorType.ROOM_PLAY_REQUIRES_IN_PROGRESS);
-        }
-        if (mode != RoomMode.AUCTION) {
-            throw CoreException.of(RoomErrorType.ROOM_BID_REQUIRES_AUCTION_MODE);
-        }
-        if (currentAuctionRound == null) {
-            throw RoomStateInvalidException.auctionRoundMissing();
-        }
-        if (currentAuctionRoundEndsAt == null) {
-            throw RoomStateInvalidException.auctionRoundMissing();
-        }
-        if (now.isBefore(currentAuctionRoundEndsAt)) {
-            throw CoreException.of(RoomErrorType.ROOM_AUCTION_ROUND_NOT_ENDED);
-        }
-
-        RoomPlayer target = requireCurrentAuctionTarget();
-
-        RoomBid winningBid =
-            bids.stream()
-                .filter(it -> it.round() == currentAuctionRound)
-                .max(Comparator.comparingInt(RoomBid::amount))
-                .orElse(null);
-
-        if (winningBid == null) {
-            int maxOrder = players.stream().mapToInt(RoomPlayer::getDisplayOrder).max().orElse(0);
-            target.moveToBack(maxOrder + 1);
-            currentAuctionRound += 1;
-            currentAuctionRoundEndsAt = now.plusSeconds(pickBanTime);
-            AuctionSettlement settlement = new AuctionSettlement(target.getName(), AuctionOutcome.PASSED);
-            registerEvent(new AuctionSettled(code, settlement.outcome().name(), currentAuctionRoundEndsAt));
-            return settlement;
-        }
-
-        RoomTeamLeader winner =
-            leaders.stream()
-                .filter(it -> it.getId().equals(winningBid.teamLeaderId()))
-                .findFirst()
-                .orElseThrow(() -> RoomStateInvalidException.auctionWinnerMissing(winningBid.teamLeaderId()));
-
-        validateAuctionPositionLimit(winner.getId(), target);
-        target.assign();
-        winner.spend(winningBid.amount());
-        members.add(new RoomTeamMember(winningBid.teamLeaderId(), target.getName(), members.size()));
-
-        if (members.size() == teamCount * (teamSize - 1)) {
-            status = RoomStatus.COMPLETED;
-            currentAuctionRoundEndsAt = null;
-        } else {
-            currentAuctionRound += 1;
-            currentAuctionRoundEndsAt = now.plusSeconds(pickBanTime);
-        }
-        AuctionSettlement settlement = new AuctionSettlement(target.getName(), AuctionOutcome.SOLD);
-        registerEvent(new AuctionSettled(code, settlement.outcome().name(), currentAuctionRoundEndsAt));
-        return settlement;
-    }
-
-    RoomTeamMember pick(TeamLeaderId teamLeaderId, String playerName) {
-        if (status != RoomStatus.IN_PROGRESS) {
-            throw CoreException.of(RoomErrorType.ROOM_PLAY_REQUIRES_IN_PROGRESS);
-        }
-        if (mode != RoomMode.DRAFT) {
-            throw CoreException.of(RoomErrorType.ROOM_PICK_REQUIRES_DRAFT_MODE);
-        }
-
-        DraftProgress progress = requireCurrentDraftProgress();
-        if (!progress.currentLeaderId().equals(teamLeaderId.value())) {
-            throw CoreException.of(RoomErrorType.ROOM_PICK_OUT_OF_TURN);
-        }
-
-        RoomPlayer player =
+                .map(leader -> new GameParticipant(leader.getId(), leader.getNickname(), leader.getDraftPosition(), leader.getRemainingBudget()))
+                .toList(),
             players.stream()
-                .filter(it -> it.getName().equals(playerName))
-                .filter(it -> it.getStatus() == PlayerStatus.AVAILABLE)
-                .findFirst()
-                .orElseThrow(() -> CoreException.of(RoomErrorType.ROOM_PICK_PLAYER_NOT_AVAILABLE));
-
-        player.assign();
-        RoomTeamMember member = new RoomTeamMember(teamLeaderId, player.getName(), members.size());
-        members.add(member);
-
-        currentTurnIndex += 1;
-        if (members.size() == teamCount * (teamSize - 1)) {
-            status = RoomStatus.COMPLETED;
-        }
-
-        return member;
-    }
-
-    DraftProgress currentDraftProgress() {
-        if (mode != RoomMode.DRAFT || status != RoomStatus.IN_PROGRESS || currentTurnIndex == null) {
-            return null;
-        }
-
-        try {
-            return DraftProgress.from(getLeaderIdsInDraftOrder(), draftOrderStrategy, currentTurnIndex);
-        } catch (IllegalArgumentException ex) {
-            throw RoomStateInvalidException.draftLeaderOrderEmpty();
-        }
+                .sorted(Comparator.comparingInt(RoomPlayer::getDisplayOrder))
+                .map(player -> new GamePlayer(player.getId(), player.getName(), player.getPosition(), player.getDisplayOrder()))
+                .toList()
+        );
     }
 
     private void validateDraftPositionChange(int draftPosition) {
@@ -452,77 +270,8 @@ class Room implements AggregateRoot<Room, RoomId> {
             .toList();
     }
 
-    private DraftProgress requireCurrentDraftProgress() {
-        DraftProgress progress = currentDraftProgress();
-        if (progress == null) {
-            throw RoomStateInvalidException.draftTurnMissing();
-        }
-        return progress;
-    }
-
     private List<String> getLeaderIdsInDraftOrder() {
         return getLeadersInDraftOrder().stream().map(RoomTeamLeader::getTeamLeaderId).toList();
-    }
-
-    private RoomPlayer requireCurrentAuctionTarget() {
-        return players.stream()
-            .filter(it -> it.getStatus() == PlayerStatus.AVAILABLE)
-            .min(Comparator.comparingInt(RoomPlayer::getDisplayOrder))
-            .orElseThrow(RoomStateInvalidException::auctionTargetMissing);
-    }
-
-    RoomPlayer currentAuctionTarget() {
-        if (mode != RoomMode.AUCTION || status != RoomStatus.IN_PROGRESS || currentAuctionRound == null) {
-            return null;
-        }
-
-        return players.stream()
-            .filter(it -> it.getStatus() == PlayerStatus.AVAILABLE)
-            .min(Comparator.comparingInt(RoomPlayer::getDisplayOrder))
-            .orElse(null);
-    }
-
-    RoomBid currentWinningBid() {
-        if (mode != RoomMode.AUCTION || status != RoomStatus.IN_PROGRESS || currentAuctionRound == null) {
-            return null;
-        }
-
-        return bids.stream()
-            .filter(it -> it.round() == currentAuctionRound)
-            .max(Comparator.comparingInt(RoomBid::amount))
-            .orElse(null);
-    }
-
-    int currentBidCount() {
-        if (mode != RoomMode.AUCTION || status != RoomStatus.IN_PROGRESS || currentAuctionRound == null) {
-            return 0;
-        }
-
-        return (int) bids.stream().filter(it -> it.round() == currentAuctionRound).count();
-    }
-
-    private void validateAuctionPositionLimit(TeamLeaderId leaderId, RoomPlayer target) {
-        if (positionLimit == null) {
-            return;
-        }
-
-        long assignedCount =
-            members.stream()
-                .filter(member -> member.teamLeaderId().equals(leaderId))
-                .map(this::findAssignedPlayerPosition)
-                .filter(target.getPosition()::equals)
-                .count();
-        if (assignedCount >= positionLimit) {
-            throw CoreException.of(RoomErrorType.ROOM_AUCTION_POSITION_LIMIT_EXCEEDED);
-        }
-    }
-
-    private String findAssignedPlayerPosition(RoomTeamMember member) {
-        return players.stream()
-            .filter(player -> player.getName().equals(member.playerName()))
-            .findFirst()
-            .map(RoomPlayer::getPosition)
-            .orElse(null);
     }
 
     private RoomTeamLeader getLeader(TeamLeaderId teamLeaderId) {
@@ -530,27 +279,5 @@ class Room implements AggregateRoot<Room, RoomId> {
             .filter(leader -> leader.getId().equals(teamLeaderId))
             .findFirst()
             .orElseThrow(() -> RoomStateInvalidException.leaderMissing(teamLeaderId));
-    }
-
-    @DomainEvents
-    Collection<DomainEvent> domainEvents() {
-        return List.copyOf(currentDomainEvents());
-    }
-
-    @AfterDomainEventPublication
-    void clearDomainEvents() {
-        currentDomainEvents().clear();
-    }
-
-    private <T extends DomainEvent> T registerEvent(T event) {
-        currentDomainEvents().add(event);
-        return event;
-    }
-
-    private List<DomainEvent> currentDomainEvents() {
-        if (domainEvents == null) {
-            domainEvents = new ArrayList<>();
-        }
-        return domainEvents;
     }
 }

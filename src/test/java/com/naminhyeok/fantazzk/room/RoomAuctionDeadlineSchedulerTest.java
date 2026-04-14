@@ -16,24 +16,24 @@ import org.mockito.InOrder;
 
 class RoomAuctionDeadlineSchedulerTest {
     private static final Instant NOW = Instant.parse("2026-04-09T00:00:10Z");
-    private static final int PICK_BAN_TIME = 15;
 
     @Test
     void schedule는_경매_room_deadline에_맞춰_정산_task를_등록하고_다음_deadline을_재예약한다() {
         FakeTaskScheduler taskScheduler = new FakeTaskScheduler();
         SettleAuction settleAuction = mock(SettleAuction.class);
-        Room room = auctionRoomWithDeadline("ROOM01", Instant.parse("2026-04-09T00:00:15Z"));
-        Room nextRoundRoom = auctionRoomWithDeadline("ROOM01", Instant.parse("2026-04-09T00:00:30Z"));
-        given(settleAuction.settleIfDue("ROOM01")).willReturn(nextRoundRoom);
+        StartedAuctionContext room = auctionRoomWithDeadline("ROOM01", Instant.parse("2026-04-09T00:00:15Z"));
+        StartedAuctionContext nextRoundRoom = auctionRoomWithDeadline("ROOM01", Instant.parse("2026-04-09T00:00:30Z"));
+        given(settleAuction.settleIfDue("ROOM01")).willReturn(nextRoundRoom.room());
         RoomAuctionDeadlineScheduler scheduler =
             new RoomAuctionDeadlineScheduler(
                 taskScheduler,
                 settleAuction,
                 new RecordingRooms(),
-                Clock.fixed(NOW, ZoneOffset.UTC)
+                Clock.fixed(NOW, ZoneOffset.UTC),
+                new InMemoryGames(room.game(), nextRoundRoom.game())
             );
 
-        scheduler.schedule(room);
+        scheduler.schedule(room.room());
 
         assertThat(taskScheduler.scheduledInstants()).containsExactly(Instant.parse("2026-04-09T00:00:15Z"));
 
@@ -47,16 +47,19 @@ class RoomAuctionDeadlineSchedulerTest {
     void schedule는_같은_room의_기존_deadline_예약을_취소하고_새_deadline만_남긴다() {
         FakeTaskScheduler taskScheduler = new FakeTaskScheduler();
         SettleAuction settleAuction = mock(SettleAuction.class);
+        StartedAuctionContext first = auctionRoomWithDeadline("ROOM01", Instant.parse("2026-04-09T00:00:15Z"));
+        StartedAuctionContext second = auctionRoomWithDeadline("ROOM01", Instant.parse("2026-04-09T00:00:20Z"));
         RoomAuctionDeadlineScheduler scheduler =
             new RoomAuctionDeadlineScheduler(
                 taskScheduler,
                 settleAuction,
                 new RecordingRooms(),
-                Clock.fixed(NOW, ZoneOffset.UTC)
+                Clock.fixed(NOW, ZoneOffset.UTC),
+                new InMemoryGames(first.game(), second.game())
             );
 
-        scheduler.schedule(auctionRoomWithDeadline("ROOM01", Instant.parse("2026-04-09T00:00:15Z")));
-        scheduler.schedule(auctionRoomWithDeadline("ROOM01", Instant.parse("2026-04-09T00:00:20Z")));
+        scheduler.schedule(first.room());
+        scheduler.schedule(second.room());
 
         assertThat(taskScheduler.cancelledInstants()).containsExactly(Instant.parse("2026-04-09T00:00:15Z"));
         assertThat(taskScheduler.activeScheduledInstants()).containsExactly(Instant.parse("2026-04-09T00:00:20Z"));
@@ -77,7 +80,8 @@ class RoomAuctionDeadlineSchedulerTest {
                 taskScheduler,
                 settleAuction,
                 scheduleReader,
-                Clock.fixed(NOW, ZoneOffset.UTC)
+                Clock.fixed(NOW, ZoneOffset.UTC),
+                null
             );
 
         scheduler.catchUpAndReschedule();
@@ -98,15 +102,16 @@ class RoomAuctionDeadlineSchedulerTest {
                     schedule("FUTURE01", Instant.parse("2026-04-09T00:00:15Z"))
                 )
             );
+        StartedAuctionContext due02 = auctionRoomWithDeadline("DUE02", Instant.parse("2026-04-09T00:00:25Z"));
         given(settleAuction.settleIfDue("BROKEN01")).willThrow(RoomStateInvalidException.auctionRoundMissing());
-        given(settleAuction.settleIfDue("DUE02"))
-            .willReturn(auctionRoomWithDeadline("DUE02", Instant.parse("2026-04-09T00:00:25Z")));
+        given(settleAuction.settleIfDue("DUE02")).willReturn(due02.room());
         RoomAuctionDeadlineScheduler scheduler =
             new RoomAuctionDeadlineScheduler(
                 taskScheduler,
                 settleAuction,
                 scheduleReader,
-                Clock.fixed(NOW, ZoneOffset.UTC)
+                Clock.fixed(NOW, ZoneOffset.UTC),
+                new InMemoryGames(due02.game())
             );
 
         scheduler.catchUpAndReschedule();
@@ -132,14 +137,16 @@ class RoomAuctionDeadlineSchedulerTest {
                     schedule("LEGACY01", Instant.parse("2026-04-09T00:00:01Z"))
                 )
             );
-        given(settleAuction.settleIfDue("LEGACY01")).willReturn(auctionRoomWithDeadline("LEGACY01", Instant.parse("2026-04-09T00:00:20Z")));
+        StartedAuctionContext legacy01 = auctionRoomWithDeadline("LEGACY01", Instant.parse("2026-04-09T00:00:20Z"));
+        given(settleAuction.settleIfDue("LEGACY01")).willReturn(legacy01.room());
         given(settleAuction.settleIfDue("DUE01")).willReturn(completedAuctionRoom("DUE01"));
         RoomAuctionDeadlineScheduler scheduler =
             new RoomAuctionDeadlineScheduler(
                 taskScheduler,
                 settleAuction,
                 scheduleReader,
-                Clock.fixed(NOW, ZoneOffset.UTC)
+                Clock.fixed(NOW, ZoneOffset.UTC),
+                new InMemoryGames(legacy01.game())
             );
 
         scheduler.catchUpAndReschedule();
@@ -164,7 +171,8 @@ class RoomAuctionDeadlineSchedulerTest {
                 taskScheduler,
                 settleAuction,
                 scheduleReader,
-                Clock.fixed(NOW, ZoneOffset.UTC)
+                Clock.fixed(NOW, ZoneOffset.UTC),
+                null
             );
 
         scheduler.catchUpAndReschedule();
@@ -176,8 +184,7 @@ class RoomAuctionDeadlineSchedulerTest {
         );
     }
 
-    private static Room auctionRoomWithDeadline(String code, Instant deadline) {
-        Instant startedAt = deadline.minusSeconds(PICK_BAN_TIME);
+    private static StartedAuctionContext auctionRoomWithDeadline(String code, Instant deadline) {
         Room room =
             Room.createFromTemplate(
                 code,
@@ -189,7 +196,7 @@ class RoomAuctionDeadlineSchedulerTest {
                     2,
                     2,
                     300,
-                    PICK_BAN_TIME,
+                    15,
                     10,
                     null,
                     List.of(
@@ -197,38 +204,32 @@ class RoomAuctionDeadlineSchedulerTest {
                         new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
                     )
                 ),
-                startedAt
+                Instant.parse("2026-04-09T00:00:00Z")
             );
         room.join(new TeamLeaderId("guest-" + code), "게스트", "guest-token-" + code);
-        room.start(new TeamLeaderId("host-" + code), startedAt);
-        return room;
+        GameId gameId = new GameId(java.util.UUID.randomUUID());
+        StartedGameSnapshot snapshot = room.start(
+            new TeamLeaderId("host-" + code),
+            gameId,
+            Instant.parse("2026-04-09T00:00:00Z")
+        );
+        AuctionGame game = (AuctionGame) new GameFactory().create(snapshot);
+        setCurrentAuctionRoundEndsAt(game, deadline);
+        return new StartedAuctionContext(room, game);
+    }
+
+    private static void setCurrentAuctionRoundEndsAt(AuctionGame game, Instant deadline) {
+        try {
+            var field = AuctionGame.class.getDeclaredField("currentRoundEndsAt");
+            field.setAccessible(true);
+            field.set(game, deadline);
+        } catch (ReflectiveOperationException ex) {
+            throw new AssertionError(ex);
+        }
     }
 
     private static Room completedAuctionRoom(String code) {
-        Instant startedAt = Instant.parse("2026-04-09T00:00:00Z");
-        TeamLeaderId hostLeaderId = new TeamLeaderId("host-" + code);
-        Room room =
-            Room.createFromTemplate(
-                code,
-                hostLeaderId,
-                "호스트",
-                "host-token-" + code,
-                new RoomTemplateSpec(
-                    RoomTemplateSpec.Mode.AUCTION,
-                    1,
-                    2,
-                    300,
-                    PICK_BAN_TIME,
-                    10,
-                    null,
-                    List.of(new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0))
-                ),
-                startedAt
-            );
-        room.start(hostLeaderId, startedAt);
-        room.placeBid(hostLeaderId, 100, startedAt.plusSeconds(1));
-        room.settleAuction(startedAt.plusSeconds(PICK_BAN_TIME));
-        return room;
+        return auctionRoomWithDeadline(code, Instant.parse("2026-04-09T00:00:05Z")).room();
     }
 
     private static AuctionScheduleCandidate schedule(String code, Instant deadline) {
@@ -263,6 +264,30 @@ class RoomAuctionDeadlineSchedulerTest {
         @Override
         public List<AuctionScheduleCandidate> findInProgressAuctionSchedules() {
             return schedulableRooms;
+        }
+    }
+
+    private record StartedAuctionContext(Room room, AuctionGame game) {
+    }
+
+    private static final class InMemoryGames implements Games {
+        private final java.util.Map<GameId, Game> games;
+
+        private InMemoryGames(Game... games) {
+            this.games = new java.util.LinkedHashMap<>();
+            for (Game game : games) {
+                this.games.put(game.getId(), game);
+            }
+        }
+
+        @Override
+        public Game save(Game game) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public java.util.Optional<Game> findById(GameId id) {
+            return java.util.Optional.ofNullable(games.get(id));
         }
     }
 }

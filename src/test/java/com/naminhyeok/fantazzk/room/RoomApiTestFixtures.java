@@ -2,6 +2,7 @@ package com.naminhyeok.fantazzk.room;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 final class RoomApiTestFixtures {
     static final Instant CREATED_AT = Instant.parse("2026-04-09T00:00:00Z");
@@ -83,7 +84,16 @@ final class RoomApiTestFixtures {
         return room;
     }
 
+    static RoomDetails startedAuctionDetails() {
+        Room room = startedAuctionRoom();
+        return new RoomDetails(room, startedAuctionGame(room));
+    }
+
     static Room inProgressAuctionRoom() {
+        return inProgressAuctionDetails().room();
+    }
+
+    static RoomDetails inProgressAuctionDetails() {
         Room room =
             Room.createFromTemplate(
                 ROOM_CODE,
@@ -108,13 +118,18 @@ final class RoomApiTestFixtures {
                 CREATED_AT
             );
         room.join(new TeamLeaderId(GUEST_ID), "게스트", GUEST_TOKEN);
-        room.start(new TeamLeaderId(HOST_ID), CREATED_AT);
-        room.placeBid(new TeamLeaderId(HOST_ID), 100, CREATED_AT.plusSeconds(1));
-        room.settleAuction(CREATED_AT.plusSeconds(15));
-        return room;
+        StartedGameSnapshot snapshot = room.start(new TeamLeaderId(HOST_ID), new GameId(UUID.fromString("00000000-0000-0000-0000-000000000201")), CREATED_AT);
+        AuctionGame game = (AuctionGame) new GameFactory().create(snapshot);
+        game.placeBid(new TeamLeaderId(HOST_ID), 100, CREATED_AT.plusSeconds(1));
+        game.settleAuction(CREATED_AT.plusSeconds(15));
+        return new RoomDetails(room, game);
     }
 
     static Room inProgressDraftRoom() {
+        return inProgressDraftDetails().room();
+    }
+
+    static RoomDetails inProgressDraftDetails() {
         Room room =
             Room.createFromTemplate(
                 ROOM_CODE,
@@ -141,9 +156,36 @@ final class RoomApiTestFixtures {
         room.join(new TeamLeaderId(GUEST_ID), "게스트", GUEST_TOKEN);
         room.selectDraftPosition(new TeamLeaderId(HOST_ID), 1);
         room.selectDraftPosition(new TeamLeaderId(GUEST_ID), 2);
-        room.start(new TeamLeaderId(HOST_ID), CREATED_AT);
-        room.pick(new TeamLeaderId(HOST_ID), "선수1");
-        room.pick(new TeamLeaderId(GUEST_ID), "선수2");
-        return room;
+        StartedGameSnapshot snapshot = room.start(new TeamLeaderId(HOST_ID), new GameId(UUID.fromString("00000000-0000-0000-0000-000000000202")), CREATED_AT);
+        DraftGame game = (DraftGame) new GameFactory().create(snapshot);
+        game.pick(new TeamLeaderId(HOST_ID), "선수1");
+        game.pick(new TeamLeaderId(GUEST_ID), "선수2");
+        return new RoomDetails(room, game);
+    }
+
+    private static AuctionGame startedAuctionGame(Room room) {
+        StartedGameSnapshot snapshot = new StartedGameSnapshot(
+            room.getId(),
+            room.getCode(),
+            new GameId(UUID.fromString("00000000-0000-0000-0000-000000000200")),
+            CREATED_AT,
+            room.getMode(),
+            new GameRules(
+                room.getTeamCount(),
+                room.getTeamSize(),
+                room.getBudget(),
+                room.getPickBanTime(),
+                room.getMinBidUnit(),
+                room.getPositionLimit(),
+                room.getDraftOrderStrategy()
+            ),
+            room.getLeaders().stream()
+                .map(leader -> new GameParticipant(leader.getId(), leader.getNickname(), leader.getDraftPosition(), leader.getRemainingBudget()))
+                .toList(),
+            room.getPlayers().stream()
+                .map(player -> new GamePlayer(player.getId(), player.getName(), player.getPosition(), player.getDisplayOrder()))
+                .toList()
+        );
+        return (AuctionGame) new GameFactory().create(snapshot);
     }
 }

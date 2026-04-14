@@ -18,16 +18,11 @@ class JpaAuctionScheduleReader implements AuctionScheduleReader {
         List<AuctionScheduleCandidate> candidates = new ArrayList<>();
         int page = 0;
         while (true) {
-            List<Room> batch =
-                repository.findByStatusAndModeOrderByCodeAsc(
-                    RoomStatus.IN_PROGRESS,
-                    RoomMode.AUCTION,
-                    PageRequest.of(page, CATCH_UP_BATCH_SIZE)
-                );
+            List<AuctionGame> batch = repository.findByCurrentRoundEndsAtNotNullOrderByRoomCodeAsc(PageRequest.of(page, CATCH_UP_BATCH_SIZE));
             if (batch.isEmpty()) {
                 return candidates;
             }
-            candidates.addAll(batch.stream().map(room -> new AuctionScheduleCandidate(room.getCode(), room.getCurrentAuctionRoundEndsAt())).toList());
+            candidates.addAll(batch.stream().map(game -> new AuctionScheduleCandidate(game.getRoomCode(), game.getCurrentRoundEndsAt())).toList());
             if (batch.size() < CATCH_UP_BATCH_SIZE) {
                 return candidates;
             }

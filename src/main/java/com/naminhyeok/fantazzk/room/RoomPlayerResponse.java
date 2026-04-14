@@ -14,4 +14,13 @@ record RoomPlayerResponse(
             player.getStatus().name()
         );
     }
+
+    static RoomPlayerResponse from(RoomPlayer player, int displayOrder, boolean assigned) {
+        return new RoomPlayerResponse(
+            player.getName(),
+            player.getPosition(),
+            displayOrder,
+            assigned ? PlayerStatus.ASSIGNED.name() : PlayerStatus.AVAILABLE.name()
+        );
+    }
 }

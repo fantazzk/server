@@ -1,0 +1,2 @@
+ALTER TABLE rooms ADD COLUMN started_game_id UUID;
+ALTER TABLE rooms ADD COLUMN started_at TIMESTAMP WITH TIME ZONE;

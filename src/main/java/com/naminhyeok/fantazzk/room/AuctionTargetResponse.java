@@ -10,4 +10,11 @@ record AuctionTargetResponse(
         }
         return new AuctionTargetResponse(player.getName(), player.getPosition());
     }
+
+    static AuctionTargetResponse from(GamePlayer player) {
+        if (player == null) {
+            return null;
+        }
+        return new AuctionTargetResponse(player.name(), player.position());
+    }
 }

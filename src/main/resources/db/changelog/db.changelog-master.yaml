@@ -85,3 +85,69 @@ databaseChangeLog:
             path: db/changelog/db.changelog-room-position-limit.sql
             splitStatements: true
             stripComments: false
+  - changeSet:
+      id: 8-room-start-handoff
+      author: codex
+      changes:
+        - sqlFile:
+            dbms: h2,postgresql
+            encoding: UTF-8
+            endDelimiter: ;
+            path: db/changelog/db.changelog-room-start-handoff.sql
+            splitStatements: true
+            stripComments: false
+  - changeSet:
+      id: 9-game
+      author: codex
+      changes:
+        - sqlFile:
+            dbms: h2,postgresql
+            encoding: UTF-8
+            endDelimiter: ;
+            path: db/changelog/db.changelog-game.sql
+            splitStatements: true
+            stripComments: false
+  - changeSet:
+      id: 10-game-auction-live-state
+      author: codex
+      changes:
+        - sqlFile:
+            dbms: h2,postgresql
+            encoding: UTF-8
+            endDelimiter: ;
+            path: db/changelog/db.changelog-game-auction-live-state.sql
+            splitStatements: true
+            stripComments: false
+  - changeSet:
+      id: 11-game-version
+      author: codex
+      changes:
+        - sqlFile:
+            dbms: h2,postgresql
+            encoding: UTF-8
+            endDelimiter: ;
+            path: db/changelog/db.changelog-game-version.sql
+            splitStatements: true
+            stripComments: false
+  - changeSet:
+      id: 12-game-draft-live-state
+      author: codex
+      changes:
+        - sqlFile:
+            dbms: h2,postgresql
+            encoding: UTF-8
+            endDelimiter: ;
+            path: db/changelog/db.changelog-game-draft-live-state.sql
+            splitStatements: true
+            stripComments: false
+  - changeSet:
+      id: 13-room-game-cleanup
+      author: codex
+      changes:
+        - sqlFile:
+            dbms: h2,postgresql
+            encoding: UTF-8
+            endDelimiter: ;
+            path: db/changelog/db.changelog-room-game-cleanup.sql
+            splitStatements: true
+            stripComments: false

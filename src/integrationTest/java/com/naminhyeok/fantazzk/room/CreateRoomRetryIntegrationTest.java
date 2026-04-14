@@ -49,8 +49,6 @@ class CreateRoomRetryIntegrationTest {
     @BeforeEach
     void setUp() {
         inNewTransaction(() -> {
-            jdbcTemplate.update("delete from room_bid");
-            jdbcTemplate.update("delete from room_team_member");
             jdbcTemplate.update("delete from room_team_leader");
             jdbcTemplate.update("delete from room_player");
             jdbcTemplate.update("delete from rooms");
