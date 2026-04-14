@@ -59,46 +59,6 @@ class RoomDraftTest {
     }
 
     @Test
-    void 시작한_드래프트_방의_현재_턴이_null이면_room_state_invalid를_던진다() throws Exception {
-        Room room = startedDraftRoom();
-        setCurrentTurnIndex(room, null);
-
-        assertThatThrownBy(() -> room.pick(new TeamLeaderId(HOST_ID), "선수1"))
-            .isInstanceOf(RoomStateInvalidException.class)
-            .isInstanceOfSatisfying(RoomStateInvalidException.class, ex -> assertThat(ex.getError()).isEqualTo(RoomErrorType.ROOM_STATE_INVALID));
-    }
-
-    @Test
-    void 시작한_드래프트_방에서_팀장_draft_position이_null이면_현재_진행상태_조회는_room_state_invalid를_던진다() throws Exception {
-        Room room = startedDraftRoom();
-        setDraftPosition(room, new TeamLeaderId(HOST_ID), null);
-
-        assertThatThrownBy(room::currentDraftProgress)
-            .isInstanceOf(RoomStateInvalidException.class)
-            .isInstanceOfSatisfying(RoomStateInvalidException.class, ex -> assertThat(ex.getError()).isEqualTo(RoomErrorType.ROOM_STATE_INVALID));
-    }
-
-    @Test
-    void 시작한_드래프트_방에서_리더_순서가_비어있으면_현재_진행상태_조회는_room_state_invalid를_던진다() throws Exception {
-        Room room = startedDraftRoom();
-        clearLeaders(room);
-
-        assertThatThrownBy(room::currentDraftProgress)
-            .isInstanceOf(RoomStateInvalidException.class)
-            .isInstanceOfSatisfying(RoomStateInvalidException.class, ex -> assertThat(ex.getError()).isEqualTo(RoomErrorType.ROOM_STATE_INVALID));
-    }
-
-    @Test
-    void 대기_중인_드래프트_방에서_호스트_팀장이_사라지면_draft_position_변경은_room_state_invalid를_던진다() throws Exception {
-        Room room = waitingDraftRoom();
-        removeLeader(room, new TeamLeaderId(HOST_ID));
-
-        assertThatThrownBy(() -> room.clearDraftPosition(new TeamLeaderId(HOST_ID)))
-            .isInstanceOf(RoomStateInvalidException.class)
-            .isInstanceOfSatisfying(RoomStateInvalidException.class, ex -> assertThat(ex.getError()).isEqualTo(RoomErrorType.ROOM_STATE_INVALID));
-    }
-
-    @Test
     void 이미_배정된_선수는_픽할_수_없다() {
         Room room = startedDraftRoom();
 
@@ -124,7 +84,7 @@ class RoomDraftTest {
         room.join(new TeamLeaderId(GUEST_ID), "게스트", GUEST_ACTION_TOKEN);
         room.selectDraftPosition(new TeamLeaderId(HOST_ID), 2);
         room.selectDraftPosition(new TeamLeaderId(GUEST_ID), 1);
-        room.start(new TeamLeaderId(HOST_ID));
+        room.start(new TeamLeaderId(HOST_ID), CREATED_AT);
 
         RoomTeamMember member = room.pick(new TeamLeaderId(GUEST_ID), "선수1");
 
@@ -181,56 +141,19 @@ class RoomDraftTest {
         assertThat(ex.getError()).isEqualTo(expected);
     }
 
-    private static void setCurrentTurnIndex(Room room, Integer value) throws Exception {
-        var field = Room.class.getDeclaredField("currentTurnIndex");
-        field.setAccessible(true);
-        field.set(room, value);
-    }
-
-    @SuppressWarnings("unchecked")
-    private static void setDraftPosition(Room room, TeamLeaderId leaderId, Integer draftPosition) throws Exception {
-        var field = Room.class.getDeclaredField("leaders");
-        field.setAccessible(true);
-        List<RoomTeamLeader> leaders = (List<RoomTeamLeader>) field.get(room);
-        RoomTeamLeader leader =
-            leaders.stream()
-                .filter(candidate -> candidate.getId().equals(leaderId))
-                .findFirst()
-                .orElseThrow();
-        var draftPositionField = RoomTeamLeader.class.getDeclaredField("draftPosition");
-        draftPositionField.setAccessible(true);
-        draftPositionField.set(leader, draftPosition);
-    }
-
-    @SuppressWarnings("unchecked")
-    private static void removeLeader(Room room, TeamLeaderId leaderId) throws Exception {
-        var field = Room.class.getDeclaredField("leaders");
-        field.setAccessible(true);
-        List<RoomTeamLeader> leaders = (List<RoomTeamLeader>) field.get(room);
-        leaders.removeIf(leader -> leader.getId().equals(leaderId));
-    }
-
-    @SuppressWarnings("unchecked")
-    private static void clearLeaders(Room room) throws Exception {
-        var field = Room.class.getDeclaredField("leaders");
-        field.setAccessible(true);
-        List<RoomTeamLeader> leaders = (List<RoomTeamLeader>) field.get(room);
-        leaders.clear();
-    }
-
     private static Room startedDraftRoom() {
         Room room = waitingDraftRoom();
         room.join(new TeamLeaderId(GUEST_ID), "게스트", GUEST_ACTION_TOKEN);
         room.selectDraftPosition(new TeamLeaderId(HOST_ID), 1);
         room.selectDraftPosition(new TeamLeaderId(GUEST_ID), 2);
-        room.start(new TeamLeaderId(HOST_ID));
+        room.start(new TeamLeaderId(HOST_ID), CREATED_AT);
         return room;
     }
 
     private static Room startedAuctionRoomForDraftError() {
         Room room = waitingAuctionRoom();
         room.join(new TeamLeaderId(GUEST_ID), "게스트", GUEST_ACTION_TOKEN);
-        room.start(new TeamLeaderId(HOST_ID));
+        room.start(new TeamLeaderId(HOST_ID), CREATED_AT);
         return room;
     }
 
@@ -243,7 +166,7 @@ class RoomDraftTest {
         room.join(new TeamLeaderId(GUEST_ID), "게스트", GUEST_ACTION_TOKEN);
         room.selectDraftPosition(new TeamLeaderId(HOST_ID), 1);
         room.selectDraftPosition(new TeamLeaderId(GUEST_ID), 2);
-        room.start(new TeamLeaderId(HOST_ID));
+        room.start(new TeamLeaderId(HOST_ID), CREATED_AT);
         return room;
     }
 

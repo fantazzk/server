@@ -66,7 +66,7 @@ class RoomRealtimeIntegrationTest {
                 )
             );
 
-        Room created = createRoom.create(template, "호스트");
+        Room created = createRoom.create(template, "호스트").room();
         joinRoom.join(created.getCode(), "게스트");
 
         Room reloaded = rooms.findByCode(created.getCode()).orElseThrow();
@@ -97,7 +97,7 @@ class RoomRealtimeIntegrationTest {
                 )
             );
 
-        Room created = createRoom.create(template, "호스트");
+        Room created = createRoom.create(template, "호스트").room();
         TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
 
         assertThatThrownBy(() -> transactionTemplate.executeWithoutResult(status -> {

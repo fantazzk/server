@@ -20,15 +20,15 @@ class PlaceBid {
     private final Clock clock;
 
     @Transactional
-    public RoomBid place(String code, String actionToken, int amount) {
+    public Room place(String code, String actionToken, int amount) {
         try {
             Room room = rooms.findByCode(code).orElseThrow(() -> CoreException.of(RoomErrorType.ROOM_NOT_FOUND));
             RoomTeamLeader caller = roomActionAuthorizer.authenticate(room, actionToken);
-            RoomBid bid = room.placeBid(caller.getId(), amount, Instant.now(clock));
+            room.placeBid(caller.getId(), amount, Instant.now(clock));
             Room saved = rooms.saveAndFlush(room);
             roomSnapshotPublisher.publishAfterCommit(saved);
             scheduleAfterCommit(saved);
-            return bid;
+            return saved;
         } catch (OptimisticLockingFailureException ex) {
             throw CoreException.of(RoomErrorType.ROOM_CONCURRENT_MODIFICATION);
         }

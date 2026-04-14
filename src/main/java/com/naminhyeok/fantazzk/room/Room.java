@@ -207,10 +207,6 @@ class Room implements AggregateRoot<Room, RoomId> {
         getLeader(callerLeaderId).clearDraftPosition();
     }
 
-    void start(TeamLeaderId callerLeaderId) {
-        start(callerLeaderId, Instant.now());
-    }
-
     void start(TeamLeaderId callerLeaderId, Instant now) {
         if (!hostLeaderId.equals(callerLeaderId)) {
             throw CoreException.of(RoomErrorType.ROOM_START_FORBIDDEN);
@@ -237,10 +233,6 @@ class Room implements AggregateRoot<Room, RoomId> {
             currentAuctionRound = null;
             currentAuctionRoundEndsAt = null;
         }
-    }
-
-    RoomBid placeBid(TeamLeaderId teamLeaderId, int amount) {
-        return placeBid(teamLeaderId, amount, Instant.now());
     }
 
     RoomBid placeBid(TeamLeaderId teamLeaderId, int amount, Instant now) {
@@ -305,10 +297,6 @@ class Room implements AggregateRoot<Room, RoomId> {
         RoomBid bid = new RoomBid(currentAuctionRound, nextSequence, teamLeaderId, amount);
         bids.add(bid);
         return bid;
-    }
-
-    public AuctionSettlement settleAuction() {
-        return settleAuction(Instant.now());
     }
 
     public AuctionSettlement settleAuction(Instant now) {

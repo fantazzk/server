@@ -16,6 +16,7 @@ import org.mockito.InOrder;
 
 class RoomAuctionDeadlineSchedulerTest {
     private static final Instant NOW = Instant.parse("2026-04-09T00:00:10Z");
+    private static final int PICK_BAN_TIME = 15;
 
     @Test
     void schedule는_경매_room_deadline에_맞춰_정산_task를_등록하고_다음_deadline을_재예약한다() {
@@ -176,6 +177,7 @@ class RoomAuctionDeadlineSchedulerTest {
     }
 
     private static Room auctionRoomWithDeadline(String code, Instant deadline) {
+        Instant startedAt = deadline.minusSeconds(PICK_BAN_TIME);
         Room room =
             Room.createFromTemplate(
                 code,
@@ -187,7 +189,7 @@ class RoomAuctionDeadlineSchedulerTest {
                     2,
                     2,
                     300,
-                    15,
+                    PICK_BAN_TIME,
                     10,
                     null,
                     List.of(
@@ -195,39 +197,38 @@ class RoomAuctionDeadlineSchedulerTest {
                         new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
                     )
                 ),
-                Instant.parse("2026-04-09T00:00:00Z")
+                startedAt
             );
         room.join(new TeamLeaderId("guest-" + code), "게스트", "guest-token-" + code);
-        room.start(new TeamLeaderId("host-" + code), Instant.parse("2026-04-09T00:00:00Z"));
-        setCurrentAuctionRoundEndsAt(room, deadline);
+        room.start(new TeamLeaderId("host-" + code), startedAt);
         return room;
-    }
-
-    private static void setCurrentAuctionRoundEndsAt(Room room, Instant deadline) {
-        try {
-            var field = Room.class.getDeclaredField("currentAuctionRoundEndsAt");
-            field.setAccessible(true);
-            field.set(room, deadline);
-        } catch (ReflectiveOperationException ex) {
-            throw new AssertionError(ex);
-        }
     }
 
     private static Room completedAuctionRoom(String code) {
-        Room room = auctionRoomWithDeadline(code, Instant.parse("2026-04-09T00:00:05Z"));
-        setField(room, "status", RoomStatus.COMPLETED);
-        setCurrentAuctionRoundEndsAt(room, null);
+        Instant startedAt = Instant.parse("2026-04-09T00:00:00Z");
+        TeamLeaderId hostLeaderId = new TeamLeaderId("host-" + code);
+        Room room =
+            Room.createFromTemplate(
+                code,
+                hostLeaderId,
+                "호스트",
+                "host-token-" + code,
+                new RoomTemplateSpec(
+                    RoomTemplateSpec.Mode.AUCTION,
+                    1,
+                    2,
+                    300,
+                    PICK_BAN_TIME,
+                    10,
+                    null,
+                    List.of(new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0))
+                ),
+                startedAt
+            );
+        room.start(hostLeaderId, startedAt);
+        room.placeBid(hostLeaderId, 100, startedAt.plusSeconds(1));
+        room.settleAuction(startedAt.plusSeconds(PICK_BAN_TIME));
         return room;
-    }
-
-    private static void setField(Room room, String fieldName, Object value) {
-        try {
-            var field = Room.class.getDeclaredField(fieldName);
-            field.setAccessible(true);
-            field.set(room, value);
-        } catch (ReflectiveOperationException ex) {
-            throw new AssertionError(ex);
-        }
     }
 
     private static AuctionScheduleCandidate schedule(String code, Instant deadline) {

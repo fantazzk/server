@@ -20,7 +20,7 @@ class StartRoom {
     private final Clock clock;
 
     @Transactional
-    public void start(String code, String actionToken) {
+    public Room start(String code, String actionToken) {
         try {
             Room loaded = rooms.findByCode(code).orElseThrow(() -> CoreException.of(RoomErrorType.ROOM_NOT_FOUND));
             RoomTeamLeader caller = roomActionAuthorizer.authenticate(loaded, actionToken);
@@ -28,6 +28,7 @@ class StartRoom {
             Room saved = rooms.saveAndFlush(loaded);
             roomSnapshotPublisher.publishAfterCommit(saved);
             scheduleAfterCommit(saved);
+            return saved;
         } catch (OptimisticLockingFailureException ex) {
             throw CoreException.of(RoomErrorType.ROOM_CONCURRENT_MODIFICATION);
         }

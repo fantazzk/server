@@ -83,7 +83,7 @@ class CreateRoomRetryIntegrationTest {
         inNewTransaction(() -> rooms.saveAndFlush(existingRoom("ROOM01")));
         roomCodeGenerator.reset("ROOM01", "ROOM02");
 
-        Room created = createRoom.create(template, "호스트");
+        Room created = createRoom.create(template, "호스트").room();
 
         assertThat(AopUtils.isAopProxy(createRoomAttempt)).isTrue();
         assertThat(TestTransaction.isActive()).isTrue();

@@ -3,7 +3,9 @@ package com.naminhyeok.fantazzk.architecture;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.time.Instant;
 import org.junit.jupiter.api.Test;
 
 class PublishedContractStructureTest {
@@ -12,7 +14,11 @@ class PublishedContractStructureTest {
         assertClassMissing("com.naminhyeok.fantazzk.room.RoomManagement");
         assertClassMissing("com.naminhyeok.fantazzk.room.RoomView");
         assertClassMissing("com.naminhyeok.fantazzk.room.TeamLeaderView");
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.RoomApiController")).isFalse();
+        assertClassMissing("com.naminhyeok.fantazzk.room.RoomApiController");
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.RoomQueryApiController")).isFalse();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.RoomSessionApiController")).isFalse();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.RoomAuctionApiController")).isFalse();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.RoomDraftApiController")).isFalse();
         assertThat(isPublic("com.naminhyeok.fantazzk.room.CreateRoom")).isFalse();
         assertThat(isPublic("com.naminhyeok.fantazzk.room.GetRoom")).isFalse();
         assertThat(isPublic("com.naminhyeok.fantazzk.room.Room")).isFalse();
@@ -57,6 +63,18 @@ class PublishedContractStructureTest {
         assertClassMissing("com.naminhyeok.fantazzk.template.JpaTemplates");
     }
 
+    @Test
+    void room_aggregate는_시간을_암묵적으로_조회하는_편의_메서드를_두지_않는다() throws Exception {
+        Class<?> teamLeaderId = Class.forName("com.naminhyeok.fantazzk.room.TeamLeaderId");
+
+        assertThat(hasDeclaredMethod("start", teamLeaderId)).isFalse();
+        assertThat(hasDeclaredMethod("placeBid", teamLeaderId, int.class)).isFalse();
+        assertThat(hasDeclaredMethod("settleAuction")).isFalse();
+        assertThat(hasDeclaredMethod("start", teamLeaderId, Instant.class)).isTrue();
+        assertThat(hasDeclaredMethod("placeBid", teamLeaderId, int.class, Instant.class)).isTrue();
+        assertThat(hasDeclaredMethod("settleAuction", Instant.class)).isTrue();
+    }
+
     private boolean isPublic(String className) throws Exception {
         return Modifier.isPublic(Class.forName(className).getModifiers());
     }
@@ -64,5 +82,16 @@ class PublishedContractStructureTest {
     private void assertClassMissing(String className) {
         assertThatThrownBy(() -> Class.forName(className))
             .isInstanceOf(ClassNotFoundException.class);
+    }
+
+    private boolean hasDeclaredMethod(String name, Class<?>... parameterTypes) {
+        try {
+            Method ignored = Class.forName("com.naminhyeok.fantazzk.room.Room").getDeclaredMethod(name, parameterTypes);
+            return true;
+        } catch (NoSuchMethodException ex) {
+            return false;
+        } catch (ClassNotFoundException ex) {
+            throw new AssertionError(ex);
+        }
     }
 }

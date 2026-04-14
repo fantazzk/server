@@ -171,7 +171,7 @@ class RoomApiIntegrationTest {
 
     private Room inProgressAuctionRoom(String code, Instant createdAt) {
         Room room = fullWaitingAuctionRoom(code, createdAt);
-        room.start(new TeamLeaderId("host-" + code));
+        room.start(new TeamLeaderId("host-" + code), createdAt);
         return room;
     }
 

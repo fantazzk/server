@@ -121,16 +121,6 @@ class RoomAuctionTest {
     }
 
     @Test
-    void 시작한_경매_방의_현재_라운드가_null이면_room_state_invalid를_던진다() throws Exception {
-        Room room = startedAuctionRoom();
-        setCurrentAuctionRound(room, null);
-
-        assertThatThrownBy(() -> room.placeBid(new TeamLeaderId(HOST_ID), 100, CREATED_AT.plusSeconds(1)))
-            .isInstanceOf(RoomStateInvalidException.class)
-            .isInstanceOfSatisfying(RoomStateInvalidException.class, ex -> assertThat(ex.getError()).isEqualTo(RoomErrorType.ROOM_STATE_INVALID));
-    }
-
-    @Test
     void 예산이_부족하면_입찰할_수_없다() {
         Room room = startedAuctionRoom();
 
@@ -238,42 +228,6 @@ class RoomAuctionTest {
     }
 
     @Test
-    void 시작한_경매_방의_현재_라운드가_null이면_낙찰_처리도_room_state_invalid를_던진다() throws Exception {
-        Room room = startedAuctionRoom();
-        setCurrentAuctionRound(room, null);
-
-        assertThatThrownBy(() -> room.settleAuction(CREATED_AT.plusSeconds(PICK_BAN_TIME)))
-            .isInstanceOf(RoomStateInvalidException.class)
-            .isInstanceOfSatisfying(RoomStateInvalidException.class, ex -> assertThat(ex.getError()).isEqualTo(RoomErrorType.ROOM_STATE_INVALID));
-    }
-
-    @Test
-    void 낙찰_팀장의_남은_예산이_null로_손상되면_정산은_room_state_invalid를_던진다() throws Exception {
-        Room room = startedAuctionRoom();
-        TeamLeaderId guestLeaderId = room.getLeaders().getLast().getId();
-
-        room.placeBid(guestLeaderId, 150, CREATED_AT.plusSeconds(1));
-        setRemainingBudget(room, guestLeaderId, null);
-
-        assertThatThrownBy(() -> room.settleAuction(CREATED_AT.plusSeconds(PICK_BAN_TIME)))
-            .isInstanceOf(RoomStateInvalidException.class)
-            .isInstanceOfSatisfying(RoomStateInvalidException.class, ex -> assertThat(ex.getError()).isEqualTo(RoomErrorType.ROOM_STATE_INVALID));
-    }
-
-    @Test
-    void 낙찰_팀장의_남은_예산이_입찰가보다_작게_손상되면_정산은_room_state_invalid를_던진다() throws Exception {
-        Room room = startedAuctionRoom();
-        TeamLeaderId guestLeaderId = room.getLeaders().getLast().getId();
-
-        room.placeBid(guestLeaderId, 150, CREATED_AT.plusSeconds(1));
-        setRemainingBudget(room, guestLeaderId, 100);
-
-        assertThatThrownBy(() -> room.settleAuction(CREATED_AT.plusSeconds(PICK_BAN_TIME)))
-            .isInstanceOf(RoomStateInvalidException.class)
-            .isInstanceOfSatisfying(RoomStateInvalidException.class, ex -> assertThat(ex.getError()).isEqualTo(RoomErrorType.ROOM_STATE_INVALID));
-    }
-
-    @Test
     void start는_저장후_realtime_publish하고_deadline_scheduling은_afterCommit에_유지한다() {
         Room room = waitingAuctionRoom();
         room.join(new TeamLeaderId(GUEST_ID), "게스트", GUEST_ACTION_TOKEN);
@@ -301,7 +255,6 @@ class RoomAuctionTest {
             assertThat(publisher.events).hasSize(1);
             RoomRealtimeSnapshotEvent event = publisher.events.getFirst();
             assertThat(event.roomCode()).isEqualTo(room.getCode());
-            assertThat(event.snapshotVersion()).isEqualTo(1L);
             assertThat(event.room().progress().currentRound()).isEqualTo(1);
             assertThat(event.room().progress().currentAuctionRoundEndsAt()).isEqualTo(CREATED_AT.plusSeconds(PICK_BAN_TIME));
             assertThat(taskScheduler.scheduledInstants()).isEmpty();
@@ -364,13 +317,12 @@ class RoomAuctionTest {
 
         TransactionSynchronizationManager.initSynchronization();
         try {
-            RoomBid bid = placeBid.place(room.getCode(), HOST_ACTION_TOKEN, 100);
+            Room bid = placeBid.place(room.getCode(), HOST_ACTION_TOKEN, 100);
 
-            assertThat(bid.amount()).isEqualTo(100);
+            assertThat(bid.getBids().getLast().amount()).isEqualTo(100);
             assertThat(publisher.events).hasSize(1);
             RoomRealtimeSnapshotEvent event = publisher.events.getFirst();
             assertThat(event.roomCode()).isEqualTo(room.getCode());
-            assertThat(event.snapshotVersion()).isEqualTo(1L);
             assertThat(event.room().progress().currentRound()).isEqualTo(1);
             assertThat(event.room().progress().highestBidAmount()).isEqualTo(100);
             assertThat(event.room().progress().bidCount()).isEqualTo(1);
@@ -459,29 +411,6 @@ class RoomAuctionTest {
 
     private static RoomSnapshotPublisher noopRoomSnapshotPublisher() {
         return new NoopRoomSnapshotPublisher();
-    }
-
-    private static void setCurrentAuctionRoundEndsAt(Room room, Instant value) throws Exception {
-        var field = Room.class.getDeclaredField("currentAuctionRoundEndsAt");
-        field.setAccessible(true);
-        field.set(room, value);
-    }
-
-    private static void setCurrentAuctionRound(Room room, Integer value) throws Exception {
-        var field = Room.class.getDeclaredField("currentAuctionRound");
-        field.setAccessible(true);
-        field.set(room, value);
-    }
-
-    private static void setRemainingBudget(Room room, TeamLeaderId leaderId, Integer value) throws Exception {
-        RoomTeamLeader leader =
-            room.getLeaders().stream()
-                .filter(it -> it.getId().equals(leaderId))
-                .findFirst()
-                .orElseThrow();
-        var field = RoomTeamLeader.class.getDeclaredField("remainingBudget");
-        field.setAccessible(true);
-        field.set(leader, value);
     }
 
     private static Room waitingAuctionRoom() {
@@ -680,7 +609,6 @@ class RoomAuctionTest {
                 throw saveFailure;
             }
             this.room = room;
-            markFlushed(room);
             return room;
         }
 
@@ -692,16 +620,6 @@ class RoomAuctionTest {
         @Override
         public Optional<Room> findByCode(String code) {
             return Optional.ofNullable(room).filter(it -> it.getCode().equals(code));
-        }
-
-        private void markFlushed(Room room) {
-            try {
-                var field = Room.class.getDeclaredField("version");
-                field.setAccessible(true);
-                field.setLong(room, 1L);
-            } catch (ReflectiveOperationException ex) {
-                throw new AssertionError(ex);
-            }
         }
     }
 

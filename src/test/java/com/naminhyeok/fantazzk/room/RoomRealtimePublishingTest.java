@@ -27,9 +27,9 @@ class RoomRealtimePublishingTest {
         RecordingRoomSnapshotPublisher publisher = new RecordingRoomSnapshotPublisher();
         JoinRoom joinRoom = new JoinRoom(new SaveAndFlushOnlyRooms(room), fixedLeaderIdentityIssuer(), publisher);
 
-        RoomTeamLeader joined = joinRoom.join(room.getCode(), "게스트");
+        RoomSessionResult joined = joinRoom.join(room.getCode(), "게스트");
 
-        assertThat(joined.getId().value()).isEqualTo(GUEST_ID);
+        assertThat(joined.leader().getId().value()).isEqualTo(GUEST_ID);
         assertThat(publisher.events).hasSize(1);
         assertPublishedRoom(publisher.events.getFirst(), room.getCode());
         assertThat(publisher.events.getFirst().room().teamLeaders()).hasSize(2);
@@ -52,9 +52,9 @@ class RoomRealtimePublishingTest {
         RecordingRoomSnapshotPublisher publisher = new RecordingRoomSnapshotPublisher();
         PickDraft pickDraft = new PickDraft(new InMemoryRooms(room), new RoomActionAuthorizer(), publisher);
 
-        RoomTeamMember member = pickDraft.pick(room.getCode(), HOST_ACTION_TOKEN, "선수1");
+        Room picked = pickDraft.pick(room.getCode(), HOST_ACTION_TOKEN, "선수1");
 
-        assertThat(member.playerName()).isEqualTo("선수1");
+        assertThat(picked.getMembers().getLast().playerName()).isEqualTo("선수1");
         assertThat(publisher.events).hasSize(1);
         RoomRealtimeSnapshotEvent event = publisher.events.getFirst();
         assertPublishedRoom(event, room.getCode());
