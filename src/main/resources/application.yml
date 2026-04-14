@@ -150,6 +150,7 @@ sentry:
 cors:
   allowed-origins:
     - https://fantazzk-rho.vercel.app
+    - https://web-fe-dev-378143668124.asia-northeast3.run.app/
 
 logging:
   structured:
