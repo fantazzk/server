@@ -26,14 +26,16 @@ class CreateRoom {
     private final Clock clock;
     private final RoomCodeGenerator roomCodeGenerator;
 
-    public Room create(UUID templateId, String hostNickname) {
+    public RoomSessionResult create(UUID templateId, String hostNickname) {
         TemplateCatalog.TemplateBlueprint template = getTemplate(templateId);
         TeamLeaderIdentityIssuer.TeamLeaderIdentity identity = teamLeaderIdentityIssuer.issue();
+        TeamLeaderId hostLeaderId = new TeamLeaderId(identity.leaderId());
 
         for (int attempt = 1; attempt <= MAX_ROOM_CODE_ATTEMPTS; attempt++) {
-            Room room = newRoom(template, identity, hostNickname);
+            Room room = newRoom(template, hostLeaderId, identity.actionToken(), hostNickname);
             try {
-                return createRoomAttempt.save(room);
+                Room saved = createRoomAttempt.save(room);
+                return new RoomSessionResult(saved, findLeader(saved, hostLeaderId));
             } catch (DataIntegrityViolationException ex) {
                 if (!isRoomCodeCollision(ex)) {
                     throw ex;
@@ -57,14 +59,15 @@ class CreateRoom {
 
     private Room newRoom(
         TemplateCatalog.TemplateBlueprint template,
-        TeamLeaderIdentityIssuer.TeamLeaderIdentity identity,
+        TeamLeaderId hostLeaderId,
+        String hostActionToken,
         String hostNickname
     ) {
         return Room.createFromTemplate(
             generateCode(),
-            new TeamLeaderId(identity.leaderId()),
+            hostLeaderId,
             hostNickname,
-            identity.actionToken(),
+            hostActionToken,
             new RoomTemplateSpec(
                 template.mode() == TemplateCatalog.Mode.AUCTION
                     ? RoomTemplateSpec.Mode.AUCTION
@@ -89,6 +92,13 @@ class CreateRoom {
             ),
             Instant.now(clock)
         );
+    }
+
+    private RoomTeamLeader findLeader(Room room, TeamLeaderId leaderId) {
+        return room.getLeaders().stream()
+            .filter(leader -> leader.getId().equals(leaderId))
+            .findFirst()
+            .orElseThrow();
     }
 
     private String generateCode() {

@@ -14,14 +14,14 @@ class JoinRoom {
     private final RoomSnapshotPublisher roomSnapshotPublisher;
 
     @Transactional
-    public RoomTeamLeader join(String code, String nickname) {
+    public RoomSessionResult join(String code, String nickname) {
         try {
             Room room = rooms.findByCode(code).orElseThrow(() -> CoreException.of(RoomErrorType.ROOM_NOT_FOUND));
             TeamLeaderIdentityIssuer.TeamLeaderIdentity identity = teamLeaderIdentityIssuer.issue();
             room.join(new TeamLeaderId(identity.leaderId()), nickname, identity.actionToken());
             Room saved = rooms.saveAndFlush(room);
             roomSnapshotPublisher.publishAfterCommit(saved);
-            return saved.getLeaders().getLast();
+            return new RoomSessionResult(saved, saved.getLeaders().getLast());
         } catch (OptimisticLockingFailureException ex) {
             throw CoreException.of(RoomErrorType.ROOM_CONCURRENT_MODIFICATION);
         }

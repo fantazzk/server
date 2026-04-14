@@ -14,14 +14,14 @@ class PickDraft {
     private final RoomSnapshotPublisher roomSnapshotPublisher;
 
     @Transactional
-    public RoomTeamMember pick(String code, String actionToken, String playerName) {
+    public Room pick(String code, String actionToken, String playerName) {
         try {
             Room room = rooms.findByCode(code).orElseThrow(() -> CoreException.of(RoomErrorType.ROOM_NOT_FOUND));
             RoomTeamLeader caller = roomActionAuthorizer.authenticate(room, actionToken);
-            RoomTeamMember member = room.pick(caller.getId(), playerName);
+            room.pick(caller.getId(), playerName);
             Room saved = rooms.saveAndFlush(room);
             roomSnapshotPublisher.publishAfterCommit(saved);
-            return member;
+            return saved;
         } catch (OptimisticLockingFailureException ex) {
             throw CoreException.of(RoomErrorType.ROOM_CONCURRENT_MODIFICATION);
         }

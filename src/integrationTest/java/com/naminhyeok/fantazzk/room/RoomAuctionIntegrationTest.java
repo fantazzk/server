@@ -45,6 +45,8 @@ import org.springframework.transaction.annotation.Transactional;
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
 @RequiredArgsConstructor
 class RoomAuctionIntegrationTest {
+    private static final Instant INITIAL_TIME = Instant.parse("2000-01-01T00:00:00Z");
+
     private final TemplateFixture templateFixture;
     private final CreateRoom createRoom;
     private final JoinRoom joinRoom;
@@ -55,10 +57,12 @@ class RoomAuctionIntegrationTest {
     private final RoomAuctionDeadlineScheduler roomAuctionDeadlineScheduler;
     private final RecordingTaskScheduler recordingTaskScheduler;
     private final PlatformTransactionManager transactionManager;
+    private final MutableClock roomAuctionTestClock;
 
     @BeforeEach
     void clearScheduledTasks() {
         recordingTaskScheduler.clear();
+        roomAuctionTestClock.setInstant(INITIAL_TIME);
     }
 
     @Test
@@ -76,25 +80,21 @@ class RoomAuctionIntegrationTest {
                 )
             );
 
-        Room created = createRoom.create(template, "호스트");
-        RoomTeamLeader guest = joinRoom.join(created.getCode(), "게스트");
-        startRoom.start(created.getCode(), created.getLeaders().getFirst().getActionToken());
+        RoomSessionResult created = createRoom.create(template, "호스트");
+        RoomTeamLeader guest = joinRoom.join(created.room().getCode(), "게스트").leader();
+        startRoom.start(created.room().getCode(), created.leader().getActionToken());
 
-        RoomBid bid = placeBid.place(created.getCode(), guest.getActionToken(), 150);
-        Room roomBeforeSettlement = rooms.findByCode(created.getCode()).orElseThrow();
-        setCurrentAuctionRoundEndsAt(roomBeforeSettlement, Instant.parse("1999-12-31T23:59:55Z"));
-        rooms.saveAndFlush(roomBeforeSettlement);
-        AuctionSettlement settlement = settleAuction.settle(created.getCode());
+        Room roomAfterBid = placeBid.place(created.room().getCode(), guest.getActionToken(), 150);
+        roomAuctionTestClock.setInstant(INITIAL_TIME.plusSeconds(45));
+        AuctionSettlement settlement = settleAuction.settle(created.room().getCode());
 
-        Room reloaded = rooms.findByCode(created.getCode()).orElseThrow();
+        Room reloaded = rooms.findByCode(created.room().getCode()).orElseThrow();
 
-        assertThat(bid.teamLeaderId()).isEqualTo(guest.getId());
-        assertThat(bid.amount()).isEqualTo(150);
-        assertThat(settlement.outcome()).isEqualTo(AuctionOutcome.SOLD);
-        assertThat(settlement.playerName()).isEqualTo("선수1");
-        assertThat(reloaded.getBids()).singleElement()
+        assertThat(roomAfterBid.getBids()).singleElement()
             .extracting(RoomBid::teamLeaderId, RoomBid::amount)
             .containsExactly(guest.getId(), 150);
+        assertThat(settlement.outcome()).isEqualTo(AuctionOutcome.SOLD);
+        assertThat(settlement.playerName()).isEqualTo("선수1");
         assertThat(reloaded.getPlayers().getFirst().getPosition()).isEqualTo("TOP");
         assertThat(reloaded.getMembers()).singleElement()
             .extracting(RoomTeamMember::teamLeaderId, RoomTeamMember::playerName)
@@ -118,17 +118,17 @@ class RoomAuctionIntegrationTest {
                 )
             );
 
-        Room created = createRoom.create(template, "호스트");
-        RoomTeamLeader guest = joinRoom.join(created.getCode(), "게스트");
-        startRoom.start(created.getCode(), created.getLeaders().getFirst().getActionToken());
+        RoomSessionResult created = createRoom.create(template, "호스트");
+        RoomTeamLeader guest = joinRoom.join(created.room().getCode(), "게스트").leader();
+        startRoom.start(created.room().getCode(), created.leader().getActionToken());
 
-        RoomBid firstBid = placeBid.place(created.getCode(), created.getLeaders().getFirst().getActionToken(), 100);
-        Room reloaded = rooms.findByCode(created.getCode()).orElseThrow();
-        RoomBid secondBid = placeBid.place(reloaded.getCode(), guest.getActionToken(), 150);
+        Room firstBid = placeBid.place(created.room().getCode(), created.leader().getActionToken(), 100);
+        Room reloaded = rooms.findByCode(created.room().getCode()).orElseThrow();
+        Room secondBid = placeBid.place(reloaded.getCode(), guest.getActionToken(), 150);
 
-        assertThat(firstBid.sequence()).isEqualTo(new BidSequence(1));
-        assertThat(secondBid.sequence()).isEqualTo(new BidSequence(2));
-        assertThat(secondBid.round()).isEqualTo(1);
+        assertThat(firstBid.getBids().getLast().sequence()).isEqualTo(new BidSequence(1));
+        assertThat(secondBid.getBids().getLast().sequence()).isEqualTo(new BidSequence(2));
+        assertThat(secondBid.getBids().getLast().round()).isEqualTo(1);
     }
 
     @Test
@@ -147,17 +147,15 @@ class RoomAuctionIntegrationTest {
                 )
             );
 
-        Room created = createRoom.create(template, "호스트");
-        RoomTeamLeader guest = joinRoom.join(created.getCode(), "게스트");
-        startRoom.start(created.getCode(), created.getLeaders().getFirst().getActionToken());
+        RoomSessionResult created = createRoom.create(template, "호스트");
+        RoomTeamLeader guest = joinRoom.join(created.room().getCode(), "게스트").leader();
+        startRoom.start(created.room().getCode(), created.leader().getActionToken());
 
-        placeBid.place(created.getCode(), guest.getActionToken(), 150);
-        Room roomBeforeSettlement = rooms.findByCode(created.getCode()).orElseThrow();
-        setCurrentAuctionRoundEndsAt(roomBeforeSettlement, Instant.parse("1999-12-31T23:59:55Z"));
-        rooms.saveAndFlush(roomBeforeSettlement);
-        settleAuction.settle(created.getCode());
+        placeBid.place(created.room().getCode(), guest.getActionToken(), 150);
+        roomAuctionTestClock.setInstant(INITIAL_TIME.plusSeconds(45));
+        settleAuction.settle(created.room().getCode());
 
-        Room reloaded = rooms.findByCode(created.getCode()).orElseThrow();
+        Room reloaded = rooms.findByCode(created.room().getCode()).orElseThrow();
 
         assertThatThrownBy(() -> placeBid.place(reloaded.getCode(), guest.getActionToken(), 160))
             .isInstanceOf(CoreException.class)
@@ -181,20 +179,17 @@ class RoomAuctionIntegrationTest {
                 )
             );
 
-        Room created = createRoom.create(template, "호스트");
-        RoomTeamLeader guest = joinRoom.join(created.getCode(), "게스트");
-        startRoom.start(created.getCode(), created.getLeaders().getFirst().getActionToken());
-        placeBid.place(created.getCode(), guest.getActionToken(), 150);
-
-        Room room = rooms.findByCode(created.getCode()).orElseThrow();
-        setCurrentAuctionRoundEndsAt(room, Instant.parse("1999-12-31T23:59:55Z"));
-        rooms.saveAndFlush(room);
+        RoomSessionResult created = createRoom.create(template, "호스트");
+        RoomTeamLeader guest = joinRoom.join(created.room().getCode(), "게스트").leader();
+        startRoom.start(created.room().getCode(), created.leader().getActionToken());
+        placeBid.place(created.room().getCode(), guest.getActionToken(), 150);
+        roomAuctionTestClock.setInstant(INITIAL_TIME.plusSeconds(45));
 
         roomAuctionDeadlineScheduler.catchUpAndReschedule();
 
-        Room reloaded = rooms.findByCode(created.getCode()).orElseThrow();
+        Room reloaded = rooms.findByCode(created.room().getCode()).orElseThrow();
         assertThat(reloaded.getCurrentAuctionRound()).isEqualTo(2);
-        assertThat(reloaded.getCurrentAuctionRoundEndsAt()).isEqualTo(Instant.parse("2000-01-01T00:00:45Z"));
+        assertThat(reloaded.getCurrentAuctionRoundEndsAt()).isEqualTo(INITIAL_TIME.plusSeconds(90));
     }
 
     @Test
@@ -211,41 +206,58 @@ class RoomAuctionIntegrationTest {
                 )
             );
 
-        Room created = createRoom.create(template, "호스트");
-        joinRoom.join(created.getCode(), "게스트");
+        RoomSessionResult created = createRoom.create(template, "호스트");
+        joinRoom.join(created.room().getCode(), "게스트");
 
         TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
         transactionTemplate.executeWithoutResult(status -> {
-            startRoom.start(created.getCode(), created.getLeaders().getFirst().getActionToken());
+            startRoom.start(created.room().getCode(), created.leader().getActionToken());
             status.setRollbackOnly();
         });
 
         assertThat(recordingTaskScheduler.scheduledInstants()).isEmpty();
-        assertThat(rooms.findByCode(created.getCode()).orElseThrow().getStatus()).isEqualTo(RoomStatus.WAITING);
-    }
-
-    private static void setCurrentAuctionRoundEndsAt(Room room, Instant deadline) {
-        try {
-            var field = Room.class.getDeclaredField("currentAuctionRoundEndsAt");
-            field.setAccessible(true);
-            field.set(room, deadline);
-        } catch (ReflectiveOperationException ex) {
-            throw new AssertionError(ex);
-        }
+        assertThat(rooms.findByCode(created.room().getCode()).orElseThrow().getStatus()).isEqualTo(RoomStatus.WAITING);
     }
 
     @TestConfiguration
     static class FixedClockConfiguration {
         @Bean
         @Primary
-        Clock roomAuctionTestClock() {
-            return Clock.fixed(Instant.parse("2000-01-01T00:00:00Z"), ZoneOffset.UTC);
+        MutableClock roomAuctionTestClock() {
+            return new MutableClock(INITIAL_TIME);
         }
 
         @Bean
         @Primary
         RecordingTaskScheduler roomAuctionIntegrationTaskScheduler() {
             return new RecordingTaskScheduler();
+        }
+    }
+
+    static final class MutableClock extends Clock {
+        private Instant instant;
+
+        private MutableClock(Instant instant) {
+            this.instant = instant;
+        }
+
+        void setInstant(Instant instant) {
+            this.instant = instant;
+        }
+
+        @Override
+        public ZoneOffset getZone() {
+            return ZoneOffset.UTC;
+        }
+
+        @Override
+        public Clock withZone(java.time.ZoneId zone) {
+            return this;
+        }
+
+        @Override
+        public Instant instant() {
+            return instant;
         }
     }
 

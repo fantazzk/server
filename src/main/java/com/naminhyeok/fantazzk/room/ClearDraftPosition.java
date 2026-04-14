@@ -14,13 +14,14 @@ class ClearDraftPosition {
     private final RoomSnapshotPublisher roomSnapshotPublisher;
 
     @Transactional
-    public void clear(String code, String actionToken) {
+    public Room clear(String code, String actionToken) {
         try {
             Room room = rooms.findByCode(code).orElseThrow(() -> CoreException.of(RoomErrorType.ROOM_NOT_FOUND));
             RoomTeamLeader caller = roomActionAuthorizer.authenticate(room, actionToken);
             room.clearDraftPosition(caller.getId());
             Room saved = rooms.saveAndFlush(room);
             roomSnapshotPublisher.publishAfterCommit(saved);
+            return saved;
         } catch (OptimisticLockingFailureException ex) {
             throw CoreException.of(RoomErrorType.ROOM_CONCURRENT_MODIFICATION);
         }

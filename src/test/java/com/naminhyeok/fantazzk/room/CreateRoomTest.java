@@ -35,15 +35,16 @@ class CreateRoomTest {
                 new StubRoomCodeGenerator("ROOM01", "ROOM02", "ROOM03")
             );
 
-        Room created = createRoom.create(UUID.randomUUID(), "호스트");
+        RoomSessionResult created = createRoom.create(UUID.randomUUID(), "호스트");
 
-        assertThat(created).isSameAs(rooms.savedRoom());
+        assertThat(created.room()).isSameAs(rooms.savedRoom());
         assertThat(rooms.flushAttemptCount()).isEqualTo(3);
         assertThat(rooms.attemptedRoomIds()).doesNotHaveDuplicates();
-        assertThat(created.getPickBanTime()).isEqualTo(45);
-        assertThat(created.getMinBidUnit()).isEqualTo(10);
-        assertThat(created.getPlayers().stream().map(RoomPlayer::getId))
+        assertThat(created.room().getPickBanTime()).isEqualTo(45);
+        assertThat(created.room().getMinBidUnit()).isEqualTo(10);
+        assertThat(created.room().getPlayers().stream().map(RoomPlayer::getId))
             .containsExactly(new RoomPlayerId(0), new RoomPlayerId(1));
+        assertThat(created.leader().getId()).isEqualTo(new TeamLeaderId("host-id"));
     }
 
     @Test

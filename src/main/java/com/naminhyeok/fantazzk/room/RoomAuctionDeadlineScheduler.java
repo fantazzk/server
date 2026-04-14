@@ -23,12 +23,16 @@ class RoomAuctionDeadlineScheduler {
     private final ConcurrentMap<String, ScheduledFuture<?>> scheduledTasks = new ConcurrentHashMap<>();
 
     void schedule(Room room) {
-        cancel(room.getCode());
-        if (!isSchedulable(room)) {
+        refresh(room.getCode(), isSchedulable(room) ? room.getCurrentAuctionRoundEndsAt() : null);
+    }
+
+    void refresh(String code, Instant deadline) {
+        cancel(code);
+        if (deadline == null) {
             return;
         }
 
-        schedule(room.getCode(), room.getCurrentAuctionRoundEndsAt());
+        schedule(code, deadline);
     }
 
     private void schedule(String code, Instant deadline) {

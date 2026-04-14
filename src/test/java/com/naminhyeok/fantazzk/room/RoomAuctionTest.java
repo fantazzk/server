@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.naminhyeok.fantazzk.CoreException;
+import com.naminhyeok.fantazzk.room.event.AuctionSettled;
+import com.naminhyeok.fantazzk.room.event.BidPlaced;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -101,6 +103,12 @@ class RoomAuctionTest {
 
         assertThat(bid.amount()).isEqualTo(110);
         assertThat(bid.sequence()).isEqualTo(new BidSequence(2));
+        assertThat(room.domainEvents()).last()
+            .isInstanceOfSatisfying(BidPlaced.class, event -> {
+                assertThat(event.roomCode()).isEqualTo("ROOM01");
+                assertThat(event.amount()).isEqualTo(110);
+                assertThat(event.roundEndsAt()).isEqualTo(CREATED_AT.plusSeconds(PICK_BAN_TIME));
+            });
     }
 
     @Test
@@ -118,16 +126,6 @@ class RoomAuctionTest {
         assertThatThrownBy(() -> room.placeBid(new TeamLeaderId(HOST_ID), 100, CREATED_AT))
             .isInstanceOf(CoreException.class)
             .isInstanceOfSatisfying(CoreException.class, ex -> assertRoomError(ex, RoomErrorType.ROOM_BID_REQUIRES_AUCTION_MODE));
-    }
-
-    @Test
-    void 시작한_경매_방의_현재_라운드가_null이면_room_state_invalid를_던진다() throws Exception {
-        Room room = startedAuctionRoom();
-        setCurrentAuctionRound(room, null);
-
-        assertThatThrownBy(() -> room.placeBid(new TeamLeaderId(HOST_ID), 100, CREATED_AT.plusSeconds(1)))
-            .isInstanceOf(RoomStateInvalidException.class)
-            .isInstanceOfSatisfying(RoomStateInvalidException.class, ex -> assertThat(ex.getError()).isEqualTo(RoomErrorType.ROOM_STATE_INVALID));
     }
 
     @Test
@@ -183,6 +181,12 @@ class RoomAuctionTest {
         assertThat(room.getPlayers().getFirst().getStatus()).isEqualTo(PlayerStatus.ASSIGNED);
         assertThat(room.getCurrentAuctionRound()).isEqualTo(2);
         assertThat(room.getCurrentAuctionRoundEndsAt()).isEqualTo(CREATED_AT.plusSeconds(PICK_BAN_TIME * 2L));
+        assertThat(room.domainEvents()).last()
+            .isInstanceOfSatisfying(AuctionSettled.class, event -> {
+                assertThat(event.roomCode()).isEqualTo("ROOM01");
+                assertThat(event.outcome()).isEqualTo(AuctionOutcome.SOLD.name());
+                assertThat(event.roundEndsAt()).isEqualTo(CREATED_AT.plusSeconds(PICK_BAN_TIME * 2L));
+            });
     }
 
     @Test
@@ -238,58 +242,15 @@ class RoomAuctionTest {
     }
 
     @Test
-    void 시작한_경매_방의_현재_라운드가_null이면_낙찰_처리도_room_state_invalid를_던진다() throws Exception {
-        Room room = startedAuctionRoom();
-        setCurrentAuctionRound(room, null);
-
-        assertThatThrownBy(() -> room.settleAuction(CREATED_AT.plusSeconds(PICK_BAN_TIME)))
-            .isInstanceOf(RoomStateInvalidException.class)
-            .isInstanceOfSatisfying(RoomStateInvalidException.class, ex -> assertThat(ex.getError()).isEqualTo(RoomErrorType.ROOM_STATE_INVALID));
-    }
-
-    @Test
-    void 낙찰_팀장의_남은_예산이_null로_손상되면_정산은_room_state_invalid를_던진다() throws Exception {
-        Room room = startedAuctionRoom();
-        TeamLeaderId guestLeaderId = room.getLeaders().getLast().getId();
-
-        room.placeBid(guestLeaderId, 150, CREATED_AT.plusSeconds(1));
-        setRemainingBudget(room, guestLeaderId, null);
-
-        assertThatThrownBy(() -> room.settleAuction(CREATED_AT.plusSeconds(PICK_BAN_TIME)))
-            .isInstanceOf(RoomStateInvalidException.class)
-            .isInstanceOfSatisfying(RoomStateInvalidException.class, ex -> assertThat(ex.getError()).isEqualTo(RoomErrorType.ROOM_STATE_INVALID));
-    }
-
-    @Test
-    void 낙찰_팀장의_남은_예산이_입찰가보다_작게_손상되면_정산은_room_state_invalid를_던진다() throws Exception {
-        Room room = startedAuctionRoom();
-        TeamLeaderId guestLeaderId = room.getLeaders().getLast().getId();
-
-        room.placeBid(guestLeaderId, 150, CREATED_AT.plusSeconds(1));
-        setRemainingBudget(room, guestLeaderId, 100);
-
-        assertThatThrownBy(() -> room.settleAuction(CREATED_AT.plusSeconds(PICK_BAN_TIME)))
-            .isInstanceOf(RoomStateInvalidException.class)
-            .isInstanceOfSatisfying(RoomStateInvalidException.class, ex -> assertThat(ex.getError()).isEqualTo(RoomErrorType.ROOM_STATE_INVALID));
-    }
-
-    @Test
-    void start는_저장후_realtime_publish하고_deadline_scheduling은_afterCommit에_유지한다() {
+    void start는_저장후_realtime_publish를_유지한다() {
         Room room = waitingAuctionRoom();
         room.join(new TeamLeaderId(GUEST_ID), "게스트", GUEST_ACTION_TOKEN);
         InMemoryRooms rooms = new InMemoryRooms(room);
         RecordingRoomSnapshotPublisher publisher = new RecordingRoomSnapshotPublisher();
-        FakeTaskScheduler taskScheduler = new FakeTaskScheduler();
         StartRoom startRoom =
             new StartRoom(
                 rooms,
                 new RoomActionAuthorizer(),
-                new RoomAuctionDeadlineScheduler(
-                    taskScheduler,
-                    unsupportedSettleAuction(),
-                    emptyAuctionScheduleReader(),
-                    Clock.fixed(CREATED_AT, ZoneOffset.UTC)
-                ),
                 publisher,
                 Clock.fixed(CREATED_AT, ZoneOffset.UTC)
             );
@@ -301,21 +262,13 @@ class RoomAuctionTest {
             assertThat(publisher.events).hasSize(1);
             RoomRealtimeSnapshotEvent event = publisher.events.getFirst();
             assertThat(event.roomCode()).isEqualTo(room.getCode());
-            assertThat(event.snapshotVersion()).isEqualTo(1L);
             assertThat(event.room().progress().currentRound()).isEqualTo(1);
             assertThat(event.room().progress().currentAuctionRoundEndsAt()).isEqualTo(CREATED_AT.plusSeconds(PICK_BAN_TIME));
-            assertThat(taskScheduler.scheduledInstants()).isEmpty();
-
-            List<TransactionSynchronization> synchronizations = TransactionSynchronizationManager.getSynchronizations();
-            TransactionSynchronizationManager.clearSynchronization();
-            synchronizations.forEach(TransactionSynchronization::afterCommit);
         } finally {
             if (TransactionSynchronizationManager.isSynchronizationActive()) {
                 TransactionSynchronizationManager.clearSynchronization();
             }
         }
-
-        assertThat(taskScheduler.scheduledInstants()).containsExactly(CREATED_AT.plusSeconds(PICK_BAN_TIME));
     }
 
     @Test
@@ -328,12 +281,6 @@ class RoomAuctionTest {
             new StartRoom(
                 rooms,
                 new RoomActionAuthorizer(),
-                new RoomAuctionDeadlineScheduler(
-                    new FakeTaskScheduler(),
-                    unsupportedSettleAuction(),
-                    emptyAuctionScheduleReader(),
-                    Clock.fixed(CREATED_AT, ZoneOffset.UTC)
-                ),
                 noopRoomSnapshotPublisher(),
                 Clock.fixed(CREATED_AT, ZoneOffset.UTC)
             );
@@ -343,49 +290,34 @@ class RoomAuctionTest {
     }
 
     @Test
-    void placeBid는_저장후_realtime_publish하고_deadline_scheduling은_afterCommit에_유지한다() {
+    void placeBid는_저장후_realtime_publish를_유지한다() {
         Room room = startedAuctionRoom();
         InMemoryRooms rooms = new InMemoryRooms(room);
         RecordingRoomSnapshotPublisher publisher = new RecordingRoomSnapshotPublisher();
-        FakeTaskScheduler taskScheduler = new FakeTaskScheduler();
         PlaceBid placeBid =
             new PlaceBid(
                 rooms,
                 new RoomActionAuthorizer(),
-                new RoomAuctionDeadlineScheduler(
-                    taskScheduler,
-                    unsupportedSettleAuction(),
-                    emptyAuctionScheduleReader(),
-                    Clock.fixed(CREATED_AT, ZoneOffset.UTC)
-                ),
                 publisher,
                 Clock.fixed(CREATED_AT.plusSeconds(1), ZoneOffset.UTC)
             );
 
         TransactionSynchronizationManager.initSynchronization();
         try {
-            RoomBid bid = placeBid.place(room.getCode(), HOST_ACTION_TOKEN, 100);
+            Room bid = placeBid.place(room.getCode(), HOST_ACTION_TOKEN, 100);
 
-            assertThat(bid.amount()).isEqualTo(100);
+            assertThat(bid.getBids().getLast().amount()).isEqualTo(100);
             assertThat(publisher.events).hasSize(1);
             RoomRealtimeSnapshotEvent event = publisher.events.getFirst();
             assertThat(event.roomCode()).isEqualTo(room.getCode());
-            assertThat(event.snapshotVersion()).isEqualTo(1L);
             assertThat(event.room().progress().currentRound()).isEqualTo(1);
             assertThat(event.room().progress().highestBidAmount()).isEqualTo(100);
             assertThat(event.room().progress().bidCount()).isEqualTo(1);
-            assertThat(taskScheduler.scheduledInstants()).isEmpty();
-
-            List<TransactionSynchronization> synchronizations = TransactionSynchronizationManager.getSynchronizations();
-            TransactionSynchronizationManager.clearSynchronization();
-            synchronizations.forEach(TransactionSynchronization::afterCommit);
         } finally {
             if (TransactionSynchronizationManager.isSynchronizationActive()) {
                 TransactionSynchronizationManager.clearSynchronization();
             }
         }
-
-        assertThat(taskScheduler.scheduledInstants()).containsExactly(CREATED_AT.plusSeconds(PICK_BAN_TIME));
     }
 
     @Test
@@ -397,12 +329,6 @@ class RoomAuctionTest {
             new PlaceBid(
                 rooms,
                 new RoomActionAuthorizer(),
-                new RoomAuctionDeadlineScheduler(
-                    new FakeTaskScheduler(),
-                    unsupportedSettleAuction(),
-                    emptyAuctionScheduleReader(),
-                    Clock.fixed(CREATED_AT, ZoneOffset.UTC)
-                ),
                 noopRoomSnapshotPublisher(),
                 Clock.fixed(CREATED_AT.plusSeconds(1), ZoneOffset.UTC)
             );
@@ -459,29 +385,6 @@ class RoomAuctionTest {
 
     private static RoomSnapshotPublisher noopRoomSnapshotPublisher() {
         return new NoopRoomSnapshotPublisher();
-    }
-
-    private static void setCurrentAuctionRoundEndsAt(Room room, Instant value) throws Exception {
-        var field = Room.class.getDeclaredField("currentAuctionRoundEndsAt");
-        field.setAccessible(true);
-        field.set(room, value);
-    }
-
-    private static void setCurrentAuctionRound(Room room, Integer value) throws Exception {
-        var field = Room.class.getDeclaredField("currentAuctionRound");
-        field.setAccessible(true);
-        field.set(room, value);
-    }
-
-    private static void setRemainingBudget(Room room, TeamLeaderId leaderId, Integer value) throws Exception {
-        RoomTeamLeader leader =
-            room.getLeaders().stream()
-                .filter(it -> it.getId().equals(leaderId))
-                .findFirst()
-                .orElseThrow();
-        var field = RoomTeamLeader.class.getDeclaredField("remainingBudget");
-        field.setAccessible(true);
-        field.set(leader, value);
     }
 
     private static Room waitingAuctionRoom() {
@@ -597,64 +500,6 @@ class RoomAuctionTest {
         room.join(new TeamLeaderId(GUEST_ID), "게스트", GUEST_ACTION_TOKEN);
         return room;
     }
-
-    private static SettleAuction unsupportedSettleAuction() {
-        InMemoryRooms rooms = new InMemoryRooms();
-        return new SettleAuction(
-            new SettleAuctionAttempt(rooms, Clock.fixed(CREATED_AT, ZoneOffset.UTC), noopRoomSnapshotPublisher()),
-            rooms,
-            new ObjectProvider<>() {
-                @Override
-                public RoomAuctionDeadlineScheduler getObject(Object... args) {
-                    return null;
-                }
-
-                @Override
-                public RoomAuctionDeadlineScheduler getObject() {
-                    return null;
-                }
-
-                @Override
-                public RoomAuctionDeadlineScheduler getIfAvailable() {
-                    return null;
-                }
-
-                @Override
-                public RoomAuctionDeadlineScheduler getIfUnique() {
-                    return null;
-                }
-            }
-        );
-    }
-
-    private static ObjectProvider<RoomAuctionDeadlineScheduler> singletonProvider(RoomAuctionDeadlineScheduler scheduler) {
-        return new ObjectProvider<>() {
-            @Override
-            public RoomAuctionDeadlineScheduler getObject(Object... args) {
-                return scheduler;
-            }
-
-            @Override
-            public RoomAuctionDeadlineScheduler getObject() {
-                return scheduler;
-            }
-
-            @Override
-            public RoomAuctionDeadlineScheduler getIfAvailable() {
-                return scheduler;
-            }
-
-            @Override
-            public RoomAuctionDeadlineScheduler getIfUnique() {
-                return scheduler;
-            }
-        };
-    }
-
-    private static AuctionScheduleReader emptyAuctionScheduleReader() {
-        return List::of;
-    }
-
     private static final class InMemoryRooms implements Rooms {
         private Room room;
         private RuntimeException saveFailure;
@@ -680,7 +525,6 @@ class RoomAuctionTest {
                 throw saveFailure;
             }
             this.room = room;
-            markFlushed(room);
             return room;
         }
 
@@ -692,16 +536,6 @@ class RoomAuctionTest {
         @Override
         public Optional<Room> findByCode(String code) {
             return Optional.ofNullable(room).filter(it -> it.getCode().equals(code));
-        }
-
-        private void markFlushed(Room room) {
-            try {
-                var field = Room.class.getDeclaredField("version");
-                field.setAccessible(true);
-                field.setLong(room, 1L);
-            } catch (ReflectiveOperationException ex) {
-                throw new AssertionError(ex);
-            }
         }
     }
 

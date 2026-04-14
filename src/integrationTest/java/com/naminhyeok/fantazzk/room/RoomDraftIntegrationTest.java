@@ -53,17 +53,17 @@ class RoomDraftIntegrationTest {
                 )
             );
 
-        Room created = createRoom.create(template, "호스트");
-        RoomTeamLeader guest = joinRoom.join(created.getCode(), "게스트");
-        selectDraftPosition.select(created.getCode(), created.getLeaders().getFirst().getActionToken(), 2);
-        selectDraftPosition.select(created.getCode(), guest.getActionToken(), 1);
-        startRoom.start(created.getCode(), created.getLeaders().getFirst().getActionToken());
+        RoomSessionResult created = createRoom.create(template, "호스트");
+        RoomTeamLeader guest = joinRoom.join(created.room().getCode(), "게스트").leader();
+        selectDraftPosition.select(created.room().getCode(), created.leader().getActionToken(), 2);
+        selectDraftPosition.select(created.room().getCode(), guest.getActionToken(), 1);
+        startRoom.start(created.room().getCode(), created.leader().getActionToken());
 
-        RoomTeamMember member = pickDraft.pick(created.getCode(), guest.getActionToken(), "선수1");
+        Room picked = pickDraft.pick(created.room().getCode(), guest.getActionToken(), "선수1");
 
-        Room reloaded = rooms.findByCode(created.getCode()).orElseThrow();
+        Room reloaded = rooms.findByCode(created.room().getCode()).orElseThrow();
 
-        assertThat(member.playerName()).isEqualTo("선수1");
+        assertThat(picked.getMembers().getLast().playerName()).isEqualTo("선수1");
         assertThat(reloaded.getMembers()).singleElement()
             .extracting(RoomTeamMember::teamLeaderId, RoomTeamMember::playerName)
             .containsExactly(guest.getId(), "선수1");
@@ -86,13 +86,13 @@ class RoomDraftIntegrationTest {
                 )
             );
 
-        Room created = createRoom.create(template, "호스트");
-        RoomTeamLeader guest = joinRoom.join(created.getCode(), "게스트");
-        selectDraftPosition.select(created.getCode(), created.getLeaders().getFirst().getActionToken(), 2);
-        selectDraftPosition.select(created.getCode(), guest.getActionToken(), 1);
-        startRoom.start(created.getCode(), created.getLeaders().getFirst().getActionToken());
+        RoomSessionResult created = createRoom.create(template, "호스트");
+        RoomTeamLeader guest = joinRoom.join(created.room().getCode(), "게스트").leader();
+        selectDraftPosition.select(created.room().getCode(), created.leader().getActionToken(), 2);
+        selectDraftPosition.select(created.room().getCode(), guest.getActionToken(), 1);
+        startRoom.start(created.room().getCode(), created.leader().getActionToken());
 
-        assertThatThrownBy(() -> pickDraft.pick(created.getCode(), created.getLeaders().getFirst().getActionToken(), "없는선수"))
+        assertThatThrownBy(() -> pickDraft.pick(created.room().getCode(), created.leader().getActionToken(), "없는선수"))
             .isInstanceOf(CoreException.class)
             .isInstanceOfSatisfying(CoreException.class, ex -> assertThat(ex.getError()).isEqualTo(RoomErrorType.ROOM_PICK_OUT_OF_TURN));
     }
@@ -114,29 +114,29 @@ class RoomDraftIntegrationTest {
                 )
             );
 
-        Room created = createRoom.create(template, "호스트");
-        RoomTeamLeader guest = joinRoom.join(created.getCode(), "게스트");
-        RoomTeamLeader host = created.getLeaders().getFirst();
-        selectDraftPosition.select(created.getCode(), host.getActionToken(), 1);
-        selectDraftPosition.select(created.getCode(), guest.getActionToken(), 2);
-        startRoom.start(created.getCode(), host.getActionToken());
+        RoomSessionResult created = createRoom.create(template, "호스트");
+        RoomTeamLeader guest = joinRoom.join(created.room().getCode(), "게스트").leader();
+        RoomTeamLeader host = created.leader();
+        selectDraftPosition.select(created.room().getCode(), host.getActionToken(), 1);
+        selectDraftPosition.select(created.room().getCode(), guest.getActionToken(), 2);
+        startRoom.start(created.room().getCode(), host.getActionToken());
 
-        pickDraft.pick(created.getCode(), host.getActionToken(), "선수1");
-        pickDraft.pick(created.getCode(), guest.getActionToken(), "선수2");
+        pickDraft.pick(created.room().getCode(), host.getActionToken(), "선수1");
+        pickDraft.pick(created.room().getCode(), guest.getActionToken(), "선수2");
 
         entityManager.flush();
         entityManager.clear();
-        Room reloadedAfterSecondPick = rooms.findByCode(created.getCode()).orElseThrow();
+        Room reloadedAfterSecondPick = rooms.findByCode(created.room().getCode()).orElseThrow();
 
         assertThat(reloadedAfterSecondPick.getCurrentTurnIndex()).isEqualTo(2);
 
-        RoomTeamMember thirdPick = pickDraft.pick(created.getCode(), guest.getActionToken(), "선수3");
+        Room thirdPick = pickDraft.pick(created.room().getCode(), guest.getActionToken(), "선수3");
 
         entityManager.flush();
         entityManager.clear();
-        Room reloadedAfterThirdPick = rooms.findByCode(created.getCode()).orElseThrow();
+        Room reloadedAfterThirdPick = rooms.findByCode(created.room().getCode()).orElseThrow();
 
-        assertThat(thirdPick.teamLeaderId()).isEqualTo(guest.getId());
+        assertThat(thirdPick.getMembers().getLast().teamLeaderId()).isEqualTo(guest.getId());
         assertThat(reloadedAfterThirdPick.getMembers())
             .extracting(RoomTeamMember::teamLeaderId, RoomTeamMember::playerName)
             .containsExactly(

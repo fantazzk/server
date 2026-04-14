@@ -4,6 +4,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.naminhyeok.fantazzk.CoreException;
+import com.naminhyeok.fantazzk.room.event.AuctionSettled;
+import com.naminhyeok.fantazzk.room.event.BidPlaced;
+import com.naminhyeok.fantazzk.room.event.LeaderJoinedRoom;
+import com.naminhyeok.fantazzk.room.event.RoomStarted;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -67,7 +71,7 @@ class RoomAggregateTest {
 
         Room started = auctionWaitingRoom(CREATED_AT.plusSeconds(120));
         started.join(new TeamLeaderId(GUEST_ID), "게스트", GUEST_ACTION_TOKEN);
-        started.start(new TeamLeaderId(HOST_ID));
+        started.start(new TeamLeaderId(HOST_ID), started.getCreatedAt());
 
         assertThat(joinable.isJoinable()).isTrue();
         assertThat(full.isJoinable()).isFalse();
@@ -83,6 +87,11 @@ class RoomAggregateTest {
         assertThat(room.getLeaders()).hasSize(2);
         assertThat(room.getLeaders().getLast().getNickname()).isEqualTo("게스트");
         assertThat(room.getLeaders().getLast().getActionToken()).isEqualTo(GUEST_ACTION_TOKEN);
+        assertThat(room.domainEvents()).singleElement()
+            .isInstanceOfSatisfying(LeaderJoinedRoom.class, event -> {
+                assertThat(event.roomCode()).isEqualTo("ROOM01");
+                assertThat(event.leaderId()).isEqualTo(GUEST_ID);
+            });
     }
 
     @Test
@@ -218,11 +227,16 @@ class RoomAggregateTest {
             Room room = auctionWaitingRoom();
             room.join(new TeamLeaderId(GUEST_ID), "게스트", GUEST_ACTION_TOKEN);
 
-            room.start(new TeamLeaderId(HOST_ID));
+            room.start(new TeamLeaderId(HOST_ID), CREATED_AT);
 
             assertThat(room.getStatus()).isEqualTo(RoomStatus.IN_PROGRESS);
             assertThat(room.getCurrentAuctionRound()).isEqualTo(1);
             assertThat(room.getCurrentTurnIndex()).isNull();
+            assertThat(room.domainEvents()).last()
+                .isInstanceOfSatisfying(RoomStarted.class, event -> {
+                    assertThat(event.roomCode()).isEqualTo("ROOM01");
+                    assertThat(event.roundEndsAt()).isEqualTo(CREATED_AT.plusSeconds(15));
+                });
         }
 
         @Test
@@ -232,7 +246,7 @@ class RoomAggregateTest {
             room.selectDraftPosition(new TeamLeaderId(HOST_ID), 1);
             room.selectDraftPosition(new TeamLeaderId(GUEST_ID), 2);
 
-            room.start(new TeamLeaderId(HOST_ID));
+            room.start(new TeamLeaderId(HOST_ID), CREATED_AT);
 
             assertThat(room.getStatus()).isEqualTo(RoomStatus.IN_PROGRESS);
             assertThat(room.getCurrentTurnIndex()).isEqualTo(0);
@@ -246,7 +260,7 @@ class RoomAggregateTest {
             room.selectDraftPosition(new TeamLeaderId(HOST_ID), 1);
 
             assertThat(room.getStartReadiness()).isEqualTo(RoomStartReadiness.WAITING_FOR_DRAFT_POSITIONS);
-            assertThatThrownBy(() -> room.start(new TeamLeaderId(HOST_ID)))
+            assertThatThrownBy(() -> room.start(new TeamLeaderId(HOST_ID), CREATED_AT))
                 .isInstanceOf(CoreException.class)
                 .satisfies(ex -> {
                     CoreException coreException = (CoreException) ex;
@@ -259,7 +273,7 @@ class RoomAggregateTest {
         void 팀장_자리가_다_차지_않으면_시작할_수_없다() {
             Room room = auctionWaitingRoom();
 
-            assertThatThrownBy(() -> room.start(new TeamLeaderId(HOST_ID)))
+            assertThatThrownBy(() -> room.start(new TeamLeaderId(HOST_ID), CREATED_AT))
                 .isInstanceOf(CoreException.class)
                 .satisfies(ex -> {
                     CoreException coreException = (CoreException) ex;
@@ -273,7 +287,7 @@ class RoomAggregateTest {
             Room room = auctionWaitingRoom();
             room.join(new TeamLeaderId(GUEST_ID), "게스트", GUEST_ACTION_TOKEN);
 
-            assertThatThrownBy(() -> room.start(new TeamLeaderId(GUEST_ID)))
+            assertThatThrownBy(() -> room.start(new TeamLeaderId(GUEST_ID), CREATED_AT))
                 .isInstanceOf(CoreException.class)
                 .satisfies(ex -> {
                     CoreException coreException = (CoreException) ex;
@@ -313,7 +327,8 @@ class RoomAggregateTest {
     private static Room startedAuctionRoom() {
         Room room = auctionWaitingRoom();
         room.join(new TeamLeaderId(GUEST_ID), "게스트", GUEST_ACTION_TOKEN);
-        room.start(new TeamLeaderId(HOST_ID));
+        room.start(new TeamLeaderId(HOST_ID), CREATED_AT);
+        room.clearDomainEvents();
         return room;
     }
 

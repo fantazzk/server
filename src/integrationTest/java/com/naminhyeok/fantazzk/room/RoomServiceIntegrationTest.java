@@ -49,8 +49,8 @@ class RoomServiceIntegrationTest {
                 )
             );
 
-        Room created = createRoom.create(template, "호스트");
-        Room reloaded = rooms.findById(created.getId()).orElseThrow();
+        RoomSessionResult created = createRoom.create(template, "호스트");
+        Room reloaded = rooms.findById(created.room().getId()).orElseThrow();
 
         assertThat(reloaded.getStatus()).isEqualTo(RoomStatus.WAITING);
         assertThat(reloaded.getLeaders()).singleElement()
@@ -75,10 +75,10 @@ class RoomServiceIntegrationTest {
                 )
             );
 
-        Room created = createRoom.create(template, "호스트");
-        RoomTeamLeader guest = joinRoom.join(created.getCode(), "게스트");
+        RoomSessionResult created = createRoom.create(template, "호스트");
+        RoomTeamLeader guest = joinRoom.join(created.room().getCode(), "게스트").leader();
 
-        assertThatThrownBy(() -> startRoom.start(created.getCode(), guest.getActionToken()))
+        assertThatThrownBy(() -> startRoom.start(created.room().getCode(), guest.getActionToken()))
             .isInstanceOf(CoreException.class)
             .satisfies(ex -> {
                 CoreException coreException = (CoreException) ex;
@@ -101,13 +101,13 @@ class RoomServiceIntegrationTest {
                 )
             );
 
-        Room created = createRoom.create(template, "호스트");
-        RoomTeamLeader guest = joinRoom.join(created.getCode(), "게스트");
+        RoomSessionResult created = createRoom.create(template, "호스트");
+        RoomTeamLeader guest = joinRoom.join(created.room().getCode(), "게스트").leader();
 
-        selectDraftPosition.select(created.getCode(), created.getLeaders().getFirst().getActionToken(), 2);
-        selectDraftPosition.select(created.getCode(), guest.getActionToken(), 1);
+        selectDraftPosition.select(created.room().getCode(), created.leader().getActionToken(), 2);
+        selectDraftPosition.select(created.room().getCode(), guest.getActionToken(), 1);
 
-        Room reloaded = rooms.findByCode(created.getCode()).orElseThrow();
+        Room reloaded = rooms.findByCode(created.room().getCode()).orElseThrow();
 
         assertThat(reloaded.getStartReadiness()).isEqualTo(RoomStartReadiness.STARTABLE);
     }
@@ -126,11 +126,11 @@ class RoomServiceIntegrationTest {
                 )
             );
 
-        Room created = createRoom.create(template, "호스트");
-        joinRoom.join(created.getCode(), "게스트");
-        selectDraftPosition.select(created.getCode(), created.getLeaders().getFirst().getActionToken(), 1);
+        RoomSessionResult created = createRoom.create(template, "호스트");
+        joinRoom.join(created.room().getCode(), "게스트");
+        selectDraftPosition.select(created.room().getCode(), created.leader().getActionToken(), 1);
 
-        assertThatThrownBy(() -> startRoom.start(created.getCode(), created.getLeaders().getFirst().getActionToken()))
+        assertThatThrownBy(() -> startRoom.start(created.room().getCode(), created.leader().getActionToken()))
             .isInstanceOf(CoreException.class)
             .satisfies(ex -> {
                 CoreException coreException = (CoreException) ex;
@@ -153,12 +153,12 @@ class RoomServiceIntegrationTest {
                 )
             );
 
-        Room created = createRoom.create(template, "호스트");
+        RoomSessionResult created = createRoom.create(template, "호스트");
 
-        selectDraftPosition.select(created.getCode(), created.getLeaders().getFirst().getActionToken(), 1);
-        clearDraftPosition.clear(created.getCode(), created.getLeaders().getFirst().getActionToken());
+        selectDraftPosition.select(created.room().getCode(), created.leader().getActionToken(), 1);
+        clearDraftPosition.clear(created.room().getCode(), created.leader().getActionToken());
 
-        Room reloaded = rooms.findByCode(created.getCode()).orElseThrow();
+        Room reloaded = rooms.findByCode(created.room().getCode()).orElseThrow();
 
         assertThat(reloaded.getLeaders()).singleElement()
             .extracting(RoomTeamLeader::getDraftPosition)
