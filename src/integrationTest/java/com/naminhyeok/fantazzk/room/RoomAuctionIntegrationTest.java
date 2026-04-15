@@ -45,8 +45,6 @@ import org.springframework.transaction.annotation.Transactional;
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
 @RequiredArgsConstructor
 class RoomAuctionIntegrationTest {
-    private static final Instant INITIAL_TIME = Instant.parse("2000-01-01T00:00:00Z");
-
     private final TemplateFixture templateFixture;
     private final CreateRoom createRoom;
     private final JoinRoom joinRoom;
@@ -54,15 +52,14 @@ class RoomAuctionIntegrationTest {
     private final PlaceBid placeBid;
     private final SettleAuction settleAuction;
     private final Rooms rooms;
+    private final Games games;
     private final RoomAuctionDeadlineScheduler roomAuctionDeadlineScheduler;
     private final RecordingTaskScheduler recordingTaskScheduler;
     private final PlatformTransactionManager transactionManager;
-    private final MutableClock roomAuctionTestClock;
 
     @BeforeEach
     void clearScheduledTasks() {
         recordingTaskScheduler.clear();
-        roomAuctionTestClock.setInstant(INITIAL_TIME);
     }
 
     @Test
@@ -84,24 +81,30 @@ class RoomAuctionIntegrationTest {
         RoomTeamLeader guest = joinRoom.join(created.room().getCode(), "게스트").leader();
         startRoom.start(created.room().getCode(), created.leader().getActionToken());
 
-        Room roomAfterBid = placeBid.place(created.room().getCode(), guest.getActionToken(), 150);
-        roomAuctionTestClock.setInstant(INITIAL_TIME.plusSeconds(45));
+        RoomBid bid = placeBid.place(created.room().getCode(), guest.getActionToken(), 150);
+        expireAuctionRound(created.room().getCode(), Instant.parse("1999-12-31T23:59:55Z"));
         AuctionSettlement settlement = settleAuction.settle(created.room().getCode());
 
         Room reloaded = rooms.findByCode(created.room().getCode()).orElseThrow();
+        AuctionGame game = (AuctionGame) games.findById(reloaded.getStartedGameId()).orElseThrow();
 
-        assertThat(roomAfterBid.getBids()).singleElement()
-            .extracting(RoomBid::teamLeaderId, RoomBid::amount)
-            .containsExactly(guest.getId(), 150);
+        assertThat(bid.teamLeaderId()).isEqualTo(guest.getId());
+        assertThat(bid.amount()).isEqualTo(150);
         assertThat(settlement.outcome()).isEqualTo(AuctionOutcome.SOLD);
         assertThat(settlement.playerName()).isEqualTo("선수1");
+        assertThat(reloaded.getStatus()).isEqualTo(RoomStatus.STARTED);
+        assertThat(game.getBids()).singleElement()
+            .extracting(RoomBid::teamLeaderId, RoomBid::amount)
+            .containsExactly(guest.getId(), 150);
         assertThat(reloaded.getPlayers().getFirst().getPosition()).isEqualTo("TOP");
-        assertThat(reloaded.getMembers()).singleElement()
+        assertThat(game.getMembers()).singleElement()
             .extracting(RoomTeamMember::teamLeaderId, RoomTeamMember::playerName)
             .containsExactly(guest.getId(), "선수1");
         assertThat(reloaded.getLeaders().stream().filter(it -> it.getId().equals(guest.getId())).findFirst().orElseThrow().getRemainingBudget())
+            .isEqualTo(300);
+        assertThat(game.getParticipants().stream().filter(it -> it.teamLeaderId().equals(guest.getId())).findFirst().orElseThrow().remainingBudget())
             .isEqualTo(150);
-        assertThat(reloaded.getCurrentAuctionRound()).isEqualTo(2);
+        assertThat(game.getCurrentRound()).isEqualTo(2);
     }
 
     @Test
@@ -122,13 +125,13 @@ class RoomAuctionIntegrationTest {
         RoomTeamLeader guest = joinRoom.join(created.room().getCode(), "게스트").leader();
         startRoom.start(created.room().getCode(), created.leader().getActionToken());
 
-        Room firstBid = placeBid.place(created.room().getCode(), created.leader().getActionToken(), 100);
+        RoomBid firstBid = placeBid.place(created.room().getCode(), created.leader().getActionToken(), 100);
         Room reloaded = rooms.findByCode(created.room().getCode()).orElseThrow();
-        Room secondBid = placeBid.place(reloaded.getCode(), guest.getActionToken(), 150);
+        RoomBid secondBid = placeBid.place(reloaded.getCode(), guest.getActionToken(), 150);
 
-        assertThat(firstBid.getBids().getLast().sequence()).isEqualTo(new BidSequence(1));
-        assertThat(secondBid.getBids().getLast().sequence()).isEqualTo(new BidSequence(2));
-        assertThat(secondBid.getBids().getLast().round()).isEqualTo(1);
+        assertThat(firstBid.sequence()).isEqualTo(new BidSequence(1));
+        assertThat(secondBid.sequence()).isEqualTo(new BidSequence(2));
+        assertThat(secondBid.round()).isEqualTo(1);
     }
 
     @Test
@@ -152,7 +155,7 @@ class RoomAuctionIntegrationTest {
         startRoom.start(created.room().getCode(), created.leader().getActionToken());
 
         placeBid.place(created.room().getCode(), guest.getActionToken(), 150);
-        roomAuctionTestClock.setInstant(INITIAL_TIME.plusSeconds(45));
+        expireAuctionRound(created.room().getCode(), Instant.parse("1999-12-31T23:59:55Z"));
         settleAuction.settle(created.room().getCode());
 
         Room reloaded = rooms.findByCode(created.room().getCode()).orElseThrow();
@@ -183,13 +186,16 @@ class RoomAuctionIntegrationTest {
         RoomTeamLeader guest = joinRoom.join(created.room().getCode(), "게스트").leader();
         startRoom.start(created.room().getCode(), created.leader().getActionToken());
         placeBid.place(created.room().getCode(), guest.getActionToken(), 150);
-        roomAuctionTestClock.setInstant(INITIAL_TIME.plusSeconds(45));
+
+        expireAuctionRound(created.room().getCode(), Instant.parse("1999-12-31T23:59:55Z"));
 
         roomAuctionDeadlineScheduler.catchUpAndReschedule();
 
         Room reloaded = rooms.findByCode(created.room().getCode()).orElseThrow();
-        assertThat(reloaded.getCurrentAuctionRound()).isEqualTo(2);
-        assertThat(reloaded.getCurrentAuctionRoundEndsAt()).isEqualTo(INITIAL_TIME.plusSeconds(90));
+        AuctionGame reloadedGame = (AuctionGame) games.findById(reloaded.getStartedGameId()).orElseThrow();
+        assertThat(reloaded.getStatus()).isEqualTo(RoomStatus.STARTED);
+        assertThat(reloadedGame.getCurrentRound()).isEqualTo(2);
+        assertThat(reloadedGame.getCurrentRoundEndsAt()).isEqualTo(Instant.parse("2000-01-01T00:00:45Z"));
     }
 
     @Test
@@ -219,45 +225,37 @@ class RoomAuctionIntegrationTest {
         assertThat(rooms.findByCode(created.room().getCode()).orElseThrow().getStatus()).isEqualTo(RoomStatus.WAITING);
     }
 
+    private void expireAuctionRound(String code, Instant deadline) {
+        TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
+        transactionTemplate.executeWithoutResult(status -> {
+            Room room = rooms.findByCode(code).orElseThrow();
+            AuctionGame game = (AuctionGame) games.findById(room.getStartedGameId()).orElseThrow();
+            setCurrentAuctionRoundEndsAt(game, deadline);
+        });
+    }
+
+    private static void setCurrentAuctionRoundEndsAt(AuctionGame game, Instant deadline) {
+        try {
+            var field = AuctionGame.class.getDeclaredField("currentRoundEndsAt");
+            field.setAccessible(true);
+            field.set(game, deadline);
+        } catch (ReflectiveOperationException ex) {
+            throw new AssertionError(ex);
+        }
+    }
+
     @TestConfiguration
     static class FixedClockConfiguration {
         @Bean
         @Primary
-        MutableClock roomAuctionTestClock() {
-            return new MutableClock(INITIAL_TIME);
+        Clock roomAuctionTestClock() {
+            return Clock.fixed(Instant.parse("2000-01-01T00:00:00Z"), ZoneOffset.UTC);
         }
 
         @Bean
         @Primary
         RecordingTaskScheduler roomAuctionIntegrationTaskScheduler() {
             return new RecordingTaskScheduler();
-        }
-    }
-
-    static final class MutableClock extends Clock {
-        private Instant instant;
-
-        private MutableClock(Instant instant) {
-            this.instant = instant;
-        }
-
-        void setInstant(Instant instant) {
-            this.instant = instant;
-        }
-
-        @Override
-        public ZoneOffset getZone() {
-            return ZoneOffset.UTC;
-        }
-
-        @Override
-        public Clock withZone(java.time.ZoneId zone) {
-            return this;
-        }
-
-        @Override
-        public Instant instant() {
-            return instant;
         }
     }
 

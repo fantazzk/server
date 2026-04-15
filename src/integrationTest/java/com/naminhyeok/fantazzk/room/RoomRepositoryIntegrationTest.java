@@ -154,6 +154,26 @@ class RoomRepositoryIntegrationTest {
     }
 
     @Test
+    @Transactional
+    void 시작된_방은_started_정보를_저장하고_다시_읽는다() {
+        Room room = auctionRoomForStartPersistence();
+        GameId gameId = new GameId(java.util.UUID.fromString("00000000-0000-0000-0000-000000000333"));
+        Instant startedAt = CREATED_AT.plusSeconds(30);
+        room.join(new TeamLeaderId("guest-1"), "게스트", "guest-action-token");
+        room.start(new TeamLeaderId("host-1"), gameId, startedAt);
+
+        Room saved = rooms.save(room);
+        entityManager.flush();
+        entityManager.clear();
+
+        Room reloaded = rooms.findById(saved.getId()).orElseThrow();
+
+        assertThat(reloaded.getStatus()).isEqualTo(RoomStatus.STARTED);
+        assertThat(reloaded.getStartedGameId()).isEqualTo(gameId);
+        assertThat(reloaded.getStartedAt()).isEqualTo(startedAt);
+    }
+
+    @Test
     void 방의_createdAt은_null일_수_없다() {
         assertThatThrownBy(() ->
             Room.createFromTemplate(
@@ -177,5 +197,28 @@ class RoomRepositoryIntegrationTest {
                 null
             )
         ).isInstanceOf(NullPointerException.class);
+    }
+
+    private Room auctionRoomForStartPersistence() {
+        return Room.createFromTemplate(
+            "ROOM05",
+            new TeamLeaderId("host-1"),
+            "호스트",
+            "host-action-token",
+            new RoomTemplateSpec(
+                RoomTemplateSpec.Mode.AUCTION,
+                2,
+                2,
+                300,
+                30,
+                10,
+                null,
+                List.of(
+                    new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
+                    new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
+                )
+            ),
+            CREATED_AT
+        );
     }
 }

@@ -19,6 +19,7 @@ class RoomDraftApiController {
     private final PickDraft pickDraft;
     private final SelectDraftPosition selectDraftPosition;
     private final ClearDraftPosition clearDraftPosition;
+    private final GetRoomDetails getRoomDetails;
 
     @PostMapping("/{code}/draft-picks")
     ApiResponse<RoomResponse> pickDraft(
@@ -26,7 +27,8 @@ class RoomDraftApiController {
         @RequestHeader(value = "X-Room-Action-Token", required = false) String actionToken,
         @Valid @RequestBody PickDraftRequest request
     ) {
-        return ApiResponse.success(RoomResponse.from(pickDraft.pick(code, actionToken, request.playerName())));
+        pickDraft.pick(code, actionToken, request.playerName());
+        return ApiResponse.success(RoomResponse.from(getRoomDetails.get(code)));
     }
 
     @PutMapping("/{code}/draft-position")
@@ -35,7 +37,8 @@ class RoomDraftApiController {
         @RequestHeader(value = "X-Room-Action-Token", required = false) String actionToken,
         @Valid @RequestBody SelectDraftPositionRequest request
     ) {
-        return ApiResponse.success(RoomResponse.from(selectDraftPosition.select(code, actionToken, request.draftPosition())));
+        selectDraftPosition.select(code, actionToken, request.draftPosition());
+        return ApiResponse.success(RoomResponse.from(getRoomDetails.get(code)));
     }
 
     @DeleteMapping("/{code}/draft-position")
@@ -43,6 +46,7 @@ class RoomDraftApiController {
         @PathVariable String code,
         @RequestHeader(value = "X-Room-Action-Token", required = false) String actionToken
     ) {
-        return ApiResponse.success(RoomResponse.from(clearDraftPosition.clear(code, actionToken)));
+        clearDraftPosition.clear(code, actionToken);
+        return ApiResponse.success(RoomResponse.from(getRoomDetails.get(code)));
     }
 }

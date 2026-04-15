@@ -41,6 +41,11 @@ class LiquibaseSmokeTest {
         assertThat(isNullable("rooms", "min_bid_unit")).isTrue();
         assertThat(countColumn("rooms", "position_limit")).isEqualTo(1);
         assertThat(isNullable("rooms", "position_limit")).isTrue();
+        assertThat(countColumn("rooms", "started_game_id")).isEqualTo(1);
+        assertThat(countColumn("rooms", "started_at")).isEqualTo(1);
+        assertThat(countColumn("rooms", "current_turn_index")).isZero();
+        assertThat(countColumn("rooms", "current_auction_round")).isZero();
+        assertThat(countColumn("rooms", "current_auction_round_ends_at")).isZero();
         assertThat(countIndex("rooms", "idx_rooms_status_created_at")).isEqualTo(1);
         assertThat(indexColumns("rooms", "idx_rooms_status_created_at")).containsExactly("STATUS", "CREATED_AT");
         assertThat(countTable("room_player")).isEqualTo(1);
@@ -49,9 +54,15 @@ class LiquibaseSmokeTest {
         assertThat(countColumn("room_team_leader", "team_leader_id")).isEqualTo(1);
         assertThat(countColumn("room_team_leader", "draft_position")).isEqualTo(1);
         assertThat(countColumn("room_team_leader", "action_token")).isEqualTo(1);
-        assertThat(countTable("room_team_member")).isEqualTo(1);
-        assertThat(countTable("room_bid")).isEqualTo(1);
-        assertThat(countColumn("room_bid", "bid_sequence")).isEqualTo(1);
+        assertThat(countTable("room_team_member")).isZero();
+        assertThat(countTable("room_bid")).isZero();
+        assertThat(countTable("game_draft_member")).isEqualTo(1);
+        assertThat(countColumn("game_draft_member", "members_game_id")).isEqualTo(1);
+        assertThat(countColumn("game_draft_member", "member_order")).isEqualTo(1);
+        assertThat(countColumn("game_draft_member", "team_leader_id")).isEqualTo(1);
+        assertThat(countColumn("game_draft_member", "player_name")).isEqualTo(1);
+        assertThat(countColumn("game_draft_member", "assign_order")).isEqualTo(1);
+        assertThat(countIndex("game_draft_member", "idx_game_draft_member_game_id")).isEqualTo(1);
         assertThat(countTable("event_publication")).isEqualTo(1);
     }
 

@@ -1,10 +1,12 @@
 package com.naminhyeok.fantazzk.room;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.resttestclient.TestRestTemplate;
@@ -20,6 +22,8 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.TestConstructor;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @SpringBootTest(
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
@@ -42,6 +46,9 @@ class RoomApiIntegrationTest {
 
     private final TestRestTemplate restTemplate;
     private final Rooms rooms;
+    private final Games games;
+    private final PlaceBid placeBid;
+    private final PlatformTransactionManager transactionManager;
 
     @Test
     void list는_joinable_waiting_room만_응답하고_정렬과_JSON_필드를_보장한다() {
@@ -62,9 +69,9 @@ class RoomApiIntegrationTest {
 
     @Test
     void auctionProgress는_due된_경매를_정산한_latest_snapshot을_반환한다() {
-        Room room = startedAuctionRoom("ROOM10", CREATED_AT.minusSeconds(30));
-        room.placeBid(new TeamLeaderId("host-ROOM10"), 100, CREATED_AT.plusSeconds(1));
-        rooms.save(room);
+        Room room = startedAuctionRoom("ROOM10", CREATED_AT);
+        placeBid.place("ROOM10", "host-action-token-ROOM10", 100);
+        expireAuctionRound("ROOM10", CREATED_AT.plusSeconds(19));
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -94,8 +101,7 @@ class RoomApiIntegrationTest {
     @Test
     void get은_경매의_deadline_projection을_반환한다() {
         Room room = startedAuctionRoom("ROOM11", CREATED_AT);
-        room.placeBid(new TeamLeaderId("host-ROOM11"), 120, CREATED_AT.plusSeconds(1));
-        rooms.save(room);
+        placeBid.place("ROOM11", "host-action-token-ROOM11", 120);
 
         var response = restTemplate.getForEntity("/api/v1/rooms/ROOM11", RoomResponseApiResponse.class);
         RoomResponseApiResponse body = response.getBody();
@@ -111,7 +117,56 @@ class RoomApiIntegrationTest {
         assertThat(body.success().progress().leadingLeaderId()).isEqualTo("host-ROOM11");
         assertThat(body.success().progress().bidCount()).isEqualTo(1);
         assertThat(body.success().progress().currentAuctionRoundEndsAt())
-            .isEqualTo(Instant.parse("2026-04-09T00:00:45Z"));
+            .isEqualTo(Instant.parse("2026-04-09T00:01:05Z"));
+    }
+
+    @Test
+    void started_draft_room의_auction_progress는_기존처럼_응답을_반환한다() {
+        Room room = startedDraftRoom("ROOM12", CREATED_AT);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        var response = restTemplate.exchange(
+            "/api/v1/rooms/ROOM12/auction/progress",
+            HttpMethod.POST,
+            new HttpEntity<>("", headers),
+            RoomResponseApiResponse.class
+        );
+        RoomResponseApiResponse body = response.getBody();
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(body).isNotNull();
+        assertThat(body.success().code()).isEqualTo("ROOM12");
+        assertThat(body.success().mode()).isEqualTo("DRAFT");
+    }
+
+    @Test
+    void get은_시작된_드래프트의_live_progress와_멤버와_선수상태를_반환한다() {
+        Room room = startedDraftRoom("ROOM13", CREATED_AT);
+        TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
+        transactionTemplate.executeWithoutResult(status -> {
+            DraftGame game = (DraftGame) games.findById(room.getStartedGameId()).orElseThrow();
+            game.pick(new TeamLeaderId("host-ROOM13"), "선수1");
+        });
+
+        var response = restTemplate.getForEntity("/api/v1/rooms/ROOM13", RoomResponseApiResponse.class);
+        RoomResponseApiResponse body = response.getBody();
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(body).isNotNull();
+        assertThat(body.success().status()).isEqualTo("IN_PROGRESS");
+        assertThat(body.success().members())
+            .extracting(RoomMemberResponse::teamLeaderId, RoomMemberResponse::playerName)
+            .containsExactly(org.assertj.core.groups.Tuple.tuple("host-ROOM13", "선수1"));
+        assertThat(body.success().players())
+            .extracting(RoomPlayerResponse::name, RoomPlayerResponse::status)
+            .containsExactly(
+                org.assertj.core.groups.Tuple.tuple("선수1", "ASSIGNED"),
+                org.assertj.core.groups.Tuple.tuple("선수2", "AVAILABLE")
+            );
+        assertThat(body.success().progress().currentTurnIndex()).isEqualTo(1);
+        assertThat(body.success().progress().currentRound()).isEqualTo(1);
+        assertThat(body.success().progress().currentLeaderId()).isEqualTo("guest-ROOM13");
     }
 
     private Room startedAuctionRoom(String code, Instant createdAt) {
@@ -136,8 +191,30 @@ class RoomApiIntegrationTest {
             createdAt
         );
         room.join(new TeamLeaderId("guest-" + code), "게스트-" + code, "guest-action-token-" + code);
-        room.start(new TeamLeaderId("host-" + code), createdAt);
+        GameId gameId = new GameId(UUID.nameUUIDFromBytes(("game:" + code).getBytes(StandardCharsets.UTF_8)));
+        StartedGameSnapshot snapshot = room.start(new TeamLeaderId("host-" + code), gameId, createdAt);
+        rooms.save(room);
+        games.save(new GameFactory().create(snapshot));
         return room;
+    }
+
+    private void expireAuctionRound(String code, Instant deadline) {
+        TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
+        transactionTemplate.executeWithoutResult(status -> {
+            Room room = rooms.findByCode(code).orElseThrow();
+            AuctionGame game = (AuctionGame) games.findById(room.getStartedGameId()).orElseThrow();
+            setCurrentAuctionRoundEndsAt(game, deadline);
+        });
+    }
+
+    private static void setCurrentAuctionRoundEndsAt(AuctionGame game, Instant deadline) {
+        try {
+            var field = AuctionGame.class.getDeclaredField("currentRoundEndsAt");
+            field.setAccessible(true);
+            field.set(game, deadline);
+        } catch (ReflectiveOperationException ex) {
+            throw new AssertionError(ex);
+        }
     }
 
     private Room joinableAuctionRoom(String code, Instant createdAt) {
@@ -196,6 +273,18 @@ class RoomApiIntegrationTest {
             ),
             createdAt
         );
+    }
+
+    private Room startedDraftRoom(String code, Instant createdAt) {
+        Room room = joinableDraftRoom(code, createdAt);
+        room.join(new TeamLeaderId("guest-" + code), "게스트-" + code, "guest-action-token-" + code);
+        room.selectDraftPosition(new TeamLeaderId("host-" + code), 1);
+        room.selectDraftPosition(new TeamLeaderId("guest-" + code), 2);
+        GameId gameId = new GameId(UUID.nameUUIDFromBytes(("game:" + code).getBytes(StandardCharsets.UTF_8)));
+        StartedGameSnapshot snapshot = room.start(new TeamLeaderId("host-" + code), gameId, createdAt);
+        rooms.save(room);
+        games.save(new GameFactory().create(snapshot));
+        return room;
     }
 
     private record JoinableRoomListApiResponse(

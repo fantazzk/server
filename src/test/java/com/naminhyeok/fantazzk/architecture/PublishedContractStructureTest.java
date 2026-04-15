@@ -64,15 +64,15 @@ class PublishedContractStructureTest {
     }
 
     @Test
-    void room_aggregate는_시간을_암묵적으로_조회하는_편의_메서드를_두지_않는다() throws Exception {
+    void room_aggregate는_준비_행위만_가지고_started_game_live_play를_직접_소유하지_않는다() throws Exception {
         Class<?> teamLeaderId = Class.forName("com.naminhyeok.fantazzk.room.TeamLeaderId");
 
         assertThat(hasDeclaredMethod("start", teamLeaderId)).isFalse();
         assertThat(hasDeclaredMethod("placeBid", teamLeaderId, int.class)).isFalse();
         assertThat(hasDeclaredMethod("settleAuction")).isFalse();
         assertThat(hasDeclaredMethod("start", teamLeaderId, Instant.class)).isTrue();
-        assertThat(hasDeclaredMethod("placeBid", teamLeaderId, int.class, Instant.class)).isTrue();
-        assertThat(hasDeclaredMethod("settleAuction", Instant.class)).isTrue();
+        assertThat(hasDeclaredMethod("placeBid", teamLeaderId, int.class, Instant.class)).isFalse();
+        assertThat(hasDeclaredMethod("settleAuction", Instant.class)).isFalse();
     }
 
     private boolean isPublic(String className) throws Exception {

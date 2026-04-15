@@ -39,10 +39,13 @@ class RoomAuctionApiControllerWebMvcTest {
     @MockitoBean
     private SettleAuction settleAuction;
 
+    @MockitoBean
+    private GetRoomDetails getRoomDetails;
+
     @Test
     void start는_header가_있으면_성공한다() throws Exception {
         given(startRoom.start(RoomApiTestFixtures.ROOM_CODE, RoomApiTestFixtures.HOST_TOKEN))
-            .willReturn(RoomApiTestFixtures.startedAuctionRoom());
+            .willReturn(RoomApiTestFixtures.startedAuctionDetails());
 
         var result = mockMvcTester().perform(
             post("/api/v1/rooms/{code}/start", RoomApiTestFixtures.ROOM_CODE)
@@ -85,7 +88,9 @@ class RoomAuctionApiControllerWebMvcTest {
     @Test
     void placeBid는_header가_있으면_최신_room_snapshot을_반환한다() throws Exception {
         given(placeBid.place(RoomApiTestFixtures.ROOM_CODE, RoomApiTestFixtures.HOST_TOKEN, 150))
-            .willReturn(RoomApiTestFixtures.startedAuctionRoom());
+            .willReturn(new RoomBid(1, new BidSequence(1), new TeamLeaderId(RoomApiTestFixtures.HOST_ID), 150));
+        given(getRoomDetails.get(RoomApiTestFixtures.ROOM_CODE))
+            .willReturn(RoomApiTestFixtures.startedAuctionDetails());
 
         var result = mockMvcTester().perform(
             post("/api/v1/rooms/{code}/bids", RoomApiTestFixtures.ROOM_CODE)
@@ -236,6 +241,7 @@ class RoomAuctionApiControllerWebMvcTest {
     @Test
     void auctionProgress는_settle된_room의_latest_snapshot을_반환한다() throws Exception {
         given(settleAuction.settleIfDue(RoomApiTestFixtures.ROOM_CODE)).willReturn(RoomApiTestFixtures.inProgressAuctionRoom());
+        given(getRoomDetails.get(RoomApiTestFixtures.ROOM_CODE)).willReturn(RoomApiTestFixtures.inProgressAuctionDetails());
 
         var result = mockMvcTester().perform(
             post("/api/v1/rooms/{code}/auction/progress", RoomApiTestFixtures.ROOM_CODE)

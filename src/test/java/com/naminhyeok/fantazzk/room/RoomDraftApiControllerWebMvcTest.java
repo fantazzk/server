@@ -41,10 +41,15 @@ class RoomDraftApiControllerWebMvcTest {
     @MockitoBean
     private ClearDraftPosition clearDraftPosition;
 
+    @MockitoBean
+    private GetRoomDetails getRoomDetails;
+
     @Test
     void pickDraft는_header가_있으면_최신_room_snapshot을_반환한다() throws Exception {
         given(pickDraft.pick(RoomApiTestFixtures.ROOM_CODE, RoomApiTestFixtures.GUEST_TOKEN, "선수3"))
-            .willReturn(RoomApiTestFixtures.inProgressDraftRoom());
+            .willReturn(new RoomTeamMember(new TeamLeaderId(RoomApiTestFixtures.GUEST_ID), "선수3", 2));
+        given(getRoomDetails.get(RoomApiTestFixtures.ROOM_CODE))
+            .willReturn(RoomApiTestFixtures.inProgressDraftDetails());
 
         var result = mockMvcTester().perform(
             post("/api/v1/rooms/{code}/draft-picks", RoomApiTestFixtures.ROOM_CODE)
@@ -117,6 +122,7 @@ class RoomDraftApiControllerWebMvcTest {
         room.selectDraftPosition(new TeamLeaderId(RoomApiTestFixtures.GUEST_ID), 2);
         given(selectDraftPosition.select(RoomApiTestFixtures.ROOM_CODE, RoomApiTestFixtures.GUEST_TOKEN, 2))
             .willReturn(room);
+        given(getRoomDetails.get(RoomApiTestFixtures.ROOM_CODE)).willReturn(RoomDetails.from(room));
 
         var result = mockMvcTester().perform(
             put("/api/v1/rooms/{code}/draft-position", RoomApiTestFixtures.ROOM_CODE)
@@ -143,6 +149,7 @@ class RoomDraftApiControllerWebMvcTest {
         room.clearDraftPosition(new TeamLeaderId(RoomApiTestFixtures.HOST_ID));
         given(clearDraftPosition.clear(RoomApiTestFixtures.ROOM_CODE, RoomApiTestFixtures.HOST_TOKEN))
             .willReturn(room);
+        given(getRoomDetails.get(RoomApiTestFixtures.ROOM_CODE)).willReturn(RoomDetails.from(room));
 
         var result = mockMvcTester().perform(
             delete("/api/v1/rooms/{code}/draft-position", RoomApiTestFixtures.ROOM_CODE)

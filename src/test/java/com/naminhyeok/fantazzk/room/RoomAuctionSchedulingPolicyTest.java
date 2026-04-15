@@ -16,7 +16,7 @@ class RoomAuctionSchedulingPolicyTest {
     void roomStarted는_deadline을_예약한다() {
         FakeTaskScheduler taskScheduler = new FakeTaskScheduler();
         RoomAuctionSchedulingPolicy policy = new RoomAuctionSchedulingPolicy(
-            new RoomAuctionDeadlineScheduler(taskScheduler, null, List::of, Clock.fixed(Instant.EPOCH, ZoneOffset.UTC))
+            new RoomAuctionDeadlineScheduler(taskScheduler, null, List::of, Clock.fixed(Instant.EPOCH, ZoneOffset.UTC), emptyGames())
         );
 
         policy.on(new RoomStarted("ROOM01", Instant.parse("2026-04-09T00:00:15Z")));
@@ -28,7 +28,7 @@ class RoomAuctionSchedulingPolicyTest {
     void bidPlaced는_deadline을_갱신한다() {
         FakeTaskScheduler taskScheduler = new FakeTaskScheduler();
         RoomAuctionDeadlineScheduler scheduler =
-            new RoomAuctionDeadlineScheduler(taskScheduler, null, List::of, Clock.fixed(Instant.EPOCH, ZoneOffset.UTC));
+            new RoomAuctionDeadlineScheduler(taskScheduler, null, List::of, Clock.fixed(Instant.EPOCH, ZoneOffset.UTC), emptyGames());
         scheduler.refresh("ROOM01", Instant.parse("2026-04-09T00:00:15Z"));
         RoomAuctionSchedulingPolicy policy = new RoomAuctionSchedulingPolicy(scheduler);
 
@@ -42,7 +42,7 @@ class RoomAuctionSchedulingPolicyTest {
     void auctionSettled는_다음_deadline이_없으면_예약을_해제한다() {
         FakeTaskScheduler taskScheduler = new FakeTaskScheduler();
         RoomAuctionDeadlineScheduler scheduler =
-            new RoomAuctionDeadlineScheduler(taskScheduler, null, List::of, Clock.fixed(Instant.EPOCH, ZoneOffset.UTC));
+            new RoomAuctionDeadlineScheduler(taskScheduler, null, List::of, Clock.fixed(Instant.EPOCH, ZoneOffset.UTC), emptyGames());
         scheduler.refresh("ROOM01", Instant.parse("2026-04-09T00:00:30Z"));
         RoomAuctionSchedulingPolicy policy = new RoomAuctionSchedulingPolicy(scheduler);
 
@@ -50,5 +50,19 @@ class RoomAuctionSchedulingPolicyTest {
 
         assertThat(taskScheduler.cancelledInstants()).containsExactly(Instant.parse("2026-04-09T00:00:30Z"));
         assertThat(taskScheduler.activeScheduledInstants()).isEmpty();
+    }
+
+    private static Games emptyGames() {
+        return new Games() {
+            @Override
+            public Game save(Game game) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public java.util.Optional<Game> findById(GameId id) {
+                return java.util.Optional.empty();
+            }
+        };
     }
 }

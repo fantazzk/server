@@ -15,36 +15,44 @@ record RoomProgressResponse(
     Integer bidCount
 ) {
     static RoomProgressResponse from(Room room) {
-        if (room.getStatus() != RoomStatus.IN_PROGRESS) {
-            return new RoomProgressResponse(null, null, null, null, null, null, null, null, null);
-        }
+        return new RoomProgressResponse(null, null, null, null, null, null, null, null, null);
+    }
 
-        if (room.getMode() == RoomMode.AUCTION) {
-            RoomBid winningBid = room.currentWinningBid();
+    static RoomProgressResponse from(RoomDetails details) {
+        if (details.game() instanceof AuctionGame auctionGame) {
+            if (auctionGame.getStatus() != GameStatus.IN_PROGRESS) {
+                return new RoomProgressResponse(null, null, null, null, null, null, null, null, null);
+            }
+            RoomBid winningBid = auctionGame.currentWinningBid();
             return new RoomProgressResponse(
                 null,
-                room.getCurrentAuctionRound(),
+                auctionGame.getCurrentRound() <= 0 ? null : auctionGame.getCurrentRound(),
                 null,
                 null,
-                room.getCurrentAuctionRoundEndsAt(),
-                AuctionTargetResponse.from(room.currentAuctionTarget()),
+                auctionGame.getCurrentRoundEndsAt(),
+                AuctionTargetResponse.from(auctionGame.currentAuctionTarget()),
                 winningBid == null ? null : winningBid.amount(),
                 winningBid == null ? null : winningBid.teamLeaderId().value(),
-                room.currentBidCount()
+                auctionGame.currentBidCount()
             );
         }
-
-        DraftProgress progress = room.currentDraftProgress();
-        return new RoomProgressResponse(
-            room.getCurrentTurnIndex(),
-            progress.currentRound(),
-            progress.currentLeaderId(),
-            progress.currentRoundLeaderIds(),
-            null,
-            null,
-            null,
-            null,
-            null
-        );
+        if (details.game() instanceof DraftGame draftGame) {
+            if (draftGame.getStatus() != GameStatus.IN_PROGRESS) {
+                return new RoomProgressResponse(null, null, null, null, null, null, null, null, null);
+            }
+            DraftProgress progress = draftGame.currentDraftProgress();
+            return new RoomProgressResponse(
+                draftGame.getCurrentTurnIndex(),
+                progress.currentRound(),
+                progress.currentLeaderId(),
+                progress.currentRoundLeaderIds(),
+                null,
+                null,
+                null,
+                null,
+                null
+            );
+        }
+        return new RoomProgressResponse(null, null, null, null, null, null, null, null, null);
     }
 }

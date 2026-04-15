@@ -11,13 +11,24 @@ record RoomRealtimeSnapshotEvent(
 ) {
     private static final String ROOM_SNAPSHOT_UPDATED = "ROOM_SNAPSHOT_UPDATED";
 
-    static RoomRealtimeSnapshotEvent from(Room room, Instant publishedAt) {
+    static RoomRealtimeSnapshotEvent from(RoomDetails details, Instant publishedAt) {
         return new RoomRealtimeSnapshotEvent(
             ROOM_SNAPSHOT_UPDATED,
-            room.getCode(),
-            room.getVersion(),
+            details.room().getCode(),
+            snapshotVersionOf(details),
             publishedAt,
-            RoomResponse.from(room)
+            RoomResponse.from(details)
         );
+    }
+
+    static RoomRealtimeSnapshotEvent from(Room room, Instant publishedAt) {
+        return from(RoomDetails.from(room), publishedAt);
+    }
+
+    static long snapshotVersionOf(RoomDetails details) {
+        if (details.game() != null) {
+            return details.room().getVersion() + details.game().getVersion();
+        }
+        return details.room().getVersion();
     }
 }

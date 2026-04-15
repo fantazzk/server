@@ -1,17 +1,18 @@
 package com.naminhyeok.fantazzk.room;
 
 import com.naminhyeok.fantazzk.CoreException;
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 
 @Service
-@RequiredArgsConstructor
 class SettleAuction {
     private final SettleAuctionAttempt settleAuctionAttempt;
     private final Rooms rooms;
-    private final ObjectProvider<RoomAuctionDeadlineScheduler> roomAuctionDeadlineScheduler;
+
+    SettleAuction(SettleAuctionAttempt settleAuctionAttempt, Rooms rooms) {
+        this.settleAuctionAttempt = settleAuctionAttempt;
+        this.rooms = rooms;
+    }
 
     public AuctionSettlement settle(String code) {
         return settleAuctionAttempt.settle(code);
@@ -19,21 +20,9 @@ class SettleAuction {
 
     public Room settleIfDue(String code) {
         try {
-            Room room = settleAuctionAttempt.settleIfDue(code);
-            scheduleIfNeeded(room);
-            return room;
+            return settleAuctionAttempt.settleIfDue(code);
         } catch (OptimisticLockingFailureException ex) {
             return rooms.findByCode(code).orElseThrow(() -> CoreException.of(RoomErrorType.ROOM_NOT_FOUND));
         }
-    }
-
-    private void scheduleIfNeeded(Room room) {
-        if (room.getMode() != RoomMode.AUCTION || room.getStatus() != RoomStatus.IN_PROGRESS) {
-            return;
-        }
-        if (room.getCurrentAuctionRoundEndsAt() == null) {
-            return;
-        }
-        roomAuctionDeadlineScheduler.ifAvailable(scheduler -> scheduler.schedule(room));
     }
 }

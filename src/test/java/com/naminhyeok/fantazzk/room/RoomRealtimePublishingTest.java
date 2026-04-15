@@ -49,12 +49,13 @@ class RoomRealtimePublishingTest {
     @Test
     void pickDraft는_저장된_room_스냅샷을_publish한다() {
         Room room = startedDraftRoom();
+        DraftGame game = (DraftGame) gameFor(room);
         RecordingRoomSnapshotPublisher publisher = new RecordingRoomSnapshotPublisher();
-        PickDraft pickDraft = new PickDraft(new InMemoryRooms(room), new RoomActionAuthorizer(), publisher);
+        PickDraft pickDraft = new PickDraft(new InMemoryRooms(room), new InMemoryGames(game), new RoomActionAuthorizer(), publisher);
 
-        Room picked = pickDraft.pick(room.getCode(), HOST_ACTION_TOKEN, "선수1");
+        RoomTeamMember picked = pickDraft.pick(room.getCode(), HOST_ACTION_TOKEN, "선수1");
 
-        assertThat(picked.getMembers().getLast().playerName()).isEqualTo("선수1");
+        assertThat(picked.playerName()).isEqualTo("선수1");
         assertThat(publisher.events).hasSize(1);
         RoomRealtimeSnapshotEvent event = publisher.events.getFirst();
         assertPublishedRoom(event, room.getCode());
@@ -96,9 +97,10 @@ class RoomRealtimePublishingTest {
     @Test
     void settle는_저장된_latest_room_스냅샷을_publish한다() {
         Room room = startedAuctionRoom();
+        AuctionGame game = (AuctionGame) gameFor(room);
         RecordingRoomSnapshotPublisher publisher = new RecordingRoomSnapshotPublisher();
         SettleAuctionAttempt settleAuctionAttempt =
-            new SettleAuctionAttempt(new InMemoryRooms(room), Clock.fixed(PUBLISHED_AT, ZoneOffset.UTC), publisher);
+            new SettleAuctionAttempt(new InMemoryRooms(room), new InMemoryGames(game), Clock.fixed(PUBLISHED_AT, ZoneOffset.UTC), publisher);
 
         AuctionSettlement settlement = settleAuctionAttempt.settle(room.getCode());
 
@@ -112,13 +114,14 @@ class RoomRealtimePublishingTest {
     @Test
     void settleIfDue는_기한이_지나면_정산된_latest_room_스냅샷을_publish한다() {
         Room room = startedAuctionRoom();
+        AuctionGame game = (AuctionGame) gameFor(room);
         RecordingRoomSnapshotPublisher publisher = new RecordingRoomSnapshotPublisher();
         SettleAuctionAttempt settleAuctionAttempt =
-            new SettleAuctionAttempt(new InMemoryRooms(room), Clock.fixed(PUBLISHED_AT, ZoneOffset.UTC), publisher);
+            new SettleAuctionAttempt(new InMemoryRooms(room), new InMemoryGames(game), Clock.fixed(PUBLISHED_AT, ZoneOffset.UTC), publisher);
 
         Room settled = settleAuctionAttempt.settleIfDue(room.getCode());
 
-        assertThat(settled.getCurrentAuctionRound()).isEqualTo(2);
+        assertThat(settled.getStatus()).isEqualTo(RoomStatus.STARTED);
         assertThat(publisher.events).hasSize(1);
         RoomRealtimeSnapshotEvent event = publisher.events.getFirst();
         assertPublishedRoom(event, room.getCode());
@@ -129,13 +132,14 @@ class RoomRealtimePublishingTest {
     @Test
     void settleIfDue는_기한이_아직_아니면_publish하지_않는다() {
         Room room = startedAuctionRoom();
+        AuctionGame game = (AuctionGame) gameFor(room);
         RecordingRoomSnapshotPublisher publisher = new RecordingRoomSnapshotPublisher();
         SettleAuctionAttempt settleAuctionAttempt =
-            new SettleAuctionAttempt(new InMemoryRooms(room), Clock.fixed(CREATED_AT.plusSeconds(10), ZoneOffset.UTC), publisher);
+            new SettleAuctionAttempt(new InMemoryRooms(room), new InMemoryGames(game), Clock.fixed(CREATED_AT.plusSeconds(10), ZoneOffset.UTC), publisher);
 
         Room current = settleAuctionAttempt.settleIfDue(room.getCode());
 
-        assertThat(current.getCurrentAuctionRound()).isEqualTo(1);
+        assertThat(current.getStatus()).isEqualTo(RoomStatus.STARTED);
         assertThat(publisher.events).isEmpty();
     }
 
@@ -216,12 +220,44 @@ class RoomRealtimePublishingTest {
         return room;
     }
 
+    private static Game gameFor(Room room) {
+        return new GameFactory().create(
+            new StartedGameSnapshot(
+                room.getId(),
+                room.getCode(),
+                room.getStartedGameId(),
+                room.getStartedAt(),
+                room.getMode(),
+                new GameRules(
+                    room.getTeamCount(),
+                    room.getTeamSize(),
+                    room.getBudget(),
+                    room.getPickBanTime(),
+                    room.getMinBidUnit(),
+                    room.getPositionLimit(),
+                    room.getDraftOrderStrategy()
+                ),
+                room.getLeaders().stream()
+                    .map(leader -> new GameParticipant(leader.getId(), leader.getNickname(), leader.getDraftPosition(), leader.getRemainingBudget()))
+                    .toList(),
+                room.getPlayers().stream()
+                    .map(player -> new GamePlayer(player.getId(), player.getName(), player.getPosition(), player.getDisplayOrder()))
+                    .toList()
+            )
+        );
+    }
+
     private static final class RecordingRoomSnapshotPublisher implements RoomSnapshotPublisher {
         private final List<RoomRealtimeSnapshotEvent> events = new ArrayList<>();
 
         @Override
         public void publishAfterCommit(Room room) {
             events.add(RoomRealtimeSnapshotEvent.from(room, PUBLISHED_AT));
+        }
+
+        @Override
+        public void publishAfterCommit(RoomDetails details) {
+            events.add(RoomRealtimeSnapshotEvent.from(details, PUBLISHED_AT));
         }
     }
 
@@ -280,6 +316,25 @@ class RoomRealtimePublishingTest {
         @Override
         public Optional<Room> findByCode(String code) {
             return Optional.ofNullable(room).filter(it -> it.getCode().equals(code));
+        }
+    }
+
+    private static final class InMemoryGames implements Games {
+        private Game game;
+
+        private InMemoryGames(Game game) {
+            this.game = game;
+        }
+
+        @Override
+        public Game save(Game game) {
+            this.game = game;
+            return game;
+        }
+
+        @Override
+        public Optional<Game> findById(GameId id) {
+            return Optional.ofNullable(game).filter(it -> it.getId().equals(id));
         }
     }
 

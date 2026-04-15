@@ -17,6 +17,7 @@ class RoomAuctionApiController {
     private final StartRoom startRoom;
     private final PlaceBid placeBid;
     private final SettleAuction settleAuction;
+    private final GetRoomDetails getRoomDetails;
 
     @PostMapping("/{code}/start")
     ApiResponse<RoomResponse> start(
@@ -32,11 +33,13 @@ class RoomAuctionApiController {
         @RequestHeader(value = "X-Room-Action-Token", required = false) String actionToken,
         @Valid @RequestBody PlaceBidRequest request
     ) {
-        return ApiResponse.success(RoomResponse.from(placeBid.place(code, actionToken, request.amount())));
+        placeBid.place(code, actionToken, request.amount());
+        return ApiResponse.success(RoomResponse.from(getRoomDetails.get(code)));
     }
 
     @PostMapping("/{code}/auction/progress")
     ApiResponse<RoomResponse> progressAuction(@PathVariable String code) {
-        return ApiResponse.success(RoomResponse.from(settleAuction.settleIfDue(code)));
+        settleAuction.settleIfDue(code);
+        return ApiResponse.success(RoomResponse.from(getRoomDetails.get(code)));
     }
 }

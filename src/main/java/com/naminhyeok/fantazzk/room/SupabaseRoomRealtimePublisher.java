@@ -50,7 +50,12 @@ class SupabaseRoomRealtimePublisher implements RoomSnapshotPublisher {
 
     @Override
     public void publishAfterCommit(Room room) {
-        PendingBroadcastSnapshot snapshot = PendingBroadcastSnapshot.from(room);
+        publishAfterCommit(RoomDetails.from(room));
+    }
+
+    @Override
+    public void publishAfterCommit(RoomDetails details) {
+        PendingBroadcastSnapshot snapshot = PendingBroadcastSnapshot.from(details);
         if (!TransactionSynchronizationManager.isSynchronizationActive()) {
             send(snapshot);
             return;
@@ -90,8 +95,12 @@ class SupabaseRoomRealtimePublisher implements RoomSnapshotPublisher {
     }
 
     private record PendingBroadcastSnapshot(String roomCode, long snapshotVersion, RoomResponse room) {
-        private static PendingBroadcastSnapshot from(Room room) {
-            return new PendingBroadcastSnapshot(room.getCode(), room.getVersion(), RoomResponse.from(room));
+        private static PendingBroadcastSnapshot from(RoomDetails details) {
+            return new PendingBroadcastSnapshot(
+                details.room().getCode(),
+                RoomRealtimeSnapshotEvent.snapshotVersionOf(details),
+                RoomResponse.from(details)
+            );
         }
 
         private RoomRealtimeSnapshotEvent toEvent(Instant publishedAt) {

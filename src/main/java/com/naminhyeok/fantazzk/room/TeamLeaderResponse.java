@@ -14,4 +14,16 @@ record TeamLeaderResponse(
             leader.getRemainingBudget()
         );
     }
+
+    static TeamLeaderResponse from(RoomTeamLeader leader, GameParticipant participant) {
+        if (participant == null) {
+            return from(leader);
+        }
+        return new TeamLeaderResponse(
+            leader.getId().value(),
+            leader.getNickname(),
+            participant.draftPosition(),
+            participant.remainingBudget()
+        );
+    }
 }

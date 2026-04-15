@@ -4,10 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.naminhyeok.fantazzk.CoreException;
-import com.naminhyeok.fantazzk.room.event.AuctionSettled;
-import com.naminhyeok.fantazzk.room.event.BidPlaced;
-import com.naminhyeok.fantazzk.room.event.LeaderJoinedRoom;
-import com.naminhyeok.fantazzk.room.event.RoomStarted;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -16,6 +12,7 @@ import org.junit.jupiter.api.Test;
 
 class RoomAggregateTest {
     private static final Instant CREATED_AT = Instant.parse("2026-04-09T00:00:00Z");
+    private static final Instant STARTED_AT = Instant.parse("2026-04-09T00:10:00Z");
     private static final String HOST_ID = "host-1";
     private static final String HOST_ACTION_TOKEN = "host-action-token";
     private static final String GUEST_ID = "guest-1";
@@ -71,7 +68,7 @@ class RoomAggregateTest {
 
         Room started = auctionWaitingRoom(CREATED_AT.plusSeconds(120));
         started.join(new TeamLeaderId(GUEST_ID), "게스트", GUEST_ACTION_TOKEN);
-        started.start(new TeamLeaderId(HOST_ID), started.getCreatedAt());
+        started.start(new TeamLeaderId(HOST_ID), STARTED_AT);
 
         assertThat(joinable.isJoinable()).isTrue();
         assertThat(full.isJoinable()).isFalse();
@@ -87,11 +84,6 @@ class RoomAggregateTest {
         assertThat(room.getLeaders()).hasSize(2);
         assertThat(room.getLeaders().getLast().getNickname()).isEqualTo("게스트");
         assertThat(room.getLeaders().getLast().getActionToken()).isEqualTo(GUEST_ACTION_TOKEN);
-        assertThat(room.domainEvents()).singleElement()
-            .isInstanceOfSatisfying(LeaderJoinedRoom.class, event -> {
-                assertThat(event.roomCode()).isEqualTo("ROOM01");
-                assertThat(event.leaderId()).isEqualTo(GUEST_ID);
-            });
     }
 
     @Test
@@ -223,34 +215,60 @@ class RoomAggregateTest {
     @Nested
     class 시작 {
         @Test
-        void 경매_방을_시작하면_경매_라운드를_초기화한다() {
+        void 방을_시작하면_시작_스냅샷을_반환하고_시작_정보를_기록한다() {
             Room room = auctionWaitingRoom();
             room.join(new TeamLeaderId(GUEST_ID), "게스트", GUEST_ACTION_TOKEN);
 
-            room.start(new TeamLeaderId(HOST_ID), CREATED_AT);
+            GameId gameId = new GameId(UUID.fromString("00000000-0000-0000-0000-000000000123"));
+            StartedGameSnapshot snapshot = room.start(new TeamLeaderId(HOST_ID), gameId, STARTED_AT);
 
-            assertThat(room.getStatus()).isEqualTo(RoomStatus.IN_PROGRESS);
-            assertThat(room.getCurrentAuctionRound()).isEqualTo(1);
-            assertThat(room.getCurrentTurnIndex()).isNull();
-            assertThat(room.domainEvents()).last()
-                .isInstanceOfSatisfying(RoomStarted.class, event -> {
-                    assertThat(event.roomCode()).isEqualTo("ROOM01");
-                    assertThat(event.roundEndsAt()).isEqualTo(CREATED_AT.plusSeconds(15));
-                });
+            assertThat(snapshot.roomId()).isEqualTo(room.getId());
+            assertThat(snapshot.roomCode()).isEqualTo(room.getCode());
+            assertThat(snapshot.gameId()).isEqualTo(gameId);
+            assertThat(snapshot.startedAt()).isEqualTo(STARTED_AT);
+            assertThat(snapshot.gameMode()).isEqualTo(room.getMode());
+            assertThat(snapshot.rules())
+                .isEqualTo(
+                    new GameRules(room.getTeamCount(), room.getTeamSize(), room.getBudget(), room.getPickBanTime(), room.getMinBidUnit(), room.getPositionLimit(), room.getDraftOrderStrategy())
+                );
+            assertThat(snapshot.participants())
+                .containsExactly(
+                    new GameParticipant(new TeamLeaderId(HOST_ID), "호스트", null, 300),
+                    new GameParticipant(new TeamLeaderId(GUEST_ID), "게스트", null, 300)
+                );
+            assertThat(snapshot.playerPool())
+                .containsExactly(
+                    new GamePlayer(new RoomPlayerId(0), "선수1", "TOP", 0),
+                    new GamePlayer(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
+                );
+            assertThat(room.getStartedGameId()).isEqualTo(gameId);
+            assertThat(room.getStartedAt()).isEqualTo(STARTED_AT);
         }
 
         @Test
-        void 드래프트_방을_시작하면_현재_턴을_초기화한다() {
+        void 경매_방을_시작하면_started_상태로_전환한다() {
+            Room room = auctionWaitingRoom();
+            room.join(new TeamLeaderId(GUEST_ID), "게스트", GUEST_ACTION_TOKEN);
+
+            room.start(new TeamLeaderId(HOST_ID), STARTED_AT);
+
+            assertThat(room.getStatus()).isEqualTo(RoomStatus.STARTED);
+            assertThat(room.getStartedGameId()).isNotNull();
+            assertThat(room.getStartedAt()).isNotNull();
+        }
+
+        @Test
+        void 드래프트_방을_시작하면_started_상태로_전환한다() {
             Room room = waitingDraftRoom();
             room.join(new TeamLeaderId(GUEST_ID), "게스트", GUEST_ACTION_TOKEN);
             room.selectDraftPosition(new TeamLeaderId(HOST_ID), 1);
             room.selectDraftPosition(new TeamLeaderId(GUEST_ID), 2);
 
-            room.start(new TeamLeaderId(HOST_ID), CREATED_AT);
+            room.start(new TeamLeaderId(HOST_ID), STARTED_AT);
 
-            assertThat(room.getStatus()).isEqualTo(RoomStatus.IN_PROGRESS);
-            assertThat(room.getCurrentTurnIndex()).isEqualTo(0);
-            assertThat(room.getCurrentAuctionRound()).isNull();
+            assertThat(room.getStatus()).isEqualTo(RoomStatus.STARTED);
+            assertThat(room.getStartedGameId()).isNotNull();
+            assertThat(room.getStartedAt()).isNotNull();
         }
 
         @Test
@@ -260,7 +278,7 @@ class RoomAggregateTest {
             room.selectDraftPosition(new TeamLeaderId(HOST_ID), 1);
 
             assertThat(room.getStartReadiness()).isEqualTo(RoomStartReadiness.WAITING_FOR_DRAFT_POSITIONS);
-            assertThatThrownBy(() -> room.start(new TeamLeaderId(HOST_ID), CREATED_AT))
+            assertThatThrownBy(() -> room.start(new TeamLeaderId(HOST_ID), STARTED_AT))
                 .isInstanceOf(CoreException.class)
                 .satisfies(ex -> {
                     CoreException coreException = (CoreException) ex;
@@ -273,7 +291,7 @@ class RoomAggregateTest {
         void 팀장_자리가_다_차지_않으면_시작할_수_없다() {
             Room room = auctionWaitingRoom();
 
-            assertThatThrownBy(() -> room.start(new TeamLeaderId(HOST_ID), CREATED_AT))
+            assertThatThrownBy(() -> room.start(new TeamLeaderId(HOST_ID), STARTED_AT))
                 .isInstanceOf(CoreException.class)
                 .satisfies(ex -> {
                     CoreException coreException = (CoreException) ex;
@@ -287,7 +305,7 @@ class RoomAggregateTest {
             Room room = auctionWaitingRoom();
             room.join(new TeamLeaderId(GUEST_ID), "게스트", GUEST_ACTION_TOKEN);
 
-            assertThatThrownBy(() -> room.start(new TeamLeaderId(GUEST_ID), CREATED_AT))
+            assertThatThrownBy(() -> room.start(new TeamLeaderId(GUEST_ID), STARTED_AT))
                 .isInstanceOf(CoreException.class)
                 .satisfies(ex -> {
                     CoreException coreException = (CoreException) ex;
@@ -327,8 +345,7 @@ class RoomAggregateTest {
     private static Room startedAuctionRoom() {
         Room room = auctionWaitingRoom();
         room.join(new TeamLeaderId(GUEST_ID), "게스트", GUEST_ACTION_TOKEN);
-        room.start(new TeamLeaderId(HOST_ID), CREATED_AT);
-        room.clearDomainEvents();
+        room.start(new TeamLeaderId(HOST_ID), STARTED_AT);
         return room;
     }
 
