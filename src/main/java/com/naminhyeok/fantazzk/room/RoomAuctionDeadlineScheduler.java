@@ -7,13 +7,14 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledFuture;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Component;
+import lombok.RequiredArgsConstructor;
 
 @Component
+@RequiredArgsConstructor
 class RoomAuctionDeadlineScheduler {
     private final TaskScheduler taskScheduler;
     private final SettleAuction settleAuction;
@@ -21,30 +22,6 @@ class RoomAuctionDeadlineScheduler {
     private final Clock clock;
     private final Games games;
     private final ConcurrentMap<String, ScheduledFuture<?>> scheduledTasks = new ConcurrentHashMap<>();
-
-    @Autowired
-    RoomAuctionDeadlineScheduler(
-        TaskScheduler taskScheduler,
-        SettleAuction settleAuction,
-        AuctionScheduleReader auctionScheduleReader,
-        Clock clock,
-        Games games
-    ) {
-        this.taskScheduler = taskScheduler;
-        this.settleAuction = settleAuction;
-        this.auctionScheduleReader = auctionScheduleReader;
-        this.clock = clock;
-        this.games = games;
-    }
-
-    RoomAuctionDeadlineScheduler(
-        TaskScheduler taskScheduler,
-        SettleAuction settleAuction,
-        AuctionScheduleReader auctionScheduleReader,
-        Clock clock
-    ) {
-        this(taskScheduler, settleAuction, auctionScheduleReader, clock, null);
-    }
 
     void schedule(Room room) {
         refresh(room.getCode(), resolveDeadline(room));

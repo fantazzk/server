@@ -1,25 +1,18 @@
 package com.naminhyeok.fantazzk.room;
 
 import com.naminhyeok.fantazzk.CoreException;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@RequiredArgsConstructor
 class PickDraft {
     private final Rooms rooms;
     private final Games games;
     private final RoomActionAuthorizer roomActionAuthorizer;
     private final RoomSnapshotPublisher roomSnapshotPublisher;
-
-    @Autowired
-    PickDraft(Rooms rooms, Games games, RoomActionAuthorizer roomActionAuthorizer, RoomSnapshotPublisher roomSnapshotPublisher) {
-        this.rooms = rooms;
-        this.games = games;
-        this.roomActionAuthorizer = roomActionAuthorizer;
-        this.roomSnapshotPublisher = roomSnapshotPublisher;
-    }
 
     @Transactional
     public RoomTeamMember pick(String code, String actionToken, String playerName) {

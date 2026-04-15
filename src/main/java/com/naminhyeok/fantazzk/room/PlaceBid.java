@@ -3,33 +3,19 @@ package com.naminhyeok.fantazzk.room;
 import com.naminhyeok.fantazzk.CoreException;
 import java.time.Clock;
 import java.time.Instant;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@RequiredArgsConstructor
 class PlaceBid {
     private final Rooms rooms;
     private final Games games;
     private final RoomActionAuthorizer roomActionAuthorizer;
     private final RoomSnapshotPublisher roomSnapshotPublisher;
     private final Clock clock;
-
-    @Autowired
-    PlaceBid(
-        Rooms rooms,
-        Games games,
-        RoomActionAuthorizer roomActionAuthorizer,
-        RoomSnapshotPublisher roomSnapshotPublisher,
-        Clock clock
-    ) {
-        this.rooms = rooms;
-        this.games = games;
-        this.roomActionAuthorizer = roomActionAuthorizer;
-        this.roomSnapshotPublisher = roomSnapshotPublisher;
-        this.clock = clock;
-    }
 
     @Transactional
     public RoomBid place(String code, String actionToken, int amount) {

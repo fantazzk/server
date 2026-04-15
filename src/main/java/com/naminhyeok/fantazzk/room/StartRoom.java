@@ -5,12 +5,13 @@ import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 import org.springframework.dao.OptimisticLockingFailureException;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@RequiredArgsConstructor
 class StartRoom {
     private final Rooms rooms;
     private final Games games;
@@ -18,23 +19,6 @@ class StartRoom {
     private final GameFactory gameFactory;
     private final RoomSnapshotPublisher roomSnapshotPublisher;
     private final Clock clock;
-
-    @Autowired
-    StartRoom(
-        Rooms rooms,
-        Games games,
-        RoomActionAuthorizer roomActionAuthorizer,
-        GameFactory gameFactory,
-        RoomSnapshotPublisher roomSnapshotPublisher,
-        Clock clock
-    ) {
-        this.rooms = rooms;
-        this.games = games;
-        this.roomActionAuthorizer = roomActionAuthorizer;
-        this.gameFactory = gameFactory;
-        this.roomSnapshotPublisher = roomSnapshotPublisher;
-        this.clock = clock;
-    }
 
     @Transactional
     public RoomDetails start(String code, String actionToken) {

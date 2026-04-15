@@ -3,29 +3,18 @@ package com.naminhyeok.fantazzk.room;
 import com.naminhyeok.fantazzk.CoreException;
 import java.time.Clock;
 import java.time.Instant;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@RequiredArgsConstructor
 class SettleAuctionAttempt {
     private final Rooms rooms;
     private final Games games;
     private final Clock clock;
     private final RoomSnapshotPublisher roomSnapshotPublisher;
-
-    @Autowired
-    SettleAuctionAttempt(Rooms rooms, Games games, Clock clock, RoomSnapshotPublisher roomSnapshotPublisher) {
-        this.rooms = rooms;
-        this.games = games;
-        this.clock = clock;
-        this.roomSnapshotPublisher = roomSnapshotPublisher;
-    }
-
-    SettleAuctionAttempt(Rooms rooms, Clock clock, RoomSnapshotPublisher roomSnapshotPublisher) {
-        this(rooms, null, clock, roomSnapshotPublisher);
-    }
 
     @Transactional
     AuctionSettlement settle(String code) {
