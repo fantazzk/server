@@ -8,6 +8,7 @@ import jakarta.persistence.ElementCollection;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OrderColumn;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -32,10 +33,10 @@ class DraftGame extends Game {
         GameId id,
         RoomId roomId,
         String roomCode,
-        java.time.Instant startedAt,
+        Instant startedAt,
         GameRules rules,
-        java.util.List<GameParticipant> participants,
-        java.util.List<GamePlayer> playerPool,
+        List<GameParticipant> participants,
+        List<GamePlayer> playerPool,
         int currentTurnIndex
     ) {
         super(id, roomId, roomCode, startedAt, GameStatus.IN_PROGRESS, rules, participants, playerPool);

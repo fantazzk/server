@@ -46,8 +46,8 @@ class AuctionGame extends Game {
         String roomCode,
         Instant startedAt,
         GameRules rules,
-        java.util.List<GameParticipant> participants,
-        java.util.List<GamePlayer> playerPool,
+        List<GameParticipant> participants,
+        List<GamePlayer> playerPool,
         int currentRound,
         Instant currentRoundEndsAt
     ) {
