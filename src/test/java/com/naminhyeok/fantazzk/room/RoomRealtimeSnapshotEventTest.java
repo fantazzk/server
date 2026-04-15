@@ -43,7 +43,7 @@ class RoomRealtimeSnapshotEventTest {
         Room room = startedAuctionRoom();
         AuctionGame game = (AuctionGame) startedGame();
         game.placeBid(new TeamLeaderId(HOST_ID), 100, CREATED_AT.plusSeconds(1));
-        game.settleAuction(CREATED_AT.plusSeconds(15));
+        game.settleAuction(CREATED_AT.plusSeconds(46));
 
         RoomRealtimeSnapshotEvent event = RoomRealtimeSnapshotEvent.from(new RoomDetails(room, game), PUBLISHED_AT);
 

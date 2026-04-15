@@ -117,7 +117,7 @@ class RoomApiIntegrationTest {
         assertThat(body.success().progress().leadingLeaderId()).isEqualTo("host-ROOM11");
         assertThat(body.success().progress().bidCount()).isEqualTo(1);
         assertThat(body.success().progress().currentAuctionRoundEndsAt())
-            .isEqualTo(Instant.parse("2026-04-09T00:00:45Z"));
+            .isEqualTo(Instant.parse("2026-04-09T00:01:05Z"));
     }
 
     @Test

@@ -114,6 +114,7 @@ class AuctionGame extends Game {
             );
         RoomBid bid = new RoomBid(currentRound, nextSequence, teamLeaderId, amount);
         bids.add(bid);
+        currentRoundEndsAt = now.plusSeconds(getPickBanTime());
         registerEvent(new BidPlaced(getRoomCode(), teamLeaderId.value(), amount, currentRound, currentRoundEndsAt));
         return bid;
     }

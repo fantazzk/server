@@ -23,7 +23,7 @@ class AuctionGameTest {
         RoomBid firstBid = game.placeBid(HOST_ID, 100, STARTED_AT.plusSeconds(1));
         RoomBid secondBid = game.placeBid(GUEST_ID, 150, STARTED_AT.plusSeconds(2));
 
-        AuctionSettlement settlement = game.settleAuction(STARTED_AT.plusSeconds(PICK_BAN_TIME));
+        AuctionSettlement settlement = game.settleAuction(STARTED_AT.plusSeconds(2 + PICK_BAN_TIME));
 
         assertThat(firstBid.sequence()).isEqualTo(new BidSequence(1));
         assertThat(secondBid.sequence()).isEqualTo(new BidSequence(2));
@@ -38,7 +38,7 @@ class AuctionGameTest {
                 org.assertj.core.groups.Tuple.tuple(GUEST_ID, 150)
             );
         assertThat(game.getCurrentRound()).isEqualTo(2);
-        assertThat(game.getCurrentRoundEndsAt()).isEqualTo(STARTED_AT.plusSeconds(PICK_BAN_TIME * 2L));
+        assertThat(game.getCurrentRoundEndsAt()).isEqualTo(STARTED_AT.plusSeconds(2 + PICK_BAN_TIME * 2L));
         assertThat(game.currentAuctionTarget()).extracting(GamePlayer::name).isEqualTo("선수2");
         assertThat(game.currentWinningBid()).isNull();
         assertThat(game.currentBidCount()).isZero();
@@ -69,13 +69,22 @@ class AuctionGameTest {
     }
 
     @Test
+    void 경매_게임은_입찰하면_deadline을_입찰_시점부터_다시_연장한다() {
+        AuctionGame game = startedAuctionGame();
+
+        game.placeBid(HOST_ID, 100, STARTED_AT.plusSeconds(10));
+
+        assertThat(game.getCurrentRoundEndsAt()).isEqualTo(STARTED_AT.plusSeconds(10 + PICK_BAN_TIME));
+    }
+
+    @Test
     void 마지막_선수를_정산하면_경매_게임은_완료_상태가_된다() {
         AuctionGame game = startedAuctionGameWithTwoPlayers();
 
         game.placeBid(HOST_ID, 100, STARTED_AT.plusSeconds(1));
-        game.settleAuction(STARTED_AT.plusSeconds(PICK_BAN_TIME));
-        game.placeBid(GUEST_ID, 110, STARTED_AT.plusSeconds(PICK_BAN_TIME + 1L));
-        AuctionSettlement settlement = game.settleAuction(STARTED_AT.plusSeconds(PICK_BAN_TIME * 2L));
+        game.settleAuction(STARTED_AT.plusSeconds(1 + PICK_BAN_TIME));
+        game.placeBid(GUEST_ID, 110, STARTED_AT.plusSeconds(1 + PICK_BAN_TIME + 1L));
+        AuctionSettlement settlement = game.settleAuction(STARTED_AT.plusSeconds(2 + PICK_BAN_TIME * 2L));
 
         assertThat(settlement).isEqualTo(new AuctionSettlement("선수2", AuctionOutcome.SOLD));
         assertThat(game.getStatus()).isEqualTo(GameStatus.COMPLETED);

@@ -125,7 +125,7 @@ class GameRepositoryIntegrationTest {
         entityManager.flush();
         long versionAfterBid = reloaded.getVersion();
 
-        reloaded.settleAuction(STARTED_AT.plusSeconds(45));
+        reloaded.settleAuction(STARTED_AT.plusSeconds(46));
         entityManager.flush();
         long versionAfterSettlement = reloaded.getVersion();
 

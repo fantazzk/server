@@ -108,7 +108,7 @@ class RoomResponseTest {
         Room room = startedAuctionRoom();
         AuctionGame game = (AuctionGame) startedGame(room);
         game.placeBid(new TeamLeaderId(HOST_ID), 100, CREATED_AT.plusSeconds(1));
-        game.settleAuction(CREATED_AT.plusSeconds(15));
+        game.settleAuction(CREATED_AT.plusSeconds(46));
 
         RoomResponse response = RoomResponse.from(new RoomDetails(room, game));
 
@@ -138,9 +138,9 @@ class RoomResponseTest {
         Room room = startedAuctionRoom();
         AuctionGame game = (AuctionGame) startedGame(room);
         game.placeBid(new TeamLeaderId(HOST_ID), 100, CREATED_AT.plusSeconds(1));
-        game.settleAuction(CREATED_AT.plusSeconds(15));
-        game.placeBid(new TeamLeaderId(GUEST_ONE_ID), 110, CREATED_AT.plusSeconds(16));
-        game.settleAuction(CREATED_AT.plusSeconds(30));
+        game.settleAuction(CREATED_AT.plusSeconds(46));
+        game.placeBid(new TeamLeaderId(GUEST_ONE_ID), 110, CREATED_AT.plusSeconds(47));
+        game.settleAuction(CREATED_AT.plusSeconds(92));
 
         RoomResponse response = RoomResponse.from(new RoomDetails(room, game));
 

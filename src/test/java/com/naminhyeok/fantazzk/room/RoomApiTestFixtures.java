@@ -121,7 +121,7 @@ final class RoomApiTestFixtures {
         StartedGameSnapshot snapshot = room.start(new TeamLeaderId(HOST_ID), new GameId(UUID.fromString("00000000-0000-0000-0000-000000000201")), CREATED_AT);
         AuctionGame game = (AuctionGame) new GameFactory().create(snapshot);
         game.placeBid(new TeamLeaderId(HOST_ID), 100, CREATED_AT.plusSeconds(1));
-        game.settleAuction(CREATED_AT.plusSeconds(15));
+        game.settleAuction(CREATED_AT.plusSeconds(16));
         return new RoomDetails(room, game);
     }
 
