@@ -52,7 +52,7 @@ class SettleAuctionAttempt {
         if (room.getMode() != RoomMode.AUCTION || room.getStatus() != RoomStatus.STARTED) {
             return null;
         }
-        if (games == null || room.getStartedGameId() == null) {
+        if (room.getStartedGameId() == null) {
             throw RoomStateInvalidException.auctionRoundMissing();
         }
         Game game = games.findById(room.getStartedGameId()).orElseThrow(RoomStateInvalidException::auctionRoundMissing);

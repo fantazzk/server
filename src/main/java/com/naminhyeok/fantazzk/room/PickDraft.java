@@ -37,7 +37,7 @@ class PickDraft {
         if (room.getStatus() != RoomStatus.STARTED) {
             throw CoreException.of(RoomErrorType.ROOM_PLAY_REQUIRES_IN_PROGRESS);
         }
-        if (games == null || room.getStartedGameId() == null) {
+        if (room.getStartedGameId() == null) {
             throw RoomStateInvalidException.draftTurnMissing();
         }
         Game game = games.findById(room.getStartedGameId()).orElseThrow(RoomStateInvalidException::draftTurnMissing);

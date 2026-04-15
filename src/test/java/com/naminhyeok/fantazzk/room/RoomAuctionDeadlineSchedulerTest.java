@@ -81,7 +81,7 @@ class RoomAuctionDeadlineSchedulerTest {
                 settleAuction,
                 scheduleReader,
                 Clock.fixed(NOW, ZoneOffset.UTC),
-                null
+                new InMemoryGames()
             );
 
         scheduler.catchUpAndReschedule();
@@ -172,7 +172,7 @@ class RoomAuctionDeadlineSchedulerTest {
                 settleAuction,
                 scheduleReader,
                 Clock.fixed(NOW, ZoneOffset.UTC),
-                null
+                new InMemoryGames()
             );
 
         scheduler.catchUpAndReschedule();

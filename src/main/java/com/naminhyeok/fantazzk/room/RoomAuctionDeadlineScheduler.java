@@ -74,7 +74,7 @@ class RoomAuctionDeadlineScheduler {
         if (room.getMode() != RoomMode.AUCTION || room.getStatus() != RoomStatus.STARTED) {
             return null;
         }
-        if (games == null || room.getStartedGameId() == null) {
+        if (room.getStartedGameId() == null) {
             return null;
         }
         return games.findById(room.getStartedGameId())
