@@ -107,8 +107,23 @@ class RoomAuctionTest {
             .isInstanceOfSatisfying(BidPlaced.class, event -> {
                 assertThat(event.roomCode()).isEqualTo("ROOM01");
                 assertThat(event.amount()).isEqualTo(110);
-                assertThat(event.roundEndsAt()).isEqualTo(CREATED_AT.plusSeconds(PICK_BAN_TIME));
+                assertThat(event.roundEndsAt()).isEqualTo(CREATED_AT.plusSeconds(PICK_BAN_TIME + 2L));
             });
+    }
+
+    @Test
+    void 유효한_입찰이_들어오면_deadline이_입찰시각부터_다시_연장된다() {
+        Room room = startedAuctionRoom();
+        TeamLeaderId hostLeaderId = room.getLeaders().getFirst().getId();
+        Instant bidAt = CREATED_AT.plusSeconds(2);
+
+        room.placeBid(hostLeaderId, 100, bidAt);
+
+        assertThat(room.getCurrentAuctionRoundEndsAt()).isEqualTo(bidAt.plusSeconds(PICK_BAN_TIME));
+        assertThat(room.domainEvents()).last()
+            .isInstanceOfSatisfying(BidPlaced.class, event ->
+                assertThat(event.roundEndsAt()).isEqualTo(bidAt.plusSeconds(PICK_BAN_TIME))
+            );
     }
 
     @Test
@@ -167,7 +182,7 @@ class RoomAuctionTest {
         RoomBid firstBid = room.placeBid(hostLeaderId, 100, CREATED_AT.plusSeconds(1));
         RoomBid secondBid = room.placeBid(guestLeaderId, 150, CREATED_AT.plusSeconds(2));
 
-        AuctionSettlement settlement = room.settleAuction(CREATED_AT.plusSeconds(PICK_BAN_TIME));
+        AuctionSettlement settlement = room.settleAuction(CREATED_AT.plusSeconds(PICK_BAN_TIME + 2L));
 
         assertThat(firstBid.sequence()).isEqualTo(new BidSequence(1));
         assertThat(secondBid.sequence()).isEqualTo(new BidSequence(2));
@@ -180,12 +195,12 @@ class RoomAuctionTest {
             .isEqualTo(150);
         assertThat(room.getPlayers().getFirst().getStatus()).isEqualTo(PlayerStatus.ASSIGNED);
         assertThat(room.getCurrentAuctionRound()).isEqualTo(2);
-        assertThat(room.getCurrentAuctionRoundEndsAt()).isEqualTo(CREATED_AT.plusSeconds(PICK_BAN_TIME * 2L));
+        assertThat(room.getCurrentAuctionRoundEndsAt()).isEqualTo(CREATED_AT.plusSeconds(PICK_BAN_TIME * 2L + 2L));
         assertThat(room.domainEvents()).last()
             .isInstanceOfSatisfying(AuctionSettled.class, event -> {
                 assertThat(event.roomCode()).isEqualTo("ROOM01");
                 assertThat(event.outcome()).isEqualTo(AuctionOutcome.SOLD.name());
-                assertThat(event.roundEndsAt()).isEqualTo(CREATED_AT.plusSeconds(PICK_BAN_TIME * 2L));
+                assertThat(event.roundEndsAt()).isEqualTo(CREATED_AT.plusSeconds(PICK_BAN_TIME * 2L + 2L));
             });
     }
 
@@ -195,7 +210,7 @@ class RoomAuctionTest {
         TeamLeaderId hostLeaderId = room.getLeaders().getFirst().getId();
 
         room.placeBid(hostLeaderId, 100, CREATED_AT.plusSeconds(1));
-        room.settleAuction(CREATED_AT.plusSeconds(PICK_BAN_TIME));
+        room.settleAuction(CREATED_AT.plusSeconds(PICK_BAN_TIME + 1L));
 
         RoomBid nextRoundBid = room.placeBid(hostLeaderId, 120, CREATED_AT.plusSeconds(PICK_BAN_TIME + 1L));
 
@@ -214,11 +229,11 @@ class RoomAuctionTest {
 
         room.placeBid(hostLeaderId, 100, CREATED_AT.plusSeconds(1));
         room.placeBid(guestLeaderId, 150, CREATED_AT.plusSeconds(2));
-        room.settleAuction(CREATED_AT.plusSeconds(PICK_BAN_TIME));
+        room.settleAuction(CREATED_AT.plusSeconds(PICK_BAN_TIME + 2L));
 
         room.placeBid(hostLeaderId, 120, CREATED_AT.plusSeconds(PICK_BAN_TIME + 1L));
         room.placeBid(guestLeaderId, 130, CREATED_AT.plusSeconds(PICK_BAN_TIME + 2L));
-        room.settleAuction(CREATED_AT.plusSeconds(PICK_BAN_TIME * 2L));
+        room.settleAuction(CREATED_AT.plusSeconds(PICK_BAN_TIME * 2L + 2L));
 
         assertThat(room.getStatus()).isEqualTo(RoomStatus.COMPLETED);
         assertThat(room.getCurrentAuctionRoundEndsAt()).isNull();

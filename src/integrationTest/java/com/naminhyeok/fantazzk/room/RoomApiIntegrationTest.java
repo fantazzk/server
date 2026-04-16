@@ -63,7 +63,7 @@ class RoomApiIntegrationTest {
     @Test
     void auctionProgress는_due된_경매를_정산한_latest_snapshot을_반환한다() {
         Room room = startedAuctionRoom("ROOM10", CREATED_AT.minusSeconds(30));
-        room.placeBid(new TeamLeaderId("host-ROOM10"), 100, CREATED_AT.plusSeconds(1));
+        room.placeBid(new TeamLeaderId("host-ROOM10"), 100, CREATED_AT.minusSeconds(30));
         rooms.save(room);
 
         HttpHeaders headers = new HttpHeaders();
@@ -111,7 +111,7 @@ class RoomApiIntegrationTest {
         assertThat(body.success().progress().leadingLeaderId()).isEqualTo("host-ROOM11");
         assertThat(body.success().progress().bidCount()).isEqualTo(1);
         assertThat(body.success().progress().currentAuctionRoundEndsAt())
-            .isEqualTo(Instant.parse("2026-04-09T00:00:45Z"));
+            .isEqualTo(Instant.parse("2026-04-09T00:00:46Z"));
     }
 
     private Room startedAuctionRoom(String code, Instant createdAt) {

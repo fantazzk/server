@@ -227,7 +227,7 @@ class RoomAuctionDeadlineSchedulerTest {
             );
         room.start(hostLeaderId, startedAt);
         room.placeBid(hostLeaderId, 100, startedAt.plusSeconds(1));
-        room.settleAuction(startedAt.plusSeconds(PICK_BAN_TIME));
+        room.settleAuction(startedAt.plusSeconds(PICK_BAN_TIME + 1L));
         return room;
     }
 

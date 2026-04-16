@@ -311,6 +311,7 @@ class Room implements AggregateRoot<Room, RoomId> {
             );
         RoomBid bid = new RoomBid(currentAuctionRound, nextSequence, teamLeaderId, amount);
         bids.add(bid);
+        currentAuctionRoundEndsAt = now.plusSeconds(pickBanTime);
         registerEvent(new BidPlaced(code, teamLeaderId.value(), amount, currentAuctionRound, currentAuctionRoundEndsAt));
         return bid;
     }

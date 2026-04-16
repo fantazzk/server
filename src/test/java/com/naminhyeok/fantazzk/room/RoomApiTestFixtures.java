@@ -110,7 +110,7 @@ final class RoomApiTestFixtures {
         room.join(new TeamLeaderId(GUEST_ID), "게스트", GUEST_TOKEN);
         room.start(new TeamLeaderId(HOST_ID), CREATED_AT);
         room.placeBid(new TeamLeaderId(HOST_ID), 100, CREATED_AT.plusSeconds(1));
-        room.settleAuction(CREATED_AT.plusSeconds(15));
+        room.settleAuction(CREATED_AT.plusSeconds(16));
         return room;
     }
 
