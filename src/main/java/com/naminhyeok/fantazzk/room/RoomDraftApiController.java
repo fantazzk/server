@@ -26,7 +26,7 @@ class RoomDraftApiController {
         @RequestHeader(value = "X-Room-Action-Token", required = false) String actionToken,
         @Valid @RequestBody PickDraftRequest request
     ) {
-        return ApiResponse.success(RoomResponse.from(pickDraft.pick(code, actionToken, request.playerName())));
+        return ApiResponse.success(RoomResponse.from(pickDraft.pick(code, actionToken, new RoomPlayerId(request.playerId()))));
     }
 
     @PutMapping("/{code}/draft-position")

@@ -15,17 +15,18 @@ final class RoomTeamMember implements ValueObject {
     @Column(name = "team_leader_id")
     @Convert(converter = TeamLeaderId.JpaConverter.class)
     private TeamLeaderId teamLeaderId;
-    @Column(name = "player_name")
-    private String playerName;
+    @Column(name = "player_id")
+    @Convert(converter = RoomPlayerId.JpaConverter.class)
+    private RoomPlayerId playerId;
     @Column(name = "assign_order")
     private int assignOrder;
 
     RoomTeamMember() {
     }
 
-    RoomTeamMember(TeamLeaderId teamLeaderId, String playerName, int assignOrder) {
+    RoomTeamMember(TeamLeaderId teamLeaderId, RoomPlayerId playerId, int assignOrder) {
         this.teamLeaderId = teamLeaderId;
-        this.playerName = playerName;
+        this.playerId = playerId;
         this.assignOrder = assignOrder;
     }
 
@@ -33,8 +34,8 @@ final class RoomTeamMember implements ValueObject {
         return teamLeaderId;
     }
 
-    String playerName() {
-        return playerName;
+    RoomPlayerId playerId() {
+        return playerId;
     }
 
     int assignOrder() {

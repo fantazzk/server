@@ -43,7 +43,7 @@ class RoomDraftApiControllerWebMvcTest {
 
     @Test
     void pickDraft는_header가_있으면_최신_room_snapshot을_반환한다() throws Exception {
-        given(pickDraft.pick(RoomApiTestFixtures.ROOM_CODE, RoomApiTestFixtures.GUEST_TOKEN, "선수3"))
+        given(pickDraft.pick(RoomApiTestFixtures.ROOM_CODE, RoomApiTestFixtures.GUEST_TOKEN, new RoomPlayerId(2)))
             .willReturn(RoomApiTestFixtures.inProgressDraftRoom());
 
         var result = mockMvcTester().perform(
@@ -53,7 +53,7 @@ class RoomDraftApiControllerWebMvcTest {
                 .content(
                     """
                     {
-                      "playerName": "선수3"
+                      "playerId": 2
                     }
                     """
                 )
@@ -70,7 +70,7 @@ class RoomDraftApiControllerWebMvcTest {
     void pickDraft는_header가_없으면_401을_반환한다() throws Exception {
         doThrow(CoreException.of(RoomErrorType.ROOM_ACTION_TOKEN_REQUIRED))
             .when(pickDraft)
-            .pick(RoomApiTestFixtures.ROOM_CODE, null, "선수3");
+            .pick(RoomApiTestFixtures.ROOM_CODE, null, new RoomPlayerId(2));
 
         var result = mockMvcTester().perform(
             post("/api/v1/rooms/{code}/draft-picks", RoomApiTestFixtures.ROOM_CODE)
@@ -78,7 +78,7 @@ class RoomDraftApiControllerWebMvcTest {
                 .content(
                     """
                     {
-                      "playerName": "선수3"
+                      "playerId": 2
                     }
                     """
                 )
@@ -92,7 +92,7 @@ class RoomDraftApiControllerWebMvcTest {
     void pickDraft는_optimistic_lock_conflict를_409로_반환한다() throws Exception {
         doThrow(CoreException.of(RoomErrorType.ROOM_CONCURRENT_MODIFICATION))
             .when(pickDraft)
-            .pick(RoomApiTestFixtures.ROOM_CODE, RoomApiTestFixtures.GUEST_TOKEN, "선수3");
+            .pick(RoomApiTestFixtures.ROOM_CODE, RoomApiTestFixtures.GUEST_TOKEN, new RoomPlayerId(2));
 
         var result = mockMvcTester().perform(
             post("/api/v1/rooms/{code}/draft-picks", RoomApiTestFixtures.ROOM_CODE)
@@ -101,7 +101,7 @@ class RoomDraftApiControllerWebMvcTest {
                 .content(
                     """
                     {
-                      "playerName": "선수3"
+                      "playerId": 2
                     }
                     """
                 )

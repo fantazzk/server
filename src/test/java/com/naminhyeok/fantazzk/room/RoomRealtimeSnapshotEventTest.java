@@ -32,6 +32,7 @@ class RoomRealtimeSnapshotEventTest {
 
         assertThat(json.at("/room/code").asText()).isEqualTo("AUC002");
         assertThat(json.toString()).doesNotContain("actionToken");
+        assertThat(json.at("/room/progress/currentAuctionTarget/playerId").asInt()).isEqualTo(0);
         assertThat(json.at("/room/progress/currentAuctionTarget/name").asText()).isEqualTo("선수1");
     }
 

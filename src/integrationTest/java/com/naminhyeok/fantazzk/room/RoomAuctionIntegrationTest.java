@@ -94,11 +94,12 @@ class RoomAuctionIntegrationTest {
             .extracting(RoomBid::teamLeaderId, RoomBid::amount)
             .containsExactly(guest.getId(), 150);
         assertThat(settlement.outcome()).isEqualTo(AuctionOutcome.SOLD);
+        assertThat(settlement.playerId()).isEqualTo(new RoomPlayerId(0));
         assertThat(settlement.playerName()).isEqualTo("선수1");
         assertThat(reloaded.getPlayers().getFirst().getPosition()).isEqualTo("TOP");
         assertThat(reloaded.getMembers()).singleElement()
-            .extracting(RoomTeamMember::teamLeaderId, RoomTeamMember::playerName)
-            .containsExactly(guest.getId(), "선수1");
+            .extracting(RoomTeamMember::teamLeaderId, RoomTeamMember::playerId)
+            .containsExactly(guest.getId(), new RoomPlayerId(0));
         assertThat(reloaded.getLeaders().stream().filter(it -> it.getId().equals(guest.getId())).findFirst().orElseThrow().getRemainingBudget())
             .isEqualTo(150);
         assertThat(reloaded.getCurrentAuctionRound()).isEqualTo(2);

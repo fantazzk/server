@@ -346,7 +346,7 @@ class Room implements AggregateRoot<Room, RoomId> {
             target.moveToBack(maxOrder + 1);
             currentAuctionRound += 1;
             currentAuctionRoundEndsAt = now.plusSeconds(pickBanTime);
-            AuctionSettlement settlement = new AuctionSettlement(target.getName(), AuctionOutcome.PASSED);
+            AuctionSettlement settlement = new AuctionSettlement(target.getId(), target.getName(), AuctionOutcome.PASSED);
             registerEvent(new AuctionSettled(code, settlement.outcome().name(), currentAuctionRoundEndsAt));
             return settlement;
         }
@@ -360,7 +360,7 @@ class Room implements AggregateRoot<Room, RoomId> {
         validateAuctionPositionLimit(winner.getId(), target);
         target.assign();
         winner.spend(winningBid.amount());
-        members.add(new RoomTeamMember(winningBid.teamLeaderId(), target.getName(), members.size()));
+        members.add(new RoomTeamMember(winningBid.teamLeaderId(), target.getId(), members.size()));
 
         if (members.size() == teamCount * (teamSize - 1)) {
             status = RoomStatus.COMPLETED;
@@ -369,12 +369,12 @@ class Room implements AggregateRoot<Room, RoomId> {
             currentAuctionRound += 1;
             currentAuctionRoundEndsAt = now.plusSeconds(pickBanTime);
         }
-        AuctionSettlement settlement = new AuctionSettlement(target.getName(), AuctionOutcome.SOLD);
+        AuctionSettlement settlement = new AuctionSettlement(target.getId(), target.getName(), AuctionOutcome.SOLD);
         registerEvent(new AuctionSettled(code, settlement.outcome().name(), currentAuctionRoundEndsAt));
         return settlement;
     }
 
-    RoomTeamMember pick(TeamLeaderId teamLeaderId, String playerName) {
+    RoomTeamMember pick(TeamLeaderId teamLeaderId, RoomPlayerId playerId) {
         if (status != RoomStatus.IN_PROGRESS) {
             throw CoreException.of(RoomErrorType.ROOM_PLAY_REQUIRES_IN_PROGRESS);
         }
@@ -389,13 +389,13 @@ class Room implements AggregateRoot<Room, RoomId> {
 
         RoomPlayer player =
             players.stream()
-                .filter(it -> it.getName().equals(playerName))
+                .filter(it -> it.getId().equals(playerId))
                 .filter(it -> it.getStatus() == PlayerStatus.AVAILABLE)
                 .findFirst()
                 .orElseThrow(() -> CoreException.of(RoomErrorType.ROOM_PICK_PLAYER_NOT_AVAILABLE));
 
         player.assign();
-        RoomTeamMember member = new RoomTeamMember(teamLeaderId, player.getName(), members.size());
+        RoomTeamMember member = new RoomTeamMember(teamLeaderId, player.getId(), members.size());
         members.add(member);
 
         currentTurnIndex += 1;
@@ -519,11 +519,14 @@ class Room implements AggregateRoot<Room, RoomId> {
     }
 
     private String findAssignedPlayerPosition(RoomTeamMember member) {
+        return findPlayer(member.playerId()).getPosition();
+    }
+
+    RoomPlayer findPlayer(RoomPlayerId playerId) {
         return players.stream()
-            .filter(player -> player.getName().equals(member.playerName()))
+            .filter(player -> player.getId().equals(playerId))
             .findFirst()
-            .map(RoomPlayer::getPosition)
-            .orElse(null);
+            .orElseThrow(() -> RoomStateInvalidException.playerMissing(playerId));
     }
 
     private RoomTeamLeader getLeader(TeamLeaderId teamLeaderId) {

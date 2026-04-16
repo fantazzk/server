@@ -94,6 +94,9 @@ class RoomResponseTest {
 
         var json = OBJECT_MAPPER.valueToTree(RoomResponse.from(room));
 
+        assertThat(json.at("/players/0/playerId").asInt()).isEqualTo(0);
+        assertThat(json.at("/players/1/playerId").asInt()).isEqualTo(1);
+        assertThat(json.at("/progress/currentAuctionTarget/playerId").asInt()).isEqualTo(0);
         assertThat(json.at("/progress/currentAuctionTarget/name").asText()).isEqualTo("선수1");
         assertThat(json.at("/progress/currentAuctionTarget/position").asText()).isEqualTo("TOP");
         assertThat(json.at("/progress/highestBidAmount").asInt()).isEqualTo(150);

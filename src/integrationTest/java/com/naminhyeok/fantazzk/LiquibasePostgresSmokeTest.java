@@ -39,6 +39,10 @@ class LiquibasePostgresSmokeTest {
         assertThat(isNullable("rooms", "position_limit")).isTrue();
         assertThat(countIndex("rooms", "idx_rooms_status_created_at")).isEqualTo(1);
         assertThat(indexColumns("rooms", "idx_rooms_status_created_at")).containsExactly("status", "created_at");
+        assertThat(countTable("room_team_member")).isEqualTo(1);
+        assertThat(countColumn("room_team_member", "player_id")).isEqualTo(1);
+        assertThat(isNullable("room_team_member", "player_id")).isFalse();
+        assertThat(countColumn("room_team_member", "player_name")).isEqualTo(0);
     }
 
     private Integer countTable(String tableName) {

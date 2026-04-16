@@ -14,11 +14,11 @@ class PickDraft {
     private final RoomSnapshotPublisher roomSnapshotPublisher;
 
     @Transactional
-    public Room pick(String code, String actionToken, String playerName) {
+    public Room pick(String code, String actionToken, RoomPlayerId playerId) {
         try {
             Room room = rooms.findByCode(code).orElseThrow(() -> CoreException.of(RoomErrorType.ROOM_NOT_FOUND));
             RoomTeamLeader caller = roomActionAuthorizer.authenticate(room, actionToken);
-            room.pick(caller.getId(), playerName);
+            room.pick(caller.getId(), playerId);
             Room saved = rooms.saveAndFlush(room);
             roomSnapshotPublisher.publishAfterCommit(saved);
             return saved;

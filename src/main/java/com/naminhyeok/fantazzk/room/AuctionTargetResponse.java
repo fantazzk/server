@@ -1,6 +1,7 @@
 package com.naminhyeok.fantazzk.room;
 
 record AuctionTargetResponse(
+    int playerId,
     String name,
     String position
 ) {
@@ -8,6 +9,6 @@ record AuctionTargetResponse(
         if (player == null) {
             return null;
         }
-        return new AuctionTargetResponse(player.getName(), player.getPosition());
+        return new AuctionTargetResponse(player.getId().value(), player.getName(), player.getPosition());
     }
 }

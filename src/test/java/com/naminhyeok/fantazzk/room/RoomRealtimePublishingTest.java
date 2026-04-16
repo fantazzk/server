@@ -52,13 +52,14 @@ class RoomRealtimePublishingTest {
         RecordingRoomSnapshotPublisher publisher = new RecordingRoomSnapshotPublisher();
         PickDraft pickDraft = new PickDraft(new InMemoryRooms(room), new RoomActionAuthorizer(), publisher);
 
-        Room picked = pickDraft.pick(room.getCode(), HOST_ACTION_TOKEN, "선수1");
+        Room picked = pickDraft.pick(room.getCode(), HOST_ACTION_TOKEN, new RoomPlayerId(0));
 
-        assertThat(picked.getMembers().getLast().playerName()).isEqualTo("선수1");
+        assertThat(picked.getMembers().getLast().playerId()).isEqualTo(new RoomPlayerId(0));
         assertThat(publisher.events).hasSize(1);
         RoomRealtimeSnapshotEvent event = publisher.events.getFirst();
         assertPublishedRoom(event, room.getCode());
         assertThat(event.room().members()).hasSize(1);
+        assertThat(event.room().members().getFirst().playerId()).isEqualTo(0);
         assertThat(event.room().progress().currentTurnIndex()).isEqualTo(1);
     }
 
@@ -102,7 +103,7 @@ class RoomRealtimePublishingTest {
 
         AuctionSettlement settlement = settleAuctionAttempt.settle(room.getCode());
 
-        assertThat(settlement).isEqualTo(new AuctionSettlement("선수1", AuctionOutcome.PASSED));
+        assertThat(settlement).isEqualTo(new AuctionSettlement(new RoomPlayerId(0), "선수1", AuctionOutcome.PASSED));
         assertThat(publisher.events).hasSize(1);
         RoomRealtimeSnapshotEvent event = publisher.events.getFirst();
         assertPublishedRoom(event, room.getCode());

@@ -187,10 +187,11 @@ class RoomAuctionTest {
         assertThat(firstBid.sequence()).isEqualTo(new BidSequence(1));
         assertThat(secondBid.sequence()).isEqualTo(new BidSequence(2));
         assertThat(settlement.outcome()).isEqualTo(AuctionOutcome.SOLD);
+        assertThat(settlement.playerId()).isEqualTo(new RoomPlayerId(0));
         assertThat(settlement.playerName()).isEqualTo("선수1");
         assertThat(room.getMembers()).singleElement()
-            .extracting(RoomTeamMember::teamLeaderId, RoomTeamMember::playerName)
-            .containsExactly(guestLeaderId, "선수1");
+            .extracting(RoomTeamMember::teamLeaderId, RoomTeamMember::playerId)
+            .containsExactly(guestLeaderId, new RoomPlayerId(0));
         assertThat(room.getLeaders().stream().filter(it -> it.getId().equals(guestLeaderId)).findFirst().orElseThrow().getRemainingBudget())
             .isEqualTo(150);
         assertThat(room.getPlayers().getFirst().getStatus()).isEqualTo(PlayerStatus.ASSIGNED);
@@ -359,7 +360,7 @@ class RoomAuctionTest {
         rooms.failOnSave(new ObjectOptimisticLockingFailureException(Room.class, room.getId()));
         PickDraft pickDraft = new PickDraft(rooms, new RoomActionAuthorizer(), noopRoomSnapshotPublisher());
 
-        assertThatThrownBy(() -> pickDraft.pick(room.getCode(), HOST_ACTION_TOKEN, "선수1"))
+        assertThatThrownBy(() -> pickDraft.pick(room.getCode(), HOST_ACTION_TOKEN, new RoomPlayerId(0)))
             .isInstanceOfSatisfying(CoreException.class, ex -> assertRoomError(ex, RoomErrorType.ROOM_CONCURRENT_MODIFICATION));
     }
 

@@ -142,8 +142,8 @@ final class RoomApiTestFixtures {
         room.selectDraftPosition(new TeamLeaderId(HOST_ID), 1);
         room.selectDraftPosition(new TeamLeaderId(GUEST_ID), 2);
         room.start(new TeamLeaderId(HOST_ID), CREATED_AT);
-        room.pick(new TeamLeaderId(HOST_ID), "선수1");
-        room.pick(new TeamLeaderId(GUEST_ID), "선수2");
+        room.pick(new TeamLeaderId(HOST_ID), new RoomPlayerId(0));
+        room.pick(new TeamLeaderId(GUEST_ID), new RoomPlayerId(1));
         return room;
     }
 }

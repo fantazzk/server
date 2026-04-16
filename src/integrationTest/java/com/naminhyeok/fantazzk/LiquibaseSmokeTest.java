@@ -50,6 +50,9 @@ class LiquibaseSmokeTest {
         assertThat(countColumn("room_team_leader", "draft_position")).isEqualTo(1);
         assertThat(countColumn("room_team_leader", "action_token")).isEqualTo(1);
         assertThat(countTable("room_team_member")).isEqualTo(1);
+        assertThat(countColumn("room_team_member", "player_id")).isEqualTo(1);
+        assertThat(isNullable("room_team_member", "player_id")).isFalse();
+        assertThat(countColumn("room_team_member", "player_name")).isEqualTo(0);
         assertThat(countTable("room_bid")).isEqualTo(1);
         assertThat(countColumn("room_bid", "bid_sequence")).isEqualTo(1);
         assertThat(countTable("event_publication")).isEqualTo(1);

@@ -82,6 +82,7 @@ class RoomApiIntegrationTest {
         assertThat(body.success().code()).isEqualTo("ROOM10");
         assertThat(body.success().status()).isEqualTo("IN_PROGRESS");
         assertThat(body.success().progress().currentRound()).isEqualTo(2);
+        assertThat(body.success().progress().currentAuctionTarget().playerId()).isEqualTo(1);
         assertThat(body.success().progress().currentAuctionTarget().name()).isEqualTo("선수2");
         assertThat(body.success().progress().currentAuctionTarget().position()).isEqualTo("JUNGLE");
         assertThat(body.success().progress().highestBidAmount()).isNull();
@@ -105,6 +106,7 @@ class RoomApiIntegrationTest {
         assertThat(body.resultType()).isEqualTo("SUCCESS");
         assertThat(body.success().code()).isEqualTo("ROOM11");
         assertThat(body.success().progress().currentRound()).isEqualTo(1);
+        assertThat(body.success().progress().currentAuctionTarget().playerId()).isEqualTo(0);
         assertThat(body.success().progress().currentAuctionTarget().name()).isEqualTo("선수1");
         assertThat(body.success().progress().currentAuctionTarget().position()).isEqualTo("TOP");
         assertThat(body.success().progress().highestBidAmount()).isEqualTo(120);

@@ -22,10 +22,10 @@ class RoomDraftTest {
         Room room = startedDraftRoom();
         TeamLeaderId currentLeaderId = new TeamLeaderId(HOST_ID);
 
-        RoomTeamMember member = room.pick(currentLeaderId, "선수1");
+        RoomTeamMember member = room.pick(currentLeaderId, new RoomPlayerId(0));
 
         assertThat(member.teamLeaderId()).isEqualTo(currentLeaderId);
-        assertThat(member.playerName()).isEqualTo("선수1");
+        assertThat(member.playerId()).isEqualTo(new RoomPlayerId(0));
         assertThat(room.getPlayers().getFirst().getStatus()).isEqualTo(PlayerStatus.ASSIGNED);
         assertThat(room.getCurrentTurnIndex()).isEqualTo(1);
     }
@@ -35,7 +35,7 @@ class RoomDraftTest {
         Room room = startedDraftRoom();
         TeamLeaderId otherLeaderId = new TeamLeaderId(GUEST_ID);
 
-        assertThatThrownBy(() -> room.pick(otherLeaderId, "선수1"))
+        assertThatThrownBy(() -> room.pick(otherLeaderId, new RoomPlayerId(0)))
             .isInstanceOf(CoreException.class)
             .isInstanceOfSatisfying(CoreException.class, ex -> assertRoomError(ex, RoomErrorType.ROOM_PICK_OUT_OF_TURN));
     }
@@ -44,7 +44,7 @@ class RoomDraftTest {
     void 진행_중이_아니면_픽할_수_없다() {
         Room room = waitingDraftRoom();
 
-        assertThatThrownBy(() -> room.pick(new TeamLeaderId(HOST_ID), "선수1"))
+        assertThatThrownBy(() -> room.pick(new TeamLeaderId(HOST_ID), new RoomPlayerId(0)))
             .isInstanceOf(CoreException.class)
             .isInstanceOfSatisfying(CoreException.class, ex -> assertRoomError(ex, RoomErrorType.ROOM_PLAY_REQUIRES_IN_PROGRESS));
     }
@@ -53,7 +53,7 @@ class RoomDraftTest {
     void 경매_방에서는_픽할_수_없다() {
         Room room = startedAuctionRoomForDraftError();
 
-        assertThatThrownBy(() -> room.pick(new TeamLeaderId(HOST_ID), "선수1"))
+        assertThatThrownBy(() -> room.pick(new TeamLeaderId(HOST_ID), new RoomPlayerId(0)))
             .isInstanceOf(CoreException.class)
             .isInstanceOfSatisfying(CoreException.class, ex -> assertRoomError(ex, RoomErrorType.ROOM_PICK_REQUIRES_DRAFT_MODE));
     }
@@ -62,9 +62,9 @@ class RoomDraftTest {
     void 이미_배정된_선수는_픽할_수_없다() {
         Room room = startedDraftRoom();
 
-        room.pick(new TeamLeaderId(HOST_ID), "선수1");
+        room.pick(new TeamLeaderId(HOST_ID), new RoomPlayerId(0));
 
-        assertThatThrownBy(() -> room.pick(new TeamLeaderId(GUEST_ID), "선수1"))
+        assertThatThrownBy(() -> room.pick(new TeamLeaderId(GUEST_ID), new RoomPlayerId(0)))
             .isInstanceOf(CoreException.class)
             .isInstanceOfSatisfying(CoreException.class, ex -> assertRoomError(ex, RoomErrorType.ROOM_PICK_PLAYER_NOT_AVAILABLE));
     }
@@ -73,7 +73,7 @@ class RoomDraftTest {
     void 존재하지_않는_선수는_픽할_수_없다() {
         Room room = startedDraftRoom();
 
-        assertThatThrownBy(() -> room.pick(new TeamLeaderId(HOST_ID), "없는 선수"))
+        assertThatThrownBy(() -> room.pick(new TeamLeaderId(HOST_ID), new RoomPlayerId(99)))
             .isInstanceOf(CoreException.class)
             .isInstanceOfSatisfying(CoreException.class, ex -> assertRoomError(ex, RoomErrorType.ROOM_PICK_PLAYER_NOT_AVAILABLE));
     }
@@ -86,7 +86,7 @@ class RoomDraftTest {
         room.selectDraftPosition(new TeamLeaderId(GUEST_ID), 1);
         room.start(new TeamLeaderId(HOST_ID), CREATED_AT);
 
-        RoomTeamMember member = room.pick(new TeamLeaderId(GUEST_ID), "선수1");
+        RoomTeamMember member = room.pick(new TeamLeaderId(GUEST_ID), new RoomPlayerId(0));
 
         assertThat(member.teamLeaderId()).isEqualTo(new TeamLeaderId(GUEST_ID));
         assertThat(room.getCurrentTurnIndex()).isEqualTo(1);
@@ -96,8 +96,8 @@ class RoomDraftTest {
     void 모든_픽이_완료되면_방이_완료된다() {
         Room room = startedDraftRoom();
 
-        room.pick(new TeamLeaderId(HOST_ID), "선수1");
-        room.pick(new TeamLeaderId(GUEST_ID), "선수2");
+        room.pick(new TeamLeaderId(HOST_ID), new RoomPlayerId(0));
+        room.pick(new TeamLeaderId(GUEST_ID), new RoomPlayerId(1));
 
         assertThat(room.getStatus()).isEqualTo(RoomStatus.COMPLETED);
         assertThat(room.getMembers()).hasSize(2);
@@ -107,14 +107,14 @@ class RoomDraftTest {
     void SNAKE_드래프트는_2라운드에서_역순으로_진행된다() {
         Room room = startedDraftRoom(RoomTemplateSpec.DraftOrderStrategy.SNAKE, 3, List.of("선수1", "선수2", "선수3", "선수4"));
 
-        room.pick(new TeamLeaderId(HOST_ID), "선수1");
-        room.pick(new TeamLeaderId(GUEST_ID), "선수2");
+        room.pick(new TeamLeaderId(HOST_ID), new RoomPlayerId(0));
+        room.pick(new TeamLeaderId(GUEST_ID), new RoomPlayerId(1));
 
-        assertThatThrownBy(() -> room.pick(new TeamLeaderId(HOST_ID), "선수3"))
+        assertThatThrownBy(() -> room.pick(new TeamLeaderId(HOST_ID), new RoomPlayerId(2)))
             .isInstanceOf(CoreException.class)
             .isInstanceOfSatisfying(CoreException.class, ex -> assertRoomError(ex, RoomErrorType.ROOM_PICK_OUT_OF_TURN));
 
-        RoomTeamMember thirdPick = room.pick(new TeamLeaderId(GUEST_ID), "선수3");
+        RoomTeamMember thirdPick = room.pick(new TeamLeaderId(GUEST_ID), new RoomPlayerId(2));
 
         assertThat(thirdPick.teamLeaderId()).isEqualTo(new TeamLeaderId(GUEST_ID));
         assertThat(room.getCurrentTurnIndex()).isEqualTo(3);
@@ -124,14 +124,14 @@ class RoomDraftTest {
     void FIXED_드래프트는_2라운드에서도_같은_순서로_진행된다() {
         Room room = startedDraftRoom(RoomTemplateSpec.DraftOrderStrategy.FIXED, 3, List.of("선수1", "선수2", "선수3", "선수4"));
 
-        room.pick(new TeamLeaderId(HOST_ID), "선수1");
-        room.pick(new TeamLeaderId(GUEST_ID), "선수2");
+        room.pick(new TeamLeaderId(HOST_ID), new RoomPlayerId(0));
+        room.pick(new TeamLeaderId(GUEST_ID), new RoomPlayerId(1));
 
-        assertThatThrownBy(() -> room.pick(new TeamLeaderId(GUEST_ID), "선수3"))
+        assertThatThrownBy(() -> room.pick(new TeamLeaderId(GUEST_ID), new RoomPlayerId(2)))
             .isInstanceOf(CoreException.class)
             .isInstanceOfSatisfying(CoreException.class, ex -> assertRoomError(ex, RoomErrorType.ROOM_PICK_OUT_OF_TURN));
 
-        RoomTeamMember thirdPick = room.pick(new TeamLeaderId(HOST_ID), "선수3");
+        RoomTeamMember thirdPick = room.pick(new TeamLeaderId(HOST_ID), new RoomPlayerId(2));
 
         assertThat(thirdPick.teamLeaderId()).isEqualTo(new TeamLeaderId(HOST_ID));
         assertThat(room.getCurrentTurnIndex()).isEqualTo(3);

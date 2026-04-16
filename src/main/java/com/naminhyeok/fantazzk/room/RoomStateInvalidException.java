@@ -49,7 +49,15 @@ final class RoomStateInvalidException extends InvalidDomainStateException {
         return new RoomStateInvalidException("팀장을 찾을 수 없습니다: " + leaderIdValue(leaderId));
     }
 
+    static RoomStateInvalidException playerMissing(RoomPlayerId playerId) {
+        return new RoomStateInvalidException("선수를 찾을 수 없습니다: " + playerIdValue(playerId));
+    }
+
     private static String leaderIdValue(TeamLeaderId leaderId) {
         return leaderId == null ? "null" : leaderId.value();
+    }
+
+    private static String playerIdValue(RoomPlayerId playerId) {
+        return playerId == null ? "null" : Integer.toString(playerId.value());
     }
 }
