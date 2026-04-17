@@ -1,7 +1,7 @@
 package com.naminhyeok.fantazzk.room;
 
 record RoomSessionResponse(
-    RoomResponse room,
+    RoomViewResponse room,
     TeamLeaderSessionResponse teamLeaderSession
 ) {
     static RoomSessionResponse from(RoomSessionResult result) {
@@ -23,7 +23,7 @@ record RoomSessionResponse(
 
     static RoomSessionResponse from(RoomDetails details, RoomTeamLeader leader) {
         return new RoomSessionResponse(
-            RoomResponse.from(details),
+            RoomViewResponse.from(details.room()),
             TeamLeaderSessionResponse.from(details.room(), leader)
         );
     }

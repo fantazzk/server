@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/rooms")
 @RequiredArgsConstructor
 class RoomQueryApiController {
-    private final GetRoomDetails getRoomDetails;
+    private final GetRoom getRoom;
     private final FindJoinableRooms findJoinableRooms;
 
     @GetMapping
@@ -21,7 +21,7 @@ class RoomQueryApiController {
     }
 
     @GetMapping("/{code}")
-    ApiResponse<RoomResponse> getByCode(@PathVariable String code) {
-        return ApiResponse.success(RoomResponse.from(getRoomDetails.get(code)));
+    ApiResponse<RoomViewResponse> getByCode(@PathVariable String code) {
+        return ApiResponse.success(RoomViewResponse.from(getRoom.get(code)));
     }
 }

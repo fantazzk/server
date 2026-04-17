@@ -32,14 +32,14 @@ class RoomQueryApiControllerWebMvcTest {
     private ObjectMapper objectMapper;
 
     @MockitoBean
-    private GetRoomDetails getRoomDetails;
+    private GetRoom getRoom;
 
     @MockitoBean
     private FindJoinableRooms findJoinableRooms;
 
     @Test
     void get은_public_room_snapshot만_반환한다() throws Exception {
-        given(getRoomDetails.get(RoomApiTestFixtures.ROOM_CODE)).willReturn(RoomDetails.from(RoomApiTestFixtures.waitingDraftRoom()));
+        given(getRoom.get(RoomApiTestFixtures.ROOM_CODE)).willReturn(RoomApiTestFixtures.waitingDraftRoom());
 
         var result = mockMvcTester().perform(get("/api/v1/rooms/{code}", RoomApiTestFixtures.ROOM_CODE));
 
@@ -50,12 +50,28 @@ class RoomQueryApiControllerWebMvcTest {
         assertThat(body.at("/success/status").asText()).isEqualTo("WAITING");
         assertThat(body.at("/success/mode").asText()).isEqualTo("DRAFT");
         assertThat(body.at("/success/startReadiness").asText()).isEqualTo("WAITING_FOR_DRAFT_POSITIONS");
+        assertThat(body.at("/success/members").isMissingNode()).isTrue();
+        assertThat(body.at("/success/progress").isMissingNode()).isTrue();
         assertThat(result.getResponse().getContentAsString()).doesNotContain("teamLeaderSession");
     }
 
     @Test
+    void 시작된_room_get은_startedGameId만_노출하고_live_game_progress는_포함하지_않는다() throws Exception {
+        given(getRoom.get(RoomApiTestFixtures.ROOM_CODE)).willReturn(RoomApiTestFixtures.startedAuctionRoom());
+
+        var result = mockMvcTester().perform(get("/api/v1/rooms/{code}", RoomApiTestFixtures.ROOM_CODE));
+
+        result.assertThat().hasStatusOk();
+        JsonNode body = objectMapper.readTree(result.getResponse().getContentAsString());
+        assertThat(body.at("/success/status").asText()).isEqualTo("STARTED");
+        assertThat(body.at("/success/startedGameId").asText()).isEqualTo(RoomApiTestFixtures.GAME_ID);
+        assertThat(body.at("/success/progress").isMissingNode()).isTrue();
+        assertThat(body.at("/success/members").isMissingNode()).isTrue();
+    }
+
+    @Test
     void get은_방이_없으면_404를_반환한다() throws Exception {
-        given(getRoomDetails.get(RoomApiTestFixtures.ROOM_CODE)).willThrow(CoreException.of(RoomErrorType.ROOM_NOT_FOUND));
+        given(getRoom.get(RoomApiTestFixtures.ROOM_CODE)).willThrow(CoreException.of(RoomErrorType.ROOM_NOT_FOUND));
 
         var result = mockMvcTester().perform(get("/api/v1/rooms/{code}", RoomApiTestFixtures.ROOM_CODE));
 

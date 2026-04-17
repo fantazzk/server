@@ -8,6 +8,7 @@ import org.slf4j.event.Level;
 @Getter
 enum RoomErrorType implements ErrorDescriptor {
     ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "ROOM_NOT_FOUND", "방을 찾을 수 없습니다", Level.WARN),
+    GAME_NOT_FOUND(HttpStatus.NOT_FOUND, "GAME_NOT_FOUND", "게임을 찾을 수 없습니다", Level.WARN),
     ROOM_TEMPLATE_NOT_FOUND(
         HttpStatus.NOT_FOUND,
         "ROOM_TEMPLATE_NOT_FOUND",

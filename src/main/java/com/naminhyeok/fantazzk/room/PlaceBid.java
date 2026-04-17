@@ -3,6 +3,7 @@ package com.naminhyeok.fantazzk.room;
 import com.naminhyeok.fantazzk.CoreException;
 import java.time.Clock;
 import java.time.Instant;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
@@ -33,6 +34,23 @@ class PlaceBid {
         }
     }
 
+    @Transactional
+    public RoomBid place(UUID gameId, String actionToken, int amount) {
+        try {
+            Game game = games.findById(new GameId(gameId)).orElseThrow(() -> CoreException.of(RoomErrorType.GAME_NOT_FOUND));
+            Room room = rooms.findById(game.getRoomId()).orElseThrow(() -> CoreException.of(RoomErrorType.GAME_NOT_FOUND));
+            RoomTeamLeader caller = roomActionAuthorizer.authenticate(room, actionToken);
+            AuctionGame auctionGame = requireAuctionGame(game);
+            RoomBid bid = auctionGame.placeBid(caller.getId(), amount, Instant.now(clock));
+            games.save(auctionGame);
+            Room saved = rooms.saveAndFlush(room);
+            roomSnapshotPublisher.publishAfterCommit(new RoomDetails(saved, auctionGame));
+            return bid;
+        } catch (OptimisticLockingFailureException ex) {
+            throw CoreException.of(RoomErrorType.ROOM_CONCURRENT_MODIFICATION);
+        }
+    }
+
     private AuctionGame requireAuctionGame(Room room) {
         if (room.getMode() != RoomMode.AUCTION) {
             throw CoreException.of(RoomErrorType.ROOM_BID_REQUIRES_AUCTION_MODE);
@@ -46,6 +64,13 @@ class PlaceBid {
         Game game = games.findById(room.getStartedGameId()).orElseThrow(RoomStateInvalidException::auctionRoundMissing);
         if (!(game instanceof AuctionGame auctionGame)) {
             throw RoomStateInvalidException.auctionRoundMissing();
+        }
+        return auctionGame;
+    }
+
+    private AuctionGame requireAuctionGame(Game game) {
+        if (!(game instanceof AuctionGame auctionGame)) {
+            throw CoreException.of(RoomErrorType.ROOM_BID_REQUIRES_AUCTION_MODE);
         }
         return auctionGame;
     }
