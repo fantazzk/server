@@ -37,6 +37,14 @@ class RoomPlayer {
         this.status = PlayerStatus.AVAILABLE;
     }
 
+    RoomPlayer(RoomPlayerId id, String name, String position, int displayOrder, PlayerStatus status) {
+        this.id = id;
+        this.name = name;
+        this.position = position;
+        this.displayOrder = displayOrder;
+        this.status = status;
+    }
+
     public RoomPlayerId getId() {
         return id;
     }
@@ -47,5 +55,10 @@ class RoomPlayer {
 
     void moveToBack(int nextOrder) {
         this.displayOrder = nextOrder;
+    }
+
+    void sync(int displayOrder, PlayerStatus status) {
+        this.displayOrder = displayOrder;
+        this.status = status;
     }
 }

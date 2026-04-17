@@ -33,6 +33,10 @@ final class RoomBid implements ValueObject {
         this.amount = amount;
     }
 
+    static RoomBid projection(int round, int sequence, TeamLeaderId teamLeaderId, int amount) {
+        return new RoomBid(round, new BidSequence(sequence), teamLeaderId, amount);
+    }
+
     int round() {
         return round;
     }

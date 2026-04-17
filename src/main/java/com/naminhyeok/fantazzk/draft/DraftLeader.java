@@ -10,6 +10,12 @@ final class DraftLeader {
         this.nickname = normalizeNickname(nickname);
     }
 
+    DraftLeader(String leaderId, String nickname, Integer draftPosition) {
+        this.id = new DraftLeaderId(leaderId);
+        this.nickname = normalizeNickname(nickname);
+        this.draftPosition = draftPosition;
+    }
+
     String id() {
         return id.value();
     }

@@ -15,6 +15,14 @@ final class AuctionPlayer {
         this.status = AuctionPlayerStatus.AVAILABLE;
     }
 
+    AuctionPlayer(int playerId, String name, String position, int displayOrder, AuctionPlayerStatus status) {
+        this.playerId = playerId;
+        this.name = name;
+        this.position = position;
+        this.displayOrder = displayOrder;
+        this.status = status;
+    }
+
     int playerId() {
         return playerId;
     }

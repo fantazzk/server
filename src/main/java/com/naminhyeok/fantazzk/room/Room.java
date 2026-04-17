@@ -1,5 +1,7 @@
 package com.naminhyeok.fantazzk.room;
 
+import com.naminhyeok.fantazzk.auction.AuctionRoomState;
+import com.naminhyeok.fantazzk.draft.DraftRoomState;
 import com.naminhyeok.fantazzk.CoreException;
 import com.naminhyeok.fantazzk.room.event.AuctionSettled;
 import com.naminhyeok.fantazzk.room.event.BidPlaced;
@@ -21,7 +23,9 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Locale;
 import java.util.UUID;
@@ -534,6 +538,69 @@ class Room implements AggregateRoot<Room, RoomId> {
             .filter(leader -> leader.getId().equals(teamLeaderId))
             .findFirst()
             .orElseThrow(() -> RoomStateInvalidException.leaderMissing(teamLeaderId));
+    }
+
+    void applyDraftState(DraftRoomState state) {
+        Map<String, DraftRoomState.Leader> leadersById = new HashMap<>();
+        state.leaders().forEach(leader -> leadersById.put(leader.leaderId(), leader));
+        leaders.forEach(leader -> {
+            DraftRoomState.Leader draftLeader = leadersById.get(leader.getId().value());
+            leader.syncDraftPosition(draftLeader == null ? null : draftLeader.draftPosition());
+        });
+
+        players.clear();
+        state.players().forEach(player -> players.add(
+            new RoomPlayer(
+                new RoomPlayerId(player.playerId()),
+                player.name(),
+                player.position(),
+                player.displayOrder(),
+                player.assigned() ? PlayerStatus.ASSIGNED : PlayerStatus.AVAILABLE
+            )
+        ));
+
+        members.clear();
+        state.members().forEach(member -> members.add(
+            new RoomTeamMember(new TeamLeaderId(member.leaderId()), new RoomPlayerId(member.playerId()), member.assignOrder())
+        ));
+
+        currentTurnIndex = state.progress() == null ? null : state.progress().currentTurnIndex();
+        currentAuctionRound = null;
+        currentAuctionRoundEndsAt = null;
+        bids.clear();
+    }
+
+    void applyAuctionState(AuctionRoomState state) {
+        Map<String, AuctionRoomState.Leader> leadersById = new HashMap<>();
+        state.leaders().forEach(leader -> leadersById.put(leader.leaderId(), leader));
+        leaders.forEach(leader -> {
+            AuctionRoomState.Leader auctionLeader = leadersById.get(leader.getId().value());
+            leader.syncRemainingBudget(auctionLeader == null ? null : auctionLeader.remainingBudget());
+        });
+
+        players.clear();
+        state.players().forEach(player -> players.add(
+            new RoomPlayer(
+                new RoomPlayerId(player.playerId()),
+                player.name(),
+                player.position(),
+                player.displayOrder(),
+                player.assigned() ? PlayerStatus.ASSIGNED : PlayerStatus.AVAILABLE
+            )
+        ));
+
+        members.clear();
+        state.members().forEach(member -> members.add(
+            new RoomTeamMember(new TeamLeaderId(member.leaderId()), new RoomPlayerId(member.playerId()), member.assignOrder())
+        ));
+
+        currentTurnIndex = null;
+        currentAuctionRound = state.currentRound();
+        currentAuctionRoundEndsAt = state.currentRoundEndsAt();
+    }
+
+    void recordBidProjection(int round, int sequence, TeamLeaderId leaderId, int amount) {
+        bids.add(RoomBid.projection(round, sequence, leaderId, amount));
     }
 
     @DomainEvents

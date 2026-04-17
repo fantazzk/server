@@ -4,7 +4,7 @@ import java.util.Optional;
 import org.jmolecules.ddd.annotation.Repository;
 
 @Repository
-interface DraftRooms extends org.jmolecules.ddd.types.Repository<DraftRoom, DraftRoomId> {
+interface DraftRooms {
     DraftRoom save(DraftRoom draftRoom);
 
     Optional<DraftRoom> findById(DraftRoomId id);

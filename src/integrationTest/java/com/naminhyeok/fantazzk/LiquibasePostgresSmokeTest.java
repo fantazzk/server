@@ -43,6 +43,10 @@ class LiquibasePostgresSmokeTest {
         assertThat(countColumn("room_team_member", "player_id")).isEqualTo(1);
         assertThat(isNullable("room_team_member", "player_id")).isFalse();
         assertThat(countColumn("room_team_member", "player_name")).isEqualTo(0);
+        assertThat(countTable("draft_room")).isEqualTo(1);
+        assertThat(countColumn("draft_room", "state_json")).isEqualTo(1);
+        assertThat(countTable("auction_room")).isEqualTo(1);
+        assertThat(countColumn("auction_room", "snapshot_json")).isEqualTo(1);
     }
 
     private Integer countTable(String tableName) {

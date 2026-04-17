@@ -15,6 +15,14 @@ final class DraftPlayer {
         this.status = DraftPlayerStatus.AVAILABLE;
     }
 
+    DraftPlayer(int playerId, String name, String position, int displayOrder, DraftPlayerStatus status) {
+        this.id = new DraftPlayerId(playerId);
+        this.name = name.trim();
+        this.position = position.trim();
+        this.displayOrder = displayOrder;
+        this.status = status;
+    }
+
     DraftPlayerId id() {
         return id;
     }

@@ -6,9 +6,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import org.jmolecules.ddd.types.AggregateRoot;
 
-public final class AuctionRoom implements AggregateRoot<AuctionRoom, AuctionRoomId> {
+public final class AuctionRoom {
     private final AuctionRoomId id;
     private final String code;
     private final Instant createdAt;
@@ -57,7 +56,6 @@ public final class AuctionRoom implements AggregateRoot<AuctionRoom, AuctionRoom
         this.currentAuctionRoundEndsAt = null;
     }
 
-    @Override
     public AuctionRoomId getId() {
         return id;
     }
@@ -92,6 +90,43 @@ public final class AuctionRoom implements AggregateRoot<AuctionRoom, AuctionRoom
             .map(player -> new AuctionPlayer(player.playerId(), player.name(), player.position(), player.displayOrder()))
             .forEach(room.players::add);
         room.leaders.add(new AuctionTeamLeader(hostLeaderId, hostNickname.trim(), setup.budget()));
+        return room;
+    }
+
+    static AuctionRoom restore(AuctionRoomSnapshot snapshot) {
+        AuctionRoom room =
+            new AuctionRoom(
+                snapshot.code(),
+                snapshot.createdAt(),
+                snapshot.hostLeaderId(),
+                snapshot.teamCount(),
+                snapshot.teamSize(),
+                snapshot.budget(),
+                snapshot.pickBanTime(),
+                snapshot.minBidUnit(),
+                snapshot.positionLimit()
+            );
+        room.leaders.addAll(snapshot.leaders().stream()
+            .map(leader -> new AuctionTeamLeader(leader.leaderId(), leader.nickname(), leader.remainingBudget()))
+            .toList());
+        room.players.addAll(snapshot.players().stream()
+            .map(player -> new AuctionPlayer(
+                player.playerId(),
+                player.name(),
+                player.position(),
+                player.displayOrder(),
+                player.status()
+            ))
+            .toList());
+        room.members.addAll(snapshot.members().stream()
+            .map(member -> new AuctionTeamMember(member.leaderId(), member.playerId(), member.sequence()))
+            .toList());
+        room.bids.addAll(snapshot.bids().stream()
+            .map(bid -> new AuctionBid(bid.round(), bid.sequence(), bid.leaderId(), bid.amount()))
+            .toList());
+        room.status = snapshot.status();
+        room.currentAuctionRound = snapshot.currentAuctionRound();
+        room.currentAuctionRoundEndsAt = snapshot.currentAuctionRoundEndsAt();
         return room;
     }
 
@@ -207,17 +242,92 @@ public final class AuctionRoom implements AggregateRoot<AuctionRoom, AuctionRoom
 
     AuctionRoomState readState() {
         if (status == AuctionRoomStatus.WAITING) {
-            return new AuctionRoomState(code, status, null, null, null, null, 0);
+            return new AuctionRoomState(
+                code,
+                status,
+                leaderStates(),
+                playerStates(),
+                memberStates(),
+                null,
+                null,
+                null,
+                null,
+                null,
+                0
+            );
         }
 
         return new AuctionRoomState(
             code,
             status,
+            leaderStates(),
+            playerStates(),
+            memberStates(),
             currentAuctionRound,
             currentAuctionRoundEndsAt,
             currentTargetSnapshot(),
             currentHighestBidAmount(),
+            currentWinningBid() == null ? null : currentWinningBid().leaderId(),
             currentBidCount()
+        );
+    }
+
+    private List<AuctionRoomState.Leader> leaderStates() {
+        return leaders.stream()
+            .map(leader -> new AuctionRoomState.Leader(leader.leaderId(), leader.nickname(), leader.remainingBudget()))
+            .toList();
+    }
+
+    private List<AuctionRoomState.Player> playerStates() {
+        return players.stream()
+            .map(player -> new AuctionRoomState.Player(
+                player.playerId(),
+                player.name(),
+                player.position(),
+                player.displayOrder(),
+                !player.available()
+            ))
+            .toList();
+    }
+
+    private List<AuctionRoomState.Member> memberStates() {
+        return members.stream()
+            .map(member -> new AuctionRoomState.Member(member.leaderId(), member.playerId(), member.sequence()))
+            .toList();
+    }
+
+    AuctionRoomSnapshot snapshot() {
+        return new AuctionRoomSnapshot(
+            code,
+            createdAt,
+            hostLeaderId,
+            teamCount,
+            teamSize,
+            budget,
+            pickBanTime,
+            minBidUnit,
+            positionLimit,
+            status,
+            currentAuctionRound,
+            currentAuctionRoundEndsAt,
+            leaders.stream()
+                .map(leader -> new AuctionRoomSnapshot.Leader(leader.leaderId(), leader.nickname(), leader.remainingBudget()))
+                .toList(),
+            players.stream()
+                .map(player -> new AuctionRoomSnapshot.Player(
+                    player.playerId(),
+                    player.name(),
+                    player.position(),
+                    player.displayOrder(),
+                    player.available() ? AuctionPlayerStatus.AVAILABLE : AuctionPlayerStatus.ASSIGNED
+                ))
+                .toList(),
+            members.stream()
+                .map(member -> new AuctionRoomSnapshot.Member(member.leaderId(), member.playerId(), member.sequence()))
+                .toList(),
+            bids.stream()
+                .map(bid -> new AuctionRoomSnapshot.Bid(bid.round(), bid.sequence(), bid.leaderId(), bid.amount()))
+                .toList()
         );
     }
 

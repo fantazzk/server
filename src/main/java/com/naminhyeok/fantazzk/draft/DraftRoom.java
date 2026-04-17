@@ -7,9 +7,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.IntStream;
-import org.jmolecules.ddd.types.AggregateRoot;
 
-class DraftRoom implements AggregateRoot<DraftRoom, DraftRoomId> {
+class DraftRoom {
     private final DraftRoomId id;
     private final int teamCount;
     private final int teamSize;
@@ -62,6 +61,36 @@ class DraftRoom implements AggregateRoot<DraftRoom, DraftRoomId> {
             .toList();
 
         return new DraftRoom(id, teamCount, teamSize, draftOrderStrategy, players);
+    }
+
+    static DraftRoom restore(DraftRoomState state) {
+        List<DraftPlayer> players = state.players().stream()
+            .map(player -> new DraftPlayer(
+                player.playerId(),
+                player.name(),
+                player.position(),
+                player.displayOrder(),
+                player.assigned() ? DraftPlayerStatus.ASSIGNED : DraftPlayerStatus.AVAILABLE
+            ))
+            .sorted(Comparator.comparingInt(DraftPlayer::displayOrder))
+            .toList();
+
+        DraftRoom room = new DraftRoom(
+            new DraftRoomId(state.roomCode()),
+            state.teamCount(),
+            state.teamSize(),
+            state.draftOrderStrategy(),
+            players
+        );
+        room.leaders.addAll(state.leaders().stream()
+            .map(leader -> new DraftLeader(leader.leaderId(), leader.nickname(), leader.draftPosition()))
+            .toList());
+        room.members.addAll(state.members().stream()
+            .map(member -> new DraftMember(member.leaderId(), member.playerId(), member.assignOrder()))
+            .toList());
+        room.status = state.status();
+        room.currentTurnIndex = state.progress() == null ? null : state.progress().currentTurnIndex();
+        return room;
     }
 
     public DraftRoomId getId() {

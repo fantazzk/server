@@ -59,4 +59,12 @@ class RoomTeamLeader {
     void clearDraftPosition() {
         this.draftPosition = null;
     }
+
+    void syncDraftPosition(Integer draftPosition) {
+        this.draftPosition = draftPosition;
+    }
+
+    void syncRemainingBudget(Integer remainingBudget) {
+        this.remainingBudget = remainingBudget;
+    }
 }

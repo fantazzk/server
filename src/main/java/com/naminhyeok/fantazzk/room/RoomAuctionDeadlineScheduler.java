@@ -12,6 +12,8 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Component
 @RequiredArgsConstructor
@@ -33,6 +35,19 @@ class RoomAuctionDeadlineScheduler {
         }
 
         schedule(code, deadline);
+    }
+
+    void refreshAfterCommit(String code, Instant deadline) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            refresh(code, deadline);
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                refresh(code, deadline);
+            }
+        });
     }
 
     private void schedule(String code, Instant deadline) {

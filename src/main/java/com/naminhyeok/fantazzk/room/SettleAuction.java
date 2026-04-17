@@ -34,6 +34,6 @@ class SettleAuction {
         if (room.getCurrentAuctionRoundEndsAt() == null) {
             return;
         }
-        roomAuctionDeadlineScheduler.ifAvailable(scheduler -> scheduler.schedule(room));
+        roomAuctionDeadlineScheduler.ifAvailable(scheduler -> scheduler.refreshAfterCommit(room.getCode(), room.getCurrentAuctionRoundEndsAt()));
     }
 }

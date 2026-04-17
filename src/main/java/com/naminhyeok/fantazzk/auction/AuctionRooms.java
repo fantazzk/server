@@ -5,7 +5,7 @@ import java.util.Optional;
 import org.jmolecules.ddd.annotation.Repository;
 
 @Repository
-public interface AuctionRooms {
+interface AuctionRooms {
     AuctionRoom save(AuctionRoom room);
 
     AuctionRoom saveAndFlush(AuctionRoom room);

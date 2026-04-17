@@ -1,18 +1,23 @@
 package com.naminhyeok.fantazzk.room;
 
+import com.naminhyeok.fantazzk.auction.AuctionPlayerSeed;
+import com.naminhyeok.fantazzk.auction.AuctionRoomLifecycle;
+import com.naminhyeok.fantazzk.auction.AuctionRoomSetup;
 import com.naminhyeok.fantazzk.CoreException;
+import com.naminhyeok.fantazzk.draft.DraftOrderStrategy;
+import com.naminhyeok.fantazzk.draft.DraftPlayerSpec;
+import com.naminhyeok.fantazzk.draft.DraftRoomLifecycle;
 import com.naminhyeok.fantazzk.template.TemplateCatalog;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.UUID;
 import java.util.regex.Pattern;
 import org.hibernate.exception.ConstraintViolationException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
-import lombok.RequiredArgsConstructor;
 
 @Service
-@RequiredArgsConstructor
 class CreateRoom {
     private static final int MAX_ROOM_CODE_ATTEMPTS = 3;
     private static final String ROOM_CODE_CONSTRAINT = "uk_rooms_code";
@@ -25,6 +30,37 @@ class CreateRoom {
     private final TeamLeaderIdentityIssuer teamLeaderIdentityIssuer;
     private final Clock clock;
     private final RoomCodeGenerator roomCodeGenerator;
+    private final DraftRoomLifecycle draftRoomLifecycle;
+    private final AuctionRoomLifecycle auctionRoomLifecycle;
+
+    @Autowired
+    CreateRoom(
+        CreateRoomAttempt createRoomAttempt,
+        TemplateCatalog templateCatalog,
+        TeamLeaderIdentityIssuer teamLeaderIdentityIssuer,
+        Clock clock,
+        RoomCodeGenerator roomCodeGenerator,
+        DraftRoomLifecycle draftRoomLifecycle,
+        AuctionRoomLifecycle auctionRoomLifecycle
+    ) {
+        this.createRoomAttempt = createRoomAttempt;
+        this.templateCatalog = templateCatalog;
+        this.teamLeaderIdentityIssuer = teamLeaderIdentityIssuer;
+        this.clock = clock;
+        this.roomCodeGenerator = roomCodeGenerator;
+        this.draftRoomLifecycle = draftRoomLifecycle;
+        this.auctionRoomLifecycle = auctionRoomLifecycle;
+    }
+
+    CreateRoom(
+        CreateRoomAttempt createRoomAttempt,
+        TemplateCatalog templateCatalog,
+        TeamLeaderIdentityIssuer teamLeaderIdentityIssuer,
+        Clock clock,
+        RoomCodeGenerator roomCodeGenerator
+    ) {
+        this(createRoomAttempt, templateCatalog, teamLeaderIdentityIssuer, clock, roomCodeGenerator, null, null);
+    }
 
     public RoomSessionResult create(UUID templateId, String hostNickname) {
         TemplateCatalog.TemplateBlueprint template = getTemplate(templateId);
@@ -34,7 +70,7 @@ class CreateRoom {
         for (int attempt = 1; attempt <= MAX_ROOM_CODE_ATTEMPTS; attempt++) {
             Room room = newRoom(template, hostLeaderId, identity.actionToken(), hostNickname);
             try {
-                Room saved = createRoomAttempt.save(room);
+                Room saved = createRoomAttempt.save(room, savedRoom -> createGameplay(savedRoom, template, hostLeaderId, hostNickname));
                 return new RoomSessionResult(saved, findLeader(saved, hostLeaderId));
             } catch (DataIntegrityViolationException ex) {
                 if (!isRoomCodeCollision(ex)) {
@@ -103,6 +139,48 @@ class CreateRoom {
 
     private String generateCode() {
         return roomCodeGenerator.generate();
+    }
+
+    private void createGameplay(
+        Room room,
+        TemplateCatalog.TemplateBlueprint template,
+        TeamLeaderId hostLeaderId,
+        String hostNickname
+    ) {
+        if (draftRoomLifecycle == null || auctionRoomLifecycle == null) {
+            return;
+        }
+        if (room.getMode() == RoomMode.DRAFT) {
+            draftRoomLifecycle.create(
+                room.getCode(),
+                template.teamCount(),
+                template.teamSize(),
+                DraftOrderStrategy.valueOf(template.draftOrderStrategy().name()),
+                template.players().stream()
+                    .map(player -> new DraftPlayerSpec(player.playerIndex(), player.name(), player.position(), player.playerIndex()))
+                    .toList()
+            );
+            draftRoomLifecycle.addLeader(room.getCode(), hostLeaderId.value(), hostNickname);
+            return;
+        }
+
+        auctionRoomLifecycle.create(
+            room.getCode(),
+            hostLeaderId.value(),
+            hostNickname,
+            room.getCreatedAt(),
+            new AuctionRoomSetup(
+                template.teamCount(),
+                template.teamSize(),
+                template.budget(),
+                template.pickBanTime(),
+                template.minBidUnit(),
+                template.positionLimit(),
+                template.players().stream()
+                    .map(player -> new AuctionPlayerSeed(player.playerIndex(), player.name(), player.position(), player.playerIndex()))
+                    .toList()
+            )
+        );
     }
 
     private boolean isRoomCodeCollision(Throwable throwable) {
