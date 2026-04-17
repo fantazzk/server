@@ -32,7 +32,9 @@ class CreateRoomTest {
                 new StubTemplateCatalog(),
                 new StubTeamLeaderIdentityIssuer(),
                 Clock.fixed(Instant.parse("2026-04-10T00:00:00Z"), ZoneOffset.UTC),
-                new StubRoomCodeGenerator("ROOM01", "ROOM02", "ROOM03")
+                new StubRoomCodeGenerator("ROOM01", "ROOM02", "ROOM03"),
+                null,
+                null
             );
 
         RoomSessionResult created = createRoom.create(UUID.randomUUID(), "호스트");
@@ -61,7 +63,9 @@ class CreateRoomTest {
                 new StubTemplateCatalog(),
                 new StubTeamLeaderIdentityIssuer(),
                 Clock.fixed(Instant.parse("2026-04-10T00:00:00Z"), ZoneOffset.UTC),
-                new StubRoomCodeGenerator("ROOM01")
+                new StubRoomCodeGenerator("ROOM01"),
+                null,
+                null
             );
 
         assertThatThrownBy(() -> createRoom.create(UUID.randomUUID(), "호스트"))
@@ -83,7 +87,9 @@ class CreateRoomTest {
                 new StubTemplateCatalog(),
                 new StubTeamLeaderIdentityIssuer(),
                 Clock.fixed(Instant.parse("2026-04-10T00:00:00Z"), ZoneOffset.UTC),
-                new StubRoomCodeGenerator("ROOM01", "ROOM02", "ROOM03")
+                new StubRoomCodeGenerator("ROOM01", "ROOM02", "ROOM03"),
+                null,
+                null
             );
 
         assertThatThrownBy(() -> createRoom.create(UUID.randomUUID(), "호스트"))

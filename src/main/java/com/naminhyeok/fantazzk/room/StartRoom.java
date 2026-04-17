@@ -7,12 +7,12 @@ import com.naminhyeok.fantazzk.draft.DraftRoomLifecycle;
 import com.naminhyeok.fantazzk.draft.DraftRoomState;
 import java.time.Clock;
 import java.time.Instant;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.OptimisticLockingFailureException;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
+@Component
+@org.jmolecules.ddd.annotation.Service
 class StartRoom {
     private final Rooms rooms;
     private final RoomActionAuthorizer roomActionAuthorizer;
@@ -22,7 +22,6 @@ class StartRoom {
     private final AuctionRoomLifecycle auctionRoomLifecycle;
     private final RoomAuctionDeadlineScheduler roomAuctionDeadlineScheduler;
 
-    @Autowired
     StartRoom(
         Rooms rooms,
         RoomActionAuthorizer roomActionAuthorizer,
@@ -39,15 +38,6 @@ class StartRoom {
         this.draftRoomLifecycle = draftRoomLifecycle;
         this.auctionRoomLifecycle = auctionRoomLifecycle;
         this.roomAuctionDeadlineScheduler = roomAuctionDeadlineScheduler;
-    }
-
-    StartRoom(
-        Rooms rooms,
-        RoomActionAuthorizer roomActionAuthorizer,
-        RoomSnapshotPublisher roomSnapshotPublisher,
-        Clock clock
-    ) {
-        this(rooms, roomActionAuthorizer, roomSnapshotPublisher, clock, null, null, null);
     }
 
     @Transactional

@@ -6,12 +6,12 @@ import com.naminhyeok.fantazzk.auction.AuctionRoomStateReader;
 import com.naminhyeok.fantazzk.CoreException;
 import java.time.Clock;
 import java.time.Instant;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.OptimisticLockingFailureException;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
+@Component
+@org.jmolecules.ddd.annotation.Service
 class PlaceBid {
     private final Rooms rooms;
     private final RoomActionAuthorizer roomActionAuthorizer;
@@ -21,7 +21,6 @@ class PlaceBid {
     private final AuctionRoomStateReader auctionRoomStateReader;
     private final RoomAuctionDeadlineScheduler roomAuctionDeadlineScheduler;
 
-    @Autowired
     PlaceBid(
         Rooms rooms,
         RoomActionAuthorizer roomActionAuthorizer,
@@ -38,15 +37,6 @@ class PlaceBid {
         this.auctionRoomPlay = auctionRoomPlay;
         this.auctionRoomStateReader = auctionRoomStateReader;
         this.roomAuctionDeadlineScheduler = roomAuctionDeadlineScheduler;
-    }
-
-    PlaceBid(
-        Rooms rooms,
-        RoomActionAuthorizer roomActionAuthorizer,
-        RoomSnapshotPublisher roomSnapshotPublisher,
-        Clock clock
-    ) {
-        this(rooms, roomActionAuthorizer, roomSnapshotPublisher, clock, null, null, null);
     }
 
     @Transactional

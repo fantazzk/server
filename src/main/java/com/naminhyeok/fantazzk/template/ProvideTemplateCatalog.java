@@ -3,9 +3,9 @@ package com.naminhyeok.fantazzk.template;
 import com.naminhyeok.fantazzk.CoreException;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
-@Service
+@Component
 @RequiredArgsConstructor
 class ProvideTemplateCatalog implements TemplateCatalog {
     private final FindTemplates findTemplates;

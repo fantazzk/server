@@ -268,7 +268,10 @@ class RoomAuctionTest {
                 rooms,
                 new RoomActionAuthorizer(),
                 publisher,
-                Clock.fixed(CREATED_AT, ZoneOffset.UTC)
+                Clock.fixed(CREATED_AT, ZoneOffset.UTC),
+                null,
+                null,
+                null
             );
 
         TransactionSynchronizationManager.initSynchronization();
@@ -298,7 +301,10 @@ class RoomAuctionTest {
                 rooms,
                 new RoomActionAuthorizer(),
                 noopRoomSnapshotPublisher(),
-                Clock.fixed(CREATED_AT, ZoneOffset.UTC)
+                Clock.fixed(CREATED_AT, ZoneOffset.UTC),
+                null,
+                null,
+                null
             );
 
         assertThatThrownBy(() -> startRoom.start(room.getCode(), HOST_ACTION_TOKEN))
@@ -315,7 +321,10 @@ class RoomAuctionTest {
                 rooms,
                 new RoomActionAuthorizer(),
                 publisher,
-                Clock.fixed(CREATED_AT.plusSeconds(1), ZoneOffset.UTC)
+                Clock.fixed(CREATED_AT.plusSeconds(1), ZoneOffset.UTC),
+                null,
+                null,
+                null
             );
 
         TransactionSynchronizationManager.initSynchronization();
@@ -346,7 +355,10 @@ class RoomAuctionTest {
                 rooms,
                 new RoomActionAuthorizer(),
                 noopRoomSnapshotPublisher(),
-                Clock.fixed(CREATED_AT.plusSeconds(1), ZoneOffset.UTC)
+                Clock.fixed(CREATED_AT.plusSeconds(1), ZoneOffset.UTC),
+                null,
+                null,
+                null
             );
 
         assertThatThrownBy(() -> placeBid.place(room.getCode(), HOST_ACTION_TOKEN, 100))
@@ -358,7 +370,7 @@ class RoomAuctionTest {
         Room room = inProgressDraftRoomForOptimisticLock();
         InMemoryRooms rooms = new InMemoryRooms(room);
         rooms.failOnSave(new ObjectOptimisticLockingFailureException(Room.class, room.getId()));
-        PickDraft pickDraft = new PickDraft(rooms, new RoomActionAuthorizer(), noopRoomSnapshotPublisher());
+        PickDraft pickDraft = new PickDraft(rooms, new RoomActionAuthorizer(), noopRoomSnapshotPublisher(), null);
 
         assertThatThrownBy(() -> pickDraft.pick(room.getCode(), HOST_ACTION_TOKEN, new RoomPlayerId(0)))
             .isInstanceOfSatisfying(CoreException.class, ex -> assertRoomError(ex, RoomErrorType.ROOM_CONCURRENT_MODIFICATION));
@@ -372,7 +384,8 @@ class RoomAuctionTest {
         SelectDraftPosition selectDraftPosition = new SelectDraftPosition(
             rooms,
             new RoomActionAuthorizer(),
-            noopRoomSnapshotPublisher()
+            noopRoomSnapshotPublisher(),
+            null
         );
 
         assertThatThrownBy(() -> selectDraftPosition.select(room.getCode(), HOST_ACTION_TOKEN, 1))
@@ -388,7 +401,8 @@ class RoomAuctionTest {
         ClearDraftPosition clearDraftPosition = new ClearDraftPosition(
             rooms,
             new RoomActionAuthorizer(),
-            noopRoomSnapshotPublisher()
+            noopRoomSnapshotPublisher(),
+            null
         );
 
         assertThatThrownBy(() -> clearDraftPosition.clear(room.getCode(), HOST_ACTION_TOKEN))

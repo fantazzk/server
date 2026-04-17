@@ -3,12 +3,12 @@ package com.naminhyeok.fantazzk.room;
 import com.naminhyeok.fantazzk.auction.AuctionRoomLifecycle;
 import com.naminhyeok.fantazzk.CoreException;
 import com.naminhyeok.fantazzk.draft.DraftRoomLifecycle;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.OptimisticLockingFailureException;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
+@Component
+@org.jmolecules.ddd.annotation.Service
 class JoinRoom {
     private final Rooms rooms;
     private final TeamLeaderIdentityIssuer teamLeaderIdentityIssuer;
@@ -16,7 +16,6 @@ class JoinRoom {
     private final DraftRoomLifecycle draftRoomLifecycle;
     private final AuctionRoomLifecycle auctionRoomLifecycle;
 
-    @Autowired
     JoinRoom(
         Rooms rooms,
         TeamLeaderIdentityIssuer teamLeaderIdentityIssuer,
@@ -29,10 +28,6 @@ class JoinRoom {
         this.roomSnapshotPublisher = roomSnapshotPublisher;
         this.draftRoomLifecycle = draftRoomLifecycle;
         this.auctionRoomLifecycle = auctionRoomLifecycle;
-    }
-
-    JoinRoom(Rooms rooms, TeamLeaderIdentityIssuer teamLeaderIdentityIssuer, RoomSnapshotPublisher roomSnapshotPublisher) {
-        this(rooms, teamLeaderIdentityIssuer, roomSnapshotPublisher, null, null);
     }
 
     @Transactional

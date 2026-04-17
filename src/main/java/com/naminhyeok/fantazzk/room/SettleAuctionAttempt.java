@@ -6,11 +6,10 @@ import com.naminhyeok.fantazzk.auction.AuctionRoomStateReader;
 import com.naminhyeok.fantazzk.CoreException;
 import java.time.Clock;
 import java.time.Instant;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
+@Component
 class SettleAuctionAttempt {
     private final Rooms rooms;
     private final Clock clock;
@@ -18,7 +17,6 @@ class SettleAuctionAttempt {
     private final AuctionRoomLifecycle auctionRoomLifecycle;
     private final AuctionRoomStateReader auctionRoomStateReader;
 
-    @Autowired
     SettleAuctionAttempt(
         Rooms rooms,
         Clock clock,
@@ -31,10 +29,6 @@ class SettleAuctionAttempt {
         this.roomSnapshotPublisher = roomSnapshotPublisher;
         this.auctionRoomLifecycle = auctionRoomLifecycle;
         this.auctionRoomStateReader = auctionRoomStateReader;
-    }
-
-    SettleAuctionAttempt(Rooms rooms, Clock clock, RoomSnapshotPublisher roomSnapshotPublisher) {
-        this(rooms, clock, roomSnapshotPublisher, null, null);
     }
 
     @Transactional

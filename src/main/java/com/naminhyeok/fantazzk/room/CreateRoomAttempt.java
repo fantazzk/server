@@ -2,11 +2,11 @@ package com.naminhyeok.fantazzk.room;
 
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
+@Component
 @RequiredArgsConstructor
 class CreateRoomAttempt {
     private final Rooms rooms;

@@ -25,7 +25,7 @@ class RoomRealtimePublishingTest {
     void join은_저장된_room_스냅샷을_publish한다() {
         Room room = waitingAuctionRoom();
         RecordingRoomSnapshotPublisher publisher = new RecordingRoomSnapshotPublisher();
-        JoinRoom joinRoom = new JoinRoom(new SaveAndFlushOnlyRooms(room), fixedLeaderIdentityIssuer(), publisher);
+        JoinRoom joinRoom = new JoinRoom(new SaveAndFlushOnlyRooms(room), fixedLeaderIdentityIssuer(), publisher, null, null);
 
         RoomSessionResult joined = joinRoom.join(room.getCode(), "게스트");
 
@@ -39,7 +39,7 @@ class RoomRealtimePublishingTest {
     void join은_optimistic_lock을_room_concurrent_modification으로_번역한다() {
         Room room = waitingAuctionRoom();
         RecordingRoomSnapshotPublisher publisher = new RecordingRoomSnapshotPublisher();
-        JoinRoom joinRoom = new JoinRoom(new OptimisticLockFailureRooms(room), fixedLeaderIdentityIssuer(), publisher);
+        JoinRoom joinRoom = new JoinRoom(new OptimisticLockFailureRooms(room), fixedLeaderIdentityIssuer(), publisher, null, null);
 
         assertThatThrownBy(() -> joinRoom.join(room.getCode(), "게스트"))
             .isInstanceOfSatisfying(CoreException.class, ex -> assertRoomError(ex, RoomErrorType.ROOM_CONCURRENT_MODIFICATION));
@@ -50,7 +50,7 @@ class RoomRealtimePublishingTest {
     void pickDraft는_저장된_room_스냅샷을_publish한다() {
         Room room = startedDraftRoom();
         RecordingRoomSnapshotPublisher publisher = new RecordingRoomSnapshotPublisher();
-        PickDraft pickDraft = new PickDraft(new InMemoryRooms(room), new RoomActionAuthorizer(), publisher);
+        PickDraft pickDraft = new PickDraft(new InMemoryRooms(room), new RoomActionAuthorizer(), publisher, null);
 
         Room picked = pickDraft.pick(room.getCode(), HOST_ACTION_TOKEN, new RoomPlayerId(0));
 
@@ -68,7 +68,7 @@ class RoomRealtimePublishingTest {
         Room room = waitingDraftRoomForPositionChange();
         RecordingRoomSnapshotPublisher publisher = new RecordingRoomSnapshotPublisher();
         SelectDraftPosition selectDraftPosition =
-            new SelectDraftPosition(new InMemoryRooms(room), new RoomActionAuthorizer(), publisher);
+            new SelectDraftPosition(new InMemoryRooms(room), new RoomActionAuthorizer(), publisher, null);
 
         selectDraftPosition.select(room.getCode(), HOST_ACTION_TOKEN, 1);
 
@@ -84,7 +84,7 @@ class RoomRealtimePublishingTest {
         room.selectDraftPosition(new TeamLeaderId(HOST_ID), 1);
         RecordingRoomSnapshotPublisher publisher = new RecordingRoomSnapshotPublisher();
         ClearDraftPosition clearDraftPosition =
-            new ClearDraftPosition(new InMemoryRooms(room), new RoomActionAuthorizer(), publisher);
+            new ClearDraftPosition(new InMemoryRooms(room), new RoomActionAuthorizer(), publisher, null);
 
         clearDraftPosition.clear(room.getCode(), HOST_ACTION_TOKEN);
 
@@ -99,7 +99,7 @@ class RoomRealtimePublishingTest {
         Room room = startedAuctionRoom();
         RecordingRoomSnapshotPublisher publisher = new RecordingRoomSnapshotPublisher();
         SettleAuctionAttempt settleAuctionAttempt =
-            new SettleAuctionAttempt(new InMemoryRooms(room), Clock.fixed(PUBLISHED_AT, ZoneOffset.UTC), publisher);
+            new SettleAuctionAttempt(new InMemoryRooms(room), Clock.fixed(PUBLISHED_AT, ZoneOffset.UTC), publisher, null, null);
 
         AuctionSettlement settlement = settleAuctionAttempt.settle(room.getCode());
 
@@ -115,7 +115,7 @@ class RoomRealtimePublishingTest {
         Room room = startedAuctionRoom();
         RecordingRoomSnapshotPublisher publisher = new RecordingRoomSnapshotPublisher();
         SettleAuctionAttempt settleAuctionAttempt =
-            new SettleAuctionAttempt(new InMemoryRooms(room), Clock.fixed(PUBLISHED_AT, ZoneOffset.UTC), publisher);
+            new SettleAuctionAttempt(new InMemoryRooms(room), Clock.fixed(PUBLISHED_AT, ZoneOffset.UTC), publisher, null, null);
 
         Room settled = settleAuctionAttempt.settleIfDue(room.getCode());
 
@@ -132,7 +132,7 @@ class RoomRealtimePublishingTest {
         Room room = startedAuctionRoom();
         RecordingRoomSnapshotPublisher publisher = new RecordingRoomSnapshotPublisher();
         SettleAuctionAttempt settleAuctionAttempt =
-            new SettleAuctionAttempt(new InMemoryRooms(room), Clock.fixed(CREATED_AT.plusSeconds(10), ZoneOffset.UTC), publisher);
+            new SettleAuctionAttempt(new InMemoryRooms(room), Clock.fixed(CREATED_AT.plusSeconds(10), ZoneOffset.UTC), publisher, null, null);
 
         Room current = settleAuctionAttempt.settleIfDue(room.getCode());
 

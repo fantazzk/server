@@ -13,11 +13,11 @@ import java.time.Instant;
 import java.util.UUID;
 import java.util.regex.Pattern;
 import org.hibernate.exception.ConstraintViolationException;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
-@Service
+@Component
+@org.jmolecules.ddd.annotation.Service
 class CreateRoom {
     private static final int MAX_ROOM_CODE_ATTEMPTS = 3;
     private static final String ROOM_CODE_CONSTRAINT = "uk_rooms_code";
@@ -33,7 +33,6 @@ class CreateRoom {
     private final DraftRoomLifecycle draftRoomLifecycle;
     private final AuctionRoomLifecycle auctionRoomLifecycle;
 
-    @Autowired
     CreateRoom(
         CreateRoomAttempt createRoomAttempt,
         TemplateCatalog templateCatalog,
@@ -50,16 +49,6 @@ class CreateRoom {
         this.roomCodeGenerator = roomCodeGenerator;
         this.draftRoomLifecycle = draftRoomLifecycle;
         this.auctionRoomLifecycle = auctionRoomLifecycle;
-    }
-
-    CreateRoom(
-        CreateRoomAttempt createRoomAttempt,
-        TemplateCatalog templateCatalog,
-        TeamLeaderIdentityIssuer teamLeaderIdentityIssuer,
-        Clock clock,
-        RoomCodeGenerator roomCodeGenerator
-    ) {
-        this(createRoomAttempt, templateCatalog, teamLeaderIdentityIssuer, clock, roomCodeGenerator, null, null);
     }
 
     public RoomSessionResult create(UUID templateId, String hostNickname) {

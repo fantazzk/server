@@ -2,10 +2,10 @@ package com.naminhyeok.fantazzk.draft;
 
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
+@Component
 @org.jmolecules.ddd.annotation.Service
 @RequiredArgsConstructor
 public class DraftRoomLifecycle {

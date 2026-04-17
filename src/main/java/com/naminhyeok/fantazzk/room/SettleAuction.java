@@ -4,9 +4,10 @@ import com.naminhyeok.fantazzk.CoreException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.dao.OptimisticLockingFailureException;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
-@Service
+@Component
+@org.jmolecules.ddd.annotation.Service
 @RequiredArgsConstructor
 class SettleAuction {
     private final SettleAuctionAttempt settleAuctionAttempt;

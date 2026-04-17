@@ -3,19 +3,18 @@ package com.naminhyeok.fantazzk.room;
 import com.naminhyeok.fantazzk.CoreException;
 import com.naminhyeok.fantazzk.draft.DraftRoomLifecycle;
 import com.naminhyeok.fantazzk.draft.DraftRoomState;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.OptimisticLockingFailureException;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
+@Component
+@org.jmolecules.ddd.annotation.Service
 class ClearDraftPosition {
     private final Rooms rooms;
     private final RoomActionAuthorizer roomActionAuthorizer;
     private final RoomSnapshotPublisher roomSnapshotPublisher;
     private final DraftRoomLifecycle draftRoomLifecycle;
 
-    @Autowired
     ClearDraftPosition(
         Rooms rooms,
         RoomActionAuthorizer roomActionAuthorizer,
@@ -26,10 +25,6 @@ class ClearDraftPosition {
         this.roomActionAuthorizer = roomActionAuthorizer;
         this.roomSnapshotPublisher = roomSnapshotPublisher;
         this.draftRoomLifecycle = draftRoomLifecycle;
-    }
-
-    ClearDraftPosition(Rooms rooms, RoomActionAuthorizer roomActionAuthorizer, RoomSnapshotPublisher roomSnapshotPublisher) {
-        this(rooms, roomActionAuthorizer, roomSnapshotPublisher, null);
     }
 
     @Transactional

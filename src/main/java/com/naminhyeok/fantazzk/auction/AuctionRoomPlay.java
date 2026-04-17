@@ -1,8 +1,10 @@
 package com.naminhyeok.fantazzk.auction;
 
 import java.time.Instant;
+import org.springframework.stereotype.Component;
 import org.jmolecules.ddd.annotation.Service;
 
+@Component
 @Service
 public class AuctionRoomPlay {
     private final AuctionRooms rooms;
