@@ -3,6 +3,7 @@ package com.naminhyeok.fantazzk.room;
 import com.naminhyeok.fantazzk.CoreException;
 import java.time.Clock;
 import java.time.Instant;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
@@ -33,6 +34,23 @@ class SettleAuctionAttempt {
     }
 
     @Transactional
+    AuctionSettlement settle(UUID gameId) {
+        try {
+            Instant now = Instant.now(clock);
+            Game loadedGame = games.findById(new GameId(gameId)).orElseThrow(() -> CoreException.of(RoomErrorType.GAME_NOT_FOUND));
+            Room room = rooms.findById(loadedGame.getRoomId()).orElseThrow(() -> CoreException.of(RoomErrorType.GAME_NOT_FOUND));
+            AuctionGame game = requireAuctionGame(loadedGame);
+            AuctionSettlement settlement = game.settleAuction(now);
+            games.save(game);
+            Room saved = rooms.saveAndFlush(room);
+            roomSnapshotPublisher.publishAfterCommit(new RoomDetails(saved, game));
+            return settlement;
+        } catch (OptimisticLockingFailureException ex) {
+            throw CoreException.of(RoomErrorType.ROOM_CONCURRENT_MODIFICATION);
+        }
+    }
+
+    @Transactional
     Room settleIfDue(String code) {
         Instant now = Instant.now(clock);
         Room room = rooms.findByCode(code).orElseThrow(() -> CoreException.of(RoomErrorType.ROOM_NOT_FOUND));
@@ -48,6 +66,23 @@ class SettleAuctionAttempt {
         return saved;
     }
 
+    @Transactional
+    Game settleIfDue(UUID gameId) {
+        Instant now = Instant.now(clock);
+        Game loadedGame = games.findById(new GameId(gameId)).orElseThrow(() -> CoreException.of(RoomErrorType.GAME_NOT_FOUND));
+        Room room = rooms.findById(loadedGame.getRoomId()).orElseThrow(() -> CoreException.of(RoomErrorType.GAME_NOT_FOUND));
+        AuctionGame game = loadAuctionGame(loadedGame);
+        if (!isDue(game, now)) {
+            return loadedGame;
+        }
+
+        game.settleAuction(now);
+        games.save(game);
+        Room saved = rooms.saveAndFlush(room);
+        roomSnapshotPublisher.publishAfterCommit(new RoomDetails(saved, game));
+        return game;
+    }
+
     private AuctionGame loadAuctionGame(Room room) {
         if (room.getMode() != RoomMode.AUCTION || room.getStatus() != RoomStatus.STARTED) {
             return null;
@@ -58,6 +93,13 @@ class SettleAuctionAttempt {
         Game game = games.findById(room.getStartedGameId()).orElseThrow(RoomStateInvalidException::auctionRoundMissing);
         if (!(game instanceof AuctionGame auctionGame)) {
             throw RoomStateInvalidException.auctionRoundMissing();
+        }
+        return auctionGame;
+    }
+
+    private AuctionGame loadAuctionGame(Game game) {
+        if (!(game instanceof AuctionGame auctionGame)) {
+            return null;
         }
         return auctionGame;
     }
@@ -76,7 +118,22 @@ class SettleAuctionAttempt {
         return game;
     }
 
-    private static boolean isDue(Room room, AuctionGame game, Instant now) {
+    private AuctionGame requireAuctionGame(Game game) {
+        AuctionGame auctionGame = loadAuctionGame(game);
+        if (auctionGame == null) {
+            throw CoreException.of(RoomErrorType.ROOM_BID_REQUIRES_AUCTION_MODE);
+        }
+        if (auctionGame.getStatus() != GameStatus.IN_PROGRESS) {
+            throw CoreException.of(RoomErrorType.ROOM_PLAY_REQUIRES_IN_PROGRESS);
+        }
+        return auctionGame;
+    }
+
+    private static boolean isDue(AuctionGame game, Instant now) {
         return game != null && game.isDue(now);
+    }
+
+    private static boolean isDue(Room room, AuctionGame game, Instant now) {
+        return isDue(game, now);
     }
 }

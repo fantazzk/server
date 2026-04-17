@@ -17,7 +17,7 @@ class PublishedContractStructureTest {
         assertClassMissing("com.naminhyeok.fantazzk.room.RoomApiController");
         assertThat(isPublic("com.naminhyeok.fantazzk.room.RoomQueryApiController")).isFalse();
         assertThat(isPublic("com.naminhyeok.fantazzk.room.RoomSessionApiController")).isFalse();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.RoomAuctionApiController")).isFalse();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.RoomStartApiController")).isFalse();
         assertThat(isPublic("com.naminhyeok.fantazzk.room.RoomDraftApiController")).isFalse();
         assertThat(isPublic("com.naminhyeok.fantazzk.room.CreateRoom")).isFalse();
         assertThat(isPublic("com.naminhyeok.fantazzk.room.GetRoom")).isFalse();

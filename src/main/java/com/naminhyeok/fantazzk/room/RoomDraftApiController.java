@@ -16,37 +16,26 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/rooms")
 @RequiredArgsConstructor
 class RoomDraftApiController {
-    private final PickDraft pickDraft;
     private final SelectDraftPosition selectDraftPosition;
     private final ClearDraftPosition clearDraftPosition;
-    private final GetRoomDetails getRoomDetails;
-
-    @PostMapping("/{code}/draft-picks")
-    ApiResponse<RoomResponse> pickDraft(
-        @PathVariable String code,
-        @RequestHeader(value = "X-Room-Action-Token", required = false) String actionToken,
-        @Valid @RequestBody PickDraftRequest request
-    ) {
-        pickDraft.pick(code, actionToken, request.playerName());
-        return ApiResponse.success(RoomResponse.from(getRoomDetails.get(code)));
-    }
+    private final GetRoom getRoom;
 
     @PutMapping("/{code}/draft-position")
-    ApiResponse<RoomResponse> selectDraftPosition(
+    ApiResponse<RoomViewResponse> selectDraftPosition(
         @PathVariable String code,
         @RequestHeader(value = "X-Room-Action-Token", required = false) String actionToken,
         @Valid @RequestBody SelectDraftPositionRequest request
     ) {
         selectDraftPosition.select(code, actionToken, request.draftPosition());
-        return ApiResponse.success(RoomResponse.from(getRoomDetails.get(code)));
+        return ApiResponse.success(RoomViewResponse.from(getRoom.get(code)));
     }
 
     @DeleteMapping("/{code}/draft-position")
-    ApiResponse<RoomResponse> clearDraftPosition(
+    ApiResponse<RoomViewResponse> clearDraftPosition(
         @PathVariable String code,
         @RequestHeader(value = "X-Room-Action-Token", required = false) String actionToken
     ) {
         clearDraftPosition.clear(code, actionToken);
-        return ApiResponse.success(RoomResponse.from(getRoomDetails.get(code)));
+        return ApiResponse.success(RoomViewResponse.from(getRoom.get(code)));
     }
 }

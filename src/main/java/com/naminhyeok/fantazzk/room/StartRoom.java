@@ -21,7 +21,7 @@ class StartRoom {
     private final Clock clock;
 
     @Transactional
-    public RoomDetails start(String code, String actionToken) {
+    public Game start(String code, String actionToken) {
         try {
             Room loaded = rooms.findByCode(code).orElseThrow(() -> CoreException.of(RoomErrorType.ROOM_NOT_FOUND));
             RoomTeamLeader caller = roomActionAuthorizer.authenticate(loaded, actionToken);
@@ -31,9 +31,8 @@ class StartRoom {
             Game createdGame = gameFactory.create(startedGameSnapshot);
             games.save(createdGame);
             Room saved = rooms.saveAndFlush(loaded);
-            RoomDetails details = new RoomDetails(saved, createdGame);
-            roomSnapshotPublisher.publishAfterCommit(details);
-            return details;
+            roomSnapshotPublisher.publishAfterCommit(new RoomDetails(saved, createdGame));
+            return createdGame;
         } catch (OptimisticLockingFailureException ex) {
             throw CoreException.of(RoomErrorType.ROOM_CONCURRENT_MODIFICATION);
         }

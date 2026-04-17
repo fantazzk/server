@@ -7,6 +7,8 @@ import java.util.UUID;
 final class RoomApiTestFixtures {
     static final Instant CREATED_AT = Instant.parse("2026-04-09T00:00:00Z");
     static final String ROOM_CODE = "ROOM01";
+    static final String GAME_ID = "00000000-0000-0000-0000-000000000201";
+    static final String DRAFT_GAME_ID = "00000000-0000-0000-0000-000000000202";
     static final String HOST_ID = "host-1";
     static final String HOST_TOKEN = "host-action-token";
     static final String GUEST_ID = "guest-1";
@@ -80,7 +82,7 @@ final class RoomApiTestFixtures {
 
     static Room startedAuctionRoom() {
         Room room = joinedAuctionRoom();
-        room.start(new TeamLeaderId(HOST_ID), CREATED_AT);
+        room.start(new TeamLeaderId(HOST_ID), new GameId(UUID.fromString(GAME_ID)), CREATED_AT);
         return room;
     }
 
@@ -118,7 +120,7 @@ final class RoomApiTestFixtures {
                 CREATED_AT
             );
         room.join(new TeamLeaderId(GUEST_ID), "게스트", GUEST_TOKEN);
-        StartedGameSnapshot snapshot = room.start(new TeamLeaderId(HOST_ID), new GameId(UUID.fromString("00000000-0000-0000-0000-000000000201")), CREATED_AT);
+        StartedGameSnapshot snapshot = room.start(new TeamLeaderId(HOST_ID), new GameId(UUID.fromString(GAME_ID)), CREATED_AT);
         AuctionGame game = (AuctionGame) new GameFactory().create(snapshot);
         game.placeBid(new TeamLeaderId(HOST_ID), 100, CREATED_AT.plusSeconds(1));
         game.settleAuction(CREATED_AT.plusSeconds(16));
@@ -156,7 +158,7 @@ final class RoomApiTestFixtures {
         room.join(new TeamLeaderId(GUEST_ID), "게스트", GUEST_TOKEN);
         room.selectDraftPosition(new TeamLeaderId(HOST_ID), 1);
         room.selectDraftPosition(new TeamLeaderId(GUEST_ID), 2);
-        StartedGameSnapshot snapshot = room.start(new TeamLeaderId(HOST_ID), new GameId(UUID.fromString("00000000-0000-0000-0000-000000000202")), CREATED_AT);
+        StartedGameSnapshot snapshot = room.start(new TeamLeaderId(HOST_ID), new GameId(UUID.fromString(DRAFT_GAME_ID)), CREATED_AT);
         DraftGame game = (DraftGame) new GameFactory().create(snapshot);
         game.pick(new TeamLeaderId(HOST_ID), "선수1");
         game.pick(new TeamLeaderId(GUEST_ID), "선수2");
@@ -167,7 +169,7 @@ final class RoomApiTestFixtures {
         StartedGameSnapshot snapshot = new StartedGameSnapshot(
             room.getId(),
             room.getCode(),
-            new GameId(UUID.fromString("00000000-0000-0000-0000-000000000200")),
+            room.getStartedGameId(),
             CREATED_AT,
             room.getMode(),
             new GameRules(

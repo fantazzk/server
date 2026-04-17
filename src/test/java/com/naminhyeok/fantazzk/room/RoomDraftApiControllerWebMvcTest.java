@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 
 import com.naminhyeok.fantazzk.CoreException;
@@ -20,6 +19,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 @WebMvcTest(RoomDraftApiController.class)
@@ -33,88 +33,13 @@ class RoomDraftApiControllerWebMvcTest {
     private ObjectMapper objectMapper;
 
     @MockitoBean
-    private PickDraft pickDraft;
-
-    @MockitoBean
     private SelectDraftPosition selectDraftPosition;
 
     @MockitoBean
     private ClearDraftPosition clearDraftPosition;
 
     @MockitoBean
-    private GetRoomDetails getRoomDetails;
-
-    @Test
-    void pickDraft는_header가_있으면_최신_room_snapshot을_반환한다() throws Exception {
-        given(pickDraft.pick(RoomApiTestFixtures.ROOM_CODE, RoomApiTestFixtures.GUEST_TOKEN, "선수3"))
-            .willReturn(new RoomTeamMember(new TeamLeaderId(RoomApiTestFixtures.GUEST_ID), "선수3", 2));
-        given(getRoomDetails.get(RoomApiTestFixtures.ROOM_CODE))
-            .willReturn(RoomApiTestFixtures.inProgressDraftDetails());
-
-        var result = mockMvcTester().perform(
-            post("/api/v1/rooms/{code}/draft-picks", RoomApiTestFixtures.ROOM_CODE)
-                .header("X-Room-Action-Token", RoomApiTestFixtures.GUEST_TOKEN)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(
-                    """
-                    {
-                      "playerName": "선수3"
-                    }
-                    """
-                )
-        );
-
-        result.assertThat().hasStatusOk();
-        RoomResponseApiResponse body = readBody(result, RoomResponseApiResponse.class);
-        assertThat(body.resultType()).isEqualTo("SUCCESS");
-        assertThat(body.success().status()).isEqualTo("IN_PROGRESS");
-        assertThat(body.success().code()).isEqualTo(RoomApiTestFixtures.ROOM_CODE);
-    }
-
-    @Test
-    void pickDraft는_header가_없으면_401을_반환한다() throws Exception {
-        doThrow(CoreException.of(RoomErrorType.ROOM_ACTION_TOKEN_REQUIRED))
-            .when(pickDraft)
-            .pick(RoomApiTestFixtures.ROOM_CODE, null, "선수3");
-
-        var result = mockMvcTester().perform(
-            post("/api/v1/rooms/{code}/draft-picks", RoomApiTestFixtures.ROOM_CODE)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(
-                    """
-                    {
-                      "playerName": "선수3"
-                    }
-                    """
-                )
-        );
-
-        result.assertThat().hasStatus(HttpStatus.UNAUTHORIZED);
-        assertThat(readBody(result, VoidApiResponse.class).error().code()).isEqualTo("ROOM_ACTION_TOKEN_REQUIRED");
-    }
-
-    @Test
-    void pickDraft는_optimistic_lock_conflict를_409로_반환한다() throws Exception {
-        doThrow(CoreException.of(RoomErrorType.ROOM_CONCURRENT_MODIFICATION))
-            .when(pickDraft)
-            .pick(RoomApiTestFixtures.ROOM_CODE, RoomApiTestFixtures.GUEST_TOKEN, "선수3");
-
-        var result = mockMvcTester().perform(
-            post("/api/v1/rooms/{code}/draft-picks", RoomApiTestFixtures.ROOM_CODE)
-                .header("X-Room-Action-Token", RoomApiTestFixtures.GUEST_TOKEN)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(
-                    """
-                    {
-                      "playerName": "선수3"
-                    }
-                    """
-                )
-        );
-
-        result.assertThat().hasStatus(HttpStatus.CONFLICT);
-        assertThat(readBody(result, VoidApiResponse.class).error().code()).isEqualTo("ROOM_CONCURRENT_MODIFICATION");
-    }
+    private GetRoom getRoom;
 
     @Test
     void selectDraftPosition은_header가_있으면_성공한다() throws Exception {
@@ -122,7 +47,7 @@ class RoomDraftApiControllerWebMvcTest {
         room.selectDraftPosition(new TeamLeaderId(RoomApiTestFixtures.GUEST_ID), 2);
         given(selectDraftPosition.select(RoomApiTestFixtures.ROOM_CODE, RoomApiTestFixtures.GUEST_TOKEN, 2))
             .willReturn(room);
-        given(getRoomDetails.get(RoomApiTestFixtures.ROOM_CODE)).willReturn(RoomDetails.from(room));
+        given(getRoom.get(RoomApiTestFixtures.ROOM_CODE)).willReturn(room);
 
         var result = mockMvcTester().perform(
             put("/api/v1/rooms/{code}/draft-position", RoomApiTestFixtures.ROOM_CODE)
@@ -138,9 +63,11 @@ class RoomDraftApiControllerWebMvcTest {
         );
 
         result.assertThat().hasStatusOk();
-        RoomResponseApiResponse body = readBody(result, RoomResponseApiResponse.class);
-        assertThat(body.success().startReadiness()).isEqualTo("STARTABLE");
-        assertThat(body.success().code()).isEqualTo(RoomApiTestFixtures.ROOM_CODE);
+        JsonNode body = objectMapper.readTree(result.getResponse().getContentAsString());
+        assertThat(body.at("/success/startReadiness").asText()).isEqualTo("STARTABLE");
+        assertThat(body.at("/success/code").asText()).isEqualTo(RoomApiTestFixtures.ROOM_CODE);
+        assertThat(body.at("/success/progress").isMissingNode()).isTrue();
+        assertThat(body.at("/success/members").isMissingNode()).isTrue();
     }
 
     @Test
@@ -149,7 +76,7 @@ class RoomDraftApiControllerWebMvcTest {
         room.clearDraftPosition(new TeamLeaderId(RoomApiTestFixtures.HOST_ID));
         given(clearDraftPosition.clear(RoomApiTestFixtures.ROOM_CODE, RoomApiTestFixtures.HOST_TOKEN))
             .willReturn(room);
-        given(getRoomDetails.get(RoomApiTestFixtures.ROOM_CODE)).willReturn(RoomDetails.from(room));
+        given(getRoom.get(RoomApiTestFixtures.ROOM_CODE)).willReturn(room);
 
         var result = mockMvcTester().perform(
             delete("/api/v1/rooms/{code}/draft-position", RoomApiTestFixtures.ROOM_CODE)
@@ -157,9 +84,11 @@ class RoomDraftApiControllerWebMvcTest {
         );
 
         result.assertThat().hasStatusOk();
-        RoomResponseApiResponse body = readBody(result, RoomResponseApiResponse.class);
-        assertThat(body.success().startReadiness()).isEqualTo("WAITING_FOR_DRAFT_POSITIONS");
-        assertThat(body.success().code()).isEqualTo(RoomApiTestFixtures.ROOM_CODE);
+        JsonNode body = objectMapper.readTree(result.getResponse().getContentAsString());
+        assertThat(body.at("/success/startReadiness").asText()).isEqualTo("WAITING_FOR_DRAFT_POSITIONS");
+        assertThat(body.at("/success/code").asText()).isEqualTo(RoomApiTestFixtures.ROOM_CODE);
+        assertThat(body.at("/success/progress").isMissingNode()).isTrue();
+        assertThat(body.at("/success/members").isMissingNode()).isTrue();
     }
 
     @Test
@@ -191,8 +120,6 @@ class RoomDraftApiControllerWebMvcTest {
     private <T> T readBody(org.springframework.test.web.servlet.assertj.MvcTestResult result, Class<T> bodyType) throws Exception {
         return objectMapper.readValue(result.getResponse().getContentAsString(), bodyType);
     }
-
-    private record RoomResponseApiResponse(String resultType, RoomResponse success, ErrorMessage error) {}
 
     private record VoidApiResponse(String resultType, Void success, ErrorMessage error) {}
 }
