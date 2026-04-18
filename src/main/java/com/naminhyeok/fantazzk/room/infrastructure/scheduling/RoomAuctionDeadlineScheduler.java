@@ -58,8 +58,7 @@ public class RoomAuctionDeadlineScheduler {
         for (AuctionScheduleCandidate candidate : collectSchedulableRooms()) {
             if (candidate.deadline() == null || !candidate.deadline().isAfter(now)) {
                 try {
-                    auctionDeadlineSettlementProcessor.processDueAuction(candidate.code());
-                    reschedule(candidate.code());
+                    refresh(candidate.code(), auctionDeadlineSettlementProcessor.processDueAuction(candidate.code()));
                 } catch (InvalidDomainStateException ignored) {
                     continue;
                 }
@@ -71,21 +70,11 @@ public class RoomAuctionDeadlineScheduler {
 
     private void runScheduledSettlement(String code) {
         scheduledTasks.remove(code);
-        auctionDeadlineSettlementProcessor.processDueAuction(code);
-        reschedule(code);
+        refresh(code, auctionDeadlineSettlementProcessor.processDueAuction(code));
     }
 
     private List<AuctionScheduleCandidate> collectSchedulableRooms() {
         return sortSchedulableRooms(auctionScheduleReader.findInProgressAuctionSchedules());
-    }
-
-    private void reschedule(String code) {
-        Instant nextDeadline = collectSchedulableRooms().stream()
-            .filter(candidate -> candidate.code().equals(code))
-            .map(AuctionScheduleCandidate::deadline)
-            .findFirst()
-            .orElse(null);
-        refresh(code, nextDeadline);
     }
 
     private List<AuctionScheduleCandidate> sortSchedulableRooms(List<AuctionScheduleCandidate> candidates) {

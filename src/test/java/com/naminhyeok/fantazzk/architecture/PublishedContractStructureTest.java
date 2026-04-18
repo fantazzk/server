@@ -62,6 +62,7 @@ class PublishedContractStructureTest {
         assertClassMissing("com.naminhyeok.fantazzk.room.UuidRoomCodeGenerator");
         assertClassMissing("com.naminhyeok.fantazzk.room.UuidTeamLeaderIdentityIssuer");
         assertThat(isPublic("com.naminhyeok.fantazzk.room.application.query.JoinableRoomReader")).isTrue();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.application.query.JoinableRoomSummary")).isTrue();
         assertThat(isPublic("com.naminhyeok.fantazzk.room.application.query.AuctionScheduleReader")).isTrue();
         assertThat(isPublic("com.naminhyeok.fantazzk.room.application.query.AuctionScheduleCandidate")).isTrue();
         assertThat(isPublic("com.naminhyeok.fantazzk.room.application.port.AuctionDeadlineSettlementProcessor")).isTrue();
@@ -116,10 +117,14 @@ class PublishedContractStructureTest {
         assertClassMissing("com.naminhyeok.fantazzk.room.RoomStarted");
         assertClassMissing("com.naminhyeok.fantazzk.room.BidPlaced");
         assertClassMissing("com.naminhyeok.fantazzk.room.AuctionSettled");
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.application.support.RoomSchedulingEvent")).isTrue();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.application.support.RoomStarted")).isTrue();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.application.support.BidPlaced")).isTrue();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.application.support.AuctionSettled")).isTrue();
+        assertClassMissing("com.naminhyeok.fantazzk.room.application.support.RoomSchedulingEvent");
+        assertClassMissing("com.naminhyeok.fantazzk.room.application.support.RoomStarted");
+        assertClassMissing("com.naminhyeok.fantazzk.room.application.support.BidPlaced");
+        assertClassMissing("com.naminhyeok.fantazzk.room.application.support.AuctionSettled");
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.domain.event.RoomSchedulingEvent")).isTrue();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.domain.event.RoomStarted")).isTrue();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.domain.event.BidPlaced")).isTrue();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.domain.event.AuctionSettled")).isTrue();
     }
 
     @Test

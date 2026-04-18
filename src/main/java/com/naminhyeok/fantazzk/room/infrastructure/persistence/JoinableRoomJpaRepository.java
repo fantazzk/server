@@ -1,6 +1,6 @@
 package com.naminhyeok.fantazzk.room.infrastructure.persistence;
 
-import com.naminhyeok.fantazzk.room.JoinableRoomView;
+import com.naminhyeok.fantazzk.room.application.query.JoinableRoomSummary;
 import jakarta.persistence.EntityManager;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -11,7 +11,7 @@ import org.springframework.stereotype.Repository;
 class JoinableRoomJpaRepository {
     private final EntityManager entityManager;
 
-    List<JoinableRoomView> findLatestWaitingRooms(int limit, int offset) {
+    List<JoinableRoomSummary> findLatestWaitingRooms(int limit, int offset) {
         @SuppressWarnings("unchecked")
         List<Object[]> rows = entityManager.createNativeQuery(
             """
@@ -30,11 +30,11 @@ class JoinableRoomJpaRepository {
         return rows.stream().map(this::toView).toList();
     }
 
-    private JoinableRoomView toView(Object[] row) {
+    private JoinableRoomSummary toView(Object[] row) {
         String code = (String) row[0];
         String mode = row[1].toString();
         int teamCount = ((Number) row[2]).intValue();
         int joinedLeaderCount = ((Number) row[3]).intValue();
-        return new JoinableRoomView(code, mode, teamCount, joinedLeaderCount, teamCount - joinedLeaderCount, "WAITING_FOR_LEADERS");
+        return new JoinableRoomSummary(code, mode, teamCount, joinedLeaderCount, teamCount - joinedLeaderCount, "WAITING_FOR_LEADERS");
     }
 }

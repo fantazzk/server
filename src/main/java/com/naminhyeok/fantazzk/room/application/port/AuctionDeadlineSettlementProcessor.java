@@ -1,5 +1,7 @@
 package com.naminhyeok.fantazzk.room.application.port;
 
+import java.time.Instant;
+
 public interface AuctionDeadlineSettlementProcessor {
-    void processDueAuction(String code);
+    Instant processDueAuction(String code);
 }

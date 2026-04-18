@@ -1,4 +1,4 @@
-package com.naminhyeok.fantazzk.room.application.support;
+package com.naminhyeok.fantazzk.room.domain.event;
 
 import java.time.Instant;
 

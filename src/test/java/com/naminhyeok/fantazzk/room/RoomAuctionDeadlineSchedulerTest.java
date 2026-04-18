@@ -2,6 +2,7 @@ package com.naminhyeok.fantazzk.room;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.willThrow;
+import static org.mockito.BDDMockito.willReturn;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -27,7 +28,8 @@ class RoomAuctionDeadlineSchedulerTest {
     void schedule는_경매_room_deadline에_맞춰_정산_task를_등록하고_다음_deadline을_재예약한다() {
         FakeTaskScheduler taskScheduler = new FakeTaskScheduler();
         AuctionDeadlineSettlementProcessor processor = mock(AuctionDeadlineSettlementProcessor.class);
-        RecordingSchedules schedules = new RecordingSchedules(List.of(schedule("ROOM01", Instant.parse("2026-04-09T00:00:30Z"))));
+        willReturn(Instant.parse("2026-04-09T00:00:30Z")).given(processor).processDueAuction("ROOM01");
+        RecordingSchedules schedules = new RecordingSchedules();
         RoomAuctionDeadlineScheduler scheduler =
             new RoomAuctionDeadlineScheduler(taskScheduler, processor, schedules, Clock.fixed(NOW, ZoneOffset.UTC));
 
@@ -39,13 +41,14 @@ class RoomAuctionDeadlineSchedulerTest {
 
         verify(processor).processDueAuction("ROOM01");
         assertThat(taskScheduler.activeScheduledInstants()).containsExactly(Instant.parse("2026-04-09T00:00:30Z"));
+        assertThat(schedules.readCount()).isZero();
     }
 
     @Test
     void schedule는_같은_room의_기존_deadline_예약을_취소하고_새_deadline만_남긴다() {
         FakeTaskScheduler taskScheduler = new FakeTaskScheduler();
         RoomAuctionDeadlineScheduler scheduler =
-            new RoomAuctionDeadlineScheduler(taskScheduler, code -> {}, new RecordingSchedules(), Clock.fixed(NOW, ZoneOffset.UTC));
+            new RoomAuctionDeadlineScheduler(taskScheduler, code -> null, new RecordingSchedules(), Clock.fixed(NOW, ZoneOffset.UTC));
 
         scheduler.schedule("ROOM01", Instant.parse("2026-04-09T00:00:15Z"));
         scheduler.schedule("ROOM01", Instant.parse("2026-04-09T00:00:20Z"));
@@ -63,9 +66,9 @@ class RoomAuctionDeadlineSchedulerTest {
                 List.of(
                     schedule("DUE01", Instant.parse("2026-04-09T00:00:05Z")),
                     schedule("FUTURE01", Instant.parse("2026-04-09T00:00:15Z"))
-                ),
-                List.of(schedule("FUTURE01", Instant.parse("2026-04-09T00:00:15Z")))
+                )
             );
+        willReturn((Instant) null).given(processor).processDueAuction("DUE01");
         RoomAuctionDeadlineScheduler scheduler =
             new RoomAuctionDeadlineScheduler(taskScheduler, processor, scheduleReader, Clock.fixed(NOW, ZoneOffset.UTC));
 
@@ -85,13 +88,10 @@ class RoomAuctionDeadlineSchedulerTest {
                     schedule("BROKEN01", Instant.parse("2026-04-09T00:00:05Z")),
                     schedule("DUE02", Instant.parse("2026-04-09T00:00:06Z")),
                     schedule("FUTURE01", Instant.parse("2026-04-09T00:00:15Z"))
-                ),
-                List.of(
-                    schedule("DUE02", Instant.parse("2026-04-09T00:00:25Z")),
-                    schedule("FUTURE01", Instant.parse("2026-04-09T00:00:15Z"))
                 )
             );
         willThrow(RoomStateInvalidException.auctionRoundMissing()).given(processor).processDueAuction("BROKEN01");
+        willReturn(Instant.parse("2026-04-09T00:00:25Z")).given(processor).processDueAuction("DUE02");
         RoomAuctionDeadlineScheduler scheduler =
             new RoomAuctionDeadlineScheduler(taskScheduler, processor, scheduleReader, Clock.fixed(NOW, ZoneOffset.UTC));
 
@@ -116,16 +116,10 @@ class RoomAuctionDeadlineSchedulerTest {
                     schedule("FUTURE01", Instant.parse("2026-04-09T00:00:15Z")),
                     schedule("DUE01", Instant.parse("2026-04-09T00:00:05Z")),
                     schedule("LEGACY01", Instant.parse("2026-04-09T00:00:01Z"))
-                ),
-                List.of(
-                    schedule("LEGACY01", Instant.parse("2026-04-09T00:00:20Z")),
-                    schedule("FUTURE01", Instant.parse("2026-04-09T00:00:15Z"))
-                ),
-                List.of(
-                    schedule("LEGACY01", Instant.parse("2026-04-09T00:00:20Z")),
-                    schedule("FUTURE01", Instant.parse("2026-04-09T00:00:15Z"))
                 )
             );
+        willReturn(Instant.parse("2026-04-09T00:00:20Z")).given(processor).processDueAuction("LEGACY01");
+        willReturn((Instant) null).given(processor).processDueAuction("DUE01");
         RoomAuctionDeadlineScheduler scheduler =
             new RoomAuctionDeadlineScheduler(taskScheduler, processor, scheduleReader, Clock.fixed(NOW, ZoneOffset.UTC));
 
@@ -146,7 +140,7 @@ class RoomAuctionDeadlineSchedulerTest {
         FakeTaskScheduler taskScheduler = new FakeTaskScheduler();
         AuctionScheduleReader scheduleReader = new RecordingSchedules(manyFutureSchedules(205));
         RoomAuctionDeadlineScheduler scheduler =
-            new RoomAuctionDeadlineScheduler(taskScheduler, code -> {}, scheduleReader, Clock.fixed(NOW, ZoneOffset.UTC));
+            new RoomAuctionDeadlineScheduler(taskScheduler, code -> null, scheduleReader, Clock.fixed(NOW, ZoneOffset.UTC));
 
         scheduler.catchUpAndReschedule();
 
@@ -155,6 +149,31 @@ class RoomAuctionDeadlineSchedulerTest {
             Instant.parse("2026-04-09T00:01:00Z"),
             Instant.parse("2026-04-09T00:04:24Z")
         );
+    }
+
+    @Test
+    void due_room_처리_후에는_reader를_다시_재조회하지_않고_processor가_돌려준_deadline으로만_재예약한다() {
+        FakeTaskScheduler taskScheduler = new FakeTaskScheduler();
+        AuctionDeadlineSettlementProcessor processor = mock(AuctionDeadlineSettlementProcessor.class);
+        RecordingSchedules scheduleReader =
+            new RecordingSchedules(
+                List.of(
+                    schedule("DUE01", Instant.parse("2026-04-09T00:00:05Z")),
+                    schedule("FUTURE01", Instant.parse("2026-04-09T00:00:15Z"))
+                )
+            );
+        willReturn(Instant.parse("2026-04-09T00:00:25Z")).given(processor).processDueAuction("DUE01");
+        RoomAuctionDeadlineScheduler scheduler =
+            new RoomAuctionDeadlineScheduler(taskScheduler, processor, scheduleReader, Clock.fixed(NOW, ZoneOffset.UTC));
+
+        scheduler.catchUpAndReschedule();
+
+        assertThat(scheduleReader.readCount()).isEqualTo(1);
+        assertThat(taskScheduler.activeScheduledInstants())
+            .containsExactly(
+                Instant.parse("2026-04-09T00:00:25Z"),
+                Instant.parse("2026-04-09T00:00:15Z")
+            );
     }
 
     private static AuctionScheduleCandidate schedule(String code, Instant deadline) {
@@ -177,22 +196,24 @@ class RoomAuctionDeadlineSchedulerTest {
 
     private static final class RecordingSchedules implements AuctionScheduleReader {
         private final Queue<List<AuctionScheduleCandidate>> responses = new ArrayDeque<>();
-        private List<AuctionScheduleCandidate> lastResponse = List.of();
+        private int readCount;
 
         private RecordingSchedules(List<AuctionScheduleCandidate>... responses) {
             this.responses.addAll(List.of(responses));
-            if (!this.responses.isEmpty()) {
-                lastResponse = this.responses.peek();
-            }
         }
 
         @Override
         public List<AuctionScheduleCandidate> findInProgressAuctionSchedules() {
+            readCount += 1;
             List<AuctionScheduleCandidate> response = responses.poll();
-            if (response != null) {
-                lastResponse = response;
+            if (response == null) {
+                throw new AssertionError("reader를 추가 재조회하면 안 됩니다");
             }
-            return lastResponse;
+            return response;
+        }
+
+        private int readCount() {
+            return readCount;
         }
     }
 }

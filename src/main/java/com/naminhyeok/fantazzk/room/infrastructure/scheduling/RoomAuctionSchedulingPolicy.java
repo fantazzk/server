@@ -1,6 +1,6 @@
 package com.naminhyeok.fantazzk.room.infrastructure.scheduling;
 
-import com.naminhyeok.fantazzk.room.application.support.RoomSchedulingEvent;
+import com.naminhyeok.fantazzk.room.domain.event.RoomSchedulingEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;

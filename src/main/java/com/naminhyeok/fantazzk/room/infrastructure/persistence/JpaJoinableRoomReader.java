@@ -1,7 +1,7 @@
 package com.naminhyeok.fantazzk.room.infrastructure.persistence;
 
-import com.naminhyeok.fantazzk.room.JoinableRoomView;
 import com.naminhyeok.fantazzk.room.application.query.JoinableRoomReader;
+import com.naminhyeok.fantazzk.room.application.query.JoinableRoomSummary;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -15,11 +15,11 @@ class JpaJoinableRoomReader implements JoinableRoomReader {
     private final JoinableRoomJpaRepository repository;
 
     @Override
-    public List<JoinableRoomView> findLatestWaitingRooms(int limit) {
-        List<JoinableRoomView> joinableRooms = new ArrayList<>();
+    public List<JoinableRoomSummary> findLatestWaitingRooms(int limit) {
+        List<JoinableRoomSummary> joinableRooms = new ArrayList<>();
         int offset = 0;
         while (joinableRooms.size() < limit) {
-            List<JoinableRoomView> waitingRooms = repository.findLatestWaitingRooms(WAITING_ROOM_PAGE_SIZE, offset);
+            List<JoinableRoomSummary> waitingRooms = repository.findLatestWaitingRooms(WAITING_ROOM_PAGE_SIZE, offset);
             if (waitingRooms.isEmpty()) {
                 return joinableRooms;
             }

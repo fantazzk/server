@@ -2,9 +2,9 @@ package com.naminhyeok.fantazzk.room;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.naminhyeok.fantazzk.room.application.support.AuctionSettled;
-import com.naminhyeok.fantazzk.room.application.support.BidPlaced;
-import com.naminhyeok.fantazzk.room.application.support.RoomStarted;
+import com.naminhyeok.fantazzk.room.domain.event.AuctionSettled;
+import com.naminhyeok.fantazzk.room.domain.event.BidPlaced;
+import com.naminhyeok.fantazzk.room.domain.event.RoomStarted;
 import com.naminhyeok.fantazzk.room.infrastructure.scheduling.RoomAuctionDeadlineScheduler;
 import com.naminhyeok.fantazzk.room.infrastructure.scheduling.RoomAuctionSchedulingPolicy;
 import java.time.Instant;
@@ -18,7 +18,7 @@ class RoomAuctionSchedulingPolicyTest {
     void roomStarted는_deadline을_예약한다() {
         FakeTaskScheduler taskScheduler = new FakeTaskScheduler();
         RoomAuctionSchedulingPolicy policy = new RoomAuctionSchedulingPolicy(
-            new RoomAuctionDeadlineScheduler(taskScheduler, code -> {}, List::of, Clock.fixed(Instant.EPOCH, ZoneOffset.UTC))
+            new RoomAuctionDeadlineScheduler(taskScheduler, code -> null, List::of, Clock.fixed(Instant.EPOCH, ZoneOffset.UTC))
         );
 
         policy.on(new RoomStarted("ROOM01", Instant.parse("2026-04-09T00:00:15Z")));
@@ -30,7 +30,7 @@ class RoomAuctionSchedulingPolicyTest {
     void bidPlaced는_deadline을_갱신한다() {
         FakeTaskScheduler taskScheduler = new FakeTaskScheduler();
         RoomAuctionDeadlineScheduler scheduler =
-            new RoomAuctionDeadlineScheduler(taskScheduler, code -> {}, List::of, Clock.fixed(Instant.EPOCH, ZoneOffset.UTC));
+            new RoomAuctionDeadlineScheduler(taskScheduler, code -> null, List::of, Clock.fixed(Instant.EPOCH, ZoneOffset.UTC));
         scheduler.refresh("ROOM01", Instant.parse("2026-04-09T00:00:15Z"));
         RoomAuctionSchedulingPolicy policy = new RoomAuctionSchedulingPolicy(scheduler);
 
@@ -44,7 +44,7 @@ class RoomAuctionSchedulingPolicyTest {
     void auctionSettled는_다음_deadline이_없으면_예약을_해제한다() {
         FakeTaskScheduler taskScheduler = new FakeTaskScheduler();
         RoomAuctionDeadlineScheduler scheduler =
-            new RoomAuctionDeadlineScheduler(taskScheduler, code -> {}, List::of, Clock.fixed(Instant.EPOCH, ZoneOffset.UTC));
+            new RoomAuctionDeadlineScheduler(taskScheduler, code -> null, List::of, Clock.fixed(Instant.EPOCH, ZoneOffset.UTC));
         scheduler.refresh("ROOM01", Instant.parse("2026-04-09T00:00:30Z"));
         RoomAuctionSchedulingPolicy policy = new RoomAuctionSchedulingPolicy(scheduler);
 

@@ -80,6 +80,14 @@ class RoomLayeredArchitectureTest {
         )
         .should(notDependOnRoomRootContracts());
 
+    @ArchTest
+    static final ArchRule room_query_seams_must_not_depend_on_root_views = noClasses()
+        .that().resideInAnyPackage(
+            "com.naminhyeok.fantazzk.room.application.query..",
+            "com.naminhyeok.fantazzk.room.infrastructure.persistence.."
+        )
+        .should().dependOnClassesThat().haveFullyQualifiedName("com.naminhyeok.fantazzk.room.JoinableRoomView");
+
     private static ArchCondition<JavaClass> haveSimpleNameNotMatching(String pattern) {
         return new ArchCondition<>("have a simple name not matching " + pattern) {
             @Override
