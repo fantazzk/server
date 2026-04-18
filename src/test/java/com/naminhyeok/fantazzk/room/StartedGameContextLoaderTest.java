@@ -18,10 +18,25 @@ import com.naminhyeok.fantazzk.room.domain.room.Room;
 import com.naminhyeok.fantazzk.room.domain.shared.GameId;
 import com.naminhyeok.fantazzk.room.domain.shared.RoomErrorType;
 import com.naminhyeok.fantazzk.room.domain.shared.RoomId;
+import com.naminhyeok.fantazzk.room.domain.shared.TeamLeaderId;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 class StartedGameContextLoaderTest {
+    @Test
+    void uuid기반_started_game_인증은_올바른_room과_game과_caller를_반환한다() {
+        Room room = RoomApiTestFixtures.startedAuctionRoom();
+        Game game = startedAuctionGameOf(room);
+        StartedGameContextLoader loader =
+            new StartedGameContextLoader(new SingleRoomRepository(room), new SingleGameRepository(game), new RoomActionAuthorizer());
+
+        var authenticated = loader.authenticate(game.getId().gameId(), RoomApiTestFixtures.HOST_TOKEN);
+
+        assertThat(authenticated.room().getId()).isEqualTo(room.getId());
+        assertThat(authenticated.game().getId()).isEqualTo(game.getId());
+        assertThat(authenticated.caller().getId()).isEqualTo(new TeamLeaderId(RoomApiTestFixtures.HOST_ID));
+    }
+
     @Test
     void 기존_game이_가리키는_room이_없으면_GAME_NOT_FOUND를_반환한다() {
         Room room = RoomApiTestFixtures.startedAuctionRoom();
