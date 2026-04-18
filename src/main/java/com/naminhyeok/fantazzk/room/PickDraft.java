@@ -13,6 +13,7 @@ class PickDraft {
     private final Rooms rooms;
     private final Games games;
     private final RoomActionAuthorizer roomActionAuthorizer;
+    private final StartedGameContextLoader startedGameContextLoader;
     private final RoomSnapshotPublisher roomSnapshotPublisher;
 
     @Transactional
@@ -34,13 +35,11 @@ class PickDraft {
     @Transactional
     public RosterMember pick(UUID gameId, String actionToken, String playerName) {
         try {
-            Game game = games.findById(new GameId(gameId)).orElseThrow(() -> CoreException.of(RoomErrorType.GAME_NOT_FOUND));
-            Room room = rooms.findById(game.getRoomId()).orElseThrow(() -> CoreException.of(RoomErrorType.GAME_NOT_FOUND));
-            RoomTeamLeader caller = roomActionAuthorizer.authenticate(room, actionToken);
-            DraftGame draftGame = requireDraftGame(game);
-            RosterMember member = draftGame.pick(caller.getId(), playerName);
+            StartedGameActionContext action = startedGameContextLoader.authenticate(gameId, actionToken);
+            DraftGame draftGame = requireDraftGame(action.game());
+            RosterMember member = draftGame.pick(action.caller().getId(), playerName);
             games.save(draftGame);
-            Room saved = rooms.saveAndFlush(room);
+            Room saved = rooms.saveAndFlush(action.room());
             roomSnapshotPublisher.publishAfterCommit(new RoomDetails(saved, draftGame));
             return member;
         } catch (OptimisticLockingFailureException ex) {

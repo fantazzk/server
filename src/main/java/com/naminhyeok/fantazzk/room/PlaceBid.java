@@ -15,6 +15,7 @@ class PlaceBid {
     private final Rooms rooms;
     private final Games games;
     private final RoomActionAuthorizer roomActionAuthorizer;
+    private final StartedGameContextLoader startedGameContextLoader;
     private final RoomSnapshotPublisher roomSnapshotPublisher;
     private final Clock clock;
 
@@ -37,13 +38,11 @@ class PlaceBid {
     @Transactional
     public AuctionBid place(UUID gameId, String actionToken, int amount) {
         try {
-            Game game = games.findById(new GameId(gameId)).orElseThrow(() -> CoreException.of(RoomErrorType.GAME_NOT_FOUND));
-            Room room = rooms.findById(game.getRoomId()).orElseThrow(() -> CoreException.of(RoomErrorType.GAME_NOT_FOUND));
-            RoomTeamLeader caller = roomActionAuthorizer.authenticate(room, actionToken);
-            AuctionGame auctionGame = requireAuctionGame(game);
-            AuctionBid bid = auctionGame.placeBid(caller.getId(), amount, Instant.now(clock));
+            StartedGameActionContext action = startedGameContextLoader.authenticate(gameId, actionToken);
+            AuctionGame auctionGame = requireAuctionGame(action.game());
+            AuctionBid bid = auctionGame.placeBid(action.caller().getId(), amount, Instant.now(clock));
             games.save(auctionGame);
-            Room saved = rooms.saveAndFlush(room);
+            Room saved = rooms.saveAndFlush(action.room());
             roomSnapshotPublisher.publishAfterCommit(new RoomDetails(saved, auctionGame));
             return bid;
         } catch (OptimisticLockingFailureException ex) {
