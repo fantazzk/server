@@ -5,13 +5,13 @@ import com.naminhyeok.fantazzk.room.domain.handoff.*;
 import com.naminhyeok.fantazzk.room.domain.shared.*;
 
 import com.naminhyeok.fantazzk.CoreException;
-import com.naminhyeok.fantazzk.room.domain.game.GameId;
 import com.naminhyeok.fantazzk.room.domain.handoff.GameRules;
 import com.naminhyeok.fantazzk.room.domain.handoff.StartedAuctionParticipant;
 import com.naminhyeok.fantazzk.room.domain.handoff.StartedDraftParticipant;
 import com.naminhyeok.fantazzk.room.domain.handoff.StartedGamePlayer;
 import com.naminhyeok.fantazzk.room.domain.handoff.StartedGameSnapshot;
 import com.naminhyeok.fantazzk.room.domain.shared.DraftOrderStrategy;
+import com.naminhyeok.fantazzk.room.domain.shared.GameId;
 import com.naminhyeok.fantazzk.room.domain.shared.TeamLeaderId;
 import jakarta.persistence.Access;
 import jakarta.persistence.AccessType;

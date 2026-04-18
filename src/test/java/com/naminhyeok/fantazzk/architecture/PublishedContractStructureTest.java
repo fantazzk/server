@@ -44,6 +44,8 @@ class PublishedContractStructureTest {
         assertThat(isPublic("com.naminhyeok.fantazzk.room.domain.room.Room")).isTrue();
         assertThat(isPublic("com.naminhyeok.fantazzk.room.domain.game.Game")).isTrue();
         assertThat(isPublic("com.naminhyeok.fantazzk.room.domain.repository.Rooms")).isTrue();
+        assertClassMissing("com.naminhyeok.fantazzk.room.domain.game.GameId");
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.domain.shared.GameId")).isTrue();
         assertClassMissing("com.naminhyeok.fantazzk.room.JoinableRoomReader");
         assertClassMissing("com.naminhyeok.fantazzk.room.AuctionScheduleReader");
         assertClassMissing("com.naminhyeok.fantazzk.room.AuctionScheduleCandidate");

@@ -1,8 +1,8 @@
 package com.naminhyeok.fantazzk.room.domain.handoff;
 
-import com.naminhyeok.fantazzk.room.domain.game.GameId;
 import com.naminhyeok.fantazzk.room.domain.room.RoomId;
 import com.naminhyeok.fantazzk.room.domain.room.RoomMode;
+import com.naminhyeok.fantazzk.room.domain.shared.GameId;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
