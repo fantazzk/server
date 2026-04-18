@@ -15,7 +15,7 @@ class GameFactory {
                 snapshot.participants(),
                 snapshot.playerPool(),
                 1,
-                snapshot.startedAt().plusSeconds(snapshot.rules().pickBanTime())
+                snapshot.startedAt().plusSeconds(snapshot.rules().auctionRules().pickBanTime())
             );
             case DRAFT -> new DraftGame(
                 snapshot.gameId(),

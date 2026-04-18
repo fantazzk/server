@@ -47,10 +47,10 @@ class GameRepositoryIntegrationTest {
                         new GameId(UUID.fromString("00000000-0000-0000-0000-000000000101")),
                         STARTED_AT,
                         RoomMode.AUCTION,
-                        new GameRules(2, 2, 300, 45, 10, 1, null),
+                        GameRules.auction(2, 2, 300, 45, 10, 1),
                         List.of(
-                            new GameParticipant(new TeamLeaderId("host-1"), "호스트", null, 300),
-                            new GameParticipant(new TeamLeaderId("guest-1"), "게스트", null, 300)
+                            GameParticipant.auction(new TeamLeaderId("host-1"), "호스트", 300),
+                            GameParticipant.auction(new TeamLeaderId("guest-1"), "게스트", 300)
                         ),
                         List.of(
                             new GamePlayer(new RoomPlayerId(0), "선수1", "TOP", 0),
@@ -71,11 +71,11 @@ class GameRepositoryIntegrationTest {
         assertThat(reloaded.getRoomCode()).isEqualTo("ROOM01");
         assertThat(reloaded.getStatus()).isEqualTo(GameStatus.IN_PROGRESS);
         assertThat(reloaded.getStartedAt()).isEqualTo(STARTED_AT);
-        assertThat(reloaded.getRules()).isEqualTo(new GameRules(2, 2, 300, 45, 10, 1, null));
+        assertThat(reloaded.getRules()).isEqualTo(GameRules.auction(2, 2, 300, 45, 10, 1));
         assertThat(reloaded.getParticipants())
             .containsExactly(
-                new GameParticipant(new TeamLeaderId("host-1"), "호스트", null, 300),
-                new GameParticipant(new TeamLeaderId("guest-1"), "게스트", null, 300)
+                GameParticipant.auction(new TeamLeaderId("host-1"), "호스트", 300),
+                GameParticipant.auction(new TeamLeaderId("guest-1"), "게스트", 300)
             );
         assertThat(reloaded.getPlayerPool())
             .containsExactly(
@@ -103,10 +103,10 @@ class GameRepositoryIntegrationTest {
                         new GameId(UUID.fromString("00000000-0000-0000-0000-000000000103")),
                         STARTED_AT,
                         RoomMode.AUCTION,
-                        new GameRules(2, 2, 300, 45, 10, 1, null),
+                        GameRules.auction(2, 2, 300, 45, 10, 1),
                         List.of(
-                            new GameParticipant(new TeamLeaderId("host-1"), "호스트", null, 300),
-                            new GameParticipant(new TeamLeaderId("guest-1"), "게스트", null, 300)
+                            GameParticipant.auction(new TeamLeaderId("host-1"), "호스트", 300),
+                            GameParticipant.auction(new TeamLeaderId("guest-1"), "게스트", 300)
                         ),
                         List.of(
                             new GamePlayer(new RoomPlayerId(0), "선수1", "TOP", 0),
@@ -148,10 +148,10 @@ class GameRepositoryIntegrationTest {
                         new GameId(UUID.fromString("00000000-0000-0000-0000-000000000102")),
                         STARTED_AT,
                         RoomMode.DRAFT,
-                        new GameRules(2, 2, null, 30, null, null, RoomTemplateSpec.DraftOrderStrategy.SNAKE),
+                        GameRules.draft(2, 2, 30, RoomTemplateSpec.DraftOrderStrategy.SNAKE),
                         List.of(
-                            new GameParticipant(new TeamLeaderId("host-1"), "호스트", 1, null),
-                            new GameParticipant(new TeamLeaderId("guest-1"), "게스트", 2, null)
+                            GameParticipant.draft(new TeamLeaderId("host-1"), "호스트", 1),
+                            GameParticipant.draft(new TeamLeaderId("guest-1"), "게스트", 2)
                         ),
                         List.of(
                             new GamePlayer(new RoomPlayerId(0), "선수1", "TOP", 0),
@@ -172,11 +172,11 @@ class GameRepositoryIntegrationTest {
         assertThat(reloaded.getRoomCode()).isEqualTo("ROOM02");
         assertThat(reloaded.getStatus()).isEqualTo(GameStatus.IN_PROGRESS);
         assertThat(reloaded.getStartedAt()).isEqualTo(STARTED_AT);
-        assertThat(reloaded.getRules()).isEqualTo(new GameRules(2, 2, null, 30, null, null, RoomTemplateSpec.DraftOrderStrategy.SNAKE));
+        assertThat(reloaded.getRules()).isEqualTo(GameRules.draft(2, 2, 30, RoomTemplateSpec.DraftOrderStrategy.SNAKE));
         assertThat(reloaded.getParticipants())
             .containsExactly(
-                new GameParticipant(new TeamLeaderId("host-1"), "호스트", 1, null),
-                new GameParticipant(new TeamLeaderId("guest-1"), "게스트", 2, null)
+                GameParticipant.draft(new TeamLeaderId("host-1"), "호스트", 1),
+                GameParticipant.draft(new TeamLeaderId("guest-1"), "게스트", 2)
             );
         assertThat(reloaded.getPlayerPool())
             .containsExactly(
@@ -202,10 +202,10 @@ class GameRepositoryIntegrationTest {
                         new GameId(UUID.fromString("00000000-0000-0000-0000-000000000104")),
                         STARTED_AT,
                         RoomMode.DRAFT,
-                        new GameRules(2, 2, null, 30, null, null, RoomTemplateSpec.DraftOrderStrategy.SNAKE),
+                        GameRules.draft(2, 2, 30, RoomTemplateSpec.DraftOrderStrategy.SNAKE),
                         List.of(
-                            new GameParticipant(new TeamLeaderId("host-1"), "호스트", 1, null),
-                            new GameParticipant(new TeamLeaderId("guest-1"), "게스트", 2, null)
+                            GameParticipant.draft(new TeamLeaderId("host-1"), "호스트", 1),
+                            GameParticipant.draft(new TeamLeaderId("guest-1"), "게스트", 2)
                         ),
                         List.of(
                             new GamePlayer(new RoomPlayerId(0), "선수1", "TOP", 0),

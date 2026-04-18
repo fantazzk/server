@@ -112,10 +112,10 @@ class DraftGameTest {
             new RoomId(UUID.fromString("00000000-0000-0000-0000-000000000001")),
             "ROOM01",
             STARTED_AT,
-            new GameRules(2, teamSize, null, 30, null, null, draftOrderStrategy),
+            GameRules.draft(2, teamSize, 30, draftOrderStrategy),
             List.of(
-                new GameParticipant(HOST_ID, "호스트", 1, null),
-                new GameParticipant(GUEST_ID, "게스트", 2, null)
+                GameParticipant.draft(HOST_ID, "호스트", 1),
+                GameParticipant.draft(GUEST_ID, "게스트", 2)
             ),
             playerNames.stream()
                 .map(name -> new GamePlayer(new RoomPlayerId(playerNames.indexOf(name)), name, "TOP", playerNames.indexOf(name)))

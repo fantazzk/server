@@ -100,10 +100,10 @@ class AuctionGameTest {
             new RoomId(UUID.fromString("00000000-0000-0000-0000-000000000001")),
             "ROOM01",
             STARTED_AT,
-            new GameRules(2, 2, 300, PICK_BAN_TIME, MIN_BID_UNIT, null, null),
+            GameRules.auction(2, 2, 300, PICK_BAN_TIME, MIN_BID_UNIT, null),
             List.of(
-                new GameParticipant(HOST_ID, "호스트", null, 300),
-                new GameParticipant(GUEST_ID, "게스트", null, 300)
+                GameParticipant.auction(HOST_ID, "호스트", 300),
+                GameParticipant.auction(GUEST_ID, "게스트", 300)
             ),
             List.of(
                 new GamePlayer(new RoomPlayerId(0), "선수1", "TOP", 0)
@@ -119,10 +119,10 @@ class AuctionGameTest {
             new RoomId(UUID.fromString("00000000-0000-0000-0000-000000000002")),
             "ROOM02",
             STARTED_AT,
-            new GameRules(2, 2, 300, PICK_BAN_TIME, MIN_BID_UNIT, null, null),
+            GameRules.auction(2, 2, 300, PICK_BAN_TIME, MIN_BID_UNIT, null),
             List.of(
-                new GameParticipant(HOST_ID, "호스트", null, 300),
-                new GameParticipant(GUEST_ID, "게스트", null, 300)
+                GameParticipant.auction(HOST_ID, "호스트", 300),
+                GameParticipant.auction(GUEST_ID, "게스트", 300)
             ),
             List.of(
                 new GamePlayer(new RoomPlayerId(0), "선수1", "TOP", 0),

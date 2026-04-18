@@ -121,7 +121,10 @@ abstract class Game implements AggregateRoot<Game, GameId> {
     }
 
     GameRules getRules() {
-        return new GameRules(teamCount, teamSize, budget, pickBanTime, minBidUnit, positionLimit, draftOrderStrategy);
+        if (draftOrderStrategy != null) {
+            return GameRules.draft(teamCount, teamSize, pickBanTime, draftOrderStrategy);
+        }
+        return GameRules.auction(teamCount, teamSize, budget, pickBanTime, minBidUnit, positionLimit);
     }
 
     List<GameParticipant> getParticipants() {
