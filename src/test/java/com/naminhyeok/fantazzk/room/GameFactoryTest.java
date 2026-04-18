@@ -57,7 +57,7 @@ class GameFactoryTest {
                 new GameId(UUID.fromString("00000000-0000-0000-0000-000000000102")),
                 STARTED_AT,
                 RoomMode.DRAFT,
-                GameRules.draft(2, 2, 30, RoomTemplateSpec.DraftOrderStrategy.SNAKE),
+                GameRules.draft(2, 2, 30, DraftOrderStrategy.SNAKE),
                 List.of(
                     GameParticipant.draft(new TeamLeaderId("host-1"), "호스트", 1),
                     GameParticipant.draft(new TeamLeaderId("guest-1"), "게스트", 2)

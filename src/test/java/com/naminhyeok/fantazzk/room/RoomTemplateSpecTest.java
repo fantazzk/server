@@ -35,7 +35,7 @@ class RoomTemplateSpecTest {
         assertThat(spec.teamCount()).isEqualTo(2);
         assertThat(spec.teamSize()).isEqualTo(3);
         assertThat(spec.pickBanTime()).isEqualTo(30);
-        assertThat(spec.draftOrderStrategy()).isEqualTo(RoomTemplateSpec.DraftOrderStrategy.SNAKE);
+        assertThat(spec.draftOrderStrategy()).isEqualTo(DraftOrderStrategy.SNAKE);
         assertThat(spec.players())
             .extracting(RoomTemplateSpec.Player::id, RoomTemplateSpec.Player::name, RoomTemplateSpec.Player::position, RoomTemplateSpec.Player::displayOrder)
             .containsExactly(

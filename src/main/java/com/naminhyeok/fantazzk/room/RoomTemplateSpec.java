@@ -89,21 +89,6 @@ record RoomTemplateSpec(
         );
     }
 
-    public enum DraftOrderStrategy {
-        SNAKE,
-        FIXED;
-
-        static DraftOrderStrategy from(TemplateCatalog.DraftOrderStrategy strategy) {
-            if (strategy == null) {
-                return null;
-            }
-            return switch (strategy) {
-                case SNAKE -> SNAKE;
-                case FIXED -> FIXED;
-            };
-        }
-    }
-
     public record Player(RoomPlayerId id, String name, String position, int displayOrder) {
         static Player from(TemplateCatalog.PlayerBlueprint player) {
             Objects.requireNonNull(player, "player must not be null");

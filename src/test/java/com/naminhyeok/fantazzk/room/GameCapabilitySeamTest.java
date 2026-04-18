@@ -24,7 +24,7 @@ class GameCapabilitySeamTest {
 
     @Test
     void 드래프트_규칙은_draft_seam으로_드러난다() {
-        GameRules rules = GameRules.draft(2, 2, 30, RoomTemplateSpec.DraftOrderStrategy.SNAKE);
+        GameRules rules = GameRules.draft(2, 2, 30, DraftOrderStrategy.SNAKE);
 
         assertThat(rules.mode()).isEqualTo(RoomMode.DRAFT);
         assertThat(rules.draftRules())
@@ -32,7 +32,7 @@ class GameCapabilitySeamTest {
                 GameRules.DraftRules::pickBanTime,
                 GameRules.DraftRules::draftOrderStrategy
             )
-            .containsExactly(30, RoomTemplateSpec.DraftOrderStrategy.SNAKE);
+            .containsExactly(30, DraftOrderStrategy.SNAKE);
         assertThatThrownBy(rules::auctionRules).isInstanceOf(IllegalStateException.class);
     }
 

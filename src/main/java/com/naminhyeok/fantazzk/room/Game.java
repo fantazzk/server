@@ -61,7 +61,7 @@ abstract class Game implements AggregateRoot<Game, GameId> {
     private final Integer positionLimit;
     @Enumerated(EnumType.STRING)
     @Column(name = "draft_order_strategy", updatable = false)
-    private final RoomTemplateSpec.DraftOrderStrategy draftOrderStrategy;
+    private final DraftOrderStrategy draftOrderStrategy;
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "game_participant", joinColumns = @JoinColumn(name = "participants_game_id"))
     @OrderColumn(name = "participant_order")

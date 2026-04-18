@@ -48,7 +48,7 @@ class Room implements AggregateRoot<Room, RoomId> {
     @Column(name = "position_limit")
     private final Integer positionLimit;
     @Enumerated(EnumType.STRING)
-    private final RoomTemplateSpec.DraftOrderStrategy draftOrderStrategy;
+    private final DraftOrderStrategy draftOrderStrategy;
     @Column(name = "started_game_id")
     @Convert(converter = GameId.JpaConverter.class)
     private GameId startedGameId;
@@ -72,7 +72,7 @@ class Room implements AggregateRoot<Room, RoomId> {
         int pickBanTime,
         Integer minBidUnit,
         Integer positionLimit,
-        RoomTemplateSpec.DraftOrderStrategy draftOrderStrategy
+        DraftOrderStrategy draftOrderStrategy
     ) {
         this.id = new RoomId(UUID.randomUUID());
         this.code = code;

@@ -148,7 +148,7 @@ class GameRepositoryIntegrationTest {
                         new GameId(UUID.fromString("00000000-0000-0000-0000-000000000102")),
                         STARTED_AT,
                         RoomMode.DRAFT,
-                        GameRules.draft(2, 2, 30, RoomTemplateSpec.DraftOrderStrategy.SNAKE),
+                        GameRules.draft(2, 2, 30, DraftOrderStrategy.SNAKE),
                         List.of(
                             GameParticipant.draft(new TeamLeaderId("host-1"), "호스트", 1),
                             GameParticipant.draft(new TeamLeaderId("guest-1"), "게스트", 2)
@@ -172,7 +172,7 @@ class GameRepositoryIntegrationTest {
         assertThat(reloaded.getRoomCode()).isEqualTo("ROOM02");
         assertThat(reloaded.getStatus()).isEqualTo(GameStatus.IN_PROGRESS);
         assertThat(reloaded.getStartedAt()).isEqualTo(STARTED_AT);
-        assertThat(reloaded.getRules()).isEqualTo(GameRules.draft(2, 2, 30, RoomTemplateSpec.DraftOrderStrategy.SNAKE));
+        assertThat(reloaded.getRules()).isEqualTo(GameRules.draft(2, 2, 30, DraftOrderStrategy.SNAKE));
         assertThat(reloaded.getParticipants())
             .containsExactly(
                 GameParticipant.draft(new TeamLeaderId("host-1"), "호스트", 1),
@@ -202,7 +202,7 @@ class GameRepositoryIntegrationTest {
                         new GameId(UUID.fromString("00000000-0000-0000-0000-000000000104")),
                         STARTED_AT,
                         RoomMode.DRAFT,
-                        GameRules.draft(2, 2, 30, RoomTemplateSpec.DraftOrderStrategy.SNAKE),
+                        GameRules.draft(2, 2, 30, DraftOrderStrategy.SNAKE),
                         List.of(
                             GameParticipant.draft(new TeamLeaderId("host-1"), "호스트", 1),
                             GameParticipant.draft(new TeamLeaderId("guest-1"), "게스트", 2)
@@ -265,7 +265,7 @@ class GameRepositoryIntegrationTest {
                 null,
                 30,
                 null,
-                RoomTemplateSpec.DraftOrderStrategy.SNAKE,
+                DraftOrderStrategy.SNAKE,
                 List.of(
                     new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
                     new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", "JUNGLE", 1)

@@ -67,7 +67,7 @@ final class RoomApiTestFixtures {
                     null,
                     30,
                     null,
-                    RoomTemplateSpec.DraftOrderStrategy.SNAKE,
+                    DraftOrderStrategy.SNAKE,
                     List.of(
                         new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
                         new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
@@ -145,7 +145,7 @@ final class RoomApiTestFixtures {
                     null,
                     30,
                     null,
-                    RoomTemplateSpec.DraftOrderStrategy.SNAKE,
+                    DraftOrderStrategy.SNAKE,
                     List.of(
                         new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
                         new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", "JUNGLE", 1),

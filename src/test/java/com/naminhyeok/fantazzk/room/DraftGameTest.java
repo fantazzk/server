@@ -35,7 +35,7 @@ class DraftGameTest {
 
     @Test
     void SNAKE_드래프트_게임은_2라운드에서_역순으로_현재_팀장을_계산한다() {
-        DraftGame game = startedDraftGame(RoomTemplateSpec.DraftOrderStrategy.SNAKE, 3, List.of("선수1", "선수2", "선수3", "선수4"));
+        DraftGame game = startedDraftGame(DraftOrderStrategy.SNAKE, 3, List.of("선수1", "선수2", "선수3", "선수4"));
 
         game.pick(HOST_ID, "선수1");
         game.pick(GUEST_ID, "선수2");
@@ -47,7 +47,7 @@ class DraftGameTest {
 
     @Test
     void FIXED_드래프트_게임은_2라운드에서도_같은_순서로_현재_팀장을_계산한다() {
-        DraftGame game = startedDraftGame(RoomTemplateSpec.DraftOrderStrategy.FIXED, 3, List.of("선수1", "선수2", "선수3", "선수4"));
+        DraftGame game = startedDraftGame(DraftOrderStrategy.FIXED, 3, List.of("선수1", "선수2", "선수3", "선수4"));
 
         game.pick(HOST_ID, "선수1");
         game.pick(GUEST_ID, "선수2");
@@ -99,11 +99,11 @@ class DraftGameTest {
     }
 
     private DraftGame startedDraftGame() {
-        return startedDraftGame(RoomTemplateSpec.DraftOrderStrategy.SNAKE, 2, List.of("선수1", "선수2"));
+        return startedDraftGame(DraftOrderStrategy.SNAKE, 2, List.of("선수1", "선수2"));
     }
 
     private DraftGame startedDraftGame(
-        RoomTemplateSpec.DraftOrderStrategy draftOrderStrategy,
+        DraftOrderStrategy draftOrderStrategy,
         int teamSize,
         List<String> playerNames
     ) {

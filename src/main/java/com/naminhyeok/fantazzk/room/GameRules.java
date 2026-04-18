@@ -10,13 +10,13 @@ record GameRules(
     int pickBanTime,
     Integer minBidUnit,
     Integer positionLimit,
-    RoomTemplateSpec.DraftOrderStrategy draftOrderStrategy
+    DraftOrderStrategy draftOrderStrategy
 ) {
     static GameRules auction(int teamCount, int teamSize, int budget, int pickBanTime, int minBidUnit, Integer positionLimit) {
         return new GameRules(RoomMode.AUCTION, teamCount, teamSize, budget, pickBanTime, minBidUnit, positionLimit, null);
     }
 
-    static GameRules draft(int teamCount, int teamSize, int pickBanTime, RoomTemplateSpec.DraftOrderStrategy draftOrderStrategy) {
+    static GameRules draft(int teamCount, int teamSize, int pickBanTime, DraftOrderStrategy draftOrderStrategy) {
         return new GameRules(
             RoomMode.DRAFT,
             teamCount,
@@ -53,7 +53,7 @@ record GameRules(
 
     record DraftRules(
         int pickBanTime,
-        RoomTemplateSpec.DraftOrderStrategy draftOrderStrategy
+        DraftOrderStrategy draftOrderStrategy
     ) {
     }
 }

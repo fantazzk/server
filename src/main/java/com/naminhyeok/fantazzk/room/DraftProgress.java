@@ -12,7 +12,7 @@ record DraftProgress(
 ) {
     static DraftProgress from(
         List<String> roundOneLeaderIds,
-        RoomTemplateSpec.DraftOrderStrategy strategy,
+        DraftOrderStrategy strategy,
         int currentTurnIndex
     ) {
         List<String> baseOrder = List.copyOf(roundOneLeaderIds);
@@ -35,10 +35,10 @@ record DraftProgress(
 
     private static List<String> currentRoundLeaderIds(
         List<String> baseOrder,
-        RoomTemplateSpec.DraftOrderStrategy strategy,
+        DraftOrderStrategy strategy,
         int currentRound
     ) {
-        if (strategy == RoomTemplateSpec.DraftOrderStrategy.FIXED || currentRound % 2 == 1) {
+        if (strategy == DraftOrderStrategy.FIXED || currentRound % 2 == 1) {
             return baseOrder;
         }
 
