@@ -93,6 +93,16 @@ class RoomLayeredArchitectureTest {
         .that().resideInAPackage("com.naminhyeok.fantazzk.room.domain.room..")
         .should().dependOnClassesThat().resideInAnyPackage("com.naminhyeok.fantazzk.room.domain.game..");
 
+    @ArchTest
+    static final ArchRule room_domain_game_must_not_depend_on_room_package = noClasses()
+        .that().resideInAPackage("com.naminhyeok.fantazzk.room.domain.game..")
+        .should().dependOnClassesThat().resideInAnyPackage("com.naminhyeok.fantazzk.room.domain.room..");
+
+    @ArchTest
+    static final ArchRule room_domain_handoff_must_not_depend_on_room_package = noClasses()
+        .that().resideInAPackage("com.naminhyeok.fantazzk.room.domain.handoff..")
+        .should().dependOnClassesThat().resideInAnyPackage("com.naminhyeok.fantazzk.room.domain.room..");
+
     private static ArchCondition<JavaClass> haveSimpleNameNotMatching(String pattern) {
         return new ArchCondition<>("have a simple name not matching " + pattern) {
             @Override

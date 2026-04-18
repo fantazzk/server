@@ -257,7 +257,6 @@ class RoomRealtimePublishingTest {
                 room.getCode(),
                 room.getStartedGameId(),
                 room.getStartedAt(),
-                room.getMode(),
                 room.getMode() == RoomMode.AUCTION
                     ? GameRules.auction(
                         room.getTeamCount(),

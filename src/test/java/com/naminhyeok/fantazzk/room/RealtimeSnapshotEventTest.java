@@ -109,7 +109,6 @@ class RealtimeSnapshotEventTest {
             room.getCode(),
             room.getStartedGameId(),
             room.getStartedAt(),
-            room.getMode(),
             GameRules.auction(room.getTeamCount(), room.getTeamSize(), room.getBudget(), room.getPickBanTime(), room.getMinBidUnit(), room.getPositionLimit()),
             List.of(
                 new StartedAuctionParticipant(new TeamLeaderId("host-1"), "호스트", 300),

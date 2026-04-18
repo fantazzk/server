@@ -276,7 +276,6 @@ public final class RoomApiTestFixtures {
             room.getCode(),
             room.getStartedGameId(),
             CREATED_AT,
-            room.getMode(),
             GameRules.auction(
                 room.getTeamCount(),
                 room.getTeamSize(),

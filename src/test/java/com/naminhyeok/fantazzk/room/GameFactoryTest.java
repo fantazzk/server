@@ -17,6 +17,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class GameFactoryTest {
     private static final Instant STARTED_AT = Instant.parse("2026-04-15T00:00:00Z");
@@ -31,7 +32,6 @@ class GameFactoryTest {
                 "ROOM01",
                 new GameId(UUID.fromString("00000000-0000-0000-0000-000000000101")),
                 STARTED_AT,
-                RoomMode.AUCTION,
                 GameRules.auction(2, 2, 300, 45, 10, 1),
                 List.of(
                     new StartedAuctionParticipant(new TeamLeaderId("host-1"), "호스트", 300),
@@ -77,7 +77,6 @@ class GameFactoryTest {
                 "ROOM02",
                 new GameId(UUID.fromString("00000000-0000-0000-0000-000000000102")),
                 STARTED_AT,
-                RoomMode.DRAFT,
                 GameRules.draft(2, 2, 30, DraftOrderStrategy.SNAKE),
                 List.of(
                     new StartedDraftParticipant(new TeamLeaderId("host-1"), "호스트", 1),
@@ -112,5 +111,28 @@ class GameFactoryTest {
             );
         DraftGame draftGame = (DraftGame) created;
         assertThat(draftGame.getCurrentTurnIndex()).isEqualTo(0);
+    }
+
+    @Test
+    void 시작_스냅샷은_규칙과_참가자_모드가_다르면_생성_시점에_거부한다() {
+        assertThatThrownBy(
+            () -> new StartedGameSnapshot(
+                new RoomId(UUID.fromString("00000000-0000-0000-0000-000000000013")),
+                "ROOM03",
+                new GameId(UUID.fromString("00000000-0000-0000-0000-000000000103")),
+                STARTED_AT,
+                GameRules.auction(2, 2, 300, 45, 10, 1),
+                List.of(
+                    new StartedDraftParticipant(new TeamLeaderId("host-1"), "호스트", 1),
+                    new StartedDraftParticipant(new TeamLeaderId("guest-1"), "게스트", 2)
+                ),
+                List.of(
+                    new StartedGamePlayer(new RoomPlayerId(0), "선수1", "TOP", 0),
+                    new StartedGamePlayer(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
+                )
+            )
+        )
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("handoff participant");
     }
 }

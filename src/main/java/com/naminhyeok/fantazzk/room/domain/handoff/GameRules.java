@@ -1,7 +1,7 @@
 package com.naminhyeok.fantazzk.room.domain.handoff;
 
-import com.naminhyeok.fantazzk.room.domain.room.RoomMode;
 import com.naminhyeok.fantazzk.room.domain.shared.DraftOrderStrategy;
+import com.naminhyeok.fantazzk.room.domain.shared.RoomMode;
 import java.util.Objects;
 
 public record GameRules(

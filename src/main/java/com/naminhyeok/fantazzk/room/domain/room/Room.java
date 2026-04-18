@@ -1,6 +1,5 @@
 package com.naminhyeok.fantazzk.room.domain.room;
 
-import com.naminhyeok.fantazzk.room.domain.game.*;
 import com.naminhyeok.fantazzk.room.domain.handoff.*;
 import com.naminhyeok.fantazzk.room.domain.shared.*;
 
@@ -235,7 +234,6 @@ public class Room implements AggregateRoot<Room, RoomId> {
             code,
             startedGameId,
             startedAt,
-            mode,
             mode == RoomMode.AUCTION
                 ? GameRules.auction(teamCount, teamSize, budget, pickBanTime, minBidUnit, positionLimit)
                 : GameRules.draft(teamCount, teamSize, pickBanTime, draftOrderStrategy),

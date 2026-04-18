@@ -52,7 +52,6 @@ class GameRepositoryIntegrationTest {
                         room.getCode(),
                         new GameId(UUID.fromString("00000000-0000-0000-0000-000000000101")),
                         STARTED_AT,
-                        RoomMode.AUCTION,
                         GameRules.auction(2, 2, 300, 45, 10, 1),
                         List.of(
                             new StartedAuctionParticipant(new TeamLeaderId("host-1"), "호스트", 300),
@@ -108,7 +107,6 @@ class GameRepositoryIntegrationTest {
                         room.getCode(),
                         new GameId(UUID.fromString("00000000-0000-0000-0000-000000000103")),
                         STARTED_AT,
-                        RoomMode.AUCTION,
                         GameRules.auction(2, 2, 300, 45, 10, 1),
                         List.of(
                             new StartedAuctionParticipant(new TeamLeaderId("host-1"), "호스트", 300),
@@ -153,7 +151,6 @@ class GameRepositoryIntegrationTest {
                         room.getCode(),
                         new GameId(UUID.fromString("00000000-0000-0000-0000-000000000102")),
                         STARTED_AT,
-                        RoomMode.DRAFT,
                         GameRules.draft(2, 2, 30, DraftOrderStrategy.SNAKE),
                         List.of(
                             new StartedDraftParticipant(new TeamLeaderId("host-1"), "호스트", 1),
@@ -207,7 +204,6 @@ class GameRepositoryIntegrationTest {
                         room.getCode(),
                         new GameId(UUID.fromString("00000000-0000-0000-0000-000000000104")),
                         STARTED_AT,
-                        RoomMode.DRAFT,
                         GameRules.draft(2, 2, 30, DraftOrderStrategy.SNAKE),
                         List.of(
                             new StartedDraftParticipant(new TeamLeaderId("host-1"), "호스트", 1),

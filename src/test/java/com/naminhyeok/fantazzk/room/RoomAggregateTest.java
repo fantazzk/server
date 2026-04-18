@@ -236,7 +236,7 @@ class RoomAggregateTest {
             assertThat(snapshot.roomCode()).isEqualTo(room.getCode());
             assertThat(snapshot.gameId()).isEqualTo(gameId);
             assertThat(snapshot.startedAt()).isEqualTo(STARTED_AT);
-            assertThat(snapshot.gameMode()).isEqualTo(room.getMode());
+            assertThat(snapshot.rules().mode()).isEqualTo(room.getMode());
             assertThat(snapshot.rules())
                 .isEqualTo(
                     GameRules.auction(

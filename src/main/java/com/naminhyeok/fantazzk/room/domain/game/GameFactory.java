@@ -2,7 +2,6 @@ package com.naminhyeok.fantazzk.room.domain.game;
 
 import com.naminhyeok.fantazzk.room.domain.event.*;
 import com.naminhyeok.fantazzk.room.domain.handoff.*;
-import com.naminhyeok.fantazzk.room.domain.room.*;
 import com.naminhyeok.fantazzk.room.domain.shared.*;
 
 import com.naminhyeok.fantazzk.room.domain.handoff.StartedAuctionParticipant;
@@ -14,15 +13,14 @@ import org.springframework.stereotype.Component;
 @Component
 public class GameFactory {
     public Game create(StartedGameSnapshot snapshot) {
-        return switch (snapshot.gameMode()) {
+        return switch (snapshot.rules().mode()) {
             case AUCTION -> new AuctionGame(
                 snapshot.gameId(),
                 snapshot.roomId(),
                 snapshot.roomCode(),
                 snapshot.startedAt(),
                 snapshot.rules(),
-                snapshot.participants().stream()
-                    .map(StartedAuctionParticipant.class::cast)
+                snapshot.auctionParticipants().stream()
                     .map(participant -> new AuctionParticipant(
                         participant.teamLeaderId(),
                         participant.nickname(),
@@ -39,8 +37,7 @@ public class GameFactory {
                 snapshot.roomCode(),
                 snapshot.startedAt(),
                 snapshot.rules(),
-                snapshot.participants().stream()
-                    .map(StartedDraftParticipant.class::cast)
+                snapshot.draftParticipants().stream()
                     .map(participant -> new DraftParticipant(
                         participant.teamLeaderId(),
                         participant.nickname(),

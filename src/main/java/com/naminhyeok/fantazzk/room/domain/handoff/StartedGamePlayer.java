@@ -1,6 +1,6 @@
 package com.naminhyeok.fantazzk.room.domain.handoff;
 
-import com.naminhyeok.fantazzk.room.domain.room.RoomPlayerId;
+import com.naminhyeok.fantazzk.room.domain.shared.RoomPlayerId;
 import java.util.Objects;
 
 public record StartedGamePlayer(

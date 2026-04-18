@@ -1,8 +1,5 @@
-package com.naminhyeok.fantazzk.room.domain.room;
+package com.naminhyeok.fantazzk.room.domain.shared;
 
-import com.naminhyeok.fantazzk.room.domain.game.*;
-import com.naminhyeok.fantazzk.room.domain.handoff.*;
-import com.naminhyeok.fantazzk.room.domain.shared.*;
 
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
