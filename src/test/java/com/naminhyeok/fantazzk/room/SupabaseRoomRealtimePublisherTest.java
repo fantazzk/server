@@ -125,6 +125,29 @@ class SupabaseRoomRealtimePublisherTest {
     }
 
     @Test
+    void publishAfterCommit는_started_snapshot을_game_payload로_broadcast한다() {
+        RestClient.Builder builder = RestClient.builder();
+        MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
+        RoomDetails details = startedAuctionDetails();
+        SupabaseRoomRealtimePublisher publisher =
+            new SupabaseRoomRealtimePublisher(builder, Clock.fixed(PUBLISHED_AT, ZoneOffset.UTC), BASE_URL, SERVICE_ROLE_KEY, "room");
+
+        server.expect(requestTo(BASE_URL + "/realtime/v1/api/broadcast"))
+            .andExpect(method(POST))
+            .andExpect(jsonPath("$.messages[0].payload.eventType").value("GAME_SNAPSHOT_UPDATED"))
+            .andExpect(jsonPath("$.messages[0].payload.roomCode").value(details.room().getCode()))
+            .andExpect(jsonPath("$.messages[0].payload.room").doesNotExist())
+            .andExpect(jsonPath("$.messages[0].payload.game.id").value(details.game().getId().gameId().toString()))
+            .andExpect(jsonPath("$.messages[0].payload.game.roomCode").value(details.room().getCode()))
+            .andExpect(jsonPath("$.messages[0].payload.game.progress.currentRound").value(1))
+            .andRespond(withSuccess());
+
+        publisher.publishAfterCommit(details);
+
+        server.verify();
+    }
+
+    @Test
     void publishAfterCommit는_전송_실패를_호출자에게_전파하지_않는다() {
         RestClient.Builder builder = RestClient.builder();
         MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
@@ -225,6 +248,17 @@ class SupabaseRoomRealtimePublisherTest {
             ),
             Instant.parse("2024-01-01T10:00:00Z")
         );
+    }
+
+    private static RoomDetails startedAuctionDetails() {
+        Room room = waitingAuctionRoom();
+        room.join(new TeamLeaderId("leader-guest"), "게스트", "guest-token");
+        StartedGameSnapshot snapshot = room.start(
+            new TeamLeaderId("leader-host"),
+            new GameId(java.util.UUID.fromString("00000000-0000-0000-0000-000000000101")),
+            Instant.parse("2024-01-01T10:00:00Z")
+        );
+        return new RoomDetails(room, new GameFactory().create(snapshot));
     }
 
     @Configuration(proxyBeanMethods = false)
