@@ -17,6 +17,7 @@ class RealtimeSnapshotEventTest {
 
         RealtimeSnapshotEvent event = RealtimeSnapshotEvent.from(room, PUBLISHED_AT);
 
+        assertThat(event).isInstanceOf(RoomSnapshotUpdatedEvent.class);
         assertThat(event.eventType()).isEqualTo("ROOM_SNAPSHOT_UPDATED");
         assertThat(event.roomCode()).isEqualTo(room.getCode());
         assertThat(event.room()).isNotNull();
@@ -31,6 +32,7 @@ class RealtimeSnapshotEventTest {
 
         RealtimeSnapshotEvent event = RealtimeSnapshotEvent.from(new StartedRoomSnapshot(room, game), PUBLISHED_AT);
 
+        assertThat(event).isInstanceOf(GameSnapshotUpdatedEvent.class);
         assertThat(event.eventType()).isEqualTo("GAME_SNAPSHOT_UPDATED");
         assertThat(event.roomCode()).isEqualTo(room.getCode());
         assertThat(event.room()).isNull();

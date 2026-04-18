@@ -117,12 +117,20 @@ class SupabaseRoomRealtimePublisher implements RoomSnapshotPublisher {
         }
 
         private RealtimeSnapshotEvent toEvent(Instant publishedAt) {
-            return new RealtimeSnapshotEvent(
-                game == null ? "ROOM_SNAPSHOT_UPDATED" : "GAME_SNAPSHOT_UPDATED",
+            if (game == null) {
+                return new RoomSnapshotUpdatedEvent(
+                    "ROOM_SNAPSHOT_UPDATED",
+                    roomCode,
+                    snapshotVersion,
+                    publishedAt,
+                    room
+                );
+            }
+            return new GameSnapshotUpdatedEvent(
+                "GAME_SNAPSHOT_UPDATED",
                 roomCode,
                 snapshotVersion,
                 publishedAt,
-                room,
                 game
             );
         }
