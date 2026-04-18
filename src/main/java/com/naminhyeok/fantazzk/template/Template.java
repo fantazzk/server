@@ -32,7 +32,7 @@ class Template implements AggregateRoot<Template, TemplateId> {
 
     public static Template createAuction(
         String name,
-        GameType gameType,
+        TemplateCatalog.GameType gameType,
         int teamCount,
         int teamSize,
         int budget,
@@ -47,7 +47,7 @@ class Template implements AggregateRoot<Template, TemplateId> {
 
     public static Template createDraft(
         String name,
-        GameType gameType,
+        TemplateCatalog.GameType gameType,
         int teamCount,
         int teamSize,
         int pickBanTime,
@@ -62,7 +62,7 @@ class Template implements AggregateRoot<Template, TemplateId> {
         return configuration.getMode();
     }
 
-    public GameType getGameType() {
+    public TemplateCatalog.GameType getGameType() {
         return configuration.getGameType();
     }
 

@@ -34,7 +34,7 @@ class TemplateCatalogIntegrationTest {
             createTemplate.create(
                 new CreateTemplateCommand.Draft(
                     "사내 리그 드래프트",
-                    GameType.OVERWATCH_2,
+                    TemplateCatalog.GameType.OVERWATCH_2,
                     2,
                     3,
                     30,

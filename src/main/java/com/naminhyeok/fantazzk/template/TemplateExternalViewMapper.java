@@ -26,7 +26,7 @@ final class TemplateExternalViewMapper {
         return new TemplateResponse(
             template.getId().templateId().toString(),
             template.getName(),
-            TemplateCatalog.GameType.valueOf(template.getGameType().name()),
+            template.getGameType(),
             template.getMode(),
             template.getTeamCount(),
             template.getTeamSize(),

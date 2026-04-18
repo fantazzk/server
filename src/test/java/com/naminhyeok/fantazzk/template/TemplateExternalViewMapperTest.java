@@ -12,7 +12,7 @@ class TemplateExternalViewMapperTest {
         Template template =
             Template.createDraft(
                 "드래프트전",
-                GameType.OVERWATCH_2,
+                TemplateCatalog.GameType.OVERWATCH_2,
                 2,
                 2,
                 30,

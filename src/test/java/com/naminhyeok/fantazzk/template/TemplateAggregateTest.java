@@ -16,7 +16,7 @@ class TemplateAggregateTest {
             Template template =
                 Template.createAuction(
                     "주말 경매전",
-                    GameType.LEAGUE_OF_LEGENDS,
+                    TemplateCatalog.GameType.LEAGUE_OF_LEGENDS,
                     2,
                     2,
                     300,
@@ -42,7 +42,7 @@ class TemplateAggregateTest {
             assertThatThrownBy(() ->
                 Template.createAuction(
                     "주말 경매전",
-                    GameType.LEAGUE_OF_LEGENDS,
+                    TemplateCatalog.GameType.LEAGUE_OF_LEGENDS,
                     2,
                     2,
                     300,
@@ -61,7 +61,7 @@ class TemplateAggregateTest {
             assertThatThrownBy(() ->
                 Template.createAuction(
                     "주말 경매전",
-                    GameType.LEAGUE_OF_LEGENDS,
+                    TemplateCatalog.GameType.LEAGUE_OF_LEGENDS,
                     2,
                     2,
                     300,
@@ -83,7 +83,7 @@ class TemplateAggregateTest {
             Template template =
                 Template.createAuction(
                     "경매전",
-                    GameType.LEAGUE_OF_LEGENDS,
+                    TemplateCatalog.GameType.LEAGUE_OF_LEGENDS,
                     2,
                     3,
                     300,
@@ -99,7 +99,7 @@ class TemplateAggregateTest {
                 );
 
             assertThat(template.getName()).isEqualTo("경매전");
-            assertThat(template.getGameType()).isEqualTo(GameType.LEAGUE_OF_LEGENDS);
+            assertThat(template.getGameType()).isEqualTo(TemplateCatalog.GameType.LEAGUE_OF_LEGENDS);
             assertThat(template.getMode()).isEqualTo(TemplateCatalog.Mode.AUCTION);
             assertThat(template.getTeamCount()).isEqualTo(2);
             assertThat(template.getTeamSize()).isEqualTo(3);
@@ -119,7 +119,7 @@ class TemplateAggregateTest {
             Template template =
                 Template.createDraft(
                     "사내 리그 드래프트",
-                    GameType.OVERWATCH_2,
+                    TemplateCatalog.GameType.OVERWATCH_2,
                     2,
                     2,
                     30,
@@ -130,7 +130,7 @@ class TemplateAggregateTest {
                     )
                 );
 
-            assertThat(template.getGameType()).isEqualTo(GameType.OVERWATCH_2);
+            assertThat(template.getGameType()).isEqualTo(TemplateCatalog.GameType.OVERWATCH_2);
             assertThat(template.getMode()).isEqualTo(TemplateCatalog.Mode.DRAFT);
             assertThat(template.getBudget()).isNull();
             assertThat(template.getPickBanTime()).isEqualTo(30);

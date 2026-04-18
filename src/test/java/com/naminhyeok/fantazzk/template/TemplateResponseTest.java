@@ -12,7 +12,7 @@ class TemplateResponseTest {
         Template template =
             Template.createAuction(
                 "경매전",
-                GameType.LEAGUE_OF_LEGENDS,
+                TemplateCatalog.GameType.LEAGUE_OF_LEGENDS,
                 2,
                 2,
                 300,
@@ -47,7 +47,7 @@ class TemplateResponseTest {
         Template template =
             Template.createDraft(
                 "드래프트전",
-                GameType.OVERWATCH_2,
+                TemplateCatalog.GameType.OVERWATCH_2,
                 2,
                 2,
                 30,

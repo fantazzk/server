@@ -10,7 +10,7 @@ import org.jmolecules.ddd.types.ValueObject;
 @EqualsAndHashCode
 final class TemplateConfiguration implements ValueObject {
     @Enumerated(EnumType.STRING)
-    private final GameType gameType;
+    private final TemplateCatalog.GameType gameType;
     @Enumerated(EnumType.STRING)
     private final TemplateCatalog.Mode mode;
     private final int teamCount;
@@ -23,7 +23,7 @@ final class TemplateConfiguration implements ValueObject {
     private final TemplateCatalog.DraftOrderStrategy draftOrderStrategy;
 
     private TemplateConfiguration(
-        GameType gameType,
+        TemplateCatalog.GameType gameType,
         TemplateCatalog.Mode mode,
         int teamCount,
         int teamSize,
@@ -94,7 +94,7 @@ final class TemplateConfiguration implements ValueObject {
     }
 
     public static TemplateConfiguration auction(
-        GameType gameType,
+        TemplateCatalog.GameType gameType,
         int teamCount,
         int teamSize,
         int budget,
@@ -116,7 +116,7 @@ final class TemplateConfiguration implements ValueObject {
     }
 
     public static TemplateConfiguration draft(
-        GameType gameType,
+        TemplateCatalog.GameType gameType,
         int teamCount,
         int teamSize,
         int pickBanTime,
@@ -136,7 +136,7 @@ final class TemplateConfiguration implements ValueObject {
     }
 
     public static TemplateConfiguration from(
-        GameType gameType,
+        TemplateCatalog.GameType gameType,
         TemplateCatalog.Mode mode,
         int teamCount,
         int teamSize,
