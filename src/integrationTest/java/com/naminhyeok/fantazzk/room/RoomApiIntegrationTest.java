@@ -67,7 +67,7 @@ class RoomApiIntegrationTest {
         assertThat(body).isNotNull();
         assertThat(body.resultType()).isEqualTo("SUCCESS");
         assertThat(body.success()).hasSize(2);
-        assertThat(body.success()).extracting(JoinableRoomResponse::code).containsExactly("ROOM99", "ROOM01");
+        assertThat(body.success()).extracting(JoinableRoomView::code).containsExactly("ROOM99", "ROOM01");
     }
 
     @Test
@@ -334,7 +334,7 @@ class RoomApiIntegrationTest {
 
     private record JoinableRoomListApiResponse(
         String resultType,
-        List<JoinableRoomResponse> success,
+        List<JoinableRoomView> success,
         Object error
     ) {
     }

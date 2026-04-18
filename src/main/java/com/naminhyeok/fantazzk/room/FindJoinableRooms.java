@@ -13,9 +13,9 @@ class FindJoinableRooms {
     private final JoinableRoomReader joinableRoomReader;
 
     @Transactional(readOnly = true)
-    public List<JoinableRoomResponse> list() {
+    List<JoinableRoomView> list() {
         return joinableRoomReader.findLatestWaitingRooms(JOINABLE_ROOM_LIMIT).stream()
-            .map(JoinableRoomResponse::from)
+            .map(JoinableRoomView::from)
             .toList();
     }
 }

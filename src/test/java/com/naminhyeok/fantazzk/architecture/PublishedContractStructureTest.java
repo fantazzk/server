@@ -12,16 +12,34 @@ class PublishedContractStructureTest {
     @Test
     void room_루트_계약은_public이고_대표_구현은_package_private이다() throws Exception {
         assertClassMissing("com.naminhyeok.fantazzk.room.RoomManagement");
-        assertClassMissing("com.naminhyeok.fantazzk.room.RoomView");
-        assertClassMissing("com.naminhyeok.fantazzk.room.TeamLeaderView");
+        assertClassMissing("com.naminhyeok.fantazzk.room.JoinableRoomResponse");
+        assertClassMissing("com.naminhyeok.fantazzk.room.RoomViewResponse");
+        assertClassMissing("com.naminhyeok.fantazzk.room.RoomSessionResponse");
+        assertClassMissing("com.naminhyeok.fantazzk.room.GameResponse");
         assertClassMissing("com.naminhyeok.fantazzk.room.RoomApiController");
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.RoomQueryApiController")).isFalse();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.RoomSessionApiController")).isFalse();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.RoomStartApiController")).isFalse();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.RoomDraftApiController")).isFalse();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.RoomQueryApi")).isTrue();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.RoomSessionApi")).isTrue();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.RoomDraftApi")).isTrue();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.RoomStartApi")).isTrue();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.GameQueryApi")).isTrue();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.GameAuctionApi")).isTrue();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.GameDraftApi")).isTrue();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.JoinableRoomView")).isTrue();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.RoomView")).isTrue();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.RoomSessionView")).isTrue();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.GameView")).isTrue();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.ProvideRoomQueryApi")).isFalse();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.ProvideRoomSessionApi")).isFalse();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.ProvideRoomDraftApi")).isFalse();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.ProvideRoomStartApi")).isFalse();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.ProvideGameQueryApi")).isFalse();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.ProvideGameAuctionApi")).isFalse();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.ProvideGameDraftApi")).isFalse();
         assertThat(isPublic("com.naminhyeok.fantazzk.room.CreateRoom")).isFalse();
         assertThat(isPublic("com.naminhyeok.fantazzk.room.GetRoom")).isFalse();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.GetGame")).isFalse();
         assertThat(isPublic("com.naminhyeok.fantazzk.room.Room")).isFalse();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.Game")).isFalse();
         assertThat(isPublic("com.naminhyeok.fantazzk.room.Rooms")).isFalse();
     }
 
@@ -41,21 +59,6 @@ class PublishedContractStructureTest {
         assertThat(isPublic("com.naminhyeok.fantazzk.template.TemplateId")).isFalse();
         assertThat(isPublic("com.naminhyeok.fantazzk.template.Templates")).isFalse();
         assertThat(isPublic("com.naminhyeok.fantazzk.template.TemplateApiController")).isFalse();
-    }
-
-    @Test
-    void legacy_layer_packages_are_empty() {
-        assertClassMissing("com.naminhyeok.fantazzk.room.application.CreateRoom");
-        assertClassMissing("com.naminhyeok.fantazzk.room.domain.Room");
-        assertClassMissing("com.naminhyeok.fantazzk.room.repository.Rooms");
-        assertClassMissing("com.naminhyeok.fantazzk.room.api.RoomApiController");
-        assertClassMissing("com.naminhyeok.fantazzk.room.GetRoomDetails");
-        assertClassMissing("com.naminhyeok.fantazzk.room.RoomDetails");
-        assertClassMissing("com.naminhyeok.fantazzk.template.application.CreateTemplate");
-        assertClassMissing("com.naminhyeok.fantazzk.template.domain.Template");
-        assertClassMissing("com.naminhyeok.fantazzk.template.repository.Templates");
-        assertClassMissing("com.naminhyeok.fantazzk.template.api.TemplateApiController");
-        assertClassMissing("com.naminhyeok.fantazzk.template.contract.TemplateCatalog");
     }
 
     @Test

@@ -11,11 +11,11 @@ sealed interface RealtimeSnapshotEvent permits RoomSnapshotUpdatedEvent, GameSna
 
     Instant publishedAt();
 
-    default RoomViewResponse room() {
+    default RoomView room() {
         return null;
     }
 
-    default GameResponse game() {
+    default GameView game() {
         return null;
     }
 
@@ -25,7 +25,7 @@ sealed interface RealtimeSnapshotEvent permits RoomSnapshotUpdatedEvent, GameSna
             snapshot.room().getCode(),
             snapshotVersionOf(snapshot),
             publishedAt,
-            GameResponse.from(snapshot.game())
+            GameView.from(snapshot.game())
         );
     }
 
@@ -35,7 +35,7 @@ sealed interface RealtimeSnapshotEvent permits RoomSnapshotUpdatedEvent, GameSna
             room.getCode(),
             snapshotVersionOf(room),
             publishedAt,
-            RoomViewResponse.from(room)
+            RoomView.from(room)
         );
     }
 

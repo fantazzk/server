@@ -7,6 +7,6 @@ record RoomSnapshotUpdatedEvent(
     String roomCode,
     long snapshotVersion,
     Instant publishedAt,
-    RoomViewResponse room
+    RoomView room
 ) implements RealtimeSnapshotEvent {
 }

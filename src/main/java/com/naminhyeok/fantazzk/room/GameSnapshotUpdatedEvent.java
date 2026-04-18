@@ -7,6 +7,6 @@ record GameSnapshotUpdatedEvent(
     String roomCode,
     long snapshotVersion,
     Instant publishedAt,
-    GameResponse game
+    GameView game
 ) implements RealtimeSnapshotEvent {
 }

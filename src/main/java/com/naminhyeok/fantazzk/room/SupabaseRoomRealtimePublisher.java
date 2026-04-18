@@ -97,12 +97,12 @@ class SupabaseRoomRealtimePublisher implements RoomSnapshotPublisher {
     private record BroadcastMessage(String topic, String event, RealtimeSnapshotEvent payload) {
     }
 
-    private record PendingBroadcastSnapshot(String roomCode, long snapshotVersion, RoomViewResponse room, GameResponse game) {
+    private record PendingBroadcastSnapshot(String roomCode, long snapshotVersion, RoomView room, GameView game) {
         private static PendingBroadcastSnapshot from(Room room) {
             return new PendingBroadcastSnapshot(
                 room.getCode(),
                 RealtimeSnapshotEvent.snapshotVersionOf(room),
-                RoomViewResponse.from(room),
+                RoomView.from(room),
                 null
             );
         }
@@ -112,7 +112,7 @@ class SupabaseRoomRealtimePublisher implements RoomSnapshotPublisher {
                 snapshot.room().getCode(),
                 RealtimeSnapshotEvent.snapshotVersionOf(snapshot),
                 null,
-                GameResponse.from(snapshot.game())
+                GameView.from(snapshot.game())
             );
         }
 
