@@ -32,6 +32,14 @@ final class GameParticipant implements ValueObject {
         this.remainingBudget = remainingBudget;
     }
 
+    static GameParticipant auction(TeamLeaderId teamLeaderId, String nickname, int remainingBudget) {
+        return new GameParticipant(teamLeaderId, nickname, null, remainingBudget);
+    }
+
+    static GameParticipant draft(TeamLeaderId teamLeaderId, String nickname, int draftPosition) {
+        return new GameParticipant(teamLeaderId, nickname, draftPosition, null);
+    }
+
     TeamLeaderId teamLeaderId() {
         return teamLeaderId;
     }
@@ -46,5 +54,37 @@ final class GameParticipant implements ValueObject {
 
     Integer remainingBudget() {
         return remainingBudget;
+    }
+
+    AuctionState auctionState() {
+        if (remainingBudget == null) {
+            throw RoomStateInvalidException.auctionWinnerBudgetMissing(teamLeaderId);
+        }
+        return new AuctionState(teamLeaderId, nickname, remainingBudget);
+    }
+
+    DraftState draftState() {
+        if (draftPosition == null) {
+            throw RoomStateInvalidException.draftPositionMissing(teamLeaderId);
+        }
+        return new DraftState(teamLeaderId, nickname, draftPosition);
+    }
+
+    GameParticipant withRemainingBudget(int remainingBudget) {
+        return new GameParticipant(teamLeaderId, nickname, draftPosition, remainingBudget);
+    }
+
+    record AuctionState(
+        TeamLeaderId teamLeaderId,
+        String nickname,
+        int remainingBudget
+    ) {
+    }
+
+    record DraftState(
+        TeamLeaderId teamLeaderId,
+        String nickname,
+        int draftPosition
+    ) {
     }
 }

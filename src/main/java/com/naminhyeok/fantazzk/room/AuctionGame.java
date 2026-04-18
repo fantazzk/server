@@ -76,10 +76,11 @@ class AuctionGame extends Game {
         }
 
         GameParticipant leader = findParticipant(teamLeaderId, RoomErrorType.ROOM_BIDDER_NOT_FOUND);
+        GameParticipant.AuctionState bidder = leader.auctionState();
         GamePlayer target = requireCurrentAuctionTarget();
         validateAuctionPositionLimit(teamLeaderId, target);
 
-        if (leader.remainingBudget() != null && leader.remainingBudget() < amount) {
+        if (bidder.remainingBudget() < amount) {
             throw CoreException.of(RoomErrorType.ROOM_BID_BUDGET_EXCEEDED);
         }
 
@@ -91,14 +92,14 @@ class AuctionGame extends Game {
                 .orElse(null);
 
         if (highestBidAmount == null) {
-            if (amount < getMinBidUnit()) {
+            if (amount < getRules().auctionRules().minBidUnit()) {
                 throw CoreException.of(RoomErrorType.ROOM_BID_MIN_UNIT_NOT_MET);
             }
         } else {
             if (amount <= highestBidAmount) {
                 throw CoreException.of(RoomErrorType.ROOM_BID_TOO_LOW);
             }
-            if (amount < highestBidAmount + getMinBidUnit()) {
+            if (amount < highestBidAmount + getRules().auctionRules().minBidUnit()) {
                 throw CoreException.of(RoomErrorType.ROOM_BID_MIN_UNIT_NOT_MET);
             }
         }
@@ -213,24 +214,19 @@ class AuctionGame extends Game {
             if (!participant.teamLeaderId().equals(leaderId)) {
                 continue;
             }
-            Integer remainingBudget = participant.remainingBudget();
-            if (remainingBudget == null) {
-                throw RoomStateInvalidException.auctionWinnerBudgetMissing(leaderId);
-            }
+            int remainingBudget = participant.auctionState().remainingBudget();
             if (remainingBudget < amount) {
                 throw RoomStateInvalidException.auctionWinnerBudgetExceeded(leaderId, remainingBudget, amount);
             }
-            participants.set(
-                index,
-                new GameParticipant(participant.teamLeaderId(), participant.nickname(), participant.draftPosition(), remainingBudget - amount)
-            );
+            participants.set(index, participant.withRemainingBudget(remainingBudget - amount));
             return;
         }
         throw RoomStateInvalidException.auctionWinnerMissing(leaderId);
     }
 
     private void validateAuctionPositionLimit(TeamLeaderId leaderId, GamePlayer target) {
-        if (getPositionLimit() == null) {
+        Integer positionLimit = getRules().auctionRules().positionLimit();
+        if (positionLimit == null) {
             return;
         }
 
@@ -240,7 +236,7 @@ class AuctionGame extends Game {
                 .map(this::findAssignedPlayerPosition)
                 .filter(target.position()::equals)
                 .count();
-        if (assignedCount >= getPositionLimit()) {
+        if (assignedCount >= positionLimit) {
             throw CoreException.of(RoomErrorType.ROOM_AUCTION_POSITION_LIMIT_EXCEEDED);
         }
     }

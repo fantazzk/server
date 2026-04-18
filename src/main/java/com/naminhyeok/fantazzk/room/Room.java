@@ -224,9 +224,13 @@ class Room implements AggregateRoot<Room, RoomId> {
             startedGameId,
             startedAt,
             mode,
-            new GameRules(teamCount, teamSize, budget, pickBanTime, minBidUnit, positionLimit, draftOrderStrategy),
+            mode == RoomMode.AUCTION
+                ? GameRules.auction(teamCount, teamSize, budget, pickBanTime, minBidUnit, positionLimit)
+                : GameRules.draft(teamCount, teamSize, pickBanTime, draftOrderStrategy),
             leaders.stream()
-                .map(leader -> new GameParticipant(leader.getId(), leader.getNickname(), leader.getDraftPosition(), leader.getRemainingBudget()))
+                .map(leader -> mode == RoomMode.AUCTION
+                    ? GameParticipant.auction(leader.getId(), leader.getNickname(), leader.getRemainingBudget())
+                    : GameParticipant.draft(leader.getId(), leader.getNickname(), leader.getDraftPosition()))
                 .toList(),
             players.stream()
                 .sorted(Comparator.comparingInt(RoomPlayer::getDisplayOrder))

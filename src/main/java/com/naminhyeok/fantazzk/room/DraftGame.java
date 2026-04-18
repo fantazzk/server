@@ -77,7 +77,7 @@ class DraftGame extends Game {
         }
 
         try {
-            return DraftProgress.from(getLeaderIdsInDraftOrder(), getDraftOrderStrategy(), currentTurnIndex);
+            return DraftProgress.from(getLeaderIdsInDraftOrder(), getRules().draftRules().draftOrderStrategy(), currentTurnIndex);
         } catch (IllegalArgumentException ex) {
             throw RoomStateInvalidException.draftLeaderOrderEmpty();
         }
@@ -109,6 +109,6 @@ class DraftGame extends Game {
         if (participantWithoutDraftPosition != null) {
             throw RoomStateInvalidException.draftPositionMissing(participantWithoutDraftPosition.teamLeaderId());
         }
-        return mutableParticipants().stream().sorted(Comparator.comparingInt(GameParticipant::draftPosition)).toList();
+        return mutableParticipants().stream().sorted(Comparator.comparingInt(participant -> participant.draftState().draftPosition())).toList();
     }
 }
