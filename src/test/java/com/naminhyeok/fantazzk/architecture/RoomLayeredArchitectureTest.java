@@ -18,6 +18,24 @@ import com.tngtech.archunit.lang.SimpleConditionEvent;
 @AnalyzeClasses(packages = "com.naminhyeok.fantazzk", importOptions = ImportOption.DoNotIncludeTests.class)
 class RoomLayeredArchitectureTest {
     private static final String ROOM_ROOT_PACKAGE = "com.naminhyeok.fantazzk.room";
+    private static final String[] ROOT_FORBIDDEN_USE_CASES = {
+        "CreateRoom",
+        "JoinRoom",
+        "GetRoom",
+        "StartRoom",
+        "SelectDraftPosition",
+        "ClearDraftPosition",
+        "GetGame",
+        "PlaceBid",
+        "PickDraft",
+        "SettleAuction",
+        "FindJoinableRooms",
+        "CreateRoomAttempt",
+        "SettleAuctionAttempt",
+        "StartedGameContextLoader",
+        "RoomActionAuthorizer",
+        "RoomSessionResult"
+    };
 
     @ArchTest
     static final ArchRule room_layered_architecture = layeredArchitecture()
@@ -36,6 +54,15 @@ class RoomLayeredArchitectureTest {
     static final ArchRule room_web_classes_may_only_depend_on_root_contracts = classes()
         .that().resideInAPackage("com.naminhyeok.fantazzk.room.web..")
         .should(onlyDependOnRoomRootContracts());
+
+    @ArchTest
+    static final ArchRule room_web_must_not_depend_on_room_application_domain_or_infrastructure = noClasses()
+        .that().resideInAPackage("com.naminhyeok.fantazzk.room.web..")
+        .should().dependOnClassesThat().resideInAnyPackage(
+            "com.naminhyeok.fantazzk.room.application..",
+            "com.naminhyeok.fantazzk.room.domain..",
+            "com.naminhyeok.fantazzk.room.infrastructure.."
+        );
 
     @ArchTest
     static final ArchRule room_web_room_must_not_depend_on_room_web_game = noClasses()
@@ -58,6 +85,12 @@ class RoomLayeredArchitectureTest {
         .that().resideInAPackage(ROOM_ROOT_PACKAGE)
         .and().areTopLevelClasses()
         .should(haveSimpleNameNotMatching(".*Publisher$|.*Scheduler$|.*JpaRepository$|Jpa.*Reader$|Uuid.*"));
+
+    @ArchTest
+    static final ArchRule room_root_must_not_contain_use_case_or_helper_implementations = classes()
+        .that().resideInAPackage(ROOM_ROOT_PACKAGE)
+        .and().areTopLevelClasses()
+        .should(haveSimpleNameNotIn(ROOT_FORBIDDEN_USE_CASES));
 
     @ArchTest
     static final ArchRule no_classes_outside_room_or_architecture_should_depend_on_room_layers = noClasses()
@@ -86,7 +119,13 @@ class RoomLayeredArchitectureTest {
             "com.naminhyeok.fantazzk.room.application.query..",
             "com.naminhyeok.fantazzk.room.infrastructure.persistence.."
         )
+        .and().doNotHaveSimpleName("FindJoinableRooms")
         .should().dependOnClassesThat().haveFullyQualifiedName("com.naminhyeok.fantazzk.room.JoinableRoomView");
+
+    @ArchTest
+    static final ArchRule room_infrastructure_may_only_depend_on_root_contracts = classes()
+        .that().resideInAPackage("com.naminhyeok.fantazzk.room.infrastructure..")
+        .should(onlyDependOnRoomRootContracts());
 
     @ArchTest
     static final ArchRule room_domain_room_must_not_depend_on_game_package = noClasses()
@@ -111,6 +150,22 @@ class RoomLayeredArchitectureTest {
                 events.add(matches
                     ? SimpleConditionEvent.violated(item, item.getSimpleName() + " matches " + pattern)
                     : SimpleConditionEvent.satisfied(item, item.getSimpleName() + " does not match " + pattern));
+            }
+        };
+    }
+
+    private static ArchCondition<JavaClass> haveSimpleNameNotIn(String... names) {
+        return new ArchCondition<>("have a simple name not in " + String.join(", ", names)) {
+            @Override
+            public void check(JavaClass item, ConditionEvents events) {
+                for (String name : names) {
+                    if (!item.getSimpleName().equals(name)) {
+                        continue;
+                    }
+                    events.add(SimpleConditionEvent.violated(item, item.getSimpleName() + " must not remain in room root"));
+                    return;
+                }
+                events.add(SimpleConditionEvent.satisfied(item, item.getSimpleName() + " is allowed in room root"));
             }
         };
     }

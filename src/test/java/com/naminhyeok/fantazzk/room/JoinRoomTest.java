@@ -9,6 +9,8 @@ import com.naminhyeok.fantazzk.room.domain.shared.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.naminhyeok.fantazzk.room.application.port.TeamLeaderIdentityIssuer;
+import com.naminhyeok.fantazzk.room.application.room.JoinRoom;
+import com.naminhyeok.fantazzk.room.application.room.RoomSessionResult;
 import com.naminhyeok.fantazzk.room.infrastructure.realtime.NoopRoomSnapshotPublisher;
 import java.lang.reflect.Field;
 import java.util.Collections;

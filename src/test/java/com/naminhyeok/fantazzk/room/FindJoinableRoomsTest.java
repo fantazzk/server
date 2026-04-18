@@ -8,6 +8,7 @@ import com.naminhyeok.fantazzk.room.domain.shared.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.naminhyeok.fantazzk.room.application.query.FindJoinableRooms;
 import com.naminhyeok.fantazzk.room.application.query.JoinableRoomReader;
 import com.naminhyeok.fantazzk.room.application.query.JoinableRoomSummary;
 import java.util.List;

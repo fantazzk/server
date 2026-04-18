@@ -1,4 +1,4 @@
-package com.naminhyeok.fantazzk.room;
+package com.naminhyeok.fantazzk.room.application.game;
 
 import com.naminhyeok.fantazzk.room.domain.game.*;
 import com.naminhyeok.fantazzk.room.domain.handoff.*;
@@ -8,13 +8,14 @@ import com.naminhyeok.fantazzk.room.domain.shared.*;
 
 import com.naminhyeok.fantazzk.CoreException;
 import com.naminhyeok.fantazzk.room.application.port.AuctionDeadlineSettlementProcessor;
+import com.naminhyeok.fantazzk.room.application.support.SettleAuctionAttempt;
 import java.time.Instant;
 import java.util.UUID;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 
 @Service
-class SettleAuction implements AuctionDeadlineSettlementProcessor {
+public class SettleAuction implements AuctionDeadlineSettlementProcessor {
     private final SettleAuctionAttempt settleAuctionAttempt;
     private final Games games;
     private final Rooms rooms;

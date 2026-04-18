@@ -1,4 +1,4 @@
-package com.naminhyeok.fantazzk.room;
+package com.naminhyeok.fantazzk.room.application.support;
 
 import com.naminhyeok.fantazzk.room.domain.game.*;
 import com.naminhyeok.fantazzk.room.domain.handoff.*;
@@ -10,8 +10,8 @@ import com.naminhyeok.fantazzk.CoreException;
 import org.springframework.stereotype.Component;
 
 @Component
-class RoomActionAuthorizer {
-    RoomTeamLeader authenticate(Room room, String actionToken) {
+public class RoomActionAuthorizer {
+    public RoomTeamLeader authenticate(Room room, String actionToken) {
         if (actionToken == null || actionToken.isBlank()) {
             throw CoreException.of(RoomErrorType.ROOM_ACTION_TOKEN_REQUIRED);
         }

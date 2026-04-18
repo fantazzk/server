@@ -23,7 +23,7 @@ public record RoomView(
     List<TeamLeaderView> teamLeaders,
     List<RoomPlayerView> players
 ) {
-    static RoomView from(Room room) {
+    public static RoomView from(Room room) {
         return new RoomView(
             room.getCode(),
             room.getStatus().name(),

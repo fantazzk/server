@@ -1,4 +1,4 @@
-package com.naminhyeok.fantazzk.room;
+package com.naminhyeok.fantazzk.room.application.room;
 
 import com.naminhyeok.fantazzk.room.domain.game.*;
 import com.naminhyeok.fantazzk.room.domain.handoff.*;
@@ -13,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-class GetRoom {
+public class GetRoom {
     private final Rooms rooms;
 
     @Transactional(readOnly = true)

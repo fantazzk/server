@@ -6,6 +6,8 @@ import com.naminhyeok.fantazzk.room.domain.repository.*;
 import com.naminhyeok.fantazzk.room.domain.room.*;
 import com.naminhyeok.fantazzk.room.domain.shared.*;
 
+import com.naminhyeok.fantazzk.room.application.room.ClearDraftPosition;
+import com.naminhyeok.fantazzk.room.application.room.SelectDraftPosition;
 import org.springframework.stereotype.Service;
 
 public interface RoomDraftApi {

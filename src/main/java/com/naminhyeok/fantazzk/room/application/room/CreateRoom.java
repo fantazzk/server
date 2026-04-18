@@ -1,4 +1,4 @@
-package com.naminhyeok.fantazzk.room;
+package com.naminhyeok.fantazzk.room.application.room;
 
 import com.naminhyeok.fantazzk.room.domain.game.*;
 import com.naminhyeok.fantazzk.room.domain.handoff.*;
@@ -9,6 +9,7 @@ import com.naminhyeok.fantazzk.room.domain.shared.*;
 import com.naminhyeok.fantazzk.CoreException;
 import com.naminhyeok.fantazzk.room.application.port.RoomCodeGenerator;
 import com.naminhyeok.fantazzk.room.application.port.TeamLeaderIdentityIssuer;
+import com.naminhyeok.fantazzk.room.application.support.CreateRoomAttempt;
 import com.naminhyeok.fantazzk.template.TemplateCatalog;
 import java.time.Clock;
 import java.time.Instant;
@@ -21,7 +22,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-class CreateRoom {
+public class CreateRoom {
     private static final int MAX_ROOM_CODE_ATTEMPTS = 3;
     private static final String ROOM_CODE_CONSTRAINT = "uk_rooms_code";
     private static final Pattern ROOM_CODE_CONSTRAINT_PATTERN = Pattern.compile(

@@ -11,6 +11,12 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.groups.Tuple.tuple;
 
 import com.naminhyeok.fantazzk.CoreException;
+import com.naminhyeok.fantazzk.room.application.game.PickDraft;
+import com.naminhyeok.fantazzk.room.application.room.CreateRoom;
+import com.naminhyeok.fantazzk.room.application.room.JoinRoom;
+import com.naminhyeok.fantazzk.room.application.room.RoomSessionResult;
+import com.naminhyeok.fantazzk.room.application.room.SelectDraftPosition;
+import com.naminhyeok.fantazzk.room.application.room.StartRoom;
 import com.naminhyeok.fantazzk.template.TemplateCatalog.DraftOrderStrategy;
 import com.naminhyeok.fantazzk.template.TemplateFixture;
 import jakarta.persistence.EntityManager;

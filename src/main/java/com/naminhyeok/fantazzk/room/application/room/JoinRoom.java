@@ -1,4 +1,4 @@
-package com.naminhyeok.fantazzk.room;
+package com.naminhyeok.fantazzk.room.application.room;
 
 import com.naminhyeok.fantazzk.room.domain.game.*;
 import com.naminhyeok.fantazzk.room.domain.handoff.*;
@@ -7,6 +7,7 @@ import com.naminhyeok.fantazzk.room.domain.room.*;
 import com.naminhyeok.fantazzk.room.domain.shared.*;
 
 import com.naminhyeok.fantazzk.CoreException;
+import com.naminhyeok.fantazzk.room.RoomView;
 import com.naminhyeok.fantazzk.room.application.port.RoomSnapshotPublisher;
 import com.naminhyeok.fantazzk.room.application.port.TeamLeaderIdentityIssuer;
 import com.naminhyeok.fantazzk.room.application.support.RoomSnapshot;
@@ -17,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-class JoinRoom {
+public class JoinRoom {
     private final Rooms rooms;
     private final TeamLeaderIdentityIssuer teamLeaderIdentityIssuer;
     private final RoomSnapshotPublisher roomSnapshotPublisher;

@@ -10,9 +10,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.naminhyeok.fantazzk.CoreException;
+import com.naminhyeok.fantazzk.room.application.game.PickDraft;
 import com.naminhyeok.fantazzk.room.application.port.RoomSnapshotPublisher;
 import com.naminhyeok.fantazzk.room.application.port.TeamLeaderIdentityIssuer;
+import com.naminhyeok.fantazzk.room.application.room.ClearDraftPosition;
+import com.naminhyeok.fantazzk.room.application.room.JoinRoom;
+import com.naminhyeok.fantazzk.room.application.room.RoomSessionResult;
+import com.naminhyeok.fantazzk.room.application.room.SelectDraftPosition;
+import com.naminhyeok.fantazzk.room.application.support.RoomActionAuthorizer;
 import com.naminhyeok.fantazzk.room.application.support.RoomSnapshot;
+import com.naminhyeok.fantazzk.room.application.support.SettleAuctionAttempt;
+import com.naminhyeok.fantazzk.room.application.support.StartedGameContextLoader;
 import com.naminhyeok.fantazzk.room.application.support.StartedRoomSnapshot;
 import com.naminhyeok.fantazzk.room.infrastructure.realtime.RealtimeSnapshotEvent;
 import java.time.Clock;

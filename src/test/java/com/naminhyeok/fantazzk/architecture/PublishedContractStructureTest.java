@@ -11,86 +11,123 @@ import org.junit.jupiter.api.Test;
 class PublishedContractStructureTest {
     @Test
     void room_루트_계약은_public이고_대표_구현은_package_private이다() throws Exception {
-        assertClassMissing("com.naminhyeok.fantazzk.room.RoomManagement");
-        assertClassMissing("com.naminhyeok.fantazzk.room.JoinableRoomResponse");
-        assertClassMissing("com.naminhyeok.fantazzk.room.RoomViewResponse");
-        assertClassMissing("com.naminhyeok.fantazzk.room.RoomSessionResponse");
-        assertClassMissing("com.naminhyeok.fantazzk.room.GameResponse");
-        assertClassMissing("com.naminhyeok.fantazzk.room.RoomApiController");
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.RoomQueryApi")).isTrue();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.RoomSessionApi")).isTrue();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.RoomDraftApi")).isTrue();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.RoomStartApi")).isTrue();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.GameQueryApi")).isTrue();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.GameAuctionApi")).isTrue();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.GameDraftApi")).isTrue();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.JoinableRoomView")).isTrue();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.RoomView")).isTrue();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.RoomSessionView")).isTrue();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.GameView")).isTrue();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.ProvideRoomQueryApi")).isFalse();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.ProvideRoomSessionApi")).isFalse();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.ProvideRoomDraftApi")).isFalse();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.ProvideRoomStartApi")).isFalse();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.ProvideGameQueryApi")).isFalse();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.ProvideGameAuctionApi")).isFalse();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.ProvideGameDraftApi")).isFalse();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.CreateRoom")).isFalse();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.GetRoom")).isFalse();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.GetGame")).isFalse();
-        assertClassMissing("com.naminhyeok.fantazzk.room.Room");
-        assertClassMissing("com.naminhyeok.fantazzk.room.Game");
-        assertClassMissing("com.naminhyeok.fantazzk.room.Rooms");
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.domain.room.Room")).isTrue();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.domain.game.Game")).isTrue();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.domain.repository.Rooms")).isTrue();
-        assertClassMissing("com.naminhyeok.fantazzk.room.domain.game.GameId");
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.domain.shared.GameId")).isTrue();
-        assertClassMissing("com.naminhyeok.fantazzk.room.domain.room.RoomId");
-        assertClassMissing("com.naminhyeok.fantazzk.room.domain.room.RoomMode");
-        assertClassMissing("com.naminhyeok.fantazzk.room.domain.room.RoomErrorType");
-        assertClassMissing("com.naminhyeok.fantazzk.room.domain.room.RoomStateInvalidException");
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.domain.shared.RoomId")).isTrue();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.domain.shared.RoomMode")).isTrue();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.domain.shared.RoomErrorType")).isTrue();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.domain.shared.RoomStateInvalidException")).isTrue();
-        assertClassMissing("com.naminhyeok.fantazzk.room.JoinableRoomReader");
-        assertClassMissing("com.naminhyeok.fantazzk.room.AuctionScheduleReader");
-        assertClassMissing("com.naminhyeok.fantazzk.room.AuctionScheduleCandidate");
-        assertClassMissing("com.naminhyeok.fantazzk.room.RoomSnapshotPublisher");
-        assertClassMissing("com.naminhyeok.fantazzk.room.RoomCodeGenerator");
-        assertClassMissing("com.naminhyeok.fantazzk.room.TeamLeaderIdentityIssuer");
-        assertClassMissing("com.naminhyeok.fantazzk.room.StartedRoomSnapshot");
-        assertClassMissing("com.naminhyeok.fantazzk.room.JoinableRoomJpaRepository");
-        assertClassMissing("com.naminhyeok.fantazzk.room.JpaJoinableRoomReader");
-        assertClassMissing("com.naminhyeok.fantazzk.room.AuctionScheduleJpaRepository");
-        assertClassMissing("com.naminhyeok.fantazzk.room.JpaAuctionScheduleReader");
-        assertClassMissing("com.naminhyeok.fantazzk.room.RoomAuctionDeadlineScheduler");
-        assertClassMissing("com.naminhyeok.fantazzk.room.RoomAuctionSchedulingPolicy");
-        assertClassMissing("com.naminhyeok.fantazzk.room.SupabaseRoomRealtimePublisher");
-        assertClassMissing("com.naminhyeok.fantazzk.room.NoopRoomSnapshotPublisher");
-        assertClassMissing("com.naminhyeok.fantazzk.room.RealtimeSnapshotEvent");
-        assertClassMissing("com.naminhyeok.fantazzk.room.RoomSnapshotUpdatedEvent");
-        assertClassMissing("com.naminhyeok.fantazzk.room.GameSnapshotUpdatedEvent");
-        assertClassMissing("com.naminhyeok.fantazzk.room.UuidRoomCodeGenerator");
-        assertClassMissing("com.naminhyeok.fantazzk.room.UuidTeamLeaderIdentityIssuer");
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.application.query.JoinableRoomReader")).isTrue();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.application.query.JoinableRoomSummary")).isTrue();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.application.query.AuctionScheduleReader")).isTrue();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.application.query.AuctionScheduleCandidate")).isTrue();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.application.port.AuctionDeadlineSettlementProcessor")).isTrue();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.application.port.RoomSnapshotPublisher")).isTrue();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.application.port.RoomCodeGenerator")).isTrue();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.application.port.TeamLeaderIdentityIssuer")).isTrue();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.application.support.RoomSnapshot")).isTrue();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.application.support.StartedRoomSnapshot")).isTrue();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.infrastructure.realtime.RealtimeSnapshotEvent")).isTrue();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.infrastructure.realtime.RoomSnapshotUpdatedEvent")).isTrue();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.infrastructure.realtime.GameSnapshotUpdatedEvent")).isTrue();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.infrastructure.realtime.NoopRoomSnapshotPublisher")).isTrue();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.infrastructure.realtime.SupabaseRoomRealtimePublisher")).isTrue();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.infrastructure.scheduling.RoomAuctionDeadlineScheduler")).isTrue();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.infrastructure.scheduling.RoomAuctionSchedulingPolicy")).isTrue();
+        assertClassesMissing(
+            "com.naminhyeok.fantazzk.room.RoomManagement",
+            "com.naminhyeok.fantazzk.room.JoinableRoomResponse",
+            "com.naminhyeok.fantazzk.room.RoomViewResponse",
+            "com.naminhyeok.fantazzk.room.RoomSessionResponse",
+            "com.naminhyeok.fantazzk.room.GameResponse",
+            "com.naminhyeok.fantazzk.room.RoomApiController",
+            "com.naminhyeok.fantazzk.room.CreateRoom",
+            "com.naminhyeok.fantazzk.room.JoinRoom",
+            "com.naminhyeok.fantazzk.room.GetRoom",
+            "com.naminhyeok.fantazzk.room.StartRoom",
+            "com.naminhyeok.fantazzk.room.SelectDraftPosition",
+            "com.naminhyeok.fantazzk.room.ClearDraftPosition",
+            "com.naminhyeok.fantazzk.room.GetGame",
+            "com.naminhyeok.fantazzk.room.PlaceBid",
+            "com.naminhyeok.fantazzk.room.PickDraft",
+            "com.naminhyeok.fantazzk.room.SettleAuction",
+            "com.naminhyeok.fantazzk.room.FindJoinableRooms",
+            "com.naminhyeok.fantazzk.room.CreateRoomAttempt",
+            "com.naminhyeok.fantazzk.room.SettleAuctionAttempt",
+            "com.naminhyeok.fantazzk.room.StartedGameContextLoader",
+            "com.naminhyeok.fantazzk.room.RoomActionAuthorizer",
+            "com.naminhyeok.fantazzk.room.RoomSessionResult",
+            "com.naminhyeok.fantazzk.room.Room",
+            "com.naminhyeok.fantazzk.room.Game",
+            "com.naminhyeok.fantazzk.room.Rooms"
+        );
+        assertPublicClasses(
+            "com.naminhyeok.fantazzk.room.RoomQueryApi",
+            "com.naminhyeok.fantazzk.room.RoomSessionApi",
+            "com.naminhyeok.fantazzk.room.RoomDraftApi",
+            "com.naminhyeok.fantazzk.room.RoomStartApi",
+            "com.naminhyeok.fantazzk.room.GameQueryApi",
+            "com.naminhyeok.fantazzk.room.GameAuctionApi",
+            "com.naminhyeok.fantazzk.room.GameDraftApi",
+            "com.naminhyeok.fantazzk.room.JoinableRoomView",
+            "com.naminhyeok.fantazzk.room.RoomView",
+            "com.naminhyeok.fantazzk.room.RoomSessionView",
+            "com.naminhyeok.fantazzk.room.GameView",
+            "com.naminhyeok.fantazzk.room.domain.room.Room",
+            "com.naminhyeok.fantazzk.room.domain.game.Game",
+            "com.naminhyeok.fantazzk.room.domain.repository.Rooms",
+            "com.naminhyeok.fantazzk.room.domain.shared.GameId",
+            "com.naminhyeok.fantazzk.room.domain.shared.RoomId",
+            "com.naminhyeok.fantazzk.room.domain.shared.RoomMode",
+            "com.naminhyeok.fantazzk.room.domain.shared.RoomErrorType",
+            "com.naminhyeok.fantazzk.room.domain.shared.RoomStateInvalidException",
+            "com.naminhyeok.fantazzk.room.application.room.CreateRoom",
+            "com.naminhyeok.fantazzk.room.application.room.JoinRoom",
+            "com.naminhyeok.fantazzk.room.application.room.GetRoom",
+            "com.naminhyeok.fantazzk.room.application.room.StartRoom",
+            "com.naminhyeok.fantazzk.room.application.room.SelectDraftPosition",
+            "com.naminhyeok.fantazzk.room.application.room.ClearDraftPosition",
+            "com.naminhyeok.fantazzk.room.application.room.RoomSessionResult",
+            "com.naminhyeok.fantazzk.room.application.game.GetGame",
+            "com.naminhyeok.fantazzk.room.application.game.PlaceBid",
+            "com.naminhyeok.fantazzk.room.application.game.PickDraft",
+            "com.naminhyeok.fantazzk.room.application.game.SettleAuction",
+            "com.naminhyeok.fantazzk.room.application.query.FindJoinableRooms",
+            "com.naminhyeok.fantazzk.room.application.query.JoinableRoomReader",
+            "com.naminhyeok.fantazzk.room.application.query.JoinableRoomSummary",
+            "com.naminhyeok.fantazzk.room.application.query.AuctionScheduleReader",
+            "com.naminhyeok.fantazzk.room.application.query.AuctionScheduleCandidate",
+            "com.naminhyeok.fantazzk.room.application.port.AuctionDeadlineSettlementProcessor",
+            "com.naminhyeok.fantazzk.room.application.port.RoomSnapshotPublisher",
+            "com.naminhyeok.fantazzk.room.application.port.RoomCodeGenerator",
+            "com.naminhyeok.fantazzk.room.application.port.TeamLeaderIdentityIssuer",
+            "com.naminhyeok.fantazzk.room.application.support.CreateRoomAttempt",
+            "com.naminhyeok.fantazzk.room.application.support.SettleAuctionAttempt",
+            "com.naminhyeok.fantazzk.room.application.support.StartedGameContextLoader",
+            "com.naminhyeok.fantazzk.room.application.support.RoomActionAuthorizer",
+            "com.naminhyeok.fantazzk.room.application.support.RoomSnapshot",
+            "com.naminhyeok.fantazzk.room.application.support.StartedRoomSnapshot",
+            "com.naminhyeok.fantazzk.room.infrastructure.realtime.RealtimeSnapshotEvent",
+            "com.naminhyeok.fantazzk.room.infrastructure.realtime.RoomSnapshotUpdatedEvent",
+            "com.naminhyeok.fantazzk.room.infrastructure.realtime.GameSnapshotUpdatedEvent",
+            "com.naminhyeok.fantazzk.room.infrastructure.realtime.NoopRoomSnapshotPublisher",
+            "com.naminhyeok.fantazzk.room.infrastructure.realtime.SupabaseRoomRealtimePublisher",
+            "com.naminhyeok.fantazzk.room.infrastructure.scheduling.RoomAuctionDeadlineScheduler",
+            "com.naminhyeok.fantazzk.room.infrastructure.scheduling.RoomAuctionSchedulingPolicy"
+        );
+        assertPackagePrivateClasses(
+            "com.naminhyeok.fantazzk.room.ProvideRoomQueryApi",
+            "com.naminhyeok.fantazzk.room.ProvideRoomSessionApi",
+            "com.naminhyeok.fantazzk.room.ProvideRoomDraftApi",
+            "com.naminhyeok.fantazzk.room.ProvideRoomStartApi",
+            "com.naminhyeok.fantazzk.room.ProvideGameQueryApi",
+            "com.naminhyeok.fantazzk.room.ProvideGameAuctionApi",
+            "com.naminhyeok.fantazzk.room.ProvideGameDraftApi"
+        );
+        assertClassesMissing(
+            "com.naminhyeok.fantazzk.room.domain.game.GameId",
+            "com.naminhyeok.fantazzk.room.domain.room.RoomId",
+            "com.naminhyeok.fantazzk.room.domain.room.RoomMode",
+            "com.naminhyeok.fantazzk.room.domain.room.RoomErrorType",
+            "com.naminhyeok.fantazzk.room.domain.room.RoomStateInvalidException",
+            "com.naminhyeok.fantazzk.room.JoinableRoomReader",
+            "com.naminhyeok.fantazzk.room.AuctionScheduleReader",
+            "com.naminhyeok.fantazzk.room.AuctionScheduleCandidate",
+            "com.naminhyeok.fantazzk.room.RoomSnapshotPublisher",
+            "com.naminhyeok.fantazzk.room.RoomCodeGenerator",
+            "com.naminhyeok.fantazzk.room.TeamLeaderIdentityIssuer",
+            "com.naminhyeok.fantazzk.room.StartedRoomSnapshot",
+            "com.naminhyeok.fantazzk.room.JoinableRoomJpaRepository",
+            "com.naminhyeok.fantazzk.room.JpaJoinableRoomReader",
+            "com.naminhyeok.fantazzk.room.AuctionScheduleJpaRepository",
+            "com.naminhyeok.fantazzk.room.JpaAuctionScheduleReader",
+            "com.naminhyeok.fantazzk.room.RoomAuctionDeadlineScheduler",
+            "com.naminhyeok.fantazzk.room.RoomAuctionSchedulingPolicy",
+            "com.naminhyeok.fantazzk.room.SupabaseRoomRealtimePublisher",
+            "com.naminhyeok.fantazzk.room.NoopRoomSnapshotPublisher",
+            "com.naminhyeok.fantazzk.room.RealtimeSnapshotEvent",
+            "com.naminhyeok.fantazzk.room.RoomSnapshotUpdatedEvent",
+            "com.naminhyeok.fantazzk.room.GameSnapshotUpdatedEvent",
+            "com.naminhyeok.fantazzk.room.UuidRoomCodeGenerator",
+            "com.naminhyeok.fantazzk.room.UuidTeamLeaderIdentityIssuer"
+        );
     }
 
     @Test
@@ -156,9 +193,27 @@ class PublishedContractStructureTest {
         return Modifier.isPublic(Class.forName(className).getModifiers());
     }
 
+    private void assertPublicClasses(String... classNames) throws Exception {
+        for (String className : classNames) {
+            assertThat(isPublic(className)).as(className).isTrue();
+        }
+    }
+
+    private void assertPackagePrivateClasses(String... classNames) throws Exception {
+        for (String className : classNames) {
+            assertThat(isPublic(className)).as(className).isFalse();
+        }
+    }
+
     private void assertClassMissing(String className) {
         assertThatThrownBy(() -> Class.forName(className))
             .isInstanceOf(ClassNotFoundException.class);
+    }
+
+    private void assertClassesMissing(String... classNames) {
+        for (String className : classNames) {
+            assertClassMissing(className);
+        }
     }
 
     private boolean hasDeclaredMethod(String name, Class<?>... parameterTypes) {

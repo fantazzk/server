@@ -11,6 +11,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.naminhyeok.fantazzk.CoreException;
 import com.naminhyeok.fantazzk.room.application.port.RoomCodeGenerator;
+import com.naminhyeok.fantazzk.room.application.room.CreateRoom;
+import com.naminhyeok.fantazzk.room.application.support.CreateRoomAttempt;
 import com.naminhyeok.fantazzk.template.TemplateFixture;
 import java.util.ArrayDeque;
 import java.util.Deque;

@@ -6,6 +6,7 @@ import com.naminhyeok.fantazzk.room.domain.repository.*;
 import com.naminhyeok.fantazzk.room.domain.room.*;
 import com.naminhyeok.fantazzk.room.domain.shared.*;
 
+import com.naminhyeok.fantazzk.room.application.room.RoomSessionResult;
 public record RoomSessionView(
     RoomView room,
     TeamLeaderSessionView teamLeaderSession

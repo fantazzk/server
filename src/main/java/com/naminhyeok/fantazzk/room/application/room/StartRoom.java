@@ -1,4 +1,4 @@
-package com.naminhyeok.fantazzk.room;
+package com.naminhyeok.fantazzk.room.application.room;
 
 import com.naminhyeok.fantazzk.room.domain.game.*;
 import com.naminhyeok.fantazzk.room.domain.handoff.*;
@@ -7,7 +7,9 @@ import com.naminhyeok.fantazzk.room.domain.room.*;
 import com.naminhyeok.fantazzk.room.domain.shared.*;
 
 import com.naminhyeok.fantazzk.CoreException;
+import com.naminhyeok.fantazzk.room.GameView;
 import com.naminhyeok.fantazzk.room.application.port.RoomSnapshotPublisher;
+import com.naminhyeok.fantazzk.room.application.support.RoomActionAuthorizer;
 import com.naminhyeok.fantazzk.room.application.support.StartedRoomSnapshot;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
@@ -20,7 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-class StartRoom {
+public class StartRoom {
     private final Rooms rooms;
     private final Games games;
     private final RoomActionAuthorizer roomActionAuthorizer;

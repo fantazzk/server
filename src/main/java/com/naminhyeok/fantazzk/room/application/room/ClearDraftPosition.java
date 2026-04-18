@@ -1,4 +1,4 @@
-package com.naminhyeok.fantazzk.room;
+package com.naminhyeok.fantazzk.room.application.room;
 
 import com.naminhyeok.fantazzk.room.domain.game.*;
 import com.naminhyeok.fantazzk.room.domain.handoff.*;
@@ -7,7 +7,9 @@ import com.naminhyeok.fantazzk.room.domain.room.*;
 import com.naminhyeok.fantazzk.room.domain.shared.*;
 
 import com.naminhyeok.fantazzk.CoreException;
+import com.naminhyeok.fantazzk.room.RoomView;
 import com.naminhyeok.fantazzk.room.application.port.RoomSnapshotPublisher;
+import com.naminhyeok.fantazzk.room.application.support.RoomActionAuthorizer;
 import com.naminhyeok.fantazzk.room.application.support.RoomSnapshot;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.OptimisticLockingFailureException;
@@ -16,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-class ClearDraftPosition {
+public class ClearDraftPosition {
     private final Rooms rooms;
     private final RoomActionAuthorizer roomActionAuthorizer;
     private final RoomSnapshotPublisher roomSnapshotPublisher;

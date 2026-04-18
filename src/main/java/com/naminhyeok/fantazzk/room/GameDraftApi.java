@@ -6,6 +6,8 @@ import com.naminhyeok.fantazzk.room.domain.repository.*;
 import com.naminhyeok.fantazzk.room.domain.room.*;
 import com.naminhyeok.fantazzk.room.domain.shared.*;
 
+import com.naminhyeok.fantazzk.room.application.game.GetGame;
+import com.naminhyeok.fantazzk.room.application.game.PickDraft;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 

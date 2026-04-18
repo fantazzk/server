@@ -1,4 +1,4 @@
-package com.naminhyeok.fantazzk.room;
+package com.naminhyeok.fantazzk.room.application.support;
 
 import com.naminhyeok.fantazzk.room.domain.game.*;
 import com.naminhyeok.fantazzk.room.domain.handoff.*;
@@ -7,8 +7,8 @@ import com.naminhyeok.fantazzk.room.domain.room.*;
 import com.naminhyeok.fantazzk.room.domain.shared.*;
 
 import com.naminhyeok.fantazzk.CoreException;
+import com.naminhyeok.fantazzk.room.GameView;
 import com.naminhyeok.fantazzk.room.application.port.RoomSnapshotPublisher;
-import com.naminhyeok.fantazzk.room.application.support.StartedRoomSnapshot;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.UUID;
@@ -19,7 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-class SettleAuctionAttempt {
+public class SettleAuctionAttempt {
     private final Rooms rooms;
     private final Games games;
     private final StartedGameContextLoader startedGameContextLoader;
@@ -27,7 +27,7 @@ class SettleAuctionAttempt {
     private final RoomSnapshotPublisher roomSnapshotPublisher;
 
     @Transactional
-    AuctionSettlement settle(String code) {
+    public AuctionSettlement settle(String code) {
         try {
             Instant now = Instant.now(clock);
             Room room = rooms.findByCode(code).orElseThrow(() -> CoreException.of(RoomErrorType.ROOM_NOT_FOUND));
@@ -45,7 +45,7 @@ class SettleAuctionAttempt {
     }
 
     @Transactional
-    AuctionSettlement settle(UUID gameId) {
+    public AuctionSettlement settle(UUID gameId) {
         try {
             Instant now = Instant.now(clock);
             StartedGameContext context = startedGameContextLoader.load(gameId);
@@ -63,7 +63,7 @@ class SettleAuctionAttempt {
     }
 
     @Transactional
-    Room settleIfDue(String code) {
+    public Room settleIfDue(String code) {
         Instant now = Instant.now(clock);
         Room room = rooms.findByCode(code).orElseThrow(() -> CoreException.of(RoomErrorType.ROOM_NOT_FOUND));
         AuctionGame game = loadAuctionGame(room);
@@ -81,7 +81,7 @@ class SettleAuctionAttempt {
     }
 
     @Transactional
-    Game settleIfDue(UUID gameId) {
+    public Game settleIfDue(UUID gameId) {
         Instant now = Instant.now(clock);
         StartedGameContext context = startedGameContextLoader.load(gameId);
         Game loadedGame = context.game();

@@ -26,7 +26,7 @@ public record GameView(
     List<GameMemberView> members,
     GameProgressView progress
 ) {
-    static GameView from(Game game) {
+    public static GameView from(Game game) {
         return new GameView(
             game.getId().gameId().toString(),
             game.getRoomCode(),

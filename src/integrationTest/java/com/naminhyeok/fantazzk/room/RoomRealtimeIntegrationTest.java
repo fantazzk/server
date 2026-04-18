@@ -9,6 +9,13 @@ import com.naminhyeok.fantazzk.room.domain.shared.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.naminhyeok.fantazzk.room.application.game.PickDraft;
+import com.naminhyeok.fantazzk.room.application.game.PlaceBid;
+import com.naminhyeok.fantazzk.room.application.game.SettleAuction;
+import com.naminhyeok.fantazzk.room.application.room.CreateRoom;
+import com.naminhyeok.fantazzk.room.application.room.JoinRoom;
+import com.naminhyeok.fantazzk.room.application.room.RoomSessionResult;
+import com.naminhyeok.fantazzk.room.application.room.StartRoom;
 import com.naminhyeok.fantazzk.room.application.port.RoomSnapshotPublisher;
 import com.naminhyeok.fantazzk.room.application.support.RoomSnapshot;
 import com.naminhyeok.fantazzk.room.application.support.StartedRoomSnapshot;

@@ -10,6 +10,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.naminhyeok.fantazzk.CoreException;
+import com.naminhyeok.fantazzk.room.application.support.RoomActionAuthorizer;
+import com.naminhyeok.fantazzk.room.application.support.StartedGameActionContext;
+import com.naminhyeok.fantazzk.room.application.support.StartedGameContextLoader;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;

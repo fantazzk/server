@@ -6,6 +6,8 @@ import com.naminhyeok.fantazzk.room.domain.repository.*;
 import com.naminhyeok.fantazzk.room.domain.room.*;
 import com.naminhyeok.fantazzk.room.domain.shared.*;
 
+import com.naminhyeok.fantazzk.room.application.query.FindJoinableRooms;
+import com.naminhyeok.fantazzk.room.application.room.GetRoom;
 import java.util.List;
 import org.springframework.stereotype.Service;
 
