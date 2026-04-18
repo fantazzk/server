@@ -38,7 +38,7 @@ class TemplateCatalogIntegrationTest {
                     2,
                     3,
                     30,
-                    DraftOrderStrategy.FIXED,
+                    TemplateCatalog.DraftOrderStrategy.FIXED,
                     List.of(
                         new CreateTemplateCommand.Player("선수4", "TANK", 0),
                         new CreateTemplateCommand.Player("선수1", "SUPPORT", 1),

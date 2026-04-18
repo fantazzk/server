@@ -20,7 +20,7 @@ final class TemplateConfiguration implements ValueObject {
     private final Integer minBidUnit;
     private final Integer positionLimit;
     @Enumerated(EnumType.STRING)
-    private final DraftOrderStrategy draftOrderStrategy;
+    private final TemplateCatalog.DraftOrderStrategy draftOrderStrategy;
 
     private TemplateConfiguration(
         GameType gameType,
@@ -31,7 +31,7 @@ final class TemplateConfiguration implements ValueObject {
         int pickBanTime,
         Integer minBidUnit,
         Integer positionLimit,
-        DraftOrderStrategy draftOrderStrategy
+        TemplateCatalog.DraftOrderStrategy draftOrderStrategy
     ) {
         if (gameType == null) {
             throw new IllegalArgumentException("게임 타입은 필수입니다");
@@ -120,7 +120,7 @@ final class TemplateConfiguration implements ValueObject {
         int teamCount,
         int teamSize,
         int pickBanTime,
-        DraftOrderStrategy strategy
+        TemplateCatalog.DraftOrderStrategy strategy
     ) {
         return new TemplateConfiguration(
             gameType,
@@ -144,7 +144,7 @@ final class TemplateConfiguration implements ValueObject {
         int pickBanTime,
         Integer minBidUnit,
         Integer positionLimit,
-        DraftOrderStrategy draftOrderStrategy
+        TemplateCatalog.DraftOrderStrategy draftOrderStrategy
     ) {
         return switch (mode) {
             case AUCTION -> {

@@ -71,7 +71,7 @@ record CreateTemplateRequest(
                     teamCount,
                     teamSize,
                     pickBanTime,
-                    DraftOrderStrategy.valueOf(draftOrderStrategy.name()),
+                    draftOrderStrategy,
                     toPlayers()
                 );
             }

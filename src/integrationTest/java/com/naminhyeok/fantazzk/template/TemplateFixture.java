@@ -44,7 +44,7 @@ public class TemplateFixture {
                 teamCount,
                 teamSize,
                 30,
-                DraftOrderStrategy.valueOf(strategy.name()),
+                strategy,
                 toPlayers(players)
             )
         ).getId().templateId();

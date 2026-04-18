@@ -123,7 +123,7 @@ class TemplateAggregateTest {
                     2,
                     2,
                     30,
-                    DraftOrderStrategy.FIXED,
+                    TemplateCatalog.DraftOrderStrategy.FIXED,
                     List.of(
                         new TemplatePlayer("선수1", "TANK", 0),
                         new TemplatePlayer("선수2", "SUPPORT", 1)
@@ -136,7 +136,7 @@ class TemplateAggregateTest {
             assertThat(template.getPickBanTime()).isEqualTo(30);
             assertThat(template.getMinBidUnit()).isNull();
             assertThat(template.getPositionLimit()).isNull();
-            assertThat(template.getDraftOrderStrategy()).isEqualTo(DraftOrderStrategy.FIXED);
+            assertThat(template.getDraftOrderStrategy()).isEqualTo(TemplateCatalog.DraftOrderStrategy.FIXED);
         }
     }
 }

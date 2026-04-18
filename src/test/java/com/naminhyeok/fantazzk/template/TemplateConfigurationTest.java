@@ -82,7 +82,7 @@ class TemplateConfigurationTest {
                     45,
                     10,
                     2,
-                    DraftOrderStrategy.SNAKE
+                    TemplateCatalog.DraftOrderStrategy.SNAKE
                 )
             )
                 .isInstanceOf(IllegalArgumentException.class)
@@ -95,7 +95,7 @@ class TemplateConfigurationTest {
         @Test
         void 게임타입과_픽밴시간_순서전략과_필요한_선수_수를_노출한다() {
             TemplateConfiguration configuration =
-                TemplateConfiguration.draft(GameType.OVERWATCH_2, 2, 3, 30, DraftOrderStrategy.SNAKE);
+                TemplateConfiguration.draft(GameType.OVERWATCH_2, 2, 3, 30, TemplateCatalog.DraftOrderStrategy.SNAKE);
 
             assertThat(configuration.getGameType()).isEqualTo(GameType.OVERWATCH_2);
             assertThat(configuration.getMode()).isEqualTo(TemplateCatalog.Mode.DRAFT);
@@ -103,7 +103,7 @@ class TemplateConfigurationTest {
             assertThat(configuration.getPickBanTime()).isEqualTo(30);
             assertThat(configuration.getMinBidUnit()).isNull();
             assertThat(configuration.getPositionLimit()).isNull();
-            assertThat(configuration.getDraftOrderStrategy()).isEqualTo(DraftOrderStrategy.SNAKE);
+            assertThat(configuration.getDraftOrderStrategy()).isEqualTo(TemplateCatalog.DraftOrderStrategy.SNAKE);
             assertThat(configuration.requiredPlayerCount()).isEqualTo(4);
         }
 
@@ -138,7 +138,7 @@ class TemplateConfigurationTest {
                     30,
                     null,
                     null,
-                    DraftOrderStrategy.SNAKE
+                    TemplateCatalog.DraftOrderStrategy.SNAKE
                 )
             )
                 .isInstanceOf(IllegalArgumentException.class)
@@ -157,7 +157,7 @@ class TemplateConfigurationTest {
                     30,
                     10,
                     null,
-                    DraftOrderStrategy.SNAKE
+                    TemplateCatalog.DraftOrderStrategy.SNAKE
                 )
             )
                 .isInstanceOf(IllegalArgumentException.class)
@@ -176,7 +176,7 @@ class TemplateConfigurationTest {
                     30,
                     null,
                     2,
-                    DraftOrderStrategy.SNAKE
+                    TemplateCatalog.DraftOrderStrategy.SNAKE
                 )
             )
                 .isInstanceOf(IllegalArgumentException.class)
@@ -195,7 +195,7 @@ class TemplateConfigurationTest {
 
         @Test
         void 팀_크기는_0보다_커야_한다() {
-            assertThatThrownBy(() -> TemplateConfiguration.draft(GameType.OVERWATCH_2, 2, 0, 30, DraftOrderStrategy.FIXED))
+            assertThatThrownBy(() -> TemplateConfiguration.draft(GameType.OVERWATCH_2, 2, 0, 30, TemplateCatalog.DraftOrderStrategy.FIXED))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("팀 크기는 0보다 커야 합니다");
         }
@@ -209,7 +209,7 @@ class TemplateConfigurationTest {
 
         @Test
         void 픽밴_시간은_0보다_커야_한다() {
-            assertThatThrownBy(() -> TemplateConfiguration.draft(GameType.OVERWATCH_2, 2, 2, 0, DraftOrderStrategy.FIXED))
+            assertThatThrownBy(() -> TemplateConfiguration.draft(GameType.OVERWATCH_2, 2, 2, 0, TemplateCatalog.DraftOrderStrategy.FIXED))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("픽밴 시간은 0보다 커야 합니다");
         }

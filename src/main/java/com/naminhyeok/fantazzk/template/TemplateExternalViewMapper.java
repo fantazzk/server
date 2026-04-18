@@ -14,9 +14,7 @@ final class TemplateExternalViewMapper {
             template.getPickBanTime(),
             template.getMinBidUnit(),
             template.getPositionLimit(),
-            template.getDraftOrderStrategy() == null
-                ? null
-                : TemplateCatalog.DraftOrderStrategy.valueOf(template.getDraftOrderStrategy().name()),
+            template.getDraftOrderStrategy(),
             detail.players().stream()
                 .map(player -> new TemplateCatalog.PlayerBlueprint(player.name(), player.position(), player.displayOrder()))
                 .toList()
@@ -36,9 +34,7 @@ final class TemplateExternalViewMapper {
             template.getPickBanTime(),
             template.getMinBidUnit(),
             template.getPositionLimit(),
-            template.getDraftOrderStrategy() == null
-                ? null
-                : TemplateCatalog.DraftOrderStrategy.valueOf(template.getDraftOrderStrategy().name()),
+            template.getDraftOrderStrategy(),
             detail.players().stream().map(TemplatePlayerResponse::from).toList()
         );
     }

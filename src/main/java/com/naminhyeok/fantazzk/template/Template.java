@@ -51,7 +51,7 @@ class Template implements AggregateRoot<Template, TemplateId> {
         int teamCount,
         int teamSize,
         int pickBanTime,
-        DraftOrderStrategy strategy,
+        TemplateCatalog.DraftOrderStrategy strategy,
         List<TemplatePlayer> players
     ) {
         return new Template(name, TemplateConfiguration.draft(gameType, teamCount, teamSize, pickBanTime, strategy))
@@ -90,7 +90,7 @@ class Template implements AggregateRoot<Template, TemplateId> {
         return configuration.getPositionLimit();
     }
 
-    public DraftOrderStrategy getDraftOrderStrategy() {
+    public TemplateCatalog.DraftOrderStrategy getDraftOrderStrategy() {
         return configuration.getDraftOrderStrategy();
     }
 

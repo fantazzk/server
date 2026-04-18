@@ -61,7 +61,7 @@ class CreateTemplateTest {
                     2,
                     2,
                     30,
-                    DraftOrderStrategy.SNAKE,
+                    TemplateCatalog.DraftOrderStrategy.SNAKE,
                     List.of(
                         new CreateTemplateCommand.Player("선수1", "TANK", 0),
                         new CreateTemplateCommand.Player("선수2", "SUPPORT", 1)
@@ -70,7 +70,7 @@ class CreateTemplateTest {
             );
 
         assertThat(template.getConfiguration())
-            .isEqualTo(TemplateConfiguration.draft(GameType.OVERWATCH_2, 2, 2, 30, DraftOrderStrategy.SNAKE));
+            .isEqualTo(TemplateConfiguration.draft(GameType.OVERWATCH_2, 2, 2, 30, TemplateCatalog.DraftOrderStrategy.SNAKE));
         assertThat(template.getBudget()).isNull();
     }
 

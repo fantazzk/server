@@ -16,7 +16,7 @@ class TemplateExternalViewMapperTest {
                 2,
                 2,
                 30,
-                DraftOrderStrategy.SNAKE,
+                TemplateCatalog.DraftOrderStrategy.SNAKE,
                 List.of(
                     new TemplatePlayer("선수1", "TANK", 0),
                     new TemplatePlayer("선수2", "SUPPORT", 1)

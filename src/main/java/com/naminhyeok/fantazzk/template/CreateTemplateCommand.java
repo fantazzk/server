@@ -37,7 +37,7 @@ sealed interface CreateTemplateCommand permits CreateTemplateCommand.Auction, Cr
         int teamCount,
         int teamSize,
         int pickBanTime,
-        DraftOrderStrategy strategy,
+        TemplateCatalog.DraftOrderStrategy strategy,
         List<Player> players
     ) implements CreateTemplateCommand {
     }
