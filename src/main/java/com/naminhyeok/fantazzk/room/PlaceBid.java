@@ -19,12 +19,12 @@ class PlaceBid {
     private final Clock clock;
 
     @Transactional
-    public RoomBid place(String code, String actionToken, int amount) {
+    public AuctionBid place(String code, String actionToken, int amount) {
         try {
             Room room = rooms.findByCode(code).orElseThrow(() -> CoreException.of(RoomErrorType.ROOM_NOT_FOUND));
             RoomTeamLeader caller = roomActionAuthorizer.authenticate(room, actionToken);
             AuctionGame game = requireAuctionGame(room);
-            RoomBid bid = game.placeBid(caller.getId(), amount, Instant.now(clock));
+            AuctionBid bid = game.placeBid(caller.getId(), amount, Instant.now(clock));
             games.save(game);
             Room saved = rooms.saveAndFlush(room);
             roomSnapshotPublisher.publishAfterCommit(new RoomDetails(saved, game));
@@ -35,13 +35,13 @@ class PlaceBid {
     }
 
     @Transactional
-    public RoomBid place(UUID gameId, String actionToken, int amount) {
+    public AuctionBid place(UUID gameId, String actionToken, int amount) {
         try {
             Game game = games.findById(new GameId(gameId)).orElseThrow(() -> CoreException.of(RoomErrorType.GAME_NOT_FOUND));
             Room room = rooms.findById(game.getRoomId()).orElseThrow(() -> CoreException.of(RoomErrorType.GAME_NOT_FOUND));
             RoomTeamLeader caller = roomActionAuthorizer.authenticate(room, actionToken);
             AuctionGame auctionGame = requireAuctionGame(game);
-            RoomBid bid = auctionGame.placeBid(caller.getId(), amount, Instant.now(clock));
+            AuctionBid bid = auctionGame.placeBid(caller.getId(), amount, Instant.now(clock));
             games.save(auctionGame);
             Room saved = rooms.saveAndFlush(room);
             roomSnapshotPublisher.publishAfterCommit(new RoomDetails(saved, auctionGame));

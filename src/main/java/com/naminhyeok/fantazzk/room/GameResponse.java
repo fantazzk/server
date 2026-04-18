@@ -65,14 +65,14 @@ record GameResponse(
     }
 
     private static Set<String> assignedPlayerNamesOf(Game game) {
-        return membersOf(game).stream().map(RoomTeamMember::playerName).collect(Collectors.toSet());
+        return membersOf(game).stream().map(RosterMember::playerName).collect(Collectors.toSet());
     }
 
     private static List<GameMemberResponse> memberResponses(Game game) {
         return membersOf(game).stream().map(GameMemberResponse::from).toList();
     }
 
-    private static List<RoomTeamMember> membersOf(Game game) {
+    private static List<RosterMember> membersOf(Game game) {
         if (game instanceof AuctionGame auctionGame) {
             return auctionGame.getMembers();
         }

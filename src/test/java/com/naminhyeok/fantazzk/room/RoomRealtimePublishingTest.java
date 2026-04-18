@@ -53,7 +53,7 @@ class RoomRealtimePublishingTest {
         RecordingRoomSnapshotPublisher publisher = new RecordingRoomSnapshotPublisher();
         PickDraft pickDraft = new PickDraft(new InMemoryRooms(room), new InMemoryGames(game), new RoomActionAuthorizer(), publisher);
 
-        RoomTeamMember picked = pickDraft.pick(room.getCode(), HOST_ACTION_TOKEN, "선수1");
+        RosterMember picked = pickDraft.pick(room.getCode(), HOST_ACTION_TOKEN, "선수1");
 
         assertThat(picked.playerName()).isEqualTo("선수1");
         assertThat(publisher.events).hasSize(1);

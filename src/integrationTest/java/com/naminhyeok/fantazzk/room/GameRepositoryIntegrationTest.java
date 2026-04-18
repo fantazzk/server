@@ -222,7 +222,7 @@ class GameRepositoryIntegrationTest {
         DraftGame reloaded = (DraftGame) games.findById(saved.getId()).orElseThrow();
 
         assertThat(reloaded.getMembers())
-            .containsExactly(new RoomTeamMember(new TeamLeaderId("host-1"), "선수1", 0));
+            .containsExactly(new RosterMember(new TeamLeaderId("host-1"), "선수1", 0));
         assertThat(reloaded.getCurrentTurnIndex()).isEqualTo(1);
         assertThat(reloaded.isPlayerAvailable("선수1")).isFalse();
         assertThat(reloaded.isPlayerAvailable("선수2")).isTrue();

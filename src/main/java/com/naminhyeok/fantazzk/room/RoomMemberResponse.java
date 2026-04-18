@@ -5,7 +5,7 @@ record RoomMemberResponse(
     String playerName,
     int assignOrder
 ) {
-    static RoomMemberResponse from(RoomTeamMember member) {
+    static RoomMemberResponse from(RosterMember member) {
         return new RoomMemberResponse(
             member.teamLeaderId().value(),
             member.playerName(),

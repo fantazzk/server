@@ -23,7 +23,7 @@ record RoomProgressResponse(
             if (auctionGame.getStatus() != GameStatus.IN_PROGRESS) {
                 return new RoomProgressResponse(null, null, null, null, null, null, null, null, null);
             }
-            RoomBid winningBid = auctionGame.currentWinningBid();
+            AuctionBid winningBid = auctionGame.currentWinningBid();
             return new RoomProgressResponse(
                 null,
                 auctionGame.getCurrentRound() <= 0 ? null : auctionGame.getCurrentRound(),

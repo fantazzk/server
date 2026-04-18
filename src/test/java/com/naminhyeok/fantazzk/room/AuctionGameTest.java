@@ -20,8 +20,8 @@ class AuctionGameTest {
     void 경매_게임은_입찰과_정산으로_라운드와_멤버와_예산을_직접_갱신한다() {
         AuctionGame game = startedAuctionGameWithTwoPlayers();
 
-        RoomBid firstBid = game.placeBid(HOST_ID, 100, STARTED_AT.plusSeconds(1));
-        RoomBid secondBid = game.placeBid(GUEST_ID, 150, STARTED_AT.plusSeconds(2));
+        AuctionBid firstBid = game.placeBid(HOST_ID, 100, STARTED_AT.plusSeconds(1));
+        AuctionBid secondBid = game.placeBid(GUEST_ID, 150, STARTED_AT.plusSeconds(2));
 
         AuctionSettlement settlement = game.settleAuction(STARTED_AT.plusSeconds(2 + PICK_BAN_TIME));
 
@@ -29,7 +29,7 @@ class AuctionGameTest {
         assertThat(secondBid.sequence()).isEqualTo(new BidSequence(2));
         assertThat(settlement).isEqualTo(new AuctionSettlement("선수1", AuctionOutcome.SOLD));
         assertThat(game.getMembers()).singleElement()
-            .extracting(RoomTeamMember::teamLeaderId, RoomTeamMember::playerName)
+            .extracting(RosterMember::teamLeaderId, RosterMember::playerName)
             .containsExactly(GUEST_ID, "선수1");
         assertThat(game.getParticipants())
             .extracting(GameParticipant::teamLeaderId, GameParticipant::remainingBudget)

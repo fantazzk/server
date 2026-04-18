@@ -42,7 +42,7 @@ class GameDraftApiControllerWebMvcTest {
     void pickDraft는_header가_있으면_최신_game_snapshot을_반환한다() throws Exception {
         UUID gameId = UUID.fromString(RoomApiTestFixtures.DRAFT_GAME_ID);
         given(pickDraft.pick(gameId, RoomApiTestFixtures.GUEST_TOKEN, "선수3"))
-            .willReturn(new RoomTeamMember(new TeamLeaderId(RoomApiTestFixtures.GUEST_ID), "선수3", 2));
+            .willReturn(new RosterMember(new TeamLeaderId(RoomApiTestFixtures.GUEST_ID), "선수3", 2));
         given(getGame.get(gameId)).willReturn(RoomApiTestFixtures.inProgressDraftDetails().game());
 
         var result = mockMvcTester().perform(
