@@ -100,7 +100,7 @@ class TemplateAggregateTest {
 
             assertThat(template.getName()).isEqualTo("경매전");
             assertThat(template.getGameType()).isEqualTo(GameType.LEAGUE_OF_LEGENDS);
-            assertThat(template.getMode()).isEqualTo(TemplateMode.AUCTION);
+            assertThat(template.getMode()).isEqualTo(TemplateCatalog.Mode.AUCTION);
             assertThat(template.getTeamCount()).isEqualTo(2);
             assertThat(template.getTeamSize()).isEqualTo(3);
             assertThat(template.getBudget()).isEqualTo(300);
@@ -131,7 +131,7 @@ class TemplateAggregateTest {
                 );
 
             assertThat(template.getGameType()).isEqualTo(GameType.OVERWATCH_2);
-            assertThat(template.getMode()).isEqualTo(TemplateMode.DRAFT);
+            assertThat(template.getMode()).isEqualTo(TemplateCatalog.Mode.DRAFT);
             assertThat(template.getBudget()).isNull();
             assertThat(template.getPickBanTime()).isEqualTo(30);
             assertThat(template.getMinBidUnit()).isNull();

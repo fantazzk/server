@@ -23,7 +23,7 @@ class TemplateConfigurationTest {
                 TemplateConfiguration.auction(GameType.LEAGUE_OF_LEGENDS, 2, 3, 300, 45, 10, 2);
 
             assertThat(configuration.getGameType()).isEqualTo(GameType.LEAGUE_OF_LEGENDS);
-            assertThat(configuration.getMode()).isEqualTo(TemplateMode.AUCTION);
+            assertThat(configuration.getMode()).isEqualTo(TemplateCatalog.Mode.AUCTION);
             assertThat(configuration.getBudget()).isEqualTo(300);
             assertThat(configuration.getPickBanTime()).isEqualTo(45);
             assertThat(configuration.getMinBidUnit()).isEqualTo(10);
@@ -37,7 +37,7 @@ class TemplateConfigurationTest {
             assertThatThrownBy(() ->
                 TemplateConfiguration.from(
                     GameType.LEAGUE_OF_LEGENDS,
-                    TemplateMode.AUCTION,
+                    TemplateCatalog.Mode.AUCTION,
                     2,
                     3,
                     null,
@@ -56,7 +56,7 @@ class TemplateConfigurationTest {
             assertThatThrownBy(() ->
                 TemplateConfiguration.from(
                     GameType.LEAGUE_OF_LEGENDS,
-                    TemplateMode.AUCTION,
+                    TemplateCatalog.Mode.AUCTION,
                     2,
                     3,
                     300,
@@ -75,7 +75,7 @@ class TemplateConfigurationTest {
             assertThatThrownBy(() ->
                 TemplateConfiguration.from(
                     GameType.LEAGUE_OF_LEGENDS,
-                    TemplateMode.AUCTION,
+                    TemplateCatalog.Mode.AUCTION,
                     2,
                     3,
                     300,
@@ -98,7 +98,7 @@ class TemplateConfigurationTest {
                 TemplateConfiguration.draft(GameType.OVERWATCH_2, 2, 3, 30, DraftOrderStrategy.SNAKE);
 
             assertThat(configuration.getGameType()).isEqualTo(GameType.OVERWATCH_2);
-            assertThat(configuration.getMode()).isEqualTo(TemplateMode.DRAFT);
+            assertThat(configuration.getMode()).isEqualTo(TemplateCatalog.Mode.DRAFT);
             assertThat(configuration.getBudget()).isNull();
             assertThat(configuration.getPickBanTime()).isEqualTo(30);
             assertThat(configuration.getMinBidUnit()).isNull();
@@ -112,7 +112,7 @@ class TemplateConfigurationTest {
             assertThatThrownBy(() ->
                 TemplateConfiguration.from(
                     GameType.OVERWATCH_2,
-                    TemplateMode.DRAFT,
+                    TemplateCatalog.Mode.DRAFT,
                     2,
                     3,
                     null,
@@ -131,7 +131,7 @@ class TemplateConfigurationTest {
             assertThatThrownBy(() ->
                 TemplateConfiguration.from(
                     GameType.OVERWATCH_2,
-                    TemplateMode.DRAFT,
+                    TemplateCatalog.Mode.DRAFT,
                     2,
                     3,
                     300,
@@ -150,7 +150,7 @@ class TemplateConfigurationTest {
             assertThatThrownBy(() ->
                 TemplateConfiguration.from(
                     GameType.OVERWATCH_2,
-                    TemplateMode.DRAFT,
+                    TemplateCatalog.Mode.DRAFT,
                     2,
                     3,
                     null,
@@ -169,7 +169,7 @@ class TemplateConfigurationTest {
             assertThatThrownBy(() ->
                 TemplateConfiguration.from(
                     GameType.OVERWATCH_2,
-                    TemplateMode.DRAFT,
+                    TemplateCatalog.Mode.DRAFT,
                     2,
                     3,
                     null,

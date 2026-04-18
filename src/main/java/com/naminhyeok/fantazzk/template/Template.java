@@ -58,7 +58,7 @@ class Template implements AggregateRoot<Template, TemplateId> {
             .registerPlayers(players);
     }
 
-    public TemplateMode getMode() {
+    public TemplateCatalog.Mode getMode() {
         return configuration.getMode();
     }
 

@@ -56,7 +56,7 @@ class TemplateRepositoryIntegrationTest {
         assertThat(reloaded.getId()).isEqualTo(saved.getId());
         assertThat(reloaded.getName()).isEqualTo("주말 풋살 경매전");
         assertThat(reloaded.getGameType()).isEqualTo(GameType.LEAGUE_OF_LEGENDS);
-        assertThat(reloaded.getMode()).isEqualTo(TemplateMode.AUCTION);
+        assertThat(reloaded.getMode()).isEqualTo(TemplateCatalog.Mode.AUCTION);
         assertThat(reloaded.getPickBanTime()).isEqualTo(45);
         assertThat(reloaded.getMinBidUnit()).isEqualTo(10);
         assertThat(reloaded.getPositionLimit()).isEqualTo(1);

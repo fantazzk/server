@@ -12,7 +12,7 @@ final class TemplateConfiguration implements ValueObject {
     @Enumerated(EnumType.STRING)
     private final GameType gameType;
     @Enumerated(EnumType.STRING)
-    private final TemplateMode mode;
+    private final TemplateCatalog.Mode mode;
     private final int teamCount;
     private final int teamSize;
     private final Integer budget;
@@ -24,7 +24,7 @@ final class TemplateConfiguration implements ValueObject {
 
     private TemplateConfiguration(
         GameType gameType,
-        TemplateMode mode,
+        TemplateCatalog.Mode mode,
         int teamCount,
         int teamSize,
         Integer budget,
@@ -46,7 +46,7 @@ final class TemplateConfiguration implements ValueObject {
             throw new IllegalArgumentException("픽밴 시간은 0보다 커야 합니다");
         }
 
-        if (mode == TemplateMode.AUCTION) {
+        if (mode == TemplateCatalog.Mode.AUCTION) {
             if (budget == null) {
                 throw new IllegalArgumentException("경매 템플릿에는 예산이 필요합니다");
             }
@@ -67,7 +67,7 @@ final class TemplateConfiguration implements ValueObject {
             }
         }
 
-        if (mode == TemplateMode.DRAFT) {
+        if (mode == TemplateCatalog.Mode.DRAFT) {
             if (budget != null) {
                 throw new IllegalArgumentException("드래프트 템플릿에는 예산을 지정할 수 없습니다");
             }
@@ -104,7 +104,7 @@ final class TemplateConfiguration implements ValueObject {
     ) {
         return new TemplateConfiguration(
             gameType,
-            TemplateMode.AUCTION,
+            TemplateCatalog.Mode.AUCTION,
             teamCount,
             teamSize,
             budget,
@@ -124,7 +124,7 @@ final class TemplateConfiguration implements ValueObject {
     ) {
         return new TemplateConfiguration(
             gameType,
-            TemplateMode.DRAFT,
+            TemplateCatalog.Mode.DRAFT,
             teamCount,
             teamSize,
             null,
@@ -137,7 +137,7 @@ final class TemplateConfiguration implements ValueObject {
 
     public static TemplateConfiguration from(
         GameType gameType,
-        TemplateMode mode,
+        TemplateCatalog.Mode mode,
         int teamCount,
         int teamSize,
         Integer budget,

@@ -7,7 +7,7 @@ final class TemplateExternalViewMapper {
     static TemplateCatalog.TemplateBlueprint toBlueprint(TemplateDetail detail) {
         Template template = detail.template();
         return new TemplateCatalog.TemplateBlueprint(
-            template.getMode() == TemplateMode.AUCTION ? TemplateCatalog.Mode.AUCTION : TemplateCatalog.Mode.DRAFT,
+            template.getMode(),
             template.getTeamCount(),
             template.getTeamSize(),
             template.getBudget(),
@@ -29,7 +29,7 @@ final class TemplateExternalViewMapper {
             template.getId().templateId().toString(),
             template.getName(),
             TemplateCatalog.GameType.valueOf(template.getGameType().name()),
-            template.getMode() == TemplateMode.AUCTION ? TemplateCatalog.Mode.AUCTION : TemplateCatalog.Mode.DRAFT,
+            template.getMode(),
             template.getTeamCount(),
             template.getTeamSize(),
             template.getBudget(),
