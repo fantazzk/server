@@ -38,20 +38,6 @@ class RoomTeamLeader {
         return id;
     }
 
-    String getTeamLeaderId() {
-        return id.value();
-    }
-
-    void spend(int amount) {
-        if (remainingBudget == null) {
-            throw RoomStateInvalidException.auctionWinnerBudgetMissing(id);
-        }
-        if (remainingBudget < amount) {
-            throw RoomStateInvalidException.auctionWinnerBudgetExceeded(id, remainingBudget, amount);
-        }
-        remainingBudget -= amount;
-    }
-
     void assignDraftPosition(int draftPosition) {
         this.draftPosition = draftPosition;
     }

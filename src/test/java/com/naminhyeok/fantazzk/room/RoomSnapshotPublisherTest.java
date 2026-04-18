@@ -14,12 +14,12 @@ class RoomSnapshotPublisherTest {
     void 기본_publishAfterCommit_roomDetails는_started_game_state_유실을_막는다() {
         RoomSnapshotPublisher publisher = new RoomOnlyPublisher();
 
-        assertThatThrownBy(() -> publisher.publishAfterCommit(startedDraftDetails()))
+        assertThatThrownBy(() -> publisher.publishAfterCommit(startedDraftSnapshot()))
             .isInstanceOf(IllegalStateException.class)
             .hasMessageContaining("game state");
     }
 
-    private static RoomDetails startedDraftDetails() {
+    private static StartedRoomSnapshot startedDraftSnapshot() {
         Room room =
             Room.createFromTemplate(
                 "DRF001",
@@ -27,13 +27,13 @@ class RoomSnapshotPublisherTest {
                 "호스트",
                 "host-action-token",
                 new RoomTemplateSpec(
-                    RoomTemplateSpec.Mode.DRAFT,
+                    RoomMode.DRAFT,
                     2,
                     2,
                     null,
                     30,
                     null,
-                    RoomTemplateSpec.DraftOrderStrategy.SNAKE,
+                    DraftOrderStrategy.SNAKE,
                     List.of(
                         new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
                         new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
@@ -49,12 +49,17 @@ class RoomSnapshotPublisherTest {
             new GameId(UUID.fromString("00000000-0000-0000-0000-000000000101")),
             STARTED_AT
         );
-        return new RoomDetails(room, new GameFactory().create(snapshot));
+        return new StartedRoomSnapshot(room, new GameFactory().create(snapshot));
     }
 
     private static final class RoomOnlyPublisher implements RoomSnapshotPublisher {
         @Override
         public void publishAfterCommit(Room room) {
+        }
+
+        @Override
+        public void publishAfterCommit(StartedRoomSnapshot snapshot) {
+            throw new IllegalStateException("started room snapshot must preserve game state");
         }
     }
 }

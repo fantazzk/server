@@ -11,7 +11,7 @@ import java.util.stream.IntStream;
 
 record CreateTemplateRequest(
     @NotBlank(message = "템플릿 이름은 비어 있을 수 없습니다") String name,
-    @NotNull(message = "게임 타입은 필수입니다") GameType gameType,
+    @NotNull(message = "게임 타입은 필수입니다") TemplateCatalog.GameType gameType,
     @NotNull(message = "템플릿 모드는 필수입니다") TemplateCatalog.Mode mode,
     @Positive(message = "팀 수는 1 이상이어야 합니다") int teamCount,
     @Positive(message = "팀 크기는 1 이상이어야 합니다") int teamSize,
@@ -71,7 +71,7 @@ record CreateTemplateRequest(
                     teamCount,
                     teamSize,
                     pickBanTime,
-                    DraftOrderStrategy.valueOf(draftOrderStrategy.name()),
+                    draftOrderStrategy,
                     toPlayers()
                 );
             }

@@ -1,8 +1,8 @@
-package com.naminhyeok.fantazzk.room.event;
+package com.naminhyeok.fantazzk.room;
 
 import java.time.Instant;
 
-public record AuctionSettled(
+record AuctionSettled(
     String roomCode,
     String outcome,
     Instant roundEndsAt

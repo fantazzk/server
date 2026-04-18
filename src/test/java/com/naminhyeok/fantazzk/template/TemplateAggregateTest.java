@@ -16,7 +16,7 @@ class TemplateAggregateTest {
             Template template =
                 Template.createAuction(
                     "주말 경매전",
-                    GameType.LEAGUE_OF_LEGENDS,
+                    TemplateCatalog.GameType.LEAGUE_OF_LEGENDS,
                     2,
                     2,
                     300,
@@ -42,7 +42,7 @@ class TemplateAggregateTest {
             assertThatThrownBy(() ->
                 Template.createAuction(
                     "주말 경매전",
-                    GameType.LEAGUE_OF_LEGENDS,
+                    TemplateCatalog.GameType.LEAGUE_OF_LEGENDS,
                     2,
                     2,
                     300,
@@ -61,7 +61,7 @@ class TemplateAggregateTest {
             assertThatThrownBy(() ->
                 Template.createAuction(
                     "주말 경매전",
-                    GameType.LEAGUE_OF_LEGENDS,
+                    TemplateCatalog.GameType.LEAGUE_OF_LEGENDS,
                     2,
                     2,
                     300,
@@ -83,7 +83,7 @@ class TemplateAggregateTest {
             Template template =
                 Template.createAuction(
                     "경매전",
-                    GameType.LEAGUE_OF_LEGENDS,
+                    TemplateCatalog.GameType.LEAGUE_OF_LEGENDS,
                     2,
                     3,
                     300,
@@ -99,8 +99,8 @@ class TemplateAggregateTest {
                 );
 
             assertThat(template.getName()).isEqualTo("경매전");
-            assertThat(template.getGameType()).isEqualTo(GameType.LEAGUE_OF_LEGENDS);
-            assertThat(template.getMode()).isEqualTo(TemplateMode.AUCTION);
+            assertThat(template.getGameType()).isEqualTo(TemplateCatalog.GameType.LEAGUE_OF_LEGENDS);
+            assertThat(template.getMode()).isEqualTo(TemplateCatalog.Mode.AUCTION);
             assertThat(template.getTeamCount()).isEqualTo(2);
             assertThat(template.getTeamSize()).isEqualTo(3);
             assertThat(template.getBudget()).isEqualTo(300);
@@ -119,24 +119,24 @@ class TemplateAggregateTest {
             Template template =
                 Template.createDraft(
                     "사내 리그 드래프트",
-                    GameType.OVERWATCH_2,
+                    TemplateCatalog.GameType.OVERWATCH_2,
                     2,
                     2,
                     30,
-                    DraftOrderStrategy.FIXED,
+                    TemplateCatalog.DraftOrderStrategy.FIXED,
                     List.of(
                         new TemplatePlayer("선수1", "TANK", 0),
                         new TemplatePlayer("선수2", "SUPPORT", 1)
                     )
                 );
 
-            assertThat(template.getGameType()).isEqualTo(GameType.OVERWATCH_2);
-            assertThat(template.getMode()).isEqualTo(TemplateMode.DRAFT);
+            assertThat(template.getGameType()).isEqualTo(TemplateCatalog.GameType.OVERWATCH_2);
+            assertThat(template.getMode()).isEqualTo(TemplateCatalog.Mode.DRAFT);
             assertThat(template.getBudget()).isNull();
             assertThat(template.getPickBanTime()).isEqualTo(30);
             assertThat(template.getMinBidUnit()).isNull();
             assertThat(template.getPositionLimit()).isNull();
-            assertThat(template.getDraftOrderStrategy()).isEqualTo(DraftOrderStrategy.FIXED);
+            assertThat(template.getDraftOrderStrategy()).isEqualTo(TemplateCatalog.DraftOrderStrategy.FIXED);
         }
     }
 }

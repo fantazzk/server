@@ -22,7 +22,7 @@ class CreateTemplateTest {
             cut.create(
                 new CreateTemplateCommand.Auction(
                     "경매전",
-                    GameType.LEAGUE_OF_LEGENDS,
+                    TemplateCatalog.GameType.LEAGUE_OF_LEGENDS,
                     2,
                     2,
                     500,
@@ -38,7 +38,7 @@ class CreateTemplateTest {
 
         assertThat(template.getName()).isEqualTo("경매전");
         assertThat(template.getConfiguration())
-            .isEqualTo(TemplateConfiguration.auction(GameType.LEAGUE_OF_LEGENDS, 2, 2, 500, 45, 10, 1));
+            .isEqualTo(TemplateConfiguration.auction(TemplateCatalog.GameType.LEAGUE_OF_LEGENDS, 2, 2, 500, 45, 10, 1));
         assertThat(template.getPlayers())
             .extracting(TemplatePlayer::displayOrder, TemplatePlayer::name, TemplatePlayer::position)
             .containsExactly(
@@ -57,11 +57,11 @@ class CreateTemplateTest {
             cut.create(
                 new CreateTemplateCommand.Draft(
                     "드래프트전",
-                    GameType.OVERWATCH_2,
+                    TemplateCatalog.GameType.OVERWATCH_2,
                     2,
                     2,
                     30,
-                    DraftOrderStrategy.SNAKE,
+                    TemplateCatalog.DraftOrderStrategy.SNAKE,
                     List.of(
                         new CreateTemplateCommand.Player("선수1", "TANK", 0),
                         new CreateTemplateCommand.Player("선수2", "SUPPORT", 1)
@@ -70,7 +70,7 @@ class CreateTemplateTest {
             );
 
         assertThat(template.getConfiguration())
-            .isEqualTo(TemplateConfiguration.draft(GameType.OVERWATCH_2, 2, 2, 30, DraftOrderStrategy.SNAKE));
+            .isEqualTo(TemplateConfiguration.draft(TemplateCatalog.GameType.OVERWATCH_2, 2, 2, 30, TemplateCatalog.DraftOrderStrategy.SNAKE));
         assertThat(template.getBudget()).isNull();
     }
 
@@ -82,7 +82,7 @@ class CreateTemplateTest {
             cut.create(
                 new CreateTemplateCommand.Auction(
                     "실패",
-                    GameType.LEAGUE_OF_LEGENDS,
+                    TemplateCatalog.GameType.LEAGUE_OF_LEGENDS,
                     2,
                     2,
                     300,

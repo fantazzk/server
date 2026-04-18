@@ -27,7 +27,7 @@ final class RoomApiTestFixtures {
             "호스트",
             HOST_TOKEN,
             new RoomTemplateSpec(
-                RoomTemplateSpec.Mode.AUCTION,
+                RoomMode.AUCTION,
                 2,
                 2,
                 300,
@@ -61,13 +61,13 @@ final class RoomApiTestFixtures {
                 "호스트",
                 HOST_TOKEN,
                 new RoomTemplateSpec(
-                    RoomTemplateSpec.Mode.DRAFT,
+                    RoomMode.DRAFT,
                     2,
                     2,
                     null,
                     30,
                     null,
-                    RoomTemplateSpec.DraftOrderStrategy.SNAKE,
+                    DraftOrderStrategy.SNAKE,
                     List.of(
                         new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
                         new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
@@ -86,16 +86,16 @@ final class RoomApiTestFixtures {
         return room;
     }
 
-    static RoomDetails startedAuctionDetails() {
+    static StartedRoomSnapshot startedAuctionDetails() {
         Room room = startedAuctionRoom();
-        return new RoomDetails(room, startedAuctionGame(room));
+        return new StartedRoomSnapshot(room, startedAuctionGame(room));
     }
 
     static Room inProgressAuctionRoom() {
         return inProgressAuctionDetails().room();
     }
 
-    static RoomDetails inProgressAuctionDetails() {
+    static StartedRoomSnapshot inProgressAuctionDetails() {
         Room room =
             Room.createFromTemplate(
                 ROOM_CODE,
@@ -103,7 +103,7 @@ final class RoomApiTestFixtures {
                 "호스트",
                 HOST_TOKEN,
                 new RoomTemplateSpec(
-                    RoomTemplateSpec.Mode.AUCTION,
+                    RoomMode.AUCTION,
                     2,
                     3,
                     300,
@@ -124,14 +124,14 @@ final class RoomApiTestFixtures {
         AuctionGame game = (AuctionGame) new GameFactory().create(snapshot);
         game.placeBid(new TeamLeaderId(HOST_ID), 100, CREATED_AT.plusSeconds(1));
         game.settleAuction(CREATED_AT.plusSeconds(16));
-        return new RoomDetails(room, game);
+        return new StartedRoomSnapshot(room, game);
     }
 
     static Room inProgressDraftRoom() {
         return inProgressDraftDetails().room();
     }
 
-    static RoomDetails inProgressDraftDetails() {
+    static StartedRoomSnapshot inProgressDraftDetails() {
         Room room =
             Room.createFromTemplate(
                 ROOM_CODE,
@@ -139,13 +139,13 @@ final class RoomApiTestFixtures {
                 "호스트",
                 HOST_TOKEN,
                 new RoomTemplateSpec(
-                    RoomTemplateSpec.Mode.DRAFT,
+                    RoomMode.DRAFT,
                     2,
                     3,
                     null,
                     30,
                     null,
-                    RoomTemplateSpec.DraftOrderStrategy.SNAKE,
+                    DraftOrderStrategy.SNAKE,
                     List.of(
                         new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
                         new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", "JUNGLE", 1),
@@ -162,7 +162,7 @@ final class RoomApiTestFixtures {
         DraftGame game = (DraftGame) new GameFactory().create(snapshot);
         game.pick(new TeamLeaderId(HOST_ID), "선수1");
         game.pick(new TeamLeaderId(GUEST_ID), "선수2");
-        return new RoomDetails(room, game);
+        return new StartedRoomSnapshot(room, game);
     }
 
     private static AuctionGame startedAuctionGame(Room room) {
@@ -172,17 +172,18 @@ final class RoomApiTestFixtures {
             room.getStartedGameId(),
             CREATED_AT,
             room.getMode(),
-            new GameRules(
+            GameRules.auction(
                 room.getTeamCount(),
                 room.getTeamSize(),
                 room.getBudget(),
                 room.getPickBanTime(),
                 room.getMinBidUnit(),
-                room.getPositionLimit(),
-                room.getDraftOrderStrategy()
+                room.getPositionLimit()
             ),
             room.getLeaders().stream()
-                .map(leader -> new GameParticipant(leader.getId(), leader.getNickname(), leader.getDraftPosition(), leader.getRemainingBudget()))
+                .map(leader -> room.getMode() == RoomMode.AUCTION
+                    ? GameParticipant.auction(leader.getId(), leader.getNickname(), leader.getRemainingBudget())
+                    : GameParticipant.draft(leader.getId(), leader.getNickname(), leader.getDraftPosition()))
                 .toList(),
             room.getPlayers().stream()
                 .map(player -> new GamePlayer(player.getId(), player.getName(), player.getPosition(), player.getDisplayOrder()))

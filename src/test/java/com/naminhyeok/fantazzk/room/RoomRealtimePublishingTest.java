@@ -182,7 +182,7 @@ class RoomRealtimePublishingTest {
             "호스트",
             HOST_ACTION_TOKEN,
             new RoomTemplateSpec(
-                RoomTemplateSpec.Mode.AUCTION,
+                RoomMode.AUCTION,
                 2,
                 2,
                 300,
@@ -221,13 +221,13 @@ class RoomRealtimePublishingTest {
                 "호스트",
                 HOST_ACTION_TOKEN,
                 new RoomTemplateSpec(
-                    RoomTemplateSpec.Mode.DRAFT,
+                    RoomMode.DRAFT,
                     2,
                     2,
                     null,
                     30,
                     null,
-                    RoomTemplateSpec.DraftOrderStrategy.SNAKE,
+                    DraftOrderStrategy.SNAKE,
                     List.of(
                         new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
                         new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
@@ -283,8 +283,8 @@ class RoomRealtimePublishingTest {
         }
 
         @Override
-        public void publishAfterCommit(RoomDetails details) {
-            events.add(RealtimeSnapshotEvent.from(details, PUBLISHED_AT));
+        public void publishAfterCommit(StartedRoomSnapshot snapshot) {
+            events.add(RealtimeSnapshotEvent.from(snapshot, PUBLISHED_AT));
         }
     }
 

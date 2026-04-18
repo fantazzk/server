@@ -166,8 +166,6 @@ class CreateRoomTest {
         @Override
         public TemplateBlueprint getTemplate(UUID templateId) {
             return new TemplateBlueprint(
-                templateId,
-                GameType.LEAGUE_OF_LEGENDS,
                 Mode.AUCTION,
                 2,
                 2,

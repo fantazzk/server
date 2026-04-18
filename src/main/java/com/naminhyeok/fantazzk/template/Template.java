@@ -32,7 +32,7 @@ class Template implements AggregateRoot<Template, TemplateId> {
 
     public static Template createAuction(
         String name,
-        GameType gameType,
+        TemplateCatalog.GameType gameType,
         int teamCount,
         int teamSize,
         int budget,
@@ -47,22 +47,22 @@ class Template implements AggregateRoot<Template, TemplateId> {
 
     public static Template createDraft(
         String name,
-        GameType gameType,
+        TemplateCatalog.GameType gameType,
         int teamCount,
         int teamSize,
         int pickBanTime,
-        DraftOrderStrategy strategy,
+        TemplateCatalog.DraftOrderStrategy strategy,
         List<TemplatePlayer> players
     ) {
         return new Template(name, TemplateConfiguration.draft(gameType, teamCount, teamSize, pickBanTime, strategy))
             .registerPlayers(players);
     }
 
-    public TemplateMode getMode() {
+    public TemplateCatalog.Mode getMode() {
         return configuration.getMode();
     }
 
-    public GameType getGameType() {
+    public TemplateCatalog.GameType getGameType() {
         return configuration.getGameType();
     }
 
@@ -90,7 +90,7 @@ class Template implements AggregateRoot<Template, TemplateId> {
         return configuration.getPositionLimit();
     }
 
-    public DraftOrderStrategy getDraftOrderStrategy() {
+    public TemplateCatalog.DraftOrderStrategy getDraftOrderStrategy() {
         return configuration.getDraftOrderStrategy();
     }
 

@@ -40,12 +40,4 @@ class RoomPlayer {
     public RoomPlayerId getId() {
         return id;
     }
-
-    void assign() {
-        this.status = PlayerStatus.ASSIGNED;
-    }
-
-    void moveToBack(int nextOrder) {
-        this.displayOrder = nextOrder;
-    }
 }

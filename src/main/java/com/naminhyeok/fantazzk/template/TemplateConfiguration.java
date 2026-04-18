@@ -8,11 +8,11 @@ import org.jmolecules.ddd.types.ValueObject;
 
 @Getter
 @EqualsAndHashCode
-public final class TemplateConfiguration implements ValueObject {
+final class TemplateConfiguration implements ValueObject {
     @Enumerated(EnumType.STRING)
-    private final GameType gameType;
+    private final TemplateCatalog.GameType gameType;
     @Enumerated(EnumType.STRING)
-    private final TemplateMode mode;
+    private final TemplateCatalog.Mode mode;
     private final int teamCount;
     private final int teamSize;
     private final Integer budget;
@@ -20,18 +20,18 @@ public final class TemplateConfiguration implements ValueObject {
     private final Integer minBidUnit;
     private final Integer positionLimit;
     @Enumerated(EnumType.STRING)
-    private final DraftOrderStrategy draftOrderStrategy;
+    private final TemplateCatalog.DraftOrderStrategy draftOrderStrategy;
 
     private TemplateConfiguration(
-        GameType gameType,
-        TemplateMode mode,
+        TemplateCatalog.GameType gameType,
+        TemplateCatalog.Mode mode,
         int teamCount,
         int teamSize,
         Integer budget,
         int pickBanTime,
         Integer minBidUnit,
         Integer positionLimit,
-        DraftOrderStrategy draftOrderStrategy
+        TemplateCatalog.DraftOrderStrategy draftOrderStrategy
     ) {
         if (gameType == null) {
             throw new IllegalArgumentException("게임 타입은 필수입니다");
@@ -46,7 +46,7 @@ public final class TemplateConfiguration implements ValueObject {
             throw new IllegalArgumentException("픽밴 시간은 0보다 커야 합니다");
         }
 
-        if (mode == TemplateMode.AUCTION) {
+        if (mode == TemplateCatalog.Mode.AUCTION) {
             if (budget == null) {
                 throw new IllegalArgumentException("경매 템플릿에는 예산이 필요합니다");
             }
@@ -67,7 +67,7 @@ public final class TemplateConfiguration implements ValueObject {
             }
         }
 
-        if (mode == TemplateMode.DRAFT) {
+        if (mode == TemplateCatalog.Mode.DRAFT) {
             if (budget != null) {
                 throw new IllegalArgumentException("드래프트 템플릿에는 예산을 지정할 수 없습니다");
             }
@@ -94,7 +94,7 @@ public final class TemplateConfiguration implements ValueObject {
     }
 
     public static TemplateConfiguration auction(
-        GameType gameType,
+        TemplateCatalog.GameType gameType,
         int teamCount,
         int teamSize,
         int budget,
@@ -104,7 +104,7 @@ public final class TemplateConfiguration implements ValueObject {
     ) {
         return new TemplateConfiguration(
             gameType,
-            TemplateMode.AUCTION,
+            TemplateCatalog.Mode.AUCTION,
             teamCount,
             teamSize,
             budget,
@@ -116,15 +116,15 @@ public final class TemplateConfiguration implements ValueObject {
     }
 
     public static TemplateConfiguration draft(
-        GameType gameType,
+        TemplateCatalog.GameType gameType,
         int teamCount,
         int teamSize,
         int pickBanTime,
-        DraftOrderStrategy strategy
+        TemplateCatalog.DraftOrderStrategy strategy
     ) {
         return new TemplateConfiguration(
             gameType,
-            TemplateMode.DRAFT,
+            TemplateCatalog.Mode.DRAFT,
             teamCount,
             teamSize,
             null,
@@ -136,15 +136,15 @@ public final class TemplateConfiguration implements ValueObject {
     }
 
     public static TemplateConfiguration from(
-        GameType gameType,
-        TemplateMode mode,
+        TemplateCatalog.GameType gameType,
+        TemplateCatalog.Mode mode,
         int teamCount,
         int teamSize,
         Integer budget,
         int pickBanTime,
         Integer minBidUnit,
         Integer positionLimit,
-        DraftOrderStrategy draftOrderStrategy
+        TemplateCatalog.DraftOrderStrategy draftOrderStrategy
     ) {
         return switch (mode) {
             case AUCTION -> {

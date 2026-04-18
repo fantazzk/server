@@ -41,13 +41,13 @@ class RoomRepositoryIntegrationTest {
                 "호스트",
                 "host-action-token",
                 new RoomTemplateSpec(
-                    RoomTemplateSpec.Mode.DRAFT,
+                    RoomMode.DRAFT,
                     2,
                     2,
                     null,
                     30,
                     null,
-                    RoomTemplateSpec.DraftOrderStrategy.SNAKE,
+                    DraftOrderStrategy.SNAKE,
                     List.of(
                         new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
                         new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
@@ -93,13 +93,13 @@ class RoomRepositoryIntegrationTest {
                 "호스트",
                 "host-action-token",
                 new RoomTemplateSpec(
-                    RoomTemplateSpec.Mode.DRAFT,
+                    RoomMode.DRAFT,
                     2,
                     2,
                     null,
                     30,
                     null,
-                    RoomTemplateSpec.DraftOrderStrategy.SNAKE,
+                    DraftOrderStrategy.SNAKE,
                     List.of(
                         new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
                         new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
@@ -127,7 +127,7 @@ class RoomRepositoryIntegrationTest {
                 "호스트",
                 "host-action-token",
                 new RoomTemplateSpec(
-                    RoomTemplateSpec.Mode.AUCTION,
+                    RoomMode.AUCTION,
                     2,
                     2,
                     300,
@@ -182,13 +182,13 @@ class RoomRepositoryIntegrationTest {
                 "호스트",
                 "host-action-token",
                 new RoomTemplateSpec(
-                    RoomTemplateSpec.Mode.DRAFT,
+                    RoomMode.DRAFT,
                     2,
                     2,
                     null,
                     30,
                     null,
-                    RoomTemplateSpec.DraftOrderStrategy.SNAKE,
+                    DraftOrderStrategy.SNAKE,
                     List.of(
                         new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
                         new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
@@ -206,7 +206,7 @@ class RoomRepositoryIntegrationTest {
             "호스트",
             "host-action-token",
             new RoomTemplateSpec(
-                RoomTemplateSpec.Mode.AUCTION,
+                RoomMode.AUCTION,
                 2,
                 2,
                 300,

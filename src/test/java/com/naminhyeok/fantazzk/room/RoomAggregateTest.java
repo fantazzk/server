@@ -27,7 +27,7 @@ class RoomAggregateTest {
                 "  호스트  ",
                 HOST_ACTION_TOKEN,
                 new RoomTemplateSpec(
-                    RoomTemplateSpec.Mode.AUCTION,
+                    RoomMode.AUCTION,
                     2,
                     3,
                     300,
@@ -95,7 +95,7 @@ class RoomAggregateTest {
                 "Faker",
                 HOST_ACTION_TOKEN,
                 new RoomTemplateSpec(
-                    RoomTemplateSpec.Mode.AUCTION,
+                    RoomMode.AUCTION,
                     2,
                     2,
                     300,
@@ -188,7 +188,7 @@ class RoomAggregateTest {
                 "호스트",
                 HOST_ACTION_TOKEN,
                 new RoomTemplateSpec(
-                    RoomTemplateSpec.Mode.AUCTION,
+                    RoomMode.AUCTION,
                     1,
                     2,
                     300,
@@ -229,12 +229,20 @@ class RoomAggregateTest {
             assertThat(snapshot.gameMode()).isEqualTo(room.getMode());
             assertThat(snapshot.rules())
                 .isEqualTo(
-                    new GameRules(room.getTeamCount(), room.getTeamSize(), room.getBudget(), room.getPickBanTime(), room.getMinBidUnit(), room.getPositionLimit(), room.getDraftOrderStrategy())
+                    GameRules.auction(
+                        room.getTeamCount(),
+                        room.getTeamSize(),
+                        room.getBudget(),
+                        room.getPickBanTime(),
+                        room.getMinBidUnit(),
+                        room.getPositionLimit()
+                    )
                 );
             assertThat(snapshot.participants())
+                .extracting(GameParticipant::teamLeaderId, GameParticipant::nickname, GameParticipant::remainingBudget)
                 .containsExactly(
-                    new GameParticipant(new TeamLeaderId(HOST_ID), "호스트", null, 300),
-                    new GameParticipant(new TeamLeaderId(GUEST_ID), "게스트", null, 300)
+                    org.assertj.core.groups.Tuple.tuple(new TeamLeaderId(HOST_ID), "호스트", 300),
+                    org.assertj.core.groups.Tuple.tuple(new TeamLeaderId(GUEST_ID), "게스트", 300)
                 );
             assertThat(snapshot.playerPool())
                 .containsExactly(
@@ -326,7 +334,7 @@ class RoomAggregateTest {
             "호스트",
             HOST_ACTION_TOKEN,
             new RoomTemplateSpec(
-                RoomTemplateSpec.Mode.AUCTION,
+                RoomMode.AUCTION,
                 2,
                 2,
                 300,
@@ -360,13 +368,13 @@ class RoomAggregateTest {
             "호스트",
             HOST_ACTION_TOKEN,
             new RoomTemplateSpec(
-                RoomTemplateSpec.Mode.DRAFT,
+                RoomMode.DRAFT,
                 2,
                 2,
                 null,
                 30,
                 null,
-                RoomTemplateSpec.DraftOrderStrategy.SNAKE,
+                DraftOrderStrategy.SNAKE,
                 List.of(
                     new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
                     new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", "JUNGLE", 1)

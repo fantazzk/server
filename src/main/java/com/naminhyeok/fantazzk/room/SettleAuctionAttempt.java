@@ -27,7 +27,7 @@ class SettleAuctionAttempt {
             AuctionSettlement settlement = game.settleAuction(now);
             games.save(game);
             Room saved = rooms.saveAndFlush(room);
-            roomSnapshotPublisher.publishAfterCommit(new RoomDetails(saved, game));
+            roomSnapshotPublisher.publishAfterCommit(new StartedRoomSnapshot(saved, game));
             return settlement;
         } catch (OptimisticLockingFailureException ex) {
             throw CoreException.of(RoomErrorType.ROOM_CONCURRENT_MODIFICATION);
@@ -43,7 +43,7 @@ class SettleAuctionAttempt {
             AuctionSettlement settlement = game.settleAuction(now);
             games.save(game);
             Room saved = rooms.saveAndFlush(context.room());
-            roomSnapshotPublisher.publishAfterCommit(new RoomDetails(saved, game));
+            roomSnapshotPublisher.publishAfterCommit(new StartedRoomSnapshot(saved, game));
             return settlement;
         } catch (OptimisticLockingFailureException ex) {
             throw CoreException.of(RoomErrorType.ROOM_CONCURRENT_MODIFICATION);
@@ -62,7 +62,7 @@ class SettleAuctionAttempt {
         game.settleAuction(now);
         games.save(game);
         Room saved = rooms.saveAndFlush(room);
-        roomSnapshotPublisher.publishAfterCommit(new RoomDetails(saved, game));
+        roomSnapshotPublisher.publishAfterCommit(new StartedRoomSnapshot(saved, game));
         return saved;
     }
 
@@ -79,7 +79,7 @@ class SettleAuctionAttempt {
         game.settleAuction(now);
         games.save(game);
         Room saved = rooms.saveAndFlush(context.room());
-        roomSnapshotPublisher.publishAfterCommit(new RoomDetails(saved, game));
+        roomSnapshotPublisher.publishAfterCommit(new StartedRoomSnapshot(saved, game));
         return game;
     }
 

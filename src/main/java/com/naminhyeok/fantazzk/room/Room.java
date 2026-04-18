@@ -48,7 +48,7 @@ class Room implements AggregateRoot<Room, RoomId> {
     @Column(name = "position_limit")
     private final Integer positionLimit;
     @Enumerated(EnumType.STRING)
-    private final RoomTemplateSpec.DraftOrderStrategy draftOrderStrategy;
+    private final DraftOrderStrategy draftOrderStrategy;
     @Column(name = "started_game_id")
     @Convert(converter = GameId.JpaConverter.class)
     private GameId startedGameId;
@@ -72,7 +72,7 @@ class Room implements AggregateRoot<Room, RoomId> {
         int pickBanTime,
         Integer minBidUnit,
         Integer positionLimit,
-        RoomTemplateSpec.DraftOrderStrategy draftOrderStrategy
+        DraftOrderStrategy draftOrderStrategy
     ) {
         this.id = new RoomId(UUID.randomUUID());
         this.code = code;
@@ -106,7 +106,7 @@ class Room implements AggregateRoot<Room, RoomId> {
                 code,
                 createdAt,
                 hostLeaderId,
-                spec.mode() == RoomTemplateSpec.Mode.AUCTION ? RoomMode.AUCTION : RoomMode.DRAFT,
+                spec.mode() == RoomMode.AUCTION ? RoomMode.AUCTION : RoomMode.DRAFT,
                 spec.teamCount(),
                 spec.teamSize(),
                 spec.budget(),
@@ -258,24 +258,6 @@ class Room implements AggregateRoot<Room, RoomId> {
     private boolean hasConfirmedDraftPositions() {
         return leaders.stream().allMatch(leader -> leader.getDraftPosition() != null)
             && leaders.stream().map(RoomTeamLeader::getDraftPosition).distinct().count() == teamCount;
-    }
-
-    private List<RoomTeamLeader> getLeadersInDraftOrder() {
-        if (leaders.isEmpty()) {
-            throw RoomStateInvalidException.draftLeaderOrderEmpty();
-        }
-        RoomTeamLeader leaderWithoutDraftPosition =
-            leaders.stream().filter(leader -> leader.getDraftPosition() == null).findFirst().orElse(null);
-        if (leaderWithoutDraftPosition != null) {
-            throw RoomStateInvalidException.draftPositionMissing(leaderWithoutDraftPosition.getId());
-        }
-        return leaders.stream()
-            .sorted(Comparator.comparingInt(RoomTeamLeader::getDraftPosition))
-            .toList();
-    }
-
-    private List<String> getLeaderIdsInDraftOrder() {
-        return getLeadersInDraftOrder().stream().map(RoomTeamLeader::getTeamLeaderId).toList();
     }
 
     private RoomTeamLeader getLeader(TeamLeaderId teamLeaderId) {

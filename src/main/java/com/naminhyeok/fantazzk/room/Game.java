@@ -61,11 +61,7 @@ abstract class Game implements AggregateRoot<Game, GameId> {
     private final Integer positionLimit;
     @Enumerated(EnumType.STRING)
     @Column(name = "draft_order_strategy", updatable = false)
-    private final RoomTemplateSpec.DraftOrderStrategy draftOrderStrategy;
-    @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "game_participant", joinColumns = @JoinColumn(name = "participants_game_id"))
-    @OrderColumn(name = "participant_order")
-    private final List<GameParticipant> participants;
+    private final DraftOrderStrategy draftOrderStrategy;
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "game_player", joinColumns = @JoinColumn(name = "player_pool_game_id"))
     @OrderColumn(name = "player_pool_order")
@@ -87,7 +83,6 @@ abstract class Game implements AggregateRoot<Game, GameId> {
         this.minBidUnit = null;
         this.positionLimit = null;
         this.draftOrderStrategy = null;
-        this.participants = new ArrayList<>();
         this.playerPool = new ArrayList<>();
         this.domainEvents = new ArrayList<>();
     }
@@ -99,7 +94,6 @@ abstract class Game implements AggregateRoot<Game, GameId> {
         Instant startedAt,
         GameStatus status,
         GameRules rules,
-        List<GameParticipant> participants,
         List<GamePlayer> playerPool
     ) {
         this.id = id;
@@ -115,28 +109,16 @@ abstract class Game implements AggregateRoot<Game, GameId> {
         this.minBidUnit = rules.minBidUnit();
         this.positionLimit = rules.positionLimit();
         this.draftOrderStrategy = rules.draftOrderStrategy();
-        this.participants = new ArrayList<>(participants);
         this.playerPool = new ArrayList<>(playerPool);
         this.domainEvents = new ArrayList<>();
     }
 
-    GameRules getRules() {
-        if (draftOrderStrategy != null) {
-            return GameRules.draft(teamCount, teamSize, pickBanTime, draftOrderStrategy);
-        }
-        return GameRules.auction(teamCount, teamSize, budget, pickBanTime, minBidUnit, positionLimit);
-    }
+    abstract GameRules getRules();
 
-    List<GameParticipant> getParticipants() {
-        return List.copyOf(participants);
-    }
+    abstract List<GameParticipant> getParticipants();
 
     List<GamePlayer> getPlayerPool() {
         return List.copyOf(playerPool);
-    }
-
-    protected List<GameParticipant> mutableParticipants() {
-        return participants;
     }
 
     protected List<GamePlayer> mutablePlayerPool() {

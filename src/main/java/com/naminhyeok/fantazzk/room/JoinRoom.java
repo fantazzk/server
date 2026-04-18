@@ -18,12 +18,20 @@ class JoinRoom {
         try {
             Room room = rooms.findByCode(code).orElseThrow(() -> CoreException.of(RoomErrorType.ROOM_NOT_FOUND));
             TeamLeaderIdentityIssuer.TeamLeaderIdentity identity = teamLeaderIdentityIssuer.issue();
-            room.join(new TeamLeaderId(identity.leaderId()), nickname, identity.actionToken());
+            TeamLeaderId joinedLeaderId = new TeamLeaderId(identity.leaderId());
+            room.join(joinedLeaderId, nickname, identity.actionToken());
             Room saved = rooms.saveAndFlush(room);
             roomSnapshotPublisher.publishAfterCommit(saved);
-            return new RoomSessionResult(saved, saved.getLeaders().getLast());
+            return new RoomSessionResult(saved, findLeader(saved, joinedLeaderId));
         } catch (OptimisticLockingFailureException ex) {
             throw CoreException.of(RoomErrorType.ROOM_CONCURRENT_MODIFICATION);
         }
+    }
+
+    private RoomTeamLeader findLeader(Room room, TeamLeaderId leaderId) {
+        return room.getLeaders().stream()
+            .filter(leader -> leader.getId().equals(leaderId))
+            .findFirst()
+            .orElseThrow();
     }
 }

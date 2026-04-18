@@ -35,7 +35,7 @@ class FindTemplatesTest {
         templates.save(
             Template.createAuction(
                 "첫째",
-                GameType.LEAGUE_OF_LEGENDS,
+                TemplateCatalog.GameType.LEAGUE_OF_LEGENDS,
                 2,
                 2,
                 300,
@@ -51,11 +51,11 @@ class FindTemplatesTest {
         templates.save(
             Template.createDraft(
                 "둘째",
-                GameType.OVERWATCH_2,
+                TemplateCatalog.GameType.OVERWATCH_2,
                 2,
                 2,
                 30,
-                DraftOrderStrategy.SNAKE,
+                TemplateCatalog.DraftOrderStrategy.SNAKE,
                 List.of(
                     new TemplatePlayer("선수1", "TANK", 0),
                     new TemplatePlayer("선수2", "SUPPORT", 1)
@@ -74,7 +74,7 @@ class FindTemplatesTest {
         Template template =
             Template.createAuction(
                 "첫째",
-                GameType.LEAGUE_OF_LEGENDS,
+                TemplateCatalog.GameType.LEAGUE_OF_LEGENDS,
                 2,
                 2,
                 300,
@@ -92,7 +92,7 @@ class FindTemplatesTest {
         TemplateDetail detail = cut.getDetail(template.getId());
 
         assertThat(detail.template().getId()).isEqualTo(template.getId());
-        assertThat(detail.template().getGameType()).isEqualTo(GameType.LEAGUE_OF_LEGENDS);
+        assertThat(detail.template().getGameType()).isEqualTo(TemplateCatalog.GameType.LEAGUE_OF_LEGENDS);
         assertThat(detail.template().getPickBanTime()).isEqualTo(45);
         assertThat(detail.template().getMinBidUnit()).isEqualTo(10);
         assertThat(detail.template().getPositionLimit()).isEqualTo(1);
@@ -110,7 +110,7 @@ class FindTemplatesTest {
         Template template =
             Template.createAuction(
                 "첫째",
-                GameType.LEAGUE_OF_LEGENDS,
+                TemplateCatalog.GameType.LEAGUE_OF_LEGENDS,
                 2,
                 2,
                 300,
@@ -128,7 +128,6 @@ class FindTemplatesTest {
 
         TemplateCatalog.TemplateBlueprint blueprint = catalog.getTemplate(template.getId().templateId());
 
-        assertThat(blueprint.gameType()).isEqualTo(TemplateCatalog.GameType.LEAGUE_OF_LEGENDS);
         assertThat(blueprint.pickBanTime()).isEqualTo(45);
         assertThat(blueprint.minBidUnit()).isEqualTo(10);
         assertThat(blueprint.positionLimit()).isEqualTo(1);

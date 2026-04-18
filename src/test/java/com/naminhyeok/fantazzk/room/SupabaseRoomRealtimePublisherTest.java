@@ -128,21 +128,21 @@ class SupabaseRoomRealtimePublisherTest {
     void publishAfterCommit는_started_snapshot을_game_payload로_broadcast한다() {
         RestClient.Builder builder = RestClient.builder();
         MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
-        RoomDetails details = startedAuctionDetails();
+        StartedRoomSnapshot snapshot = startedAuctionSnapshot();
         SupabaseRoomRealtimePublisher publisher =
             new SupabaseRoomRealtimePublisher(builder, Clock.fixed(PUBLISHED_AT, ZoneOffset.UTC), BASE_URL, SERVICE_ROLE_KEY, "room");
 
         server.expect(requestTo(BASE_URL + "/realtime/v1/api/broadcast"))
             .andExpect(method(POST))
             .andExpect(jsonPath("$.messages[0].payload.eventType").value("GAME_SNAPSHOT_UPDATED"))
-            .andExpect(jsonPath("$.messages[0].payload.roomCode").value(details.room().getCode()))
+            .andExpect(jsonPath("$.messages[0].payload.roomCode").value(snapshot.room().getCode()))
             .andExpect(jsonPath("$.messages[0].payload.room").doesNotExist())
-            .andExpect(jsonPath("$.messages[0].payload.game.id").value(details.game().getId().gameId().toString()))
-            .andExpect(jsonPath("$.messages[0].payload.game.roomCode").value(details.room().getCode()))
+            .andExpect(jsonPath("$.messages[0].payload.game.id").value(snapshot.game().getId().gameId().toString()))
+            .andExpect(jsonPath("$.messages[0].payload.game.roomCode").value(snapshot.room().getCode()))
             .andExpect(jsonPath("$.messages[0].payload.game.progress.currentRound").value(1))
             .andRespond(withSuccess());
 
-        publisher.publishAfterCommit(details);
+        publisher.publishAfterCommit(snapshot);
 
         server.verify();
     }
@@ -234,7 +234,7 @@ class SupabaseRoomRealtimePublisherTest {
             "호스트",
             "host-token",
             new RoomTemplateSpec(
-                RoomTemplateSpec.Mode.AUCTION,
+                RoomMode.AUCTION,
                 2,
                 2,
                 300,
@@ -250,7 +250,7 @@ class SupabaseRoomRealtimePublisherTest {
         );
     }
 
-    private static RoomDetails startedAuctionDetails() {
+    private static StartedRoomSnapshot startedAuctionSnapshot() {
         Room room = waitingAuctionRoom();
         room.join(new TeamLeaderId("leader-guest"), "게스트", "guest-token");
         StartedGameSnapshot snapshot = room.start(
@@ -258,7 +258,7 @@ class SupabaseRoomRealtimePublisherTest {
             new GameId(java.util.UUID.fromString("00000000-0000-0000-0000-000000000101")),
             Instant.parse("2024-01-01T10:00:00Z")
         );
-        return new RoomDetails(room, new GameFactory().create(snapshot));
+        return new StartedRoomSnapshot(room, new GameFactory().create(snapshot));
     }
 
     @Configuration(proxyBeanMethods = false)
