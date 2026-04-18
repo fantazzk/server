@@ -1,8 +1,8 @@
-package com.naminhyeok.fantazzk.room.event;
+package com.naminhyeok.fantazzk.room;
 
 import java.time.Instant;
 
-public record RoomStarted(
+record RoomStarted(
     String roomCode,
     Instant roundEndsAt
 ) implements RoomSchedulingEvent {

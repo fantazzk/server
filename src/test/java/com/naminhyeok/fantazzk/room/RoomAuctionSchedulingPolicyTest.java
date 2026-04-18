@@ -2,9 +2,6 @@ package com.naminhyeok.fantazzk.room;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.naminhyeok.fantazzk.room.event.AuctionSettled;
-import com.naminhyeok.fantazzk.room.event.BidPlaced;
-import com.naminhyeok.fantazzk.room.event.RoomStarted;
 import java.time.Instant;
 import java.time.Clock;
 import java.time.ZoneOffset;

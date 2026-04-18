@@ -1,6 +1,5 @@
 package com.naminhyeok.fantazzk.room;
 
-import com.naminhyeok.fantazzk.room.event.RoomSchedulingEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;

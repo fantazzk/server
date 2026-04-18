@@ -67,8 +67,16 @@ class PublishedContractStructureTest {
     }
 
     @Test
-    void 사용하지_않는_room_domain_event는_남기지_않는다() {
+    void 사용하지_않는_room_domain_event는_남기지_않는다() throws Exception {
         assertClassMissing("com.naminhyeok.fantazzk.room.event.LeaderJoinedRoom");
+        assertClassMissing("com.naminhyeok.fantazzk.room.event.RoomSchedulingEvent");
+        assertClassMissing("com.naminhyeok.fantazzk.room.event.RoomStarted");
+        assertClassMissing("com.naminhyeok.fantazzk.room.event.BidPlaced");
+        assertClassMissing("com.naminhyeok.fantazzk.room.event.AuctionSettled");
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.RoomSchedulingEvent")).isFalse();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.RoomStarted")).isFalse();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.BidPlaced")).isFalse();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.AuctionSettled")).isFalse();
     }
 
     @Test

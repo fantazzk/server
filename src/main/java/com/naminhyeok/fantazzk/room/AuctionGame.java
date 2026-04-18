@@ -1,9 +1,6 @@
 package com.naminhyeok.fantazzk.room;
 
 import com.naminhyeok.fantazzk.CoreException;
-import com.naminhyeok.fantazzk.room.event.AuctionSettled;
-import com.naminhyeok.fantazzk.room.event.BidPlaced;
-import com.naminhyeok.fantazzk.room.event.RoomStarted;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
