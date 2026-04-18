@@ -119,7 +119,6 @@ class RoomLayeredArchitectureTest {
             "com.naminhyeok.fantazzk.room.application.query..",
             "com.naminhyeok.fantazzk.room.infrastructure.persistence.."
         )
-        .and().doNotHaveSimpleName("FindJoinableRooms")
         .should().dependOnClassesThat().haveFullyQualifiedName("com.naminhyeok.fantazzk.room.JoinableRoomView");
 
     @ArchTest

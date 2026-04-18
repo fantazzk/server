@@ -29,11 +29,24 @@ class ProvideRoomQueryApi implements RoomQueryApi {
 
     @Override
     public List<JoinableRoomView> list() {
-        return findJoinableRooms.list();
+        return findJoinableRooms.list().stream()
+            .map(ProvideRoomQueryApi::toView)
+            .toList();
     }
 
     @Override
     public RoomView get(String code) {
         return RoomView.from(getRoom.get(code));
+    }
+
+    private static JoinableRoomView toView(com.naminhyeok.fantazzk.room.application.query.JoinableRoomSummary summary) {
+        return new JoinableRoomView(
+            summary.code(),
+            summary.mode(),
+            summary.teamCount(),
+            summary.joinedLeaderCount(),
+            summary.remainingSlotCount(),
+            summary.startReadiness()
+        );
     }
 }

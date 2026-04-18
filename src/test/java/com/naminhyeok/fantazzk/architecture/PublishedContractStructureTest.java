@@ -11,6 +11,28 @@ import org.junit.jupiter.api.Test;
 class PublishedContractStructureTest {
     @Test
     void room_루트_계약은_public이고_대표_구현은_package_private이다() throws Exception {
+        assertPublicClasses(
+            "com.naminhyeok.fantazzk.room.RoomQueryApi",
+            "com.naminhyeok.fantazzk.room.RoomSessionApi",
+            "com.naminhyeok.fantazzk.room.RoomDraftApi",
+            "com.naminhyeok.fantazzk.room.RoomStartApi",
+            "com.naminhyeok.fantazzk.room.GameQueryApi",
+            "com.naminhyeok.fantazzk.room.GameAuctionApi",
+            "com.naminhyeok.fantazzk.room.GameDraftApi",
+            "com.naminhyeok.fantazzk.room.JoinableRoomView",
+            "com.naminhyeok.fantazzk.room.RoomView",
+            "com.naminhyeok.fantazzk.room.RoomSessionView",
+            "com.naminhyeok.fantazzk.room.GameView"
+        );
+        assertPackagePrivateClasses(
+            "com.naminhyeok.fantazzk.room.ProvideRoomQueryApi",
+            "com.naminhyeok.fantazzk.room.ProvideRoomSessionApi",
+            "com.naminhyeok.fantazzk.room.ProvideRoomDraftApi",
+            "com.naminhyeok.fantazzk.room.ProvideRoomStartApi",
+            "com.naminhyeok.fantazzk.room.ProvideGameQueryApi",
+            "com.naminhyeok.fantazzk.room.ProvideGameAuctionApi",
+            "com.naminhyeok.fantazzk.room.ProvideGameDraftApi"
+        );
         assertClassesMissing(
             "com.naminhyeok.fantazzk.room.RoomManagement",
             "com.naminhyeok.fantazzk.room.JoinableRoomResponse",
@@ -34,79 +56,6 @@ class PublishedContractStructureTest {
             "com.naminhyeok.fantazzk.room.StartedGameContextLoader",
             "com.naminhyeok.fantazzk.room.RoomActionAuthorizer",
             "com.naminhyeok.fantazzk.room.RoomSessionResult",
-            "com.naminhyeok.fantazzk.room.Room",
-            "com.naminhyeok.fantazzk.room.Game",
-            "com.naminhyeok.fantazzk.room.Rooms"
-        );
-        assertPublicClasses(
-            "com.naminhyeok.fantazzk.room.RoomQueryApi",
-            "com.naminhyeok.fantazzk.room.RoomSessionApi",
-            "com.naminhyeok.fantazzk.room.RoomDraftApi",
-            "com.naminhyeok.fantazzk.room.RoomStartApi",
-            "com.naminhyeok.fantazzk.room.GameQueryApi",
-            "com.naminhyeok.fantazzk.room.GameAuctionApi",
-            "com.naminhyeok.fantazzk.room.GameDraftApi",
-            "com.naminhyeok.fantazzk.room.JoinableRoomView",
-            "com.naminhyeok.fantazzk.room.RoomView",
-            "com.naminhyeok.fantazzk.room.RoomSessionView",
-            "com.naminhyeok.fantazzk.room.GameView",
-            "com.naminhyeok.fantazzk.room.domain.room.Room",
-            "com.naminhyeok.fantazzk.room.domain.game.Game",
-            "com.naminhyeok.fantazzk.room.domain.repository.Rooms",
-            "com.naminhyeok.fantazzk.room.domain.shared.GameId",
-            "com.naminhyeok.fantazzk.room.domain.shared.RoomId",
-            "com.naminhyeok.fantazzk.room.domain.shared.RoomMode",
-            "com.naminhyeok.fantazzk.room.domain.shared.RoomErrorType",
-            "com.naminhyeok.fantazzk.room.domain.shared.RoomStateInvalidException",
-            "com.naminhyeok.fantazzk.room.application.room.CreateRoom",
-            "com.naminhyeok.fantazzk.room.application.room.JoinRoom",
-            "com.naminhyeok.fantazzk.room.application.room.GetRoom",
-            "com.naminhyeok.fantazzk.room.application.room.StartRoom",
-            "com.naminhyeok.fantazzk.room.application.room.SelectDraftPosition",
-            "com.naminhyeok.fantazzk.room.application.room.ClearDraftPosition",
-            "com.naminhyeok.fantazzk.room.application.room.RoomSessionResult",
-            "com.naminhyeok.fantazzk.room.application.game.GetGame",
-            "com.naminhyeok.fantazzk.room.application.game.PlaceBid",
-            "com.naminhyeok.fantazzk.room.application.game.PickDraft",
-            "com.naminhyeok.fantazzk.room.application.game.SettleAuction",
-            "com.naminhyeok.fantazzk.room.application.query.FindJoinableRooms",
-            "com.naminhyeok.fantazzk.room.application.query.JoinableRoomReader",
-            "com.naminhyeok.fantazzk.room.application.query.JoinableRoomSummary",
-            "com.naminhyeok.fantazzk.room.application.query.AuctionScheduleReader",
-            "com.naminhyeok.fantazzk.room.application.query.AuctionScheduleCandidate",
-            "com.naminhyeok.fantazzk.room.application.port.AuctionDeadlineSettlementProcessor",
-            "com.naminhyeok.fantazzk.room.application.port.RoomSnapshotPublisher",
-            "com.naminhyeok.fantazzk.room.application.port.RoomCodeGenerator",
-            "com.naminhyeok.fantazzk.room.application.port.TeamLeaderIdentityIssuer",
-            "com.naminhyeok.fantazzk.room.application.support.CreateRoomAttempt",
-            "com.naminhyeok.fantazzk.room.application.support.SettleAuctionAttempt",
-            "com.naminhyeok.fantazzk.room.application.support.StartedGameContextLoader",
-            "com.naminhyeok.fantazzk.room.application.support.RoomActionAuthorizer",
-            "com.naminhyeok.fantazzk.room.application.support.RoomSnapshot",
-            "com.naminhyeok.fantazzk.room.application.support.StartedRoomSnapshot",
-            "com.naminhyeok.fantazzk.room.infrastructure.realtime.RealtimeSnapshotEvent",
-            "com.naminhyeok.fantazzk.room.infrastructure.realtime.RoomSnapshotUpdatedEvent",
-            "com.naminhyeok.fantazzk.room.infrastructure.realtime.GameSnapshotUpdatedEvent",
-            "com.naminhyeok.fantazzk.room.infrastructure.realtime.NoopRoomSnapshotPublisher",
-            "com.naminhyeok.fantazzk.room.infrastructure.realtime.SupabaseRoomRealtimePublisher",
-            "com.naminhyeok.fantazzk.room.infrastructure.scheduling.RoomAuctionDeadlineScheduler",
-            "com.naminhyeok.fantazzk.room.infrastructure.scheduling.RoomAuctionSchedulingPolicy"
-        );
-        assertPackagePrivateClasses(
-            "com.naminhyeok.fantazzk.room.ProvideRoomQueryApi",
-            "com.naminhyeok.fantazzk.room.ProvideRoomSessionApi",
-            "com.naminhyeok.fantazzk.room.ProvideRoomDraftApi",
-            "com.naminhyeok.fantazzk.room.ProvideRoomStartApi",
-            "com.naminhyeok.fantazzk.room.ProvideGameQueryApi",
-            "com.naminhyeok.fantazzk.room.ProvideGameAuctionApi",
-            "com.naminhyeok.fantazzk.room.ProvideGameDraftApi"
-        );
-        assertClassesMissing(
-            "com.naminhyeok.fantazzk.room.domain.game.GameId",
-            "com.naminhyeok.fantazzk.room.domain.room.RoomId",
-            "com.naminhyeok.fantazzk.room.domain.room.RoomMode",
-            "com.naminhyeok.fantazzk.room.domain.room.RoomErrorType",
-            "com.naminhyeok.fantazzk.room.domain.room.RoomStateInvalidException",
             "com.naminhyeok.fantazzk.room.JoinableRoomReader",
             "com.naminhyeok.fantazzk.room.AuctionScheduleReader",
             "com.naminhyeok.fantazzk.room.AuctionScheduleCandidate",
@@ -126,7 +75,15 @@ class PublishedContractStructureTest {
             "com.naminhyeok.fantazzk.room.RoomSnapshotUpdatedEvent",
             "com.naminhyeok.fantazzk.room.GameSnapshotUpdatedEvent",
             "com.naminhyeok.fantazzk.room.UuidRoomCodeGenerator",
-            "com.naminhyeok.fantazzk.room.UuidTeamLeaderIdentityIssuer"
+            "com.naminhyeok.fantazzk.room.UuidTeamLeaderIdentityIssuer",
+            "com.naminhyeok.fantazzk.room.Room",
+            "com.naminhyeok.fantazzk.room.Game",
+            "com.naminhyeok.fantazzk.room.Rooms",
+            "com.naminhyeok.fantazzk.room.domain.game.GameId",
+            "com.naminhyeok.fantazzk.room.domain.room.RoomId",
+            "com.naminhyeok.fantazzk.room.domain.room.RoomMode",
+            "com.naminhyeok.fantazzk.room.domain.room.RoomErrorType",
+            "com.naminhyeok.fantazzk.room.domain.room.RoomStateInvalidException"
         );
     }
 
