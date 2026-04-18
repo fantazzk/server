@@ -69,7 +69,7 @@ class SupabaseRoomRealtimePublisher implements RoomSnapshotPublisher {
     }
 
     private void send(PendingBroadcastSnapshot snapshot) {
-        RoomRealtimeSnapshotEvent event = snapshot.toEvent(Instant.now(clock));
+        RealtimeSnapshotEvent event = snapshot.toEvent(Instant.now(clock));
         try {
             restClient.post()
                 .uri(BROADCAST_URI)
@@ -91,20 +91,36 @@ class SupabaseRoomRealtimePublisher implements RoomSnapshotPublisher {
     private record BroadcastRequest(List<BroadcastMessage> messages) {
     }
 
-    private record BroadcastMessage(String topic, String event, RoomRealtimeSnapshotEvent payload) {
+    private record BroadcastMessage(String topic, String event, RealtimeSnapshotEvent payload) {
     }
 
-    private record PendingBroadcastSnapshot(String roomCode, long snapshotVersion, RoomResponse room) {
+    private record PendingBroadcastSnapshot(String roomCode, long snapshotVersion, RoomViewResponse room, GameResponse game) {
         private static PendingBroadcastSnapshot from(RoomDetails details) {
+            if (details.game() != null) {
+                return new PendingBroadcastSnapshot(
+                    details.room().getCode(),
+                    RealtimeSnapshotEvent.snapshotVersionOf(details),
+                    null,
+                    GameResponse.from(details.game())
+                );
+            }
             return new PendingBroadcastSnapshot(
                 details.room().getCode(),
-                RoomRealtimeSnapshotEvent.snapshotVersionOf(details),
-                RoomResponse.from(details)
+                RealtimeSnapshotEvent.snapshotVersionOf(details),
+                RoomViewResponse.from(details.room()),
+                null
             );
         }
 
-        private RoomRealtimeSnapshotEvent toEvent(Instant publishedAt) {
-            return new RoomRealtimeSnapshotEvent("ROOM_SNAPSHOT_UPDATED", roomCode, snapshotVersion, publishedAt, room);
+        private RealtimeSnapshotEvent toEvent(Instant publishedAt) {
+            return new RealtimeSnapshotEvent(
+                game == null ? "ROOM_SNAPSHOT_UPDATED" : "GAME_SNAPSHOT_UPDATED",
+                roomCode,
+                snapshotVersion,
+                publishedAt,
+                room,
+                game
+            );
         }
     }
 }
