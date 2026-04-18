@@ -86,16 +86,16 @@ final class RoomApiTestFixtures {
         return room;
     }
 
-    static RoomDetails startedAuctionDetails() {
+    static StartedRoomSnapshot startedAuctionDetails() {
         Room room = startedAuctionRoom();
-        return new RoomDetails(room, startedAuctionGame(room));
+        return new StartedRoomSnapshot(room, startedAuctionGame(room));
     }
 
     static Room inProgressAuctionRoom() {
         return inProgressAuctionDetails().room();
     }
 
-    static RoomDetails inProgressAuctionDetails() {
+    static StartedRoomSnapshot inProgressAuctionDetails() {
         Room room =
             Room.createFromTemplate(
                 ROOM_CODE,
@@ -124,14 +124,14 @@ final class RoomApiTestFixtures {
         AuctionGame game = (AuctionGame) new GameFactory().create(snapshot);
         game.placeBid(new TeamLeaderId(HOST_ID), 100, CREATED_AT.plusSeconds(1));
         game.settleAuction(CREATED_AT.plusSeconds(16));
-        return new RoomDetails(room, game);
+        return new StartedRoomSnapshot(room, game);
     }
 
     static Room inProgressDraftRoom() {
         return inProgressDraftDetails().room();
     }
 
-    static RoomDetails inProgressDraftDetails() {
+    static StartedRoomSnapshot inProgressDraftDetails() {
         Room room =
             Room.createFromTemplate(
                 ROOM_CODE,
@@ -162,7 +162,7 @@ final class RoomApiTestFixtures {
         DraftGame game = (DraftGame) new GameFactory().create(snapshot);
         game.pick(new TeamLeaderId(HOST_ID), "선수1");
         game.pick(new TeamLeaderId(GUEST_ID), "선수2");
-        return new RoomDetails(room, game);
+        return new StartedRoomSnapshot(room, game);
     }
 
     private static AuctionGame startedAuctionGame(Room room) {

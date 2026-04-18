@@ -50,6 +50,7 @@ class PublishedContractStructureTest {
         assertClassMissing("com.naminhyeok.fantazzk.room.repository.Rooms");
         assertClassMissing("com.naminhyeok.fantazzk.room.api.RoomApiController");
         assertClassMissing("com.naminhyeok.fantazzk.room.GetRoomDetails");
+        assertClassMissing("com.naminhyeok.fantazzk.room.RoomDetails");
         assertClassMissing("com.naminhyeok.fantazzk.template.application.CreateTemplate");
         assertClassMissing("com.naminhyeok.fantazzk.template.domain.Template");
         assertClassMissing("com.naminhyeok.fantazzk.template.repository.Templates");

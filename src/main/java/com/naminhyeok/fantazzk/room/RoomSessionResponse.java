@@ -8,27 +8,18 @@ record RoomSessionResponse(
         return from(result.room(), result.leader());
     }
 
-    static RoomSessionResponse fromHost(RoomDetails details) {
-        Room room = details.room();
+    static RoomSessionResponse fromHost(Room room) {
         RoomTeamLeader host = room.getLeaders().stream()
             .filter(leader -> leader.getId().equals(room.getHostLeaderId()))
             .findFirst()
             .orElseThrow();
-        return from(details, host);
-    }
-
-    static RoomSessionResponse fromHost(Room room) {
-        return fromHost(RoomDetails.from(room));
-    }
-
-    static RoomSessionResponse from(RoomDetails details, RoomTeamLeader leader) {
-        return new RoomSessionResponse(
-            RoomViewResponse.from(details.room()),
-            TeamLeaderSessionResponse.from(details.room(), leader)
-        );
+        return from(room, host);
     }
 
     static RoomSessionResponse from(Room room, RoomTeamLeader leader) {
-        return from(RoomDetails.from(room), leader);
+        return new RoomSessionResponse(
+            RoomViewResponse.from(room),
+            TeamLeaderSessionResponse.from(room, leader)
+        );
     }
 }
