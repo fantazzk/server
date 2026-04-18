@@ -3,6 +3,10 @@ package com.naminhyeok.fantazzk.room;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.naminhyeok.fantazzk.room.application.port.RoomSnapshotPublisher;
+import com.naminhyeok.fantazzk.room.application.support.RoomSnapshot;
+import com.naminhyeok.fantazzk.room.application.support.StartedRoomSnapshot;
+import com.naminhyeok.fantazzk.room.infrastructure.realtime.RealtimeSnapshotEvent;
 import com.naminhyeok.fantazzk.template.TemplateFixture;
 import java.time.Clock;
 import java.time.Instant;
@@ -347,8 +351,8 @@ class RoomRealtimeIntegrationTest {
         }
 
         @Override
-        public void publishAfterCommit(Room room) {
-            RealtimeSnapshotEvent event = RealtimeSnapshotEvent.from(room, Instant.now(clock));
+        public void publishAfterCommit(RoomSnapshot snapshot) {
+            RealtimeSnapshotEvent event = RealtimeSnapshotEvent.from(snapshot, Instant.now(clock));
             if (!TransactionSynchronizationManager.isSynchronizationActive()) {
                 events.add(event);
                 return;

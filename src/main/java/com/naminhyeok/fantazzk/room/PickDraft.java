@@ -1,6 +1,8 @@
 package com.naminhyeok.fantazzk.room;
 
 import com.naminhyeok.fantazzk.CoreException;
+import com.naminhyeok.fantazzk.room.application.port.RoomSnapshotPublisher;
+import com.naminhyeok.fantazzk.room.application.support.StartedRoomSnapshot;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.OptimisticLockingFailureException;
@@ -25,7 +27,9 @@ class PickDraft {
             RosterMember member = game.pick(caller.getId(), playerName);
             games.save(game);
             Room saved = rooms.saveAndFlush(room);
-            roomSnapshotPublisher.publishAfterCommit(new StartedRoomSnapshot(saved, game));
+            roomSnapshotPublisher.publishAfterCommit(
+                new StartedRoomSnapshot(saved.getCode(), saved.getVersion() + game.getVersion(), GameView.from(game))
+            );
             return member;
         } catch (OptimisticLockingFailureException ex) {
             throw CoreException.of(RoomErrorType.ROOM_CONCURRENT_MODIFICATION);
@@ -40,7 +44,9 @@ class PickDraft {
             RosterMember member = draftGame.pick(action.caller().getId(), playerName);
             games.save(draftGame);
             Room saved = rooms.saveAndFlush(action.room());
-            roomSnapshotPublisher.publishAfterCommit(new StartedRoomSnapshot(saved, draftGame));
+            roomSnapshotPublisher.publishAfterCommit(
+                new StartedRoomSnapshot(saved.getCode(), saved.getVersion() + draftGame.getVersion(), GameView.from(draftGame))
+            );
             return member;
         } catch (OptimisticLockingFailureException ex) {
             throw CoreException.of(RoomErrorType.ROOM_CONCURRENT_MODIFICATION);

@@ -1,5 +1,9 @@
-package com.naminhyeok.fantazzk.room;
+package com.naminhyeok.fantazzk.room.infrastructure.scheduling;
 
+import com.naminhyeok.fantazzk.InvalidDomainStateException;
+import com.naminhyeok.fantazzk.room.application.port.AuctionDeadlineSettlementProcessor;
+import com.naminhyeok.fantazzk.room.application.query.AuctionScheduleCandidate;
+import com.naminhyeok.fantazzk.room.application.query.AuctionScheduleReader;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.Comparator;
@@ -15,34 +19,33 @@ import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
-class RoomAuctionDeadlineScheduler {
+public class RoomAuctionDeadlineScheduler {
     private final TaskScheduler taskScheduler;
-    private final SettleAuction settleAuction;
+    private final AuctionDeadlineSettlementProcessor auctionDeadlineSettlementProcessor;
     private final AuctionScheduleReader auctionScheduleReader;
     private final Clock clock;
-    private final Games games;
     private final ConcurrentMap<String, ScheduledFuture<?>> scheduledTasks = new ConcurrentHashMap<>();
 
-    void schedule(Room room) {
-        refresh(room.getCode(), resolveDeadline(room));
+    public void schedule(String code, Instant deadline) {
+        refresh(code, deadline);
     }
 
-    void refresh(String code, Instant deadline) {
+    public void refresh(String code, Instant deadline) {
         cancel(code);
         if (deadline == null) {
             return;
         }
-        schedule(code, deadline);
+        scheduleTask(code, deadline);
     }
 
-    private void schedule(String code, Instant deadline) {
+    private void scheduleTask(String code, Instant deadline) {
         ScheduledFuture<?> future = taskScheduler.schedule(() -> runScheduledSettlement(code), deadline);
         if (future != null) {
             scheduledTasks.put(code, future);
         }
     }
 
-    void cancel(String code) {
+    public void cancel(String code) {
         ScheduledFuture<?> future = scheduledTasks.remove(code);
         if (future != null) {
             future.cancel(false);
@@ -50,42 +53,39 @@ class RoomAuctionDeadlineScheduler {
     }
 
     @EventListener(ApplicationReadyEvent.class)
-    void catchUpAndReschedule() {
+    public void catchUpAndReschedule() {
         Instant now = Instant.now(clock);
         for (AuctionScheduleCandidate candidate : collectSchedulableRooms()) {
             if (candidate.deadline() == null || !candidate.deadline().isAfter(now)) {
                 try {
-                    schedule(settleAuction.settleIfDue(candidate.code()));
-                } catch (RoomStateInvalidException ignored) {
+                    auctionDeadlineSettlementProcessor.processDueAuction(candidate.code());
+                    reschedule(candidate.code());
+                } catch (InvalidDomainStateException ignored) {
                     continue;
                 }
                 continue;
             }
-            schedule(candidate.code(), candidate.deadline());
+            scheduleTask(candidate.code(), candidate.deadline());
         }
     }
 
     private void runScheduledSettlement(String code) {
         scheduledTasks.remove(code);
-        schedule(settleAuction.settleIfDue(code));
-    }
-
-    private Instant resolveDeadline(Room room) {
-        if (room.getMode() != RoomMode.AUCTION || room.getStatus() != RoomStatus.STARTED) {
-            return null;
-        }
-        if (room.getStartedGameId() == null) {
-            return null;
-        }
-        return games.findById(room.getStartedGameId())
-            .filter(AuctionGame.class::isInstance)
-            .map(AuctionGame.class::cast)
-            .map(AuctionGame::getCurrentRoundEndsAt)
-            .orElse(null);
+        auctionDeadlineSettlementProcessor.processDueAuction(code);
+        reschedule(code);
     }
 
     private List<AuctionScheduleCandidate> collectSchedulableRooms() {
         return sortSchedulableRooms(auctionScheduleReader.findInProgressAuctionSchedules());
+    }
+
+    private void reschedule(String code) {
+        Instant nextDeadline = collectSchedulableRooms().stream()
+            .filter(candidate -> candidate.code().equals(code))
+            .map(AuctionScheduleCandidate::deadline)
+            .findFirst()
+            .orElse(null);
+        refresh(code, nextDeadline);
     }
 
     private List<AuctionScheduleCandidate> sortSchedulableRooms(List<AuctionScheduleCandidate> candidates) {

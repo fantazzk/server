@@ -1,6 +1,8 @@
 package com.naminhyeok.fantazzk.room;
 
 import com.naminhyeok.fantazzk.CoreException;
+import com.naminhyeok.fantazzk.room.application.port.RoomSnapshotPublisher;
+import com.naminhyeok.fantazzk.room.application.support.StartedRoomSnapshot;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.UUID;
@@ -28,7 +30,9 @@ class PlaceBid {
             AuctionBid bid = game.placeBid(caller.getId(), amount, Instant.now(clock));
             games.save(game);
             Room saved = rooms.saveAndFlush(room);
-            roomSnapshotPublisher.publishAfterCommit(new StartedRoomSnapshot(saved, game));
+            roomSnapshotPublisher.publishAfterCommit(
+                new StartedRoomSnapshot(saved.getCode(), saved.getVersion() + game.getVersion(), GameView.from(game))
+            );
             return bid;
         } catch (OptimisticLockingFailureException ex) {
             throw CoreException.of(RoomErrorType.ROOM_CONCURRENT_MODIFICATION);
@@ -43,7 +47,9 @@ class PlaceBid {
             AuctionBid bid = auctionGame.placeBid(action.caller().getId(), amount, Instant.now(clock));
             games.save(auctionGame);
             Room saved = rooms.saveAndFlush(action.room());
-            roomSnapshotPublisher.publishAfterCommit(new StartedRoomSnapshot(saved, auctionGame));
+            roomSnapshotPublisher.publishAfterCommit(
+                new StartedRoomSnapshot(saved.getCode(), saved.getVersion() + auctionGame.getVersion(), GameView.from(auctionGame))
+            );
             return bid;
         } catch (OptimisticLockingFailureException ex) {
             throw CoreException.of(RoomErrorType.ROOM_CONCURRENT_MODIFICATION);

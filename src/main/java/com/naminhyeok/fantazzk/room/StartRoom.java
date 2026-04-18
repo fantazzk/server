@@ -1,6 +1,8 @@
 package com.naminhyeok.fantazzk.room;
 
 import com.naminhyeok.fantazzk.CoreException;
+import com.naminhyeok.fantazzk.room.application.port.RoomSnapshotPublisher;
+import com.naminhyeok.fantazzk.room.application.support.StartedRoomSnapshot;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Instant;
@@ -31,7 +33,9 @@ class StartRoom {
             Game createdGame = gameFactory.create(startedGameSnapshot);
             games.save(createdGame);
             Room saved = rooms.saveAndFlush(loaded);
-            roomSnapshotPublisher.publishAfterCommit(new StartedRoomSnapshot(saved, createdGame));
+            roomSnapshotPublisher.publishAfterCommit(
+                new StartedRoomSnapshot(saved.getCode(), saved.getVersion() + createdGame.getVersion(), GameView.from(createdGame))
+            );
             return createdGame;
         } catch (OptimisticLockingFailureException ex) {
             throw CoreException.of(RoomErrorType.ROOM_CONCURRENT_MODIFICATION);

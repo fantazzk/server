@@ -1,9 +1,10 @@
-package com.naminhyeok.fantazzk.room;
+package com.naminhyeok.fantazzk.room.infrastructure.persistence;
 
+import com.naminhyeok.fantazzk.room.application.query.AuctionScheduleCandidate;
+import com.naminhyeok.fantazzk.room.application.query.AuctionScheduleReader;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -16,17 +17,17 @@ class JpaAuctionScheduleReader implements AuctionScheduleReader {
     @Override
     public List<AuctionScheduleCandidate> findInProgressAuctionSchedules() {
         List<AuctionScheduleCandidate> candidates = new ArrayList<>();
-        int page = 0;
+        int offset = 0;
         while (true) {
-            List<AuctionGame> batch = repository.findByCurrentRoundEndsAtNotNullOrderByRoomCodeAsc(PageRequest.of(page, CATCH_UP_BATCH_SIZE));
+            List<AuctionScheduleCandidate> batch = repository.findInProgressAuctionSchedules(CATCH_UP_BATCH_SIZE, offset);
             if (batch.isEmpty()) {
                 return candidates;
             }
-            candidates.addAll(batch.stream().map(game -> new AuctionScheduleCandidate(game.getRoomCode(), game.getCurrentRoundEndsAt())).toList());
+            candidates.addAll(batch);
             if (batch.size() < CATCH_UP_BATCH_SIZE) {
                 return candidates;
             }
-            page += 1;
+            offset += CATCH_UP_BATCH_SIZE;
         }
     }
 }

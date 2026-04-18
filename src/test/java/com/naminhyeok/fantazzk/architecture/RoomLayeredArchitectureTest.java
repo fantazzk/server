@@ -54,6 +54,12 @@ class RoomLayeredArchitectureTest {
         .should(haveSimpleNameNotMatching(".*(ApiController|Request|Response)$"));
 
     @ArchTest
+    static final ArchRule room_root_must_not_contain_infrastructure_implementations = classes()
+        .that().resideInAPackage(ROOM_ROOT_PACKAGE)
+        .and().areTopLevelClasses()
+        .should(haveSimpleNameNotMatching(".*Publisher$|.*Scheduler$|.*JpaRepository$|Jpa.*Reader$|Uuid.*"));
+
+    @ArchTest
     static final ArchRule no_classes_outside_room_or_architecture_should_depend_on_room_layers = noClasses()
         .that().resideOutsideOfPackages(
             "com.naminhyeok.fantazzk.room..",

@@ -2,6 +2,8 @@ package com.naminhyeok.fantazzk.room;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.naminhyeok.fantazzk.room.application.port.TeamLeaderIdentityIssuer;
+import com.naminhyeok.fantazzk.room.infrastructure.realtime.NoopRoomSnapshotPublisher;
 import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.List;

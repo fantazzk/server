@@ -4,6 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.naminhyeok.fantazzk.CoreException;
+import com.naminhyeok.fantazzk.room.application.port.RoomSnapshotPublisher;
+import com.naminhyeok.fantazzk.room.application.port.TeamLeaderIdentityIssuer;
+import com.naminhyeok.fantazzk.room.application.support.RoomSnapshot;
+import com.naminhyeok.fantazzk.room.application.support.StartedRoomSnapshot;
+import com.naminhyeok.fantazzk.room.infrastructure.realtime.RealtimeSnapshotEvent;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -278,8 +283,8 @@ class RoomRealtimePublishingTest {
         private final List<RealtimeSnapshotEvent> events = new ArrayList<>();
 
         @Override
-        public void publishAfterCommit(Room room) {
-            events.add(RealtimeSnapshotEvent.from(room, PUBLISHED_AT));
+        public void publishAfterCommit(RoomSnapshot snapshot) {
+            events.add(RealtimeSnapshotEvent.from(snapshot, PUBLISHED_AT));
         }
 
         @Override

@@ -1,5 +1,6 @@
-package com.naminhyeok.fantazzk.room;
+package com.naminhyeok.fantazzk.room.infrastructure.identity;
 
+import com.naminhyeok.fantazzk.room.application.port.RoomCodeGenerator;
 import java.util.UUID;
 import org.springframework.stereotype.Component;
 

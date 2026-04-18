@@ -1,6 +1,8 @@
 package com.naminhyeok.fantazzk.room;
 
 import com.naminhyeok.fantazzk.CoreException;
+import com.naminhyeok.fantazzk.room.application.port.RoomSnapshotPublisher;
+import com.naminhyeok.fantazzk.room.application.support.RoomSnapshot;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
@@ -20,7 +22,7 @@ class ClearDraftPosition {
             RoomTeamLeader caller = roomActionAuthorizer.authenticate(room, actionToken);
             room.clearDraftPosition(caller.getId());
             Room saved = rooms.saveAndFlush(room);
-            roomSnapshotPublisher.publishAfterCommit(saved);
+            roomSnapshotPublisher.publishAfterCommit(new RoomSnapshot(saved.getCode(), saved.getVersion(), RoomView.from(saved)));
             return saved;
         } catch (OptimisticLockingFailureException ex) {
             throw CoreException.of(RoomErrorType.ROOM_CONCURRENT_MODIFICATION);

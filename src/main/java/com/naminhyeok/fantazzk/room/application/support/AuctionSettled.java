@@ -1,9 +1,10 @@
-package com.naminhyeok.fantazzk.room;
+package com.naminhyeok.fantazzk.room.application.support;
 
 import java.time.Instant;
 
-record RoomStarted(
+public record AuctionSettled(
     String roomCode,
+    String outcome,
     Instant roundEndsAt
 ) implements RoomSchedulingEvent {
 }

@@ -41,6 +41,42 @@ class PublishedContractStructureTest {
         assertThat(isPublic("com.naminhyeok.fantazzk.room.Room")).isFalse();
         assertThat(isPublic("com.naminhyeok.fantazzk.room.Game")).isFalse();
         assertThat(isPublic("com.naminhyeok.fantazzk.room.Rooms")).isFalse();
+        assertClassMissing("com.naminhyeok.fantazzk.room.JoinableRoomReader");
+        assertClassMissing("com.naminhyeok.fantazzk.room.AuctionScheduleReader");
+        assertClassMissing("com.naminhyeok.fantazzk.room.AuctionScheduleCandidate");
+        assertClassMissing("com.naminhyeok.fantazzk.room.RoomSnapshotPublisher");
+        assertClassMissing("com.naminhyeok.fantazzk.room.RoomCodeGenerator");
+        assertClassMissing("com.naminhyeok.fantazzk.room.TeamLeaderIdentityIssuer");
+        assertClassMissing("com.naminhyeok.fantazzk.room.StartedRoomSnapshot");
+        assertClassMissing("com.naminhyeok.fantazzk.room.JoinableRoomJpaRepository");
+        assertClassMissing("com.naminhyeok.fantazzk.room.JpaJoinableRoomReader");
+        assertClassMissing("com.naminhyeok.fantazzk.room.AuctionScheduleJpaRepository");
+        assertClassMissing("com.naminhyeok.fantazzk.room.JpaAuctionScheduleReader");
+        assertClassMissing("com.naminhyeok.fantazzk.room.RoomAuctionDeadlineScheduler");
+        assertClassMissing("com.naminhyeok.fantazzk.room.RoomAuctionSchedulingPolicy");
+        assertClassMissing("com.naminhyeok.fantazzk.room.SupabaseRoomRealtimePublisher");
+        assertClassMissing("com.naminhyeok.fantazzk.room.NoopRoomSnapshotPublisher");
+        assertClassMissing("com.naminhyeok.fantazzk.room.RealtimeSnapshotEvent");
+        assertClassMissing("com.naminhyeok.fantazzk.room.RoomSnapshotUpdatedEvent");
+        assertClassMissing("com.naminhyeok.fantazzk.room.GameSnapshotUpdatedEvent");
+        assertClassMissing("com.naminhyeok.fantazzk.room.UuidRoomCodeGenerator");
+        assertClassMissing("com.naminhyeok.fantazzk.room.UuidTeamLeaderIdentityIssuer");
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.application.query.JoinableRoomReader")).isTrue();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.application.query.AuctionScheduleReader")).isTrue();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.application.query.AuctionScheduleCandidate")).isTrue();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.application.port.AuctionDeadlineSettlementProcessor")).isTrue();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.application.port.RoomSnapshotPublisher")).isTrue();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.application.port.RoomCodeGenerator")).isTrue();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.application.port.TeamLeaderIdentityIssuer")).isTrue();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.application.support.RoomSnapshot")).isTrue();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.application.support.StartedRoomSnapshot")).isTrue();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.infrastructure.realtime.RealtimeSnapshotEvent")).isTrue();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.infrastructure.realtime.RoomSnapshotUpdatedEvent")).isTrue();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.infrastructure.realtime.GameSnapshotUpdatedEvent")).isTrue();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.infrastructure.realtime.NoopRoomSnapshotPublisher")).isTrue();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.infrastructure.realtime.SupabaseRoomRealtimePublisher")).isTrue();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.infrastructure.scheduling.RoomAuctionDeadlineScheduler")).isTrue();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.infrastructure.scheduling.RoomAuctionSchedulingPolicy")).isTrue();
     }
 
     @Test
@@ -76,10 +112,14 @@ class PublishedContractStructureTest {
         assertClassMissing("com.naminhyeok.fantazzk.room.event.RoomStarted");
         assertClassMissing("com.naminhyeok.fantazzk.room.event.BidPlaced");
         assertClassMissing("com.naminhyeok.fantazzk.room.event.AuctionSettled");
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.RoomSchedulingEvent")).isFalse();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.RoomStarted")).isFalse();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.BidPlaced")).isFalse();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.AuctionSettled")).isFalse();
+        assertClassMissing("com.naminhyeok.fantazzk.room.RoomSchedulingEvent");
+        assertClassMissing("com.naminhyeok.fantazzk.room.RoomStarted");
+        assertClassMissing("com.naminhyeok.fantazzk.room.BidPlaced");
+        assertClassMissing("com.naminhyeok.fantazzk.room.AuctionSettled");
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.application.support.RoomSchedulingEvent")).isTrue();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.application.support.RoomStarted")).isTrue();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.application.support.BidPlaced")).isTrue();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.application.support.AuctionSettled")).isTrue();
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.naminhyeok.fantazzk.room;
 
+import com.naminhyeok.fantazzk.room.application.query.JoinableRoomReader;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -14,8 +15,6 @@ class FindJoinableRooms {
 
     @Transactional(readOnly = true)
     List<JoinableRoomView> list() {
-        return joinableRoomReader.findLatestWaitingRooms(JOINABLE_ROOM_LIMIT).stream()
-            .map(JoinableRoomView::from)
-            .toList();
+        return joinableRoomReader.findLatestWaitingRooms(JOINABLE_ROOM_LIMIT);
     }
 }

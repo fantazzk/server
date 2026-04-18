@@ -2,6 +2,9 @@ package com.naminhyeok.fantazzk.room;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.naminhyeok.fantazzk.room.application.port.RoomSnapshotPublisher;
+import com.naminhyeok.fantazzk.room.application.support.RoomSnapshot;
+import com.naminhyeok.fantazzk.room.application.support.StartedRoomSnapshot;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -49,12 +52,13 @@ class RoomSnapshotPublisherTest {
             new GameId(UUID.fromString("00000000-0000-0000-0000-000000000101")),
             STARTED_AT
         );
-        return new StartedRoomSnapshot(room, new GameFactory().create(snapshot));
+        Game game = new GameFactory().create(snapshot);
+        return new StartedRoomSnapshot(room.getCode(), room.getVersion() + game.getVersion(), GameView.from(game));
     }
 
     private static final class RoomOnlyPublisher implements RoomSnapshotPublisher {
         @Override
-        public void publishAfterCommit(Room room) {
+        public void publishAfterCommit(RoomSnapshot snapshot) {
         }
 
         @Override

@@ -1,12 +1,13 @@
 package com.naminhyeok.fantazzk.room;
 
 import com.naminhyeok.fantazzk.CoreException;
+import com.naminhyeok.fantazzk.room.application.port.AuctionDeadlineSettlementProcessor;
 import java.util.UUID;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 
 @Service
-class SettleAuction {
+class SettleAuction implements AuctionDeadlineSettlementProcessor {
     private final SettleAuctionAttempt settleAuctionAttempt;
     private final Rooms rooms;
 
@@ -29,6 +30,11 @@ class SettleAuction {
         } catch (OptimisticLockingFailureException ex) {
             return rooms.findByCode(code).orElseThrow(() -> CoreException.of(RoomErrorType.ROOM_NOT_FOUND));
         }
+    }
+
+    @Override
+    public void processDueAuction(String code) {
+        settleIfDue(code);
     }
 
     public Game settleIfDue(UUID gameId) {

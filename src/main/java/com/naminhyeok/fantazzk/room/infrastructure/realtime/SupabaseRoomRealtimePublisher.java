@@ -1,23 +1,23 @@
-package com.naminhyeok.fantazzk.room;
+package com.naminhyeok.fantazzk.room.infrastructure.realtime;
 
 import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
+import com.naminhyeok.fantazzk.room.GameView;
+import com.naminhyeok.fantazzk.room.RoomView;
+import com.naminhyeok.fantazzk.room.application.port.RoomSnapshotPublisher;
+import com.naminhyeok.fantazzk.room.application.support.RoomSnapshot;
+import com.naminhyeok.fantazzk.room.application.support.StartedRoomSnapshot;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
-class SupabaseRoomRealtimePublisher implements RoomSnapshotPublisher {
+public class SupabaseRoomRealtimePublisher implements RoomSnapshotPublisher {
     private static final Logger log = LoggerFactory.getLogger(SupabaseRoomRealtimePublisher.class);
     private static final String BROADCAST_URI = "/realtime/v1/api/broadcast";
     private static final String SNAPSHOT_UPDATED_EVENT = "snapshot.updated";
@@ -27,7 +27,7 @@ class SupabaseRoomRealtimePublisher implements RoomSnapshotPublisher {
     private final String serviceRoleKey;
     private final String topicPrefix;
 
-    SupabaseRoomRealtimePublisher(
+    public SupabaseRoomRealtimePublisher(
         RestClient.Builder restClientBuilder,
         Clock clock,
         String supabaseUrl,
@@ -37,7 +37,7 @@ class SupabaseRoomRealtimePublisher implements RoomSnapshotPublisher {
         this(restClientBuilder.baseUrl(supabaseUrl), clock, serviceRoleKey, topicPrefix);
     }
 
-    SupabaseRoomRealtimePublisher(RestClient.Builder restClientBuilder, Clock clock, String serviceRoleKey, String topicPrefix) {
+    public SupabaseRoomRealtimePublisher(RestClient.Builder restClientBuilder, Clock clock, String serviceRoleKey, String topicPrefix) {
         this(restClientBuilder.build(), clock, serviceRoleKey, topicPrefix);
     }
 
@@ -49,8 +49,8 @@ class SupabaseRoomRealtimePublisher implements RoomSnapshotPublisher {
     }
 
     @Override
-    public void publishAfterCommit(Room room) {
-        publishAfterCommit(PendingBroadcastSnapshot.from(room));
+    public void publishAfterCommit(RoomSnapshot snapshot) {
+        publishAfterCommit(PendingBroadcastSnapshot.from(snapshot));
     }
 
     @Override
@@ -98,22 +98,12 @@ class SupabaseRoomRealtimePublisher implements RoomSnapshotPublisher {
     }
 
     private record PendingBroadcastSnapshot(String roomCode, long snapshotVersion, RoomView room, GameView game) {
-        private static PendingBroadcastSnapshot from(Room room) {
-            return new PendingBroadcastSnapshot(
-                room.getCode(),
-                RealtimeSnapshotEvent.snapshotVersionOf(room),
-                RoomView.from(room),
-                null
-            );
+        private static PendingBroadcastSnapshot from(RoomSnapshot snapshot) {
+            return new PendingBroadcastSnapshot(snapshot.roomCode(), snapshot.snapshotVersion(), snapshot.room(), null);
         }
 
         private static PendingBroadcastSnapshot from(StartedRoomSnapshot snapshot) {
-            return new PendingBroadcastSnapshot(
-                snapshot.room().getCode(),
-                RealtimeSnapshotEvent.snapshotVersionOf(snapshot),
-                null,
-                GameView.from(snapshot.game())
-            );
+            return new PendingBroadcastSnapshot(snapshot.roomCode(), snapshot.snapshotVersion(), null, snapshot.game());
         }
 
         private RealtimeSnapshotEvent toEvent(Instant publishedAt) {
@@ -134,31 +124,5 @@ class SupabaseRoomRealtimePublisher implements RoomSnapshotPublisher {
                 game
             );
         }
-    }
-}
-
-@Configuration(proxyBeanMethods = false)
-class RoomSnapshotPublisherConfiguration {
-    @Bean
-    @ConditionalOnMissingBean(RoomSnapshotPublisher.class)
-    @ConditionalOnExpression(
-        "T(Boolean).parseBoolean('${fantazzk.supabase.realtime.enabled:false}') and " +
-        "T(org.springframework.util.StringUtils).hasText('${fantazzk.supabase.url:}') and " +
-        "T(org.springframework.util.StringUtils).hasText('${fantazzk.supabase.service-role-key:}')"
-    )
-    RoomSnapshotPublisher supabaseRoomSnapshotPublisher(
-        RestClient.Builder restClientBuilder,
-        Clock clock,
-        @Value("${fantazzk.supabase.url}") String supabaseUrl,
-        @Value("${fantazzk.supabase.service-role-key}") String serviceRoleKey,
-        @Value("${fantazzk.supabase.realtime.topic-prefix:room}") String topicPrefix
-    ) {
-        return new SupabaseRoomRealtimePublisher(restClientBuilder, clock, supabaseUrl, serviceRoleKey, topicPrefix);
-    }
-
-    @Bean
-    @ConditionalOnMissingBean(RoomSnapshotPublisher.class)
-    RoomSnapshotPublisher noopRoomSnapshotPublisher() {
-        return new NoopRoomSnapshotPublisher();
     }
 }

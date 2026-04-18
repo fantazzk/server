@@ -11,6 +11,12 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
+import com.naminhyeok.fantazzk.room.application.port.RoomSnapshotPublisher;
+import com.naminhyeok.fantazzk.room.application.support.RoomSnapshot;
+import com.naminhyeok.fantazzk.room.application.support.StartedRoomSnapshot;
+import com.naminhyeok.fantazzk.room.infrastructure.realtime.NoopRoomSnapshotPublisher;
+import com.naminhyeok.fantazzk.room.infrastructure.realtime.RoomSnapshotPublisherConfiguration;
+import com.naminhyeok.fantazzk.room.infrastructure.realtime.SupabaseRoomRealtimePublisher;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -50,7 +56,7 @@ class SupabaseRoomRealtimePublisherTest {
             .andExpect(jsonPath("$.messages[0].payload.room.code").value(room.getCode()))
             .andRespond(withSuccess());
 
-        publisher.publishAfterCommit(room);
+        publisher.publishAfterCommit(roomSnapshot(room));
 
         server.verify();
     }
@@ -69,7 +75,7 @@ class SupabaseRoomRealtimePublisherTest {
 
         TransactionSynchronizationManager.initSynchronization();
         try {
-            publisher.publishAfterCommit(room);
+            publisher.publishAfterCommit(roomSnapshot(room));
 
             List<TransactionSynchronization> synchronizations = TransactionSynchronizationManager.getSynchronizations();
             assertThat(synchronizations).hasSize(1);
@@ -106,7 +112,7 @@ class SupabaseRoomRealtimePublisherTest {
 
         TransactionSynchronizationManager.initSynchronization();
         try {
-            publisher.publishAfterCommit(room);
+            publisher.publishAfterCommit(roomSnapshot(room));
             room.join(new TeamLeaderId("leader-guest"), "게스트", "guest-token");
             clock.advanceSeconds(30);
 
@@ -135,10 +141,10 @@ class SupabaseRoomRealtimePublisherTest {
         server.expect(requestTo(BASE_URL + "/realtime/v1/api/broadcast"))
             .andExpect(method(POST))
             .andExpect(jsonPath("$.messages[0].payload.eventType").value("GAME_SNAPSHOT_UPDATED"))
-            .andExpect(jsonPath("$.messages[0].payload.roomCode").value(snapshot.room().getCode()))
+            .andExpect(jsonPath("$.messages[0].payload.roomCode").value(snapshot.roomCode()))
             .andExpect(jsonPath("$.messages[0].payload.room").doesNotExist())
-            .andExpect(jsonPath("$.messages[0].payload.game.id").value(snapshot.game().getId().gameId().toString()))
-            .andExpect(jsonPath("$.messages[0].payload.game.roomCode").value(snapshot.room().getCode()))
+            .andExpect(jsonPath("$.messages[0].payload.game.id").value(snapshot.game().id()))
+            .andExpect(jsonPath("$.messages[0].payload.game.roomCode").value(snapshot.roomCode()))
             .andExpect(jsonPath("$.messages[0].payload.game.progress.currentRound").value(1))
             .andRespond(withSuccess());
 
@@ -158,7 +164,7 @@ class SupabaseRoomRealtimePublisherTest {
             .andExpect(method(POST))
             .andRespond(withServerError());
 
-        assertThatCode(() -> publisher.publishAfterCommit(waitingAuctionRoom())).doesNotThrowAnyException();
+        assertThatCode(() -> publisher.publishAfterCommit(roomSnapshot(waitingAuctionRoom()))).doesNotThrowAnyException();
 
         server.verify();
     }
@@ -258,7 +264,12 @@ class SupabaseRoomRealtimePublisherTest {
             new GameId(java.util.UUID.fromString("00000000-0000-0000-0000-000000000101")),
             Instant.parse("2024-01-01T10:00:00Z")
         );
-        return new StartedRoomSnapshot(room, new GameFactory().create(snapshot));
+        Game game = new GameFactory().create(snapshot);
+        return new StartedRoomSnapshot(room.getCode(), room.getVersion() + game.getVersion(), GameView.from(game));
+    }
+
+    private static RoomSnapshot roomSnapshot(Room room) {
+        return new RoomSnapshot(room.getCode(), room.getVersion(), RoomView.from(room));
     }
 
     @Configuration(proxyBeanMethods = false)

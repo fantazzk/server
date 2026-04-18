@@ -2,6 +2,11 @@ package com.naminhyeok.fantazzk.room;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.naminhyeok.fantazzk.room.application.support.RoomSnapshot;
+import com.naminhyeok.fantazzk.room.application.support.StartedRoomSnapshot;
+import com.naminhyeok.fantazzk.room.infrastructure.realtime.GameSnapshotUpdatedEvent;
+import com.naminhyeok.fantazzk.room.infrastructure.realtime.RealtimeSnapshotEvent;
+import com.naminhyeok.fantazzk.room.infrastructure.realtime.RoomSnapshotUpdatedEvent;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -15,7 +20,10 @@ class RealtimeSnapshotEventTest {
     void waiting_snapshot은_room_payload를_담고_game_payload는_비운다() {
         Room room = waitingAuctionRoom();
 
-        RealtimeSnapshotEvent event = RealtimeSnapshotEvent.from(room, PUBLISHED_AT);
+        RealtimeSnapshotEvent event = RealtimeSnapshotEvent.from(
+            new RoomSnapshot(room.getCode(), room.getVersion(), RoomView.from(room)),
+            PUBLISHED_AT
+        );
 
         assertThat(event).isInstanceOf(RoomSnapshotUpdatedEvent.class);
         assertThat(event.eventType()).isEqualTo("ROOM_SNAPSHOT_UPDATED");
@@ -30,7 +38,10 @@ class RealtimeSnapshotEventTest {
         Room room = startedAuctionRoom();
         Game game = startedGameOf(room);
 
-        RealtimeSnapshotEvent event = RealtimeSnapshotEvent.from(new StartedRoomSnapshot(room, game), PUBLISHED_AT);
+        RealtimeSnapshotEvent event = RealtimeSnapshotEvent.from(
+            new StartedRoomSnapshot(room.getCode(), room.getVersion() + game.getVersion(), GameView.from(game)),
+            PUBLISHED_AT
+        );
 
         assertThat(event).isInstanceOf(GameSnapshotUpdatedEvent.class);
         assertThat(event.eventType()).isEqualTo("GAME_SNAPSHOT_UPDATED");
@@ -48,7 +59,10 @@ class RealtimeSnapshotEventTest {
         setVersion(Room.class, room, 1L);
         setVersion(Game.class, game, 7L);
 
-        RealtimeSnapshotEvent event = RealtimeSnapshotEvent.from(new StartedRoomSnapshot(room, game), PUBLISHED_AT);
+        RealtimeSnapshotEvent event = RealtimeSnapshotEvent.from(
+            new StartedRoomSnapshot(room.getCode(), room.getVersion() + game.getVersion(), GameView.from(game)),
+            PUBLISHED_AT
+        );
 
         assertThat(event.snapshotVersion()).isEqualTo(8L);
     }

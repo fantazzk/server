@@ -57,15 +57,15 @@ public final class RoomApiTestFixtures {
     }
 
     public static GameView startedAuctionGameView() {
-        return GameView.from(startedAuctionDetails().game());
+        return GameView.from(startedAuctionGame(startedAuctionRoom()));
     }
 
     public static GameView inProgressAuctionGameView() {
-        return GameView.from(inProgressAuctionDetails().game());
+        return GameView.from(inProgressAuctionGame());
     }
 
     public static GameView inProgressDraftGameView() {
-        return GameView.from(inProgressDraftDetails().game());
+        return GameView.from(inProgressDraftGame());
     }
 
     static Room waitingAuctionRoom() {
@@ -138,16 +138,36 @@ public final class RoomApiTestFixtures {
         return room;
     }
 
-    static StartedRoomSnapshot startedAuctionDetails() {
-        Room room = startedAuctionRoom();
-        return new StartedRoomSnapshot(room, startedAuctionGame(room));
-    }
-
     static Room inProgressAuctionRoom() {
-        return inProgressAuctionDetails().room();
+        Room room =
+            Room.createFromTemplate(
+                ROOM_CODE,
+                new TeamLeaderId(HOST_ID),
+                "호스트",
+                HOST_TOKEN,
+                new RoomTemplateSpec(
+                    RoomMode.AUCTION,
+                    2,
+                    3,
+                    300,
+                    15,
+                    10,
+                    null,
+                    List.of(
+                        new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
+                        new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", "JUNGLE", 1),
+                        new RoomTemplateSpec.Player(new RoomPlayerId(2), "선수3", "MID", 2),
+                        new RoomTemplateSpec.Player(new RoomPlayerId(3), "선수4", "ADC", 3)
+                    )
+                ),
+                CREATED_AT
+            );
+        room.join(new TeamLeaderId(GUEST_ID), "게스트", GUEST_TOKEN);
+        room.start(new TeamLeaderId(HOST_ID), new GameId(UUID.fromString(GAME_ID)), CREATED_AT);
+        return room;
     }
 
-    static StartedRoomSnapshot inProgressAuctionDetails() {
+    private static AuctionGame inProgressAuctionGame() {
         Room room =
             Room.createFromTemplate(
                 ROOM_CODE,
@@ -176,14 +196,41 @@ public final class RoomApiTestFixtures {
         AuctionGame game = (AuctionGame) new GameFactory().create(snapshot);
         game.placeBid(new TeamLeaderId(HOST_ID), 100, CREATED_AT.plusSeconds(1));
         game.settleAuction(CREATED_AT.plusSeconds(16));
-        return new StartedRoomSnapshot(room, game);
+        return game;
     }
 
     static Room inProgressDraftRoom() {
-        return inProgressDraftDetails().room();
+        Room room =
+            Room.createFromTemplate(
+                ROOM_CODE,
+                new TeamLeaderId(HOST_ID),
+                "호스트",
+                HOST_TOKEN,
+                new RoomTemplateSpec(
+                    RoomMode.DRAFT,
+                    2,
+                    3,
+                    null,
+                    30,
+                    null,
+                    DraftOrderStrategy.SNAKE,
+                    List.of(
+                        new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
+                        new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", "JUNGLE", 1),
+                        new RoomTemplateSpec.Player(new RoomPlayerId(2), "선수3", "MID", 2),
+                        new RoomTemplateSpec.Player(new RoomPlayerId(3), "선수4", "ADC", 3)
+                    )
+                ),
+                CREATED_AT
+            );
+        room.join(new TeamLeaderId(GUEST_ID), "게스트", GUEST_TOKEN);
+        room.selectDraftPosition(new TeamLeaderId(HOST_ID), 1);
+        room.selectDraftPosition(new TeamLeaderId(GUEST_ID), 2);
+        room.start(new TeamLeaderId(HOST_ID), new GameId(UUID.fromString(DRAFT_GAME_ID)), CREATED_AT);
+        return room;
     }
 
-    static StartedRoomSnapshot inProgressDraftDetails() {
+    private static DraftGame inProgressDraftGame() {
         Room room =
             Room.createFromTemplate(
                 ROOM_CODE,
@@ -214,7 +261,7 @@ public final class RoomApiTestFixtures {
         DraftGame game = (DraftGame) new GameFactory().create(snapshot);
         game.pick(new TeamLeaderId(HOST_ID), "선수1");
         game.pick(new TeamLeaderId(GUEST_ID), "선수2");
-        return new StartedRoomSnapshot(room, game);
+        return game;
     }
 
     private static AuctionGame startedAuctionGame(Room room) {

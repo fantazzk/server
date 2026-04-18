@@ -1,6 +1,9 @@
 package com.naminhyeok.fantazzk.room;
 
 import com.naminhyeok.fantazzk.CoreException;
+import com.naminhyeok.fantazzk.room.application.port.RoomSnapshotPublisher;
+import com.naminhyeok.fantazzk.room.application.port.TeamLeaderIdentityIssuer;
+import com.naminhyeok.fantazzk.room.application.support.RoomSnapshot;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
@@ -21,7 +24,7 @@ class JoinRoom {
             TeamLeaderId joinedLeaderId = new TeamLeaderId(identity.leaderId());
             room.join(joinedLeaderId, nickname, identity.actionToken());
             Room saved = rooms.saveAndFlush(room);
-            roomSnapshotPublisher.publishAfterCommit(saved);
+            roomSnapshotPublisher.publishAfterCommit(new RoomSnapshot(saved.getCode(), saved.getVersion(), RoomView.from(saved)));
             return new RoomSessionResult(saved, findLeader(saved, joinedLeaderId));
         } catch (OptimisticLockingFailureException ex) {
             throw CoreException.of(RoomErrorType.ROOM_CONCURRENT_MODIFICATION);

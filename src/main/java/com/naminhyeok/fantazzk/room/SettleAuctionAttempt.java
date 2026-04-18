@@ -1,6 +1,8 @@
 package com.naminhyeok.fantazzk.room;
 
 import com.naminhyeok.fantazzk.CoreException;
+import com.naminhyeok.fantazzk.room.application.port.RoomSnapshotPublisher;
+import com.naminhyeok.fantazzk.room.application.support.StartedRoomSnapshot;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.UUID;
@@ -27,7 +29,9 @@ class SettleAuctionAttempt {
             AuctionSettlement settlement = game.settleAuction(now);
             games.save(game);
             Room saved = rooms.saveAndFlush(room);
-            roomSnapshotPublisher.publishAfterCommit(new StartedRoomSnapshot(saved, game));
+            roomSnapshotPublisher.publishAfterCommit(
+                new StartedRoomSnapshot(saved.getCode(), saved.getVersion() + game.getVersion(), GameView.from(game))
+            );
             return settlement;
         } catch (OptimisticLockingFailureException ex) {
             throw CoreException.of(RoomErrorType.ROOM_CONCURRENT_MODIFICATION);
@@ -43,7 +47,9 @@ class SettleAuctionAttempt {
             AuctionSettlement settlement = game.settleAuction(now);
             games.save(game);
             Room saved = rooms.saveAndFlush(context.room());
-            roomSnapshotPublisher.publishAfterCommit(new StartedRoomSnapshot(saved, game));
+            roomSnapshotPublisher.publishAfterCommit(
+                new StartedRoomSnapshot(saved.getCode(), saved.getVersion() + game.getVersion(), GameView.from(game))
+            );
             return settlement;
         } catch (OptimisticLockingFailureException ex) {
             throw CoreException.of(RoomErrorType.ROOM_CONCURRENT_MODIFICATION);
@@ -62,7 +68,9 @@ class SettleAuctionAttempt {
         game.settleAuction(now);
         games.save(game);
         Room saved = rooms.saveAndFlush(room);
-        roomSnapshotPublisher.publishAfterCommit(new StartedRoomSnapshot(saved, game));
+        roomSnapshotPublisher.publishAfterCommit(
+            new StartedRoomSnapshot(saved.getCode(), saved.getVersion() + game.getVersion(), GameView.from(game))
+        );
         return saved;
     }
 
@@ -79,7 +87,9 @@ class SettleAuctionAttempt {
         game.settleAuction(now);
         games.save(game);
         Room saved = rooms.saveAndFlush(context.room());
-        roomSnapshotPublisher.publishAfterCommit(new StartedRoomSnapshot(saved, game));
+        roomSnapshotPublisher.publishAfterCommit(
+            new StartedRoomSnapshot(saved.getCode(), saved.getVersion() + game.getVersion(), GameView.from(game))
+        );
         return game;
     }
 

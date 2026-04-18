@@ -1,6 +1,6 @@
-package com.naminhyeok.fantazzk.room;
+package com.naminhyeok.fantazzk.room.application.port;
 
-interface TeamLeaderIdentityIssuer {
+public interface TeamLeaderIdentityIssuer {
     TeamLeaderIdentity issue();
 
     record TeamLeaderIdentity(
