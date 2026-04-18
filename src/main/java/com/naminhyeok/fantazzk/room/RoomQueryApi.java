@@ -1,5 +1,11 @@
 package com.naminhyeok.fantazzk.room;
 
+import com.naminhyeok.fantazzk.room.domain.game.*;
+import com.naminhyeok.fantazzk.room.domain.handoff.*;
+import com.naminhyeok.fantazzk.room.domain.repository.*;
+import com.naminhyeok.fantazzk.room.domain.room.*;
+import com.naminhyeok.fantazzk.room.domain.shared.*;
+
 import java.util.List;
 import org.springframework.stereotype.Service;
 

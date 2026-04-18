@@ -1,7 +1,18 @@
 package com.naminhyeok.fantazzk.room;
 
+import com.naminhyeok.fantazzk.room.domain.game.*;
+import com.naminhyeok.fantazzk.room.domain.handoff.*;
+import com.naminhyeok.fantazzk.room.domain.repository.*;
+import com.naminhyeok.fantazzk.room.domain.room.*;
+import com.naminhyeok.fantazzk.room.domain.shared.*;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.naminhyeok.fantazzk.room.domain.handoff.GameRules;
+import com.naminhyeok.fantazzk.room.domain.handoff.StartedAuctionParticipant;
+import com.naminhyeok.fantazzk.room.domain.handoff.StartedDraftParticipant;
+import com.naminhyeok.fantazzk.room.domain.handoff.StartedGamePlayer;
+import com.naminhyeok.fantazzk.room.domain.handoff.StartedGameSnapshot;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -23,12 +34,12 @@ class GameFactoryTest {
                 RoomMode.AUCTION,
                 GameRules.auction(2, 2, 300, 45, 10, 1),
                 List.of(
-                    GameParticipant.auction(new TeamLeaderId("host-1"), "호스트", 300),
-                    GameParticipant.auction(new TeamLeaderId("guest-1"), "게스트", 300)
+                    new StartedAuctionParticipant(new TeamLeaderId("host-1"), "호스트", 300),
+                    new StartedAuctionParticipant(new TeamLeaderId("guest-1"), "게스트", 300)
                 ),
                 List.of(
-                    new GamePlayer(new RoomPlayerId(0), "선수1", "TOP", 0),
-                    new GamePlayer(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
+                    new StartedGamePlayer(new RoomPlayerId(0), "선수1", "TOP", 0),
+                    new StartedGamePlayer(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
                 )
             );
 
@@ -41,8 +52,18 @@ class GameFactoryTest {
         assertThat(created.getStatus()).isEqualTo(GameStatus.IN_PROGRESS);
         assertThat(created.getStartedAt()).isEqualTo(snapshot.startedAt());
         assertThat(created.getRules()).isEqualTo(snapshot.rules());
-        assertThat(created.getParticipants()).containsExactlyElementsOf(snapshot.participants());
-        assertThat(created.getPlayerPool()).containsExactlyElementsOf(snapshot.playerPool());
+        assertThat(created.getParticipants())
+            .extracting(GameParticipant::teamLeaderId, GameParticipant::nickname, GameParticipant::remainingBudget)
+            .containsExactly(
+                org.assertj.core.groups.Tuple.tuple(new TeamLeaderId("host-1"), "호스트", 300),
+                org.assertj.core.groups.Tuple.tuple(new TeamLeaderId("guest-1"), "게스트", 300)
+            );
+        assertThat(created.getPlayerPool())
+            .extracting(GamePlayer::playerId, GamePlayer::name, GamePlayer::position, GamePlayer::displayOrder)
+            .containsExactly(
+                org.assertj.core.groups.Tuple.tuple(new RoomPlayerId(0), "선수1", "TOP", 0),
+                org.assertj.core.groups.Tuple.tuple(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
+            );
         AuctionGame auctionGame = (AuctionGame) created;
         assertThat(auctionGame.getCurrentRound()).isEqualTo(1);
         assertThat(auctionGame.getCurrentRoundEndsAt()).isEqualTo(STARTED_AT.plusSeconds(45));
@@ -59,12 +80,12 @@ class GameFactoryTest {
                 RoomMode.DRAFT,
                 GameRules.draft(2, 2, 30, DraftOrderStrategy.SNAKE),
                 List.of(
-                    GameParticipant.draft(new TeamLeaderId("host-1"), "호스트", 1),
-                    GameParticipant.draft(new TeamLeaderId("guest-1"), "게스트", 2)
+                    new StartedDraftParticipant(new TeamLeaderId("host-1"), "호스트", 1),
+                    new StartedDraftParticipant(new TeamLeaderId("guest-1"), "게스트", 2)
                 ),
                 List.of(
-                    new GamePlayer(new RoomPlayerId(0), "선수1", "TOP", 0),
-                    new GamePlayer(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
+                    new StartedGamePlayer(new RoomPlayerId(0), "선수1", "TOP", 0),
+                    new StartedGamePlayer(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
                 )
             );
 
@@ -77,8 +98,18 @@ class GameFactoryTest {
         assertThat(created.getStatus()).isEqualTo(GameStatus.IN_PROGRESS);
         assertThat(created.getStartedAt()).isEqualTo(snapshot.startedAt());
         assertThat(created.getRules()).isEqualTo(snapshot.rules());
-        assertThat(created.getParticipants()).containsExactlyElementsOf(snapshot.participants());
-        assertThat(created.getPlayerPool()).containsExactlyElementsOf(snapshot.playerPool());
+        assertThat(created.getParticipants())
+            .extracting(GameParticipant::teamLeaderId, GameParticipant::nickname, GameParticipant::draftPosition)
+            .containsExactly(
+                org.assertj.core.groups.Tuple.tuple(new TeamLeaderId("host-1"), "호스트", 1),
+                org.assertj.core.groups.Tuple.tuple(new TeamLeaderId("guest-1"), "게스트", 2)
+            );
+        assertThat(created.getPlayerPool())
+            .extracting(GamePlayer::playerId, GamePlayer::name, GamePlayer::position, GamePlayer::displayOrder)
+            .containsExactly(
+                org.assertj.core.groups.Tuple.tuple(new RoomPlayerId(0), "선수1", "TOP", 0),
+                org.assertj.core.groups.Tuple.tuple(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
+            );
         DraftGame draftGame = (DraftGame) created;
         assertThat(draftGame.getCurrentTurnIndex()).isEqualTo(0);
     }

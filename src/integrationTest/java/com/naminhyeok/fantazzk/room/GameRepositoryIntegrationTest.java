@@ -1,5 +1,11 @@
 package com.naminhyeok.fantazzk.room;
 
+import com.naminhyeok.fantazzk.room.domain.game.*;
+import com.naminhyeok.fantazzk.room.domain.handoff.*;
+import com.naminhyeok.fantazzk.room.domain.repository.*;
+import com.naminhyeok.fantazzk.room.domain.room.*;
+import com.naminhyeok.fantazzk.room.domain.shared.*;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 import jakarta.persistence.EntityManager;
@@ -49,12 +55,12 @@ class GameRepositoryIntegrationTest {
                         RoomMode.AUCTION,
                         GameRules.auction(2, 2, 300, 45, 10, 1),
                         List.of(
-                            GameParticipant.auction(new TeamLeaderId("host-1"), "호스트", 300),
-                            GameParticipant.auction(new TeamLeaderId("guest-1"), "게스트", 300)
+                            new StartedAuctionParticipant(new TeamLeaderId("host-1"), "호스트", 300),
+                            new StartedAuctionParticipant(new TeamLeaderId("guest-1"), "게스트", 300)
                         ),
                         List.of(
-                            new GamePlayer(new RoomPlayerId(0), "선수1", "TOP", 0),
-                            new GamePlayer(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
+                            new StartedGamePlayer(new RoomPlayerId(0), "선수1", "TOP", 0),
+                            new StartedGamePlayer(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
                         )
                     )
                 )
@@ -105,12 +111,12 @@ class GameRepositoryIntegrationTest {
                         RoomMode.AUCTION,
                         GameRules.auction(2, 2, 300, 45, 10, 1),
                         List.of(
-                            GameParticipant.auction(new TeamLeaderId("host-1"), "호스트", 300),
-                            GameParticipant.auction(new TeamLeaderId("guest-1"), "게스트", 300)
+                            new StartedAuctionParticipant(new TeamLeaderId("host-1"), "호스트", 300),
+                            new StartedAuctionParticipant(new TeamLeaderId("guest-1"), "게스트", 300)
                         ),
                         List.of(
-                            new GamePlayer(new RoomPlayerId(0), "선수1", "TOP", 0),
-                            new GamePlayer(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
+                            new StartedGamePlayer(new RoomPlayerId(0), "선수1", "TOP", 0),
+                            new StartedGamePlayer(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
                         )
                     )
                 )
@@ -150,12 +156,12 @@ class GameRepositoryIntegrationTest {
                         RoomMode.DRAFT,
                         GameRules.draft(2, 2, 30, DraftOrderStrategy.SNAKE),
                         List.of(
-                            GameParticipant.draft(new TeamLeaderId("host-1"), "호스트", 1),
-                            GameParticipant.draft(new TeamLeaderId("guest-1"), "게스트", 2)
+                            new StartedDraftParticipant(new TeamLeaderId("host-1"), "호스트", 1),
+                            new StartedDraftParticipant(new TeamLeaderId("guest-1"), "게스트", 2)
                         ),
                         List.of(
-                            new GamePlayer(new RoomPlayerId(0), "선수1", "TOP", 0),
-                            new GamePlayer(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
+                            new StartedGamePlayer(new RoomPlayerId(0), "선수1", "TOP", 0),
+                            new StartedGamePlayer(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
                         )
                     )
                 )
@@ -204,12 +210,12 @@ class GameRepositoryIntegrationTest {
                         RoomMode.DRAFT,
                         GameRules.draft(2, 2, 30, DraftOrderStrategy.SNAKE),
                         List.of(
-                            GameParticipant.draft(new TeamLeaderId("host-1"), "호스트", 1),
-                            GameParticipant.draft(new TeamLeaderId("guest-1"), "게스트", 2)
+                            new StartedDraftParticipant(new TeamLeaderId("host-1"), "호스트", 1),
+                            new StartedDraftParticipant(new TeamLeaderId("guest-1"), "게스트", 2)
                         ),
                         List.of(
-                            new GamePlayer(new RoomPlayerId(0), "선수1", "TOP", 0),
-                            new GamePlayer(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
+                            new StartedGamePlayer(new RoomPlayerId(0), "선수1", "TOP", 0),
+                            new StartedGamePlayer(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
                         )
                     )
                 )

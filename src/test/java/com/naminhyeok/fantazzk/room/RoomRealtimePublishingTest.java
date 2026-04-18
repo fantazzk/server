@@ -1,5 +1,11 @@
 package com.naminhyeok.fantazzk.room;
 
+import com.naminhyeok.fantazzk.room.domain.game.*;
+import com.naminhyeok.fantazzk.room.domain.handoff.*;
+import com.naminhyeok.fantazzk.room.domain.repository.*;
+import com.naminhyeok.fantazzk.room.domain.room.*;
+import com.naminhyeok.fantazzk.room.domain.shared.*;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -269,11 +275,11 @@ class RoomRealtimePublishingTest {
                     ),
                 room.getLeaders().stream()
                     .map(leader -> room.getMode() == RoomMode.AUCTION
-                        ? GameParticipant.auction(leader.getId(), leader.getNickname(), leader.getRemainingBudget())
-                        : GameParticipant.draft(leader.getId(), leader.getNickname(), leader.getDraftPosition()))
+                        ? new StartedAuctionParticipant(leader.getId(), leader.getNickname(), leader.getRemainingBudget())
+                        : new StartedDraftParticipant(leader.getId(), leader.getNickname(), leader.getDraftPosition()))
                     .toList(),
                 room.getPlayers().stream()
-                    .map(player -> new GamePlayer(player.getId(), player.getName(), player.getPosition(), player.getDisplayOrder()))
+                    .map(player -> new StartedGamePlayer(player.getId(), player.getName(), player.getPosition(), player.getDisplayOrder()))
                     .toList()
             )
         );

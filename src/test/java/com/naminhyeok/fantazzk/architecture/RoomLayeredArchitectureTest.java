@@ -88,6 +88,55 @@ class RoomLayeredArchitectureTest {
         )
         .should().dependOnClassesThat().haveFullyQualifiedName("com.naminhyeok.fantazzk.room.JoinableRoomView");
 
+    @ArchTest
+    static final ArchRule room_domain_room_must_not_depend_on_live_game_models = noClasses()
+        .that().resideInAPackage("com.naminhyeok.fantazzk.room.domain.room..")
+        .should().dependOnClassesThat().haveFullyQualifiedName(
+            "com.naminhyeok.fantazzk.room.domain.game.Game"
+        )
+        .orShould().dependOnClassesThat().haveFullyQualifiedName(
+            "com.naminhyeok.fantazzk.room.domain.game.GameStatus"
+        )
+        .orShould().dependOnClassesThat().haveFullyQualifiedName(
+            "com.naminhyeok.fantazzk.room.domain.game.GameParticipant"
+        )
+        .orShould().dependOnClassesThat().haveFullyQualifiedName(
+            "com.naminhyeok.fantazzk.room.domain.game.GamePlayer"
+        )
+        .orShould().dependOnClassesThat().haveFullyQualifiedName(
+            "com.naminhyeok.fantazzk.room.domain.game.AuctionGame"
+        )
+        .orShould().dependOnClassesThat().haveFullyQualifiedName(
+            "com.naminhyeok.fantazzk.room.domain.game.DraftGame"
+        )
+        .orShould().dependOnClassesThat().haveFullyQualifiedName(
+            "com.naminhyeok.fantazzk.room.domain.game.AuctionParticipant"
+        )
+        .orShould().dependOnClassesThat().haveFullyQualifiedName(
+            "com.naminhyeok.fantazzk.room.domain.game.DraftParticipant"
+        )
+        .orShould().dependOnClassesThat().haveFullyQualifiedName(
+            "com.naminhyeok.fantazzk.room.domain.game.AuctionBid"
+        )
+        .orShould().dependOnClassesThat().haveFullyQualifiedName(
+            "com.naminhyeok.fantazzk.room.domain.game.AuctionSettlement"
+        )
+        .orShould().dependOnClassesThat().haveFullyQualifiedName(
+            "com.naminhyeok.fantazzk.room.domain.game.AuctionOutcome"
+        )
+        .orShould().dependOnClassesThat().haveFullyQualifiedName(
+            "com.naminhyeok.fantazzk.room.domain.game.RosterMember"
+        )
+        .orShould().dependOnClassesThat().haveFullyQualifiedName(
+            "com.naminhyeok.fantazzk.room.domain.game.DraftProgress"
+        )
+        .orShould().dependOnClassesThat().haveFullyQualifiedName(
+            "com.naminhyeok.fantazzk.room.domain.game.BidSequence"
+        )
+        .orShould().dependOnClassesThat().haveFullyQualifiedName(
+            "com.naminhyeok.fantazzk.room.domain.game.GameFactory"
+        );
+
     private static ArchCondition<JavaClass> haveSimpleNameNotMatching(String pattern) {
         return new ArchCondition<>("have a simple name not matching " + pattern) {
             @Override

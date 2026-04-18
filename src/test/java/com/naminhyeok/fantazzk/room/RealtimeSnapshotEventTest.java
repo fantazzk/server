@@ -1,5 +1,11 @@
 package com.naminhyeok.fantazzk.room;
 
+import com.naminhyeok.fantazzk.room.domain.game.*;
+import com.naminhyeok.fantazzk.room.domain.handoff.*;
+import com.naminhyeok.fantazzk.room.domain.repository.*;
+import com.naminhyeok.fantazzk.room.domain.room.*;
+import com.naminhyeok.fantazzk.room.domain.shared.*;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.naminhyeok.fantazzk.room.application.support.RoomSnapshot;
@@ -106,12 +112,12 @@ class RealtimeSnapshotEventTest {
             room.getMode(),
             GameRules.auction(room.getTeamCount(), room.getTeamSize(), room.getBudget(), room.getPickBanTime(), room.getMinBidUnit(), room.getPositionLimit()),
             List.of(
-                GameParticipant.auction(new TeamLeaderId("host-1"), "호스트", 300),
-                GameParticipant.auction(new TeamLeaderId("guest-1"), "게스트1", 300)
+                new StartedAuctionParticipant(new TeamLeaderId("host-1"), "호스트", 300),
+                new StartedAuctionParticipant(new TeamLeaderId("guest-1"), "게스트1", 300)
             ),
             List.of(
-                new GamePlayer(new RoomPlayerId(0), "선수1", "TOP", 0),
-                new GamePlayer(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
+                new StartedGamePlayer(new RoomPlayerId(0), "선수1", "TOP", 0),
+                new StartedGamePlayer(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
             )
         );
         return new GameFactory().create(snapshot);

@@ -1,9 +1,19 @@
 package com.naminhyeok.fantazzk.room;
 
+import com.naminhyeok.fantazzk.room.domain.game.*;
+import com.naminhyeok.fantazzk.room.domain.handoff.*;
+import com.naminhyeok.fantazzk.room.domain.repository.*;
+import com.naminhyeok.fantazzk.room.domain.room.*;
+import com.naminhyeok.fantazzk.room.domain.shared.*;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.naminhyeok.fantazzk.CoreException;
+import com.naminhyeok.fantazzk.room.domain.handoff.GameRules;
+import com.naminhyeok.fantazzk.room.domain.handoff.StartedAuctionParticipant;
+import com.naminhyeok.fantazzk.room.domain.handoff.StartedGamePlayer;
+import com.naminhyeok.fantazzk.room.domain.handoff.StartedGameSnapshot;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -239,15 +249,30 @@ class RoomAggregateTest {
                     )
                 );
             assertThat(snapshot.participants())
-                .extracting(GameParticipant::teamLeaderId, GameParticipant::nickname, GameParticipant::remainingBudget)
+                .extracting(
+                    StartedAuctionParticipant.class::cast,
+                    participant -> participant.teamLeaderId(),
+                    participant -> participant.nickname(),
+                    participant -> participant.remainingBudget()
+                )
                 .containsExactly(
-                    org.assertj.core.groups.Tuple.tuple(new TeamLeaderId(HOST_ID), "호스트", 300),
-                    org.assertj.core.groups.Tuple.tuple(new TeamLeaderId(GUEST_ID), "게스트", 300)
+                    org.assertj.core.groups.Tuple.tuple(
+                        new StartedAuctionParticipant(new TeamLeaderId(HOST_ID), "호스트", 300),
+                        new TeamLeaderId(HOST_ID),
+                        "호스트",
+                        300
+                    ),
+                    org.assertj.core.groups.Tuple.tuple(
+                        new StartedAuctionParticipant(new TeamLeaderId(GUEST_ID), "게스트", 300),
+                        new TeamLeaderId(GUEST_ID),
+                        "게스트",
+                        300
+                    )
                 );
             assertThat(snapshot.playerPool())
                 .containsExactly(
-                    new GamePlayer(new RoomPlayerId(0), "선수1", "TOP", 0),
-                    new GamePlayer(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
+                    new StartedGamePlayer(new RoomPlayerId(0), "선수1", "TOP", 0),
+                    new StartedGamePlayer(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
                 );
             assertThat(room.getStartedGameId()).isEqualTo(gameId);
             assertThat(room.getStartedAt()).isEqualTo(STARTED_AT);

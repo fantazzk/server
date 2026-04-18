@@ -38,9 +38,12 @@ class PublishedContractStructureTest {
         assertThat(isPublic("com.naminhyeok.fantazzk.room.CreateRoom")).isFalse();
         assertThat(isPublic("com.naminhyeok.fantazzk.room.GetRoom")).isFalse();
         assertThat(isPublic("com.naminhyeok.fantazzk.room.GetGame")).isFalse();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.Room")).isFalse();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.Game")).isFalse();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.Rooms")).isFalse();
+        assertClassMissing("com.naminhyeok.fantazzk.room.Room");
+        assertClassMissing("com.naminhyeok.fantazzk.room.Game");
+        assertClassMissing("com.naminhyeok.fantazzk.room.Rooms");
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.domain.room.Room")).isTrue();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.domain.game.Game")).isTrue();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.domain.repository.Rooms")).isTrue();
         assertClassMissing("com.naminhyeok.fantazzk.room.JoinableRoomReader");
         assertClassMissing("com.naminhyeok.fantazzk.room.AuctionScheduleReader");
         assertClassMissing("com.naminhyeok.fantazzk.room.AuctionScheduleCandidate");
@@ -129,7 +132,7 @@ class PublishedContractStructureTest {
 
     @Test
     void room_aggregate는_준비_행위만_가지고_started_game_live_play를_직접_소유하지_않는다() throws Exception {
-        Class<?> teamLeaderId = Class.forName("com.naminhyeok.fantazzk.room.TeamLeaderId");
+        Class<?> teamLeaderId = Class.forName("com.naminhyeok.fantazzk.room.domain.shared.TeamLeaderId");
 
         assertThat(hasDeclaredMethod("start", teamLeaderId)).isFalse();
         assertThat(hasDeclaredMethod("placeBid", teamLeaderId, int.class)).isFalse();
@@ -150,7 +153,7 @@ class PublishedContractStructureTest {
 
     private boolean hasDeclaredMethod(String name, Class<?>... parameterTypes) {
         try {
-            Method ignored = Class.forName("com.naminhyeok.fantazzk.room.Room").getDeclaredMethod(name, parameterTypes);
+            Method ignored = Class.forName("com.naminhyeok.fantazzk.room.domain.room.Room").getDeclaredMethod(name, parameterTypes);
             return true;
         } catch (NoSuchMethodException ex) {
             return false;
