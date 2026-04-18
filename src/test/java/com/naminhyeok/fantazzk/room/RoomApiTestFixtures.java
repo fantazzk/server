@@ -181,7 +181,9 @@ final class RoomApiTestFixtures {
                 room.getPositionLimit()
             ),
             room.getLeaders().stream()
-                .map(leader -> new GameParticipant(leader.getId(), leader.getNickname(), leader.getDraftPosition(), leader.getRemainingBudget()))
+                .map(leader -> room.getMode() == RoomMode.AUCTION
+                    ? GameParticipant.auction(leader.getId(), leader.getNickname(), leader.getRemainingBudget())
+                    : GameParticipant.draft(leader.getId(), leader.getNickname(), leader.getDraftPosition()))
                 .toList(),
             room.getPlayers().stream()
                 .map(player -> new GamePlayer(player.getId(), player.getName(), player.getPosition(), player.getDisplayOrder()))

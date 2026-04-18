@@ -240,8 +240,8 @@ class RoomAggregateTest {
                 );
             assertThat(snapshot.participants())
                 .containsExactly(
-                    new GameParticipant(new TeamLeaderId(HOST_ID), "호스트", null, 300),
-                    new GameParticipant(new TeamLeaderId(GUEST_ID), "게스트", null, 300)
+                    GameParticipant.auction(new TeamLeaderId(HOST_ID), "호스트", 300),
+                    GameParticipant.auction(new TeamLeaderId(GUEST_ID), "게스트", 300)
                 );
             assertThat(snapshot.playerPool())
                 .containsExactly(

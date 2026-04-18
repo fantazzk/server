@@ -40,6 +40,7 @@ class GameCapabilitySeamTest {
     void 경매_참가자는_auction_state로_예산을_드러낸다() {
         GameParticipant participant = GameParticipant.auction(new TeamLeaderId("host-1"), "호스트", 300);
 
+        assertThat(participant.mode()).isEqualTo(RoomMode.AUCTION);
         assertThat(participant.auctionState())
             .extracting(
                 GameParticipant.AuctionState::teamLeaderId,
@@ -54,6 +55,7 @@ class GameCapabilitySeamTest {
     void 드래프트_참가자는_draft_state로_순서를_드러낸다() {
         GameParticipant participant = GameParticipant.draft(new TeamLeaderId("guest-1"), "게스트", 2);
 
+        assertThat(participant.mode()).isEqualTo(RoomMode.DRAFT);
         assertThat(participant.draftState())
             .extracting(
                 GameParticipant.DraftState::teamLeaderId,

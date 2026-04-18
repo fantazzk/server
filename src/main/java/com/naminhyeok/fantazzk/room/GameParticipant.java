@@ -28,6 +28,9 @@ final class GameParticipant implements ValueObject {
     GameParticipant(TeamLeaderId teamLeaderId, String nickname, Integer draftPosition, Integer remainingBudget) {
         this.teamLeaderId = java.util.Objects.requireNonNull(teamLeaderId, "teamLeaderId must not be null");
         this.nickname = java.util.Objects.requireNonNull(nickname, "nickname must not be null");
+        if ((draftPosition == null) == (remainingBudget == null)) {
+            throw new IllegalArgumentException("game participant는 draftPosition 또는 remainingBudget 중 하나만 가져야 합니다");
+        }
         this.draftPosition = draftPosition;
         this.remainingBudget = remainingBudget;
     }
@@ -56,15 +59,19 @@ final class GameParticipant implements ValueObject {
         return remainingBudget;
     }
 
+    RoomMode mode() {
+        return remainingBudget != null ? RoomMode.AUCTION : RoomMode.DRAFT;
+    }
+
     AuctionState auctionState() {
-        if (remainingBudget == null) {
+        if (mode() != RoomMode.AUCTION) {
             throw RoomStateInvalidException.auctionWinnerBudgetMissing(teamLeaderId);
         }
         return new AuctionState(teamLeaderId, nickname, remainingBudget);
     }
 
     DraftState draftState() {
-        if (draftPosition == null) {
+        if (mode() != RoomMode.DRAFT) {
             throw RoomStateInvalidException.draftPositionMissing(teamLeaderId);
         }
         return new DraftState(teamLeaderId, nickname, draftPosition);
