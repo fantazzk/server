@@ -28,7 +28,7 @@ class PlaceBid {
             AuctionBid bid = game.placeBid(caller.getId(), amount, Instant.now(clock));
             games.save(game);
             Room saved = rooms.saveAndFlush(room);
-            roomSnapshotPublisher.publishAfterCommit(new RoomDetails(saved, game));
+            roomSnapshotPublisher.publishAfterCommit(new StartedRoomSnapshot(saved, game));
             return bid;
         } catch (OptimisticLockingFailureException ex) {
             throw CoreException.of(RoomErrorType.ROOM_CONCURRENT_MODIFICATION);
@@ -43,7 +43,7 @@ class PlaceBid {
             AuctionBid bid = auctionGame.placeBid(action.caller().getId(), amount, Instant.now(clock));
             games.save(auctionGame);
             Room saved = rooms.saveAndFlush(action.room());
-            roomSnapshotPublisher.publishAfterCommit(new RoomDetails(saved, auctionGame));
+            roomSnapshotPublisher.publishAfterCommit(new StartedRoomSnapshot(saved, auctionGame));
             return bid;
         } catch (OptimisticLockingFailureException ex) {
             throw CoreException.of(RoomErrorType.ROOM_CONCURRENT_MODIFICATION);

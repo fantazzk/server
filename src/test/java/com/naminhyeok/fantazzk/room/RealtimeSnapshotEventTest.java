@@ -15,7 +15,7 @@ class RealtimeSnapshotEventTest {
     void waiting_snapshot은_room_payload를_담고_game_payload는_비운다() {
         Room room = waitingAuctionRoom();
 
-        RealtimeSnapshotEvent event = RealtimeSnapshotEvent.from(RoomDetails.from(room), PUBLISHED_AT);
+        RealtimeSnapshotEvent event = RealtimeSnapshotEvent.from(room, PUBLISHED_AT);
 
         assertThat(event.eventType()).isEqualTo("ROOM_SNAPSHOT_UPDATED");
         assertThat(event.roomCode()).isEqualTo(room.getCode());
@@ -29,7 +29,7 @@ class RealtimeSnapshotEventTest {
         Room room = startedAuctionRoom();
         Game game = startedGameOf(room);
 
-        RealtimeSnapshotEvent event = RealtimeSnapshotEvent.from(new RoomDetails(room, game), PUBLISHED_AT);
+        RealtimeSnapshotEvent event = RealtimeSnapshotEvent.from(new StartedRoomSnapshot(room, game), PUBLISHED_AT);
 
         assertThat(event.eventType()).isEqualTo("GAME_SNAPSHOT_UPDATED");
         assertThat(event.roomCode()).isEqualTo(room.getCode());
@@ -46,7 +46,7 @@ class RealtimeSnapshotEventTest {
         setVersion(Room.class, room, 1L);
         setVersion(Game.class, game, 7L);
 
-        RealtimeSnapshotEvent event = RealtimeSnapshotEvent.from(new RoomDetails(room, game), PUBLISHED_AT);
+        RealtimeSnapshotEvent event = RealtimeSnapshotEvent.from(new StartedRoomSnapshot(room, game), PUBLISHED_AT);
 
         assertThat(event.snapshotVersion()).isEqualTo(8L);
     }

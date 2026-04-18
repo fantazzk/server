@@ -283,8 +283,8 @@ class RoomRealtimePublishingTest {
         }
 
         @Override
-        public void publishAfterCommit(RoomDetails details) {
-            events.add(RealtimeSnapshotEvent.from(details, PUBLISHED_AT));
+        public void publishAfterCommit(StartedRoomSnapshot snapshot) {
+            events.add(RealtimeSnapshotEvent.from(snapshot, PUBLISHED_AT));
         }
     }
 

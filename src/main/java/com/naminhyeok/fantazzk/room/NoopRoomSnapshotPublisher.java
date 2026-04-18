@@ -6,6 +6,6 @@ class NoopRoomSnapshotPublisher implements RoomSnapshotPublisher {
     }
 
     @Override
-    public void publishAfterCommit(RoomDetails details) {
+    public void publishAfterCommit(StartedRoomSnapshot snapshot) {
     }
 }

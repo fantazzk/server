@@ -50,12 +50,15 @@ class SupabaseRoomRealtimePublisher implements RoomSnapshotPublisher {
 
     @Override
     public void publishAfterCommit(Room room) {
-        publishAfterCommit(RoomDetails.from(room));
+        publishAfterCommit(PendingBroadcastSnapshot.from(room));
     }
 
     @Override
-    public void publishAfterCommit(RoomDetails details) {
-        PendingBroadcastSnapshot snapshot = PendingBroadcastSnapshot.from(details);
+    public void publishAfterCommit(StartedRoomSnapshot snapshot) {
+        publishAfterCommit(PendingBroadcastSnapshot.from(snapshot));
+    }
+
+    private void publishAfterCommit(PendingBroadcastSnapshot snapshot) {
         if (!TransactionSynchronizationManager.isSynchronizationActive()) {
             send(snapshot);
             return;
@@ -95,20 +98,21 @@ class SupabaseRoomRealtimePublisher implements RoomSnapshotPublisher {
     }
 
     private record PendingBroadcastSnapshot(String roomCode, long snapshotVersion, RoomViewResponse room, GameResponse game) {
-        private static PendingBroadcastSnapshot from(RoomDetails details) {
-            if (details.game() != null) {
-                return new PendingBroadcastSnapshot(
-                    details.room().getCode(),
-                    RealtimeSnapshotEvent.snapshotVersionOf(details),
-                    null,
-                    GameResponse.from(details.game())
-                );
-            }
+        private static PendingBroadcastSnapshot from(Room room) {
             return new PendingBroadcastSnapshot(
-                details.room().getCode(),
-                RealtimeSnapshotEvent.snapshotVersionOf(details),
-                RoomViewResponse.from(details.room()),
+                room.getCode(),
+                RealtimeSnapshotEvent.snapshotVersionOf(room),
+                RoomViewResponse.from(room),
                 null
+            );
+        }
+
+        private static PendingBroadcastSnapshot from(StartedRoomSnapshot snapshot) {
+            return new PendingBroadcastSnapshot(
+                snapshot.room().getCode(),
+                RealtimeSnapshotEvent.snapshotVersionOf(snapshot),
+                null,
+                GameResponse.from(snapshot.game())
             );
         }
 

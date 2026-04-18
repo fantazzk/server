@@ -13,35 +13,33 @@ record RealtimeSnapshotEvent(
     private static final String ROOM_SNAPSHOT_UPDATED = "ROOM_SNAPSHOT_UPDATED";
     private static final String GAME_SNAPSHOT_UPDATED = "GAME_SNAPSHOT_UPDATED";
 
-    static RealtimeSnapshotEvent from(RoomDetails details, Instant publishedAt) {
-        if (details.game() != null) {
-            return new RealtimeSnapshotEvent(
-                GAME_SNAPSHOT_UPDATED,
-                details.room().getCode(),
-                snapshotVersionOf(details),
-                publishedAt,
-                null,
-                GameResponse.from(details.game())
-            );
-        }
+    static RealtimeSnapshotEvent from(StartedRoomSnapshot snapshot, Instant publishedAt) {
         return new RealtimeSnapshotEvent(
-            ROOM_SNAPSHOT_UPDATED,
-            details.room().getCode(),
-            snapshotVersionOf(details),
+            GAME_SNAPSHOT_UPDATED,
+            snapshot.room().getCode(),
+            snapshotVersionOf(snapshot),
             publishedAt,
-            RoomViewResponse.from(details.room()),
-            null
+            null,
+            GameResponse.from(snapshot.game())
         );
     }
 
     static RealtimeSnapshotEvent from(Room room, Instant publishedAt) {
-        return from(RoomDetails.from(room), publishedAt);
+        return new RealtimeSnapshotEvent(
+            ROOM_SNAPSHOT_UPDATED,
+            room.getCode(),
+            snapshotVersionOf(room),
+            publishedAt,
+            RoomViewResponse.from(room),
+            null
+        );
     }
 
-    static long snapshotVersionOf(RoomDetails details) {
-        if (details.game() != null) {
-            return details.room().getVersion() + details.game().getVersion();
-        }
-        return details.room().getVersion();
+    static long snapshotVersionOf(StartedRoomSnapshot snapshot) {
+        return snapshot.room().getVersion() + snapshot.game().getVersion();
+    }
+
+    static long snapshotVersionOf(Room room) {
+        return room.getVersion();
     }
 }

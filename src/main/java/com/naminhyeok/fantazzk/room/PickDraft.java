@@ -25,7 +25,7 @@ class PickDraft {
             RosterMember member = game.pick(caller.getId(), playerName);
             games.save(game);
             Room saved = rooms.saveAndFlush(room);
-            roomSnapshotPublisher.publishAfterCommit(new RoomDetails(saved, game));
+            roomSnapshotPublisher.publishAfterCommit(new StartedRoomSnapshot(saved, game));
             return member;
         } catch (OptimisticLockingFailureException ex) {
             throw CoreException.of(RoomErrorType.ROOM_CONCURRENT_MODIFICATION);
@@ -40,7 +40,7 @@ class PickDraft {
             RosterMember member = draftGame.pick(action.caller().getId(), playerName);
             games.save(draftGame);
             Room saved = rooms.saveAndFlush(action.room());
-            roomSnapshotPublisher.publishAfterCommit(new RoomDetails(saved, draftGame));
+            roomSnapshotPublisher.publishAfterCommit(new StartedRoomSnapshot(saved, draftGame));
             return member;
         } catch (OptimisticLockingFailureException ex) {
             throw CoreException.of(RoomErrorType.ROOM_CONCURRENT_MODIFICATION);

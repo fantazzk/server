@@ -348,12 +348,22 @@ class RoomRealtimeIntegrationTest {
 
         @Override
         public void publishAfterCommit(Room room) {
-            publishAfterCommit(RoomDetails.from(room));
+            RealtimeSnapshotEvent event = RealtimeSnapshotEvent.from(room, Instant.now(clock));
+            if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+                events.add(event);
+                return;
+            }
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    events.add(event);
+                }
+            });
         }
 
         @Override
-        public void publishAfterCommit(RoomDetails details) {
-            RealtimeSnapshotEvent event = RealtimeSnapshotEvent.from(details, Instant.now(clock));
+        public void publishAfterCommit(StartedRoomSnapshot snapshot) {
+            RealtimeSnapshotEvent event = RealtimeSnapshotEvent.from(snapshot, Instant.now(clock));
             if (!TransactionSynchronizationManager.isSynchronizationActive()) {
                 events.add(event);
                 return;
