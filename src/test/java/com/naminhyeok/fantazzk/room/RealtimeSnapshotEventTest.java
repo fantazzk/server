@@ -58,7 +58,7 @@ class RealtimeSnapshotEventTest {
             "호스트",
             "host-action-token",
             new RoomTemplateSpec(
-                RoomTemplateSpec.Mode.AUCTION,
+                RoomMode.AUCTION,
                 2,
                 2,
                 300,

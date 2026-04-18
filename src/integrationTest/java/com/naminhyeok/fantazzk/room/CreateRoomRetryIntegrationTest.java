@@ -139,7 +139,7 @@ class CreateRoomRetryIntegrationTest {
             "선점호스트",
             "existing-token",
             new RoomTemplateSpec(
-                RoomTemplateSpec.Mode.AUCTION,
+                RoomMode.AUCTION,
                 2,
                 2,
                 300,

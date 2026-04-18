@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Objects;
 
 record RoomTemplateSpec(
-    Mode mode,
+    RoomMode mode,
     int teamCount,
     int teamSize,
     Integer budget,
@@ -28,7 +28,7 @@ record RoomTemplateSpec(
         }
         players = List.copyOf(players);
 
-        if (mode == Mode.AUCTION) {
+        if (mode == RoomMode.AUCTION) {
             if (budget == null) {
                 throw new IllegalArgumentException("경매 방 생성 명세에는 예산이 필요합니다");
             }
@@ -40,7 +40,7 @@ record RoomTemplateSpec(
             }
         }
 
-        if (mode == Mode.DRAFT) {
+        if (mode == RoomMode.DRAFT) {
             if (budget != null) {
                 throw new IllegalArgumentException("드래프트 방 생성 명세에는 예산을 지정할 수 없습니다");
             }
@@ -57,7 +57,7 @@ record RoomTemplateSpec(
     }
 
     RoomTemplateSpec(
-        Mode mode,
+        RoomMode mode,
         int teamCount,
         int teamSize,
         Integer budget,
@@ -77,7 +77,7 @@ record RoomTemplateSpec(
             throw new IllegalArgumentException("선수 수는 정확히 " + requiredPlayerCount + "명이어야 합니다");
         }
         return new RoomTemplateSpec(
-            Mode.from(template.mode()),
+            RoomMode.from(template.mode()),
             template.teamCount(),
             template.teamSize(),
             template.budget(),
@@ -87,18 +87,6 @@ record RoomTemplateSpec(
             DraftOrderStrategy.from(template.draftOrderStrategy()),
             players
         );
-    }
-
-    public enum Mode {
-        AUCTION,
-        DRAFT;
-
-        static Mode from(TemplateCatalog.Mode mode) {
-            return switch (Objects.requireNonNull(mode, "mode must not be null")) {
-                case AUCTION -> AUCTION;
-                case DRAFT -> DRAFT;
-            };
-        }
     }
 
     public enum DraftOrderStrategy {

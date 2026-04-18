@@ -31,7 +31,7 @@ class RoomTemplateSpecTest {
                 )
             );
 
-        assertThat(spec.mode()).isEqualTo(RoomTemplateSpec.Mode.DRAFT);
+        assertThat(spec.mode()).isEqualTo(RoomMode.DRAFT);
         assertThat(spec.teamCount()).isEqualTo(2);
         assertThat(spec.teamSize()).isEqualTo(3);
         assertThat(spec.pickBanTime()).isEqualTo(30);

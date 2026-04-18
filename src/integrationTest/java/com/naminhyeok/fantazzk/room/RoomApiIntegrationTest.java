@@ -221,7 +221,7 @@ class RoomApiIntegrationTest {
             "호스트-" + code,
             "host-action-token-" + code,
             new RoomTemplateSpec(
-                RoomTemplateSpec.Mode.AUCTION,
+                RoomMode.AUCTION,
                 2,
                 2,
                 300,
@@ -269,7 +269,7 @@ class RoomApiIntegrationTest {
             "호스트-" + code,
             "host-action-token-" + code,
             new RoomTemplateSpec(
-                RoomTemplateSpec.Mode.AUCTION,
+                RoomMode.AUCTION,
                 2,
                 2,
                 300,
@@ -304,7 +304,7 @@ class RoomApiIntegrationTest {
             "호스트-" + code,
             "host-action-token-" + code,
             new RoomTemplateSpec(
-                RoomTemplateSpec.Mode.DRAFT,
+                RoomMode.DRAFT,
                 2,
                 2,
                 null,

@@ -66,7 +66,7 @@ class FindJoinableRoomsIntegrationTest {
             "호스트-" + code,
             "token-" + code,
             new RoomTemplateSpec(
-                RoomTemplateSpec.Mode.AUCTION,
+                RoomMode.AUCTION,
                 2,
                 2,
                 300,

@@ -182,7 +182,7 @@ class RoomRealtimePublishingTest {
             "호스트",
             HOST_ACTION_TOKEN,
             new RoomTemplateSpec(
-                RoomTemplateSpec.Mode.AUCTION,
+                RoomMode.AUCTION,
                 2,
                 2,
                 300,
@@ -221,7 +221,7 @@ class RoomRealtimePublishingTest {
                 "호스트",
                 HOST_ACTION_TOKEN,
                 new RoomTemplateSpec(
-                    RoomTemplateSpec.Mode.DRAFT,
+                    RoomMode.DRAFT,
                     2,
                     2,
                     null,

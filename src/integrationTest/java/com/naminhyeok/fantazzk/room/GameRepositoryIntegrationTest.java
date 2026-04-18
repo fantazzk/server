@@ -235,7 +235,7 @@ class GameRepositoryIntegrationTest {
             "호스트",
             "host-action-token",
             new RoomTemplateSpec(
-                RoomTemplateSpec.Mode.AUCTION,
+                RoomMode.AUCTION,
                 2,
                 2,
                 300,
@@ -259,7 +259,7 @@ class GameRepositoryIntegrationTest {
             "호스트",
             "host-action-token",
             new RoomTemplateSpec(
-                RoomTemplateSpec.Mode.DRAFT,
+                RoomMode.DRAFT,
                 2,
                 2,
                 null,

@@ -27,7 +27,7 @@ class RoomAggregateTest {
                 "  호스트  ",
                 HOST_ACTION_TOKEN,
                 new RoomTemplateSpec(
-                    RoomTemplateSpec.Mode.AUCTION,
+                    RoomMode.AUCTION,
                     2,
                     3,
                     300,
@@ -95,7 +95,7 @@ class RoomAggregateTest {
                 "Faker",
                 HOST_ACTION_TOKEN,
                 new RoomTemplateSpec(
-                    RoomTemplateSpec.Mode.AUCTION,
+                    RoomMode.AUCTION,
                     2,
                     2,
                     300,
@@ -188,7 +188,7 @@ class RoomAggregateTest {
                 "호스트",
                 HOST_ACTION_TOKEN,
                 new RoomTemplateSpec(
-                    RoomTemplateSpec.Mode.AUCTION,
+                    RoomMode.AUCTION,
                     1,
                     2,
                     300,
@@ -333,7 +333,7 @@ class RoomAggregateTest {
             "호스트",
             HOST_ACTION_TOKEN,
             new RoomTemplateSpec(
-                RoomTemplateSpec.Mode.AUCTION,
+                RoomMode.AUCTION,
                 2,
                 2,
                 300,
@@ -367,7 +367,7 @@ class RoomAggregateTest {
             "호스트",
             HOST_ACTION_TOKEN,
             new RoomTemplateSpec(
-                RoomTemplateSpec.Mode.DRAFT,
+                RoomMode.DRAFT,
                 2,
                 2,
                 null,

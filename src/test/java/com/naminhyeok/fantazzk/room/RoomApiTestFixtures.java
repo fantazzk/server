@@ -27,7 +27,7 @@ final class RoomApiTestFixtures {
             "호스트",
             HOST_TOKEN,
             new RoomTemplateSpec(
-                RoomTemplateSpec.Mode.AUCTION,
+                RoomMode.AUCTION,
                 2,
                 2,
                 300,
@@ -61,7 +61,7 @@ final class RoomApiTestFixtures {
                 "호스트",
                 HOST_TOKEN,
                 new RoomTemplateSpec(
-                    RoomTemplateSpec.Mode.DRAFT,
+                    RoomMode.DRAFT,
                     2,
                     2,
                     null,
@@ -103,7 +103,7 @@ final class RoomApiTestFixtures {
                 "호스트",
                 HOST_TOKEN,
                 new RoomTemplateSpec(
-                    RoomTemplateSpec.Mode.AUCTION,
+                    RoomMode.AUCTION,
                     2,
                     3,
                     300,
@@ -139,7 +139,7 @@ final class RoomApiTestFixtures {
                 "호스트",
                 HOST_TOKEN,
                 new RoomTemplateSpec(
-                    RoomTemplateSpec.Mode.DRAFT,
+                    RoomMode.DRAFT,
                     2,
                     3,
                     null,

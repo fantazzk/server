@@ -106,7 +106,7 @@ class Room implements AggregateRoot<Room, RoomId> {
                 code,
                 createdAt,
                 hostLeaderId,
-                spec.mode() == RoomTemplateSpec.Mode.AUCTION ? RoomMode.AUCTION : RoomMode.DRAFT,
+                spec.mode() == RoomMode.AUCTION ? RoomMode.AUCTION : RoomMode.DRAFT,
                 spec.teamCount(),
                 spec.teamSize(),
                 spec.budget(),

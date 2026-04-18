@@ -27,7 +27,7 @@ class RoomSnapshotPublisherTest {
                 "호스트",
                 "host-action-token",
                 new RoomTemplateSpec(
-                    RoomTemplateSpec.Mode.DRAFT,
+                    RoomMode.DRAFT,
                     2,
                     2,
                     null,

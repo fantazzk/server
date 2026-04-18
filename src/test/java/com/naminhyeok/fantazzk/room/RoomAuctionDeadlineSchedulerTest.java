@@ -192,7 +192,7 @@ class RoomAuctionDeadlineSchedulerTest {
                 "호스트",
                 "host-token-" + code,
                 new RoomTemplateSpec(
-                    RoomTemplateSpec.Mode.AUCTION,
+                    RoomMode.AUCTION,
                     2,
                     2,
                     300,
