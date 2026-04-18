@@ -15,8 +15,6 @@ class ProvideTemplateCatalog implements TemplateCatalog {
         try {
             TemplateDetail detail = findTemplates.getDetail(new TemplateId(templateId));
             return new TemplateBlueprint(
-                templateId,
-                GameType.valueOf(detail.template().getGameType().name()),
                 detail.template().getMode() == TemplateMode.AUCTION
                     ? Mode.AUCTION
                     : Mode.DRAFT,

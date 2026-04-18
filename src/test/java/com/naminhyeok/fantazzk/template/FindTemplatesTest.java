@@ -128,7 +128,6 @@ class FindTemplatesTest {
 
         TemplateCatalog.TemplateBlueprint blueprint = catalog.getTemplate(template.getId().templateId());
 
-        assertThat(blueprint.gameType()).isEqualTo(TemplateCatalog.GameType.LEAGUE_OF_LEGENDS);
         assertThat(blueprint.pickBanTime()).isEqualTo(45);
         assertThat(blueprint.minBidUnit()).isEqualTo(10);
         assertThat(blueprint.positionLimit()).isEqualTo(1);

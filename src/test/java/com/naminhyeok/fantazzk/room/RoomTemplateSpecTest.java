@@ -14,8 +14,6 @@ class RoomTemplateSpecTest {
         RoomTemplateSpec spec =
             RoomTemplateSpec.from(
                 new TemplateCatalog.TemplateBlueprint(
-                    UUID.randomUUID(),
-                    TemplateCatalog.GameType.LEAGUE_OF_LEGENDS,
                     TemplateCatalog.Mode.DRAFT,
                     2,
                     3,
@@ -53,8 +51,6 @@ class RoomTemplateSpecTest {
         assertThatThrownBy(
             () -> RoomTemplateSpec.from(
                 new TemplateCatalog.TemplateBlueprint(
-                    UUID.randomUUID(),
-                    TemplateCatalog.GameType.LEAGUE_OF_LEGENDS,
                     TemplateCatalog.Mode.DRAFT,
                     2,
                     2,
@@ -79,8 +75,6 @@ class RoomTemplateSpecTest {
         assertThatThrownBy(
             () -> RoomTemplateSpec.from(
                 new TemplateCatalog.TemplateBlueprint(
-                    UUID.randomUUID(),
-                    TemplateCatalog.GameType.LEAGUE_OF_LEGENDS,
                     TemplateCatalog.Mode.AUCTION,
                     2,
                     2,

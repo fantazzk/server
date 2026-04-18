@@ -22,8 +22,6 @@ public interface TemplateCatalog {
     }
 
     record TemplateBlueprint(
-        UUID templateId,
-        GameType gameType,
         Mode mode,
         int teamCount,
         int teamSize,
