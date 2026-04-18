@@ -60,10 +60,10 @@ class RoomRealtimePublishingTest {
 
         assertThat(picked.playerName()).isEqualTo("선수1");
         assertThat(publisher.events).hasSize(1);
-        RoomRealtimeSnapshotEvent event = publisher.events.getFirst();
+        RealtimeSnapshotEvent event = publisher.events.getFirst();
         assertPublishedRoom(event, room.getCode());
-        assertThat(event.room().members()).hasSize(1);
-        assertThat(event.room().progress().currentTurnIndex()).isEqualTo(1);
+        assertThat(event.game().members()).hasSize(1);
+        assertThat(event.game().progress().currentTurnIndex()).isEqualTo(1);
     }
 
     @Test
@@ -76,7 +76,7 @@ class RoomRealtimePublishingTest {
         selectDraftPosition.select(room.getCode(), HOST_ACTION_TOKEN, 1);
 
         assertThat(publisher.events).hasSize(1);
-        RoomRealtimeSnapshotEvent event = publisher.events.getFirst();
+        RealtimeSnapshotEvent event = publisher.events.getFirst();
         assertPublishedRoom(event, room.getCode());
         assertThat(event.room().teamLeaders().getFirst().draftPosition()).isEqualTo(1);
     }
@@ -92,7 +92,7 @@ class RoomRealtimePublishingTest {
         clearDraftPosition.clear(room.getCode(), HOST_ACTION_TOKEN);
 
         assertThat(publisher.events).hasSize(1);
-        RoomRealtimeSnapshotEvent event = publisher.events.getFirst();
+        RealtimeSnapshotEvent event = publisher.events.getFirst();
         assertPublishedRoom(event, room.getCode());
         assertThat(event.room().teamLeaders().getFirst().draftPosition()).isNull();
     }
@@ -111,9 +111,9 @@ class RoomRealtimePublishingTest {
 
         assertThat(settlement).isEqualTo(new AuctionSettlement("선수1", AuctionOutcome.PASSED));
         assertThat(publisher.events).hasSize(1);
-        RoomRealtimeSnapshotEvent event = publisher.events.getFirst();
+        RealtimeSnapshotEvent event = publisher.events.getFirst();
         assertPublishedRoom(event, room.getCode());
-        assertThat(event.room().progress().currentRound()).isEqualTo(2);
+        assertThat(event.game().progress().currentRound()).isEqualTo(2);
     }
 
     @Test
@@ -130,10 +130,10 @@ class RoomRealtimePublishingTest {
 
         assertThat(settled.getStatus()).isEqualTo(RoomStatus.STARTED);
         assertThat(publisher.events).hasSize(1);
-        RoomRealtimeSnapshotEvent event = publisher.events.getFirst();
+        RealtimeSnapshotEvent event = publisher.events.getFirst();
         assertPublishedRoom(event, room.getCode());
-        assertThat(event.room().progress().currentRound()).isEqualTo(2);
-        assertThat(event.room().progress().currentAuctionRoundEndsAt()).isEqualTo(PUBLISHED_AT.plusSeconds(30));
+        assertThat(event.game().progress().currentRound()).isEqualTo(2);
+        assertThat(event.game().progress().currentAuctionRoundEndsAt()).isEqualTo(PUBLISHED_AT.plusSeconds(30));
     }
 
     @Test
@@ -170,7 +170,7 @@ class RoomRealtimePublishingTest {
         assertThat(exception.getError()).isSameAs(errorType);
     }
 
-    private static void assertPublishedRoom(RoomRealtimeSnapshotEvent event, String roomCode) {
+    private static void assertPublishedRoom(RealtimeSnapshotEvent event, String roomCode) {
         assertThat(event.roomCode()).isEqualTo(roomCode);
         assertThat(event.publishedAt()).isEqualTo(PUBLISHED_AT);
     }
@@ -275,16 +275,16 @@ class RoomRealtimePublishingTest {
     }
 
     private static final class RecordingRoomSnapshotPublisher implements RoomSnapshotPublisher {
-        private final List<RoomRealtimeSnapshotEvent> events = new ArrayList<>();
+        private final List<RealtimeSnapshotEvent> events = new ArrayList<>();
 
         @Override
         public void publishAfterCommit(Room room) {
-            events.add(RoomRealtimeSnapshotEvent.from(room, PUBLISHED_AT));
+            events.add(RealtimeSnapshotEvent.from(room, PUBLISHED_AT));
         }
 
         @Override
         public void publishAfterCommit(RoomDetails details) {
-            events.add(RoomRealtimeSnapshotEvent.from(details, PUBLISHED_AT));
+            events.add(RealtimeSnapshotEvent.from(details, PUBLISHED_AT));
         }
     }
 

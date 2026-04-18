@@ -84,7 +84,7 @@ class RoomRealtimeIntegrationTest {
                 assertThat(event.room().status()).isEqualTo(RoomStatus.WAITING.name());
                 assertThat(event.room().teamLeaders()).extracting(TeamLeaderResponse::nickname)
                     .containsExactly("호스트", "게스트");
-                assertThat(event.room().members()).isEmpty();
+                assertThat(event.game()).isNull();
             });
     }
 
@@ -150,18 +150,18 @@ class RoomRealtimeIntegrationTest {
         assertThat(recordingRoomSnapshotPublisher.publishedEvents()).last()
             .satisfies(event -> {
                 assertThat(event.snapshotVersion()).isEqualTo(reloaded.getVersion() + game.getVersion());
-                assertThat(event.room().progress().currentRound()).isEqualTo(2);
-                assertThat(event.room().members())
-                    .extracting(RoomMemberResponse::teamLeaderId, RoomMemberResponse::playerName)
+                assertThat(event.game().progress().currentRound()).isEqualTo(2);
+                assertThat(event.game().members())
+                    .extracting(GameMemberResponse::teamLeaderId, GameMemberResponse::playerName)
                     .containsExactly(org.assertj.core.groups.Tuple.tuple(guest.getId().value(), "선수1"));
-                assertThat(event.room().teamLeaders())
-                    .extracting(TeamLeaderResponse::id, TeamLeaderResponse::remainingBudget)
+                assertThat(event.game().participants())
+                    .extracting(GameParticipantResponse::teamLeaderId, GameParticipantResponse::remainingBudget)
                     .containsExactly(
                         org.assertj.core.groups.Tuple.tuple(created.leader().getId().value(), 300),
                         org.assertj.core.groups.Tuple.tuple(guest.getId().value(), 150)
                     );
-                assertThat(event.room().players())
-                    .extracting(RoomPlayerResponse::name, RoomPlayerResponse::status)
+                assertThat(event.game().players())
+                    .extracting(GamePlayerResponse::name, GamePlayerResponse::status)
                     .containsExactly(
                         org.assertj.core.groups.Tuple.tuple("선수1", "ASSIGNED"),
                         org.assertj.core.groups.Tuple.tuple("선수2", "AVAILABLE")
@@ -219,9 +219,10 @@ class RoomRealtimeIntegrationTest {
         assertThat(recordingRoomSnapshotPublisher.publishedEvents()).singleElement()
             .satisfies(event -> {
                 assertThat(event.snapshotVersion()).isEqualTo(reloaded.getVersion() + game.getVersion());
-                assertThat(event.room().status()).isEqualTo(GameStatus.IN_PROGRESS.name());
-                assertThat(event.room().progress().currentTurnIndex()).isEqualTo(0);
-                assertThat(event.room().progress().currentLeaderId()).isEqualTo(created.leader().getId().value());
+                assertThat(event.room()).isNull();
+                assertThat(event.game().status()).isEqualTo(GameStatus.IN_PROGRESS.name());
+                assertThat(event.game().progress().currentTurnIndex()).isEqualTo(0);
+                assertThat(event.game().progress().currentLeaderId()).isEqualTo(created.leader().getId().value());
             });
     }
 
@@ -251,17 +252,17 @@ class RoomRealtimeIntegrationTest {
         assertThat(recordingRoomSnapshotPublisher.publishedEvents()).singleElement()
             .satisfies(event -> {
                 assertThat(event.snapshotVersion()).isEqualTo(reloaded.getVersion() + game.getVersion());
-                assertThat(event.room().members())
-                    .extracting(RoomMemberResponse::teamLeaderId, RoomMemberResponse::playerName)
+                assertThat(event.game().members())
+                    .extracting(GameMemberResponse::teamLeaderId, GameMemberResponse::playerName)
                     .containsExactly(org.assertj.core.groups.Tuple.tuple(created.leader().getId().value(), "선수1"));
-                assertThat(event.room().players())
-                    .extracting(RoomPlayerResponse::name, RoomPlayerResponse::status)
+                assertThat(event.game().players())
+                    .extracting(GamePlayerResponse::name, GamePlayerResponse::status)
                     .containsExactly(
                         org.assertj.core.groups.Tuple.tuple("선수1", "ASSIGNED"),
                         org.assertj.core.groups.Tuple.tuple("선수2", "AVAILABLE")
                     );
-                assertThat(event.room().progress().currentTurnIndex()).isEqualTo(1);
-                assertThat(event.room().progress().currentLeaderId()).isEqualTo(guest.getId().value());
+                assertThat(event.game().progress().currentTurnIndex()).isEqualTo(1);
+                assertThat(event.game().progress().currentLeaderId()).isEqualTo(guest.getId().value());
             });
     }
 
@@ -339,7 +340,7 @@ class RoomRealtimeIntegrationTest {
 
     static final class RecordingRoomSnapshotPublisher implements RoomSnapshotPublisher {
         private final Clock clock;
-        private final List<RoomRealtimeSnapshotEvent> events = new ArrayList<>();
+        private final List<RealtimeSnapshotEvent> events = new ArrayList<>();
 
         RecordingRoomSnapshotPublisher(Clock clock) {
             this.clock = clock;
@@ -352,7 +353,7 @@ class RoomRealtimeIntegrationTest {
 
         @Override
         public void publishAfterCommit(RoomDetails details) {
-            RoomRealtimeSnapshotEvent event = RoomRealtimeSnapshotEvent.from(details, Instant.now(clock));
+            RealtimeSnapshotEvent event = RealtimeSnapshotEvent.from(details, Instant.now(clock));
             if (!TransactionSynchronizationManager.isSynchronizationActive()) {
                 events.add(event);
                 return;
@@ -365,7 +366,7 @@ class RoomRealtimeIntegrationTest {
             });
         }
 
-        List<RoomRealtimeSnapshotEvent> publishedEvents() {
+        List<RealtimeSnapshotEvent> publishedEvents() {
             return List.copyOf(events);
         }
 
