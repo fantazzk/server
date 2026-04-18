@@ -60,7 +60,7 @@ class RoomDraftIntegrationTest {
         selectDraftPosition.select(created.room().getCode(), guest.getActionToken(), 1);
         startRoom.start(created.room().getCode(), created.leader().getActionToken());
 
-        RoomTeamMember member = pickDraft.pick(created.room().getCode(), guest.getActionToken(), "선수1");
+        RosterMember member = pickDraft.pick(created.room().getCode(), guest.getActionToken(), "선수1");
 
         entityManager.flush();
         entityManager.clear();
@@ -72,7 +72,7 @@ class RoomDraftIntegrationTest {
         assertThat(reloaded.getPlayers().stream().filter(it -> it.getName().equals("선수1")).findFirst().orElseThrow().getStatus())
             .isEqualTo(PlayerStatus.AVAILABLE);
         assertThat(game.getMembers()).singleElement()
-            .extracting(RoomTeamMember::teamLeaderId, RoomTeamMember::playerName)
+            .extracting(RosterMember::teamLeaderId, RosterMember::playerName)
             .containsExactly(guest.getId(), "선수1");
         assertThat(game.isPlayerAvailable("선수1")).isFalse();
         assertThat(game.getCurrentTurnIndex()).isEqualTo(1);
@@ -138,7 +138,7 @@ class RoomDraftIntegrationTest {
         assertThat(reloadedAfterSecondPick.getStatus()).isEqualTo(RoomStatus.STARTED);
         assertThat(gameAfterSecondPick.getCurrentTurnIndex()).isEqualTo(2);
 
-        RoomTeamMember thirdPick = pickDraft.pick(created.room().getCode(), guest.getActionToken(), "선수3");
+        RosterMember thirdPick = pickDraft.pick(created.room().getCode(), guest.getActionToken(), "선수3");
 
         entityManager.flush();
         entityManager.clear();
@@ -147,7 +147,7 @@ class RoomDraftIntegrationTest {
 
         assertThat(thirdPick.teamLeaderId()).isEqualTo(guest.getId());
         assertThat(gameAfterThirdPick.getMembers())
-            .extracting(RoomTeamMember::teamLeaderId, RoomTeamMember::playerName)
+            .extracting(RosterMember::teamLeaderId, RosterMember::playerName)
             .containsExactly(
                 tuple(host.getId(), "선수1"),
                 tuple(guest.getId(), "선수2"),

@@ -45,7 +45,7 @@ class GameAuctionApiControllerWebMvcTest {
     void placeBid는_header가_있으면_최신_game_snapshot을_반환한다() throws Exception {
         UUID gameId = UUID.fromString(RoomApiTestFixtures.GAME_ID);
         given(placeBid.place(gameId, RoomApiTestFixtures.HOST_TOKEN, 150))
-            .willReturn(new RoomBid(1, new BidSequence(1), new TeamLeaderId(RoomApiTestFixtures.HOST_ID), 150));
+            .willReturn(new AuctionBid(1, new BidSequence(1), new TeamLeaderId(RoomApiTestFixtures.HOST_ID), 150));
         given(getGame.get(gameId)).willReturn(RoomApiTestFixtures.inProgressAuctionDetails().game());
 
         var result = mockMvcTester().perform(

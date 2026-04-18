@@ -73,14 +73,14 @@ record RoomResponse(
         }
         if (draftGame != null) {
             Set<String> assignedPlayerNames =
-                draftGame.getMembers().stream().map(RoomTeamMember::playerName).collect(Collectors.toSet());
+                draftGame.getMembers().stream().map(RosterMember::playerName).collect(Collectors.toSet());
             return room.getPlayers().stream()
                 .map(player -> RoomPlayerResponse.from(player, player.getDisplayOrder(), assignedPlayerNames.contains(player.getName())))
                 .toList();
         }
         Map<String, Integer> liveDisplayOrders = buildLiveDisplayOrders(auctionGame);
         Set<String> assignedPlayerNames =
-            auctionGame.getMembers().stream().map(RoomTeamMember::playerName).collect(Collectors.toSet());
+            auctionGame.getMembers().stream().map(RosterMember::playerName).collect(Collectors.toSet());
         return room.getPlayers().stream()
             .sorted(Comparator.comparingInt(player -> liveDisplayOrders.getOrDefault(player.getName(), Integer.MAX_VALUE)))
             .map(

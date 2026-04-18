@@ -27,11 +27,11 @@ class AuctionGame extends Game {
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "game_auction_bid", joinColumns = @JoinColumn(name = "bids_game_id"))
     @OrderColumn(name = "bid_order")
-    private final List<RoomBid> bids;
+    private final List<AuctionBid> bids;
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "game_auction_member", joinColumns = @JoinColumn(name = "members_game_id"))
     @OrderColumn(name = "member_order")
-    private final List<RoomTeamMember> members;
+    private final List<RosterMember> members;
 
     protected AuctionGame() {
         this.currentRound = 0;
@@ -61,7 +61,7 @@ class AuctionGame extends Game {
         }
     }
 
-    RoomBid placeBid(TeamLeaderId teamLeaderId, int amount, Instant now) {
+    AuctionBid placeBid(TeamLeaderId teamLeaderId, int amount, Instant now) {
         if (getStatus() != GameStatus.IN_PROGRESS) {
             throw CoreException.of(RoomErrorType.ROOM_PLAY_REQUIRES_IN_PROGRESS);
         }
@@ -86,7 +86,7 @@ class AuctionGame extends Game {
         Integer highestBidAmount =
             bids.stream()
                 .filter(it -> it.round() == currentRound)
-                .map(RoomBid::amount)
+                .map(AuctionBid::amount)
                 .max(Integer::compareTo)
                 .orElse(null);
 
@@ -107,12 +107,12 @@ class AuctionGame extends Game {
             new BidSequence(
                 bids.stream()
                     .filter(it -> it.round() == currentRound)
-                    .map(RoomBid::sequence)
+                    .map(AuctionBid::sequence)
                     .mapToInt(BidSequence::value)
                     .max()
                     .orElse(0) + 1
             );
-        RoomBid bid = new RoomBid(currentRound, nextSequence, teamLeaderId, amount);
+        AuctionBid bid = new AuctionBid(currentRound, nextSequence, teamLeaderId, amount);
         bids.add(bid);
         currentRoundEndsAt = now.plusSeconds(getPickBanTime());
         registerEvent(new BidPlaced(getRoomCode(), teamLeaderId.value(), amount, currentRound, currentRoundEndsAt));
@@ -134,7 +134,7 @@ class AuctionGame extends Game {
         }
 
         GamePlayer target = requireCurrentAuctionTarget();
-        RoomBid winningBid = currentWinningBid();
+        AuctionBid winningBid = currentWinningBid();
         if (winningBid == null) {
             moveCurrentTargetToBack(target);
             advanceRound(now);
@@ -146,7 +146,7 @@ class AuctionGame extends Game {
         GameParticipant winner = findParticipant(winningBid.teamLeaderId(), RoomErrorType.ROOM_BIDDER_NOT_FOUND);
         validateAuctionPositionLimit(winner.teamLeaderId(), target);
         spend(winner.teamLeaderId(), winningBid.amount());
-        members.add(new RoomTeamMember(winningBid.teamLeaderId(), target.name(), members.size()));
+        members.add(new RosterMember(winningBid.teamLeaderId(), target.name(), members.size()));
 
         if (members.size() == getTeamCount() * (getTeamSize() - 1)) {
             changeStatus(GameStatus.COMPLETED);
@@ -166,13 +166,13 @@ class AuctionGame extends Game {
         return mutablePlayerPool().stream().filter(this::isAvailable).findFirst().orElse(null);
     }
 
-    RoomBid currentWinningBid() {
+    AuctionBid currentWinningBid() {
         if (getStatus() != GameStatus.IN_PROGRESS || currentRound <= 0) {
             return null;
         }
         return bids.stream()
             .filter(it -> it.round() == currentRound)
-            .max(Comparator.comparingInt(RoomBid::amount))
+            .max(Comparator.comparingInt(AuctionBid::amount))
             .orElse(null);
     }
 
@@ -245,7 +245,7 @@ class AuctionGame extends Game {
         }
     }
 
-    private String findAssignedPlayerPosition(RoomTeamMember member) {
+    private String findAssignedPlayerPosition(RosterMember member) {
         return mutablePlayerPool().stream()
             .filter(player -> player.name().equals(member.playerName()))
             .findFirst()

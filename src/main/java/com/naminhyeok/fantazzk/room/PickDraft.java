@@ -16,12 +16,12 @@ class PickDraft {
     private final RoomSnapshotPublisher roomSnapshotPublisher;
 
     @Transactional
-    public RoomTeamMember pick(String code, String actionToken, String playerName) {
+    public RosterMember pick(String code, String actionToken, String playerName) {
         try {
             Room room = rooms.findByCode(code).orElseThrow(() -> CoreException.of(RoomErrorType.ROOM_NOT_FOUND));
             RoomTeamLeader caller = roomActionAuthorizer.authenticate(room, actionToken);
             DraftGame game = requireDraftGame(room);
-            RoomTeamMember member = game.pick(caller.getId(), playerName);
+            RosterMember member = game.pick(caller.getId(), playerName);
             games.save(game);
             Room saved = rooms.saveAndFlush(room);
             roomSnapshotPublisher.publishAfterCommit(new RoomDetails(saved, game));
@@ -32,13 +32,13 @@ class PickDraft {
     }
 
     @Transactional
-    public RoomTeamMember pick(UUID gameId, String actionToken, String playerName) {
+    public RosterMember pick(UUID gameId, String actionToken, String playerName) {
         try {
             Game game = games.findById(new GameId(gameId)).orElseThrow(() -> CoreException.of(RoomErrorType.GAME_NOT_FOUND));
             Room room = rooms.findById(game.getRoomId()).orElseThrow(() -> CoreException.of(RoomErrorType.GAME_NOT_FOUND));
             RoomTeamLeader caller = roomActionAuthorizer.authenticate(room, actionToken);
             DraftGame draftGame = requireDraftGame(game);
-            RoomTeamMember member = draftGame.pick(caller.getId(), playerName);
+            RosterMember member = draftGame.pick(caller.getId(), playerName);
             games.save(draftGame);
             Room saved = rooms.saveAndFlush(room);
             roomSnapshotPublisher.publishAfterCommit(new RoomDetails(saved, draftGame));

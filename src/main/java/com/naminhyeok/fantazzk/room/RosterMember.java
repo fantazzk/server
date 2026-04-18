@@ -11,7 +11,7 @@ import org.jmolecules.ddd.types.ValueObject;
 @Access(AccessType.FIELD)
 @Embeddable
 @EqualsAndHashCode
-final class RoomTeamMember implements ValueObject {
+final class RosterMember implements ValueObject {
     @Column(name = "team_leader_id")
     @Convert(converter = TeamLeaderId.JpaConverter.class)
     private TeamLeaderId teamLeaderId;
@@ -20,10 +20,10 @@ final class RoomTeamMember implements ValueObject {
     @Column(name = "assign_order")
     private int assignOrder;
 
-    RoomTeamMember() {
+    RosterMember() {
     }
 
-    RoomTeamMember(TeamLeaderId teamLeaderId, String playerName, int assignOrder) {
+    RosterMember(TeamLeaderId teamLeaderId, String playerName, int assignOrder) {
         this.teamLeaderId = teamLeaderId;
         this.playerName = playerName;
         this.assignOrder = assignOrder;

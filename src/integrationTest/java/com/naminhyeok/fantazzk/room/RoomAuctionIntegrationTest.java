@@ -81,7 +81,7 @@ class RoomAuctionIntegrationTest {
         RoomTeamLeader guest = joinRoom.join(created.room().getCode(), "게스트").leader();
         startRoom.start(created.room().getCode(), created.leader().getActionToken());
 
-        RoomBid bid = placeBid.place(created.room().getCode(), guest.getActionToken(), 150);
+        AuctionBid bid = placeBid.place(created.room().getCode(), guest.getActionToken(), 150);
         expireAuctionRound(created.room().getCode(), Instant.parse("1999-12-31T23:59:55Z"));
         AuctionSettlement settlement = settleAuction.settle(created.room().getCode());
 
@@ -94,11 +94,11 @@ class RoomAuctionIntegrationTest {
         assertThat(settlement.playerName()).isEqualTo("선수1");
         assertThat(reloaded.getStatus()).isEqualTo(RoomStatus.STARTED);
         assertThat(game.getBids()).singleElement()
-            .extracting(RoomBid::teamLeaderId, RoomBid::amount)
+            .extracting(AuctionBid::teamLeaderId, AuctionBid::amount)
             .containsExactly(guest.getId(), 150);
         assertThat(reloaded.getPlayers().getFirst().getPosition()).isEqualTo("TOP");
         assertThat(game.getMembers()).singleElement()
-            .extracting(RoomTeamMember::teamLeaderId, RoomTeamMember::playerName)
+            .extracting(RosterMember::teamLeaderId, RosterMember::playerName)
             .containsExactly(guest.getId(), "선수1");
         assertThat(reloaded.getLeaders().stream().filter(it -> it.getId().equals(guest.getId())).findFirst().orElseThrow().getRemainingBudget())
             .isEqualTo(300);
@@ -125,9 +125,9 @@ class RoomAuctionIntegrationTest {
         RoomTeamLeader guest = joinRoom.join(created.room().getCode(), "게스트").leader();
         startRoom.start(created.room().getCode(), created.leader().getActionToken());
 
-        RoomBid firstBid = placeBid.place(created.room().getCode(), created.leader().getActionToken(), 100);
+        AuctionBid firstBid = placeBid.place(created.room().getCode(), created.leader().getActionToken(), 100);
         Room reloaded = rooms.findByCode(created.room().getCode()).orElseThrow();
-        RoomBid secondBid = placeBid.place(reloaded.getCode(), guest.getActionToken(), 150);
+        AuctionBid secondBid = placeBid.place(reloaded.getCode(), guest.getActionToken(), 150);
 
         assertThat(firstBid.sequence()).isEqualTo(new BidSequence(1));
         assertThat(secondBid.sequence()).isEqualTo(new BidSequence(2));

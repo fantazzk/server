@@ -11,7 +11,7 @@ import org.jmolecules.ddd.types.ValueObject;
 @Access(AccessType.FIELD)
 @Embeddable
 @EqualsAndHashCode
-final class RoomBid implements ValueObject {
+final class AuctionBid implements ValueObject {
     @Column(name = "round")
     private int round;
     @Column(name = "bid_sequence")
@@ -23,10 +23,10 @@ final class RoomBid implements ValueObject {
     @Column(name = "amount")
     private int amount;
 
-    RoomBid() {
+    AuctionBid() {
     }
 
-    RoomBid(int round, BidSequence sequence, TeamLeaderId teamLeaderId, int amount) {
+    AuctionBid(int round, BidSequence sequence, TeamLeaderId teamLeaderId, int amount) {
         this.round = round;
         this.sequence = sequence;
         this.teamLeaderId = teamLeaderId;

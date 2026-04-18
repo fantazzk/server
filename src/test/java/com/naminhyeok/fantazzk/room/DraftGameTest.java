@@ -18,9 +18,9 @@ class DraftGameTest {
     void 드래프트_게임은_픽으로_턴과_멤버와_선수_가용상태를_직접_갱신한다() {
         DraftGame game = startedDraftGame();
 
-        RoomTeamMember member = game.pick(HOST_ID, "선수1");
+        RosterMember member = game.pick(HOST_ID, "선수1");
 
-        assertThat(member).isEqualTo(new RoomTeamMember(HOST_ID, "선수1", 0));
+        assertThat(member).isEqualTo(new RosterMember(HOST_ID, "선수1", 0));
         assertThat(game.getCurrentTurnIndex()).isEqualTo(1);
         assertThat(game.currentDraftProgress())
             .extracting(DraftProgress::currentRound, DraftProgress::currentLeaderId, DraftProgress::currentRoundLeaderIds)
@@ -62,13 +62,13 @@ class DraftGameTest {
         DraftGame game = startedDraftGame();
 
         game.pick(HOST_ID, "선수1");
-        RoomTeamMember secondPick = game.pick(GUEST_ID, "선수2");
+        RosterMember secondPick = game.pick(GUEST_ID, "선수2");
 
-        assertThat(secondPick).isEqualTo(new RoomTeamMember(GUEST_ID, "선수2", 1));
+        assertThat(secondPick).isEqualTo(new RosterMember(GUEST_ID, "선수2", 1));
         assertThat(game.getStatus()).isEqualTo(GameStatus.COMPLETED);
         assertThat(game.currentDraftProgress()).isNull();
         assertThat(game.getMembers()).containsExactly(
-            new RoomTeamMember(HOST_ID, "선수1", 0),
+            new RosterMember(HOST_ID, "선수1", 0),
             secondPick
         );
     }

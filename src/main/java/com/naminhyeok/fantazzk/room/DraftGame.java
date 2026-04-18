@@ -22,7 +22,7 @@ class DraftGame extends Game {
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "game_draft_member", joinColumns = @JoinColumn(name = "members_game_id"))
     @OrderColumn(name = "member_order")
-    private final List<RoomTeamMember> members;
+    private final List<RosterMember> members;
 
     protected DraftGame() {
         this.currentTurnIndex = 0;
@@ -44,7 +44,7 @@ class DraftGame extends Game {
         this.members = new ArrayList<>();
     }
 
-    RoomTeamMember pick(TeamLeaderId teamLeaderId, String playerName) {
+    RosterMember pick(TeamLeaderId teamLeaderId, String playerName) {
         if (getStatus() != GameStatus.IN_PROGRESS) {
             throw CoreException.of(RoomErrorType.ROOM_PLAY_REQUIRES_IN_PROGRESS);
         }
@@ -61,7 +61,7 @@ class DraftGame extends Game {
                 .findFirst()
                 .orElseThrow(() -> CoreException.of(RoomErrorType.ROOM_PICK_PLAYER_NOT_AVAILABLE));
 
-        RoomTeamMember member = new RoomTeamMember(teamLeaderId, player.name(), members.size());
+        RosterMember member = new RosterMember(teamLeaderId, player.name(), members.size());
         members.add(member);
         currentTurnIndex += 1;
 
