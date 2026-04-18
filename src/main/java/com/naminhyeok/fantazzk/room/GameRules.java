@@ -3,6 +3,7 @@ package com.naminhyeok.fantazzk.room;
 import java.util.Objects;
 
 record GameRules(
+    Mode mode,
     int teamCount,
     int teamSize,
     Integer budget,
@@ -12,25 +13,39 @@ record GameRules(
     RoomTemplateSpec.DraftOrderStrategy draftOrderStrategy
 ) {
     static GameRules auction(int teamCount, int teamSize, int budget, int pickBanTime, int minBidUnit, Integer positionLimit) {
-        return new GameRules(teamCount, teamSize, budget, pickBanTime, minBidUnit, positionLimit, null);
+        return new GameRules(Mode.AUCTION, teamCount, teamSize, budget, pickBanTime, minBidUnit, positionLimit, null);
     }
 
     static GameRules draft(int teamCount, int teamSize, int pickBanTime, RoomTemplateSpec.DraftOrderStrategy draftOrderStrategy) {
-        return new GameRules(teamCount, teamSize, null, pickBanTime, null, null, Objects.requireNonNull(draftOrderStrategy));
+        return new GameRules(
+            Mode.DRAFT,
+            teamCount,
+            teamSize,
+            null,
+            pickBanTime,
+            null,
+            null,
+            Objects.requireNonNull(draftOrderStrategy)
+        );
     }
 
     AuctionRules auctionRules() {
-        if (budget == null || minBidUnit == null) {
+        if (mode != Mode.AUCTION || budget == null || minBidUnit == null) {
             throw new IllegalStateException("auction rules are not available");
         }
         return new AuctionRules(budget, pickBanTime, minBidUnit, positionLimit);
     }
 
     DraftRules draftRules() {
-        if (draftOrderStrategy == null) {
+        if (mode != Mode.DRAFT || draftOrderStrategy == null) {
             throw new IllegalStateException("draft rules are not available");
         }
         return new DraftRules(pickBanTime, draftOrderStrategy);
+    }
+
+    enum Mode {
+        AUCTION,
+        DRAFT
     }
 
     record AuctionRules(

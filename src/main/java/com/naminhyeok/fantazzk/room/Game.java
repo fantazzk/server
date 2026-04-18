@@ -120,12 +120,7 @@ abstract class Game implements AggregateRoot<Game, GameId> {
         this.domainEvents = new ArrayList<>();
     }
 
-    GameRules getRules() {
-        if (draftOrderStrategy != null) {
-            return GameRules.draft(teamCount, teamSize, pickBanTime, draftOrderStrategy);
-        }
-        return GameRules.auction(teamCount, teamSize, budget, pickBanTime, minBidUnit, positionLimit);
-    }
+    abstract GameRules getRules();
 
     List<GameParticipant> getParticipants() {
         return List.copyOf(participants);

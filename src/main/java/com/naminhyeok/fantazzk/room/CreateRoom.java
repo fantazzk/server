@@ -63,33 +63,13 @@ class CreateRoom {
         String hostActionToken,
         String hostNickname
     ) {
+        RoomTemplateSpec spec = RoomTemplateSpec.from(template);
         return Room.createFromTemplate(
             generateCode(),
             hostLeaderId,
             hostNickname,
             hostActionToken,
-            new RoomTemplateSpec(
-                template.mode() == TemplateCatalog.Mode.AUCTION
-                    ? RoomTemplateSpec.Mode.AUCTION
-                    : RoomTemplateSpec.Mode.DRAFT,
-                template.teamCount(),
-                template.teamSize(),
-                template.budget(),
-                template.pickBanTime(),
-                template.minBidUnit(),
-                template.positionLimit(),
-                template.draftOrderStrategy() == null
-                    ? null
-                    : RoomTemplateSpec.DraftOrderStrategy.valueOf(template.draftOrderStrategy().name()),
-                template.players().stream()
-                    .map(player -> new RoomTemplateSpec.Player(
-                        new RoomPlayerId(player.playerIndex()),
-                        player.name(),
-                        player.position(),
-                        player.playerIndex()
-                    ))
-                    .toList()
-            ),
+            spec,
             Instant.now(clock)
         );
     }

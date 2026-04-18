@@ -10,6 +10,7 @@ class GameCapabilitySeamTest {
     void 경매_규칙은_auction_seam으로_드러난다() {
         GameRules rules = GameRules.auction(2, 2, 300, 45, 10, 1);
 
+        assertThat(rules.mode()).isEqualTo(GameRules.Mode.AUCTION);
         assertThat(rules.auctionRules())
             .extracting(
                 GameRules.AuctionRules::budget,
@@ -25,6 +26,7 @@ class GameCapabilitySeamTest {
     void 드래프트_규칙은_draft_seam으로_드러난다() {
         GameRules rules = GameRules.draft(2, 2, 30, RoomTemplateSpec.DraftOrderStrategy.SNAKE);
 
+        assertThat(rules.mode()).isEqualTo(GameRules.Mode.DRAFT);
         assertThat(rules.draftRules())
             .extracting(
                 GameRules.DraftRules::pickBanTime,

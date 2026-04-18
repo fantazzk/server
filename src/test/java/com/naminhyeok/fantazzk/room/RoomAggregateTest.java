@@ -229,7 +229,14 @@ class RoomAggregateTest {
             assertThat(snapshot.gameMode()).isEqualTo(room.getMode());
             assertThat(snapshot.rules())
                 .isEqualTo(
-                    new GameRules(room.getTeamCount(), room.getTeamSize(), room.getBudget(), room.getPickBanTime(), room.getMinBidUnit(), room.getPositionLimit(), room.getDraftOrderStrategy())
+                    GameRules.auction(
+                        room.getTeamCount(),
+                        room.getTeamSize(),
+                        room.getBudget(),
+                        room.getPickBanTime(),
+                        room.getMinBidUnit(),
+                        room.getPositionLimit()
+                    )
                 );
             assertThat(snapshot.participants())
                 .containsExactly(

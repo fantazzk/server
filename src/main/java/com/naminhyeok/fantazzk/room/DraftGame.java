@@ -44,6 +44,16 @@ class DraftGame extends Game {
         this.members = new ArrayList<>();
     }
 
+    @Override
+    GameRules getRules() {
+        return GameRules.draft(
+            getTeamCount(),
+            getTeamSize(),
+            getPickBanTime(),
+            getDraftOrderStrategy()
+        );
+    }
+
     RosterMember pick(TeamLeaderId teamLeaderId, String playerName) {
         if (getStatus() != GameStatus.IN_PROGRESS) {
             throw CoreException.of(RoomErrorType.ROOM_PLAY_REQUIRES_IN_PROGRESS);

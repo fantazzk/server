@@ -172,14 +172,13 @@ final class RoomApiTestFixtures {
             room.getStartedGameId(),
             CREATED_AT,
             room.getMode(),
-            new GameRules(
+            GameRules.auction(
                 room.getTeamCount(),
                 room.getTeamSize(),
                 room.getBudget(),
                 room.getPickBanTime(),
                 room.getMinBidUnit(),
-                room.getPositionLimit(),
-                room.getDraftOrderStrategy()
+                room.getPositionLimit()
             ),
             room.getLeaders().stream()
                 .map(leader -> new GameParticipant(leader.getId(), leader.getNickname(), leader.getDraftPosition(), leader.getRemainingBudget()))

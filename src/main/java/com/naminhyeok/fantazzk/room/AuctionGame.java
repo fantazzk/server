@@ -61,6 +61,18 @@ class AuctionGame extends Game {
         }
     }
 
+    @Override
+    GameRules getRules() {
+        return GameRules.auction(
+            getTeamCount(),
+            getTeamSize(),
+            getBudget(),
+            getPickBanTime(),
+            getMinBidUnit(),
+            getPositionLimit()
+        );
+    }
+
     AuctionBid placeBid(TeamLeaderId teamLeaderId, int amount, Instant now) {
         if (getStatus() != GameStatus.IN_PROGRESS) {
             throw CoreException.of(RoomErrorType.ROOM_PLAY_REQUIRES_IN_PROGRESS);
