@@ -11,9 +11,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.junit.jupiter.api.Test;
 
-class GameCapabilitySeamTest {
+class GameRulesAndParticipantStateTest {
     @Test
-    void 경매_규칙은_auction_seam으로_드러난다() {
+    void 경매_규칙은_auction_rules로_예산과_입찰설정을_드러낸다() {
         GameRules rules = GameRules.auction(2, 2, 300, 45, 10, 1);
 
         assertThat(rules.mode()).isEqualTo(RoomMode.AUCTION);
@@ -29,7 +29,7 @@ class GameCapabilitySeamTest {
     }
 
     @Test
-    void 드래프트_규칙은_draft_seam으로_드러난다() {
+    void 드래프트_규칙은_draft_rules로_밴픽시간과_순서를_드러낸다() {
         GameRules rules = GameRules.draft(2, 2, 30, DraftOrderStrategy.SNAKE);
 
         assertThat(rules.mode()).isEqualTo(RoomMode.DRAFT);
