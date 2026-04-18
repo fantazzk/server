@@ -51,7 +51,10 @@ class RoomRealtimePublishingTest {
         Room room = startedDraftRoom();
         DraftGame game = (DraftGame) gameFor(room);
         RecordingRoomSnapshotPublisher publisher = new RecordingRoomSnapshotPublisher();
-        PickDraft pickDraft = new PickDraft(new InMemoryRooms(room), new InMemoryGames(game), new RoomActionAuthorizer(), publisher);
+        InMemoryRooms rooms = new InMemoryRooms(room);
+        InMemoryGames games = new InMemoryGames(game);
+        PickDraft pickDraft =
+            new PickDraft(rooms, games, new RoomActionAuthorizer(), startedGameContextLoader(rooms, games), publisher);
 
         RosterMember picked = pickDraft.pick(room.getCode(), HOST_ACTION_TOKEN, "선수1");
 
@@ -99,8 +102,10 @@ class RoomRealtimePublishingTest {
         Room room = startedAuctionRoom();
         AuctionGame game = (AuctionGame) gameFor(room);
         RecordingRoomSnapshotPublisher publisher = new RecordingRoomSnapshotPublisher();
+        InMemoryRooms rooms = new InMemoryRooms(room);
+        InMemoryGames games = new InMemoryGames(game);
         SettleAuctionAttempt settleAuctionAttempt =
-            new SettleAuctionAttempt(new InMemoryRooms(room), new InMemoryGames(game), Clock.fixed(PUBLISHED_AT, ZoneOffset.UTC), publisher);
+            new SettleAuctionAttempt(rooms, games, startedGameContextLoader(rooms, games), Clock.fixed(PUBLISHED_AT, ZoneOffset.UTC), publisher);
 
         AuctionSettlement settlement = settleAuctionAttempt.settle(room.getCode());
 
@@ -116,8 +121,10 @@ class RoomRealtimePublishingTest {
         Room room = startedAuctionRoom();
         AuctionGame game = (AuctionGame) gameFor(room);
         RecordingRoomSnapshotPublisher publisher = new RecordingRoomSnapshotPublisher();
+        InMemoryRooms rooms = new InMemoryRooms(room);
+        InMemoryGames games = new InMemoryGames(game);
         SettleAuctionAttempt settleAuctionAttempt =
-            new SettleAuctionAttempt(new InMemoryRooms(room), new InMemoryGames(game), Clock.fixed(PUBLISHED_AT, ZoneOffset.UTC), publisher);
+            new SettleAuctionAttempt(rooms, games, startedGameContextLoader(rooms, games), Clock.fixed(PUBLISHED_AT, ZoneOffset.UTC), publisher);
 
         Room settled = settleAuctionAttempt.settleIfDue(room.getCode());
 
@@ -134,8 +141,16 @@ class RoomRealtimePublishingTest {
         Room room = startedAuctionRoom();
         AuctionGame game = (AuctionGame) gameFor(room);
         RecordingRoomSnapshotPublisher publisher = new RecordingRoomSnapshotPublisher();
+        InMemoryRooms rooms = new InMemoryRooms(room);
+        InMemoryGames games = new InMemoryGames(game);
         SettleAuctionAttempt settleAuctionAttempt =
-            new SettleAuctionAttempt(new InMemoryRooms(room), new InMemoryGames(game), Clock.fixed(CREATED_AT.plusSeconds(10), ZoneOffset.UTC), publisher);
+            new SettleAuctionAttempt(
+                rooms,
+                games,
+                startedGameContextLoader(rooms, games),
+                Clock.fixed(CREATED_AT.plusSeconds(10), ZoneOffset.UTC),
+                publisher
+            );
 
         Room current = settleAuctionAttempt.settleIfDue(room.getCode());
 
@@ -145,6 +160,10 @@ class RoomRealtimePublishingTest {
 
     private static TeamLeaderIdentityIssuer fixedLeaderIdentityIssuer() {
         return () -> new TeamLeaderIdentityIssuer.TeamLeaderIdentity(GUEST_ID, GUEST_ACTION_TOKEN);
+    }
+
+    private static StartedGameContextLoader startedGameContextLoader(InMemoryRooms rooms, InMemoryGames games) {
+        return new StartedGameContextLoader(rooms, games, new RoomActionAuthorizer());
     }
 
     private static void assertRoomError(CoreException exception, RoomErrorType errorType) {
@@ -228,17 +247,25 @@ class RoomRealtimePublishingTest {
                 room.getStartedGameId(),
                 room.getStartedAt(),
                 room.getMode(),
-                new GameRules(
-                    room.getTeamCount(),
-                    room.getTeamSize(),
-                    room.getBudget(),
-                    room.getPickBanTime(),
-                    room.getMinBidUnit(),
-                    room.getPositionLimit(),
-                    room.getDraftOrderStrategy()
-                ),
+                room.getMode() == RoomMode.AUCTION
+                    ? GameRules.auction(
+                        room.getTeamCount(),
+                        room.getTeamSize(),
+                        room.getBudget(),
+                        room.getPickBanTime(),
+                        room.getMinBidUnit(),
+                        room.getPositionLimit()
+                    )
+                    : GameRules.draft(
+                        room.getTeamCount(),
+                        room.getTeamSize(),
+                        room.getPickBanTime(),
+                        room.getDraftOrderStrategy()
+                    ),
                 room.getLeaders().stream()
-                    .map(leader -> new GameParticipant(leader.getId(), leader.getNickname(), leader.getDraftPosition(), leader.getRemainingBudget()))
+                    .map(leader -> room.getMode() == RoomMode.AUCTION
+                        ? GameParticipant.auction(leader.getId(), leader.getNickname(), leader.getRemainingBudget())
+                        : GameParticipant.draft(leader.getId(), leader.getNickname(), leader.getDraftPosition()))
                     .toList(),
                 room.getPlayers().stream()
                     .map(player -> new GamePlayer(player.getId(), player.getName(), player.getPosition(), player.getDisplayOrder()))

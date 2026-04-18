@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 class SettleAuctionAttempt {
     private final Rooms rooms;
     private final Games games;
+    private final StartedGameContextLoader startedGameContextLoader;
     private final Clock clock;
     private final RoomSnapshotPublisher roomSnapshotPublisher;
 
@@ -37,12 +38,11 @@ class SettleAuctionAttempt {
     AuctionSettlement settle(UUID gameId) {
         try {
             Instant now = Instant.now(clock);
-            Game loadedGame = games.findById(new GameId(gameId)).orElseThrow(() -> CoreException.of(RoomErrorType.GAME_NOT_FOUND));
-            Room room = rooms.findById(loadedGame.getRoomId()).orElseThrow(() -> CoreException.of(RoomErrorType.GAME_NOT_FOUND));
-            AuctionGame game = requireAuctionGame(loadedGame);
+            StartedGameContext context = startedGameContextLoader.load(gameId);
+            AuctionGame game = requireAuctionGame(context.game());
             AuctionSettlement settlement = game.settleAuction(now);
             games.save(game);
-            Room saved = rooms.saveAndFlush(room);
+            Room saved = rooms.saveAndFlush(context.room());
             roomSnapshotPublisher.publishAfterCommit(new RoomDetails(saved, game));
             return settlement;
         } catch (OptimisticLockingFailureException ex) {
@@ -69,8 +69,8 @@ class SettleAuctionAttempt {
     @Transactional
     Game settleIfDue(UUID gameId) {
         Instant now = Instant.now(clock);
-        Game loadedGame = games.findById(new GameId(gameId)).orElseThrow(() -> CoreException.of(RoomErrorType.GAME_NOT_FOUND));
-        Room room = rooms.findById(loadedGame.getRoomId()).orElseThrow(() -> CoreException.of(RoomErrorType.GAME_NOT_FOUND));
+        StartedGameContext context = startedGameContextLoader.load(gameId);
+        Game loadedGame = context.game();
         AuctionGame game = loadAuctionGame(loadedGame);
         if (!isDue(game, now)) {
             return loadedGame;
@@ -78,7 +78,7 @@ class SettleAuctionAttempt {
 
         game.settleAuction(now);
         games.save(game);
-        Room saved = rooms.saveAndFlush(room);
+        Room saved = rooms.saveAndFlush(context.room());
         roomSnapshotPublisher.publishAfterCommit(new RoomDetails(saved, game));
         return game;
     }
