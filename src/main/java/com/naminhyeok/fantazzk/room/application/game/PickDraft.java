@@ -7,9 +7,9 @@ import com.naminhyeok.fantazzk.room.domain.room.*;
 import com.naminhyeok.fantazzk.room.domain.shared.*;
 
 import com.naminhyeok.fantazzk.CoreException;
-import com.naminhyeok.fantazzk.room.GameView;
 import com.naminhyeok.fantazzk.room.application.port.RoomSnapshotPublisher;
 import com.naminhyeok.fantazzk.room.application.support.RoomActionAuthorizer;
+import com.naminhyeok.fantazzk.room.application.support.RoomViewProjector;
 import com.naminhyeok.fantazzk.room.application.support.StartedGameActionContext;
 import com.naminhyeok.fantazzk.room.application.support.StartedGameContextLoader;
 import com.naminhyeok.fantazzk.room.application.support.StartedRoomSnapshot;
@@ -38,7 +38,7 @@ public class PickDraft {
             games.save(game);
             Room saved = rooms.saveAndFlush(room);
             roomSnapshotPublisher.publishAfterCommit(
-                new StartedRoomSnapshot(saved.getCode(), saved.getVersion() + game.getVersion(), GameView.from(game))
+                new StartedRoomSnapshot(saved.getCode(), saved.getVersion() + game.getVersion(), RoomViewProjector.toGameView(game))
             );
             return member;
         } catch (OptimisticLockingFailureException ex) {
@@ -55,7 +55,11 @@ public class PickDraft {
             games.save(draftGame);
             Room saved = rooms.saveAndFlush(action.room());
             roomSnapshotPublisher.publishAfterCommit(
-                new StartedRoomSnapshot(saved.getCode(), saved.getVersion() + draftGame.getVersion(), GameView.from(draftGame))
+                new StartedRoomSnapshot(
+                    saved.getCode(),
+                    saved.getVersion() + draftGame.getVersion(),
+                    RoomViewProjector.toGameView(draftGame)
+                )
             );
             return member;
         } catch (OptimisticLockingFailureException ex) {

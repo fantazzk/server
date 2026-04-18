@@ -7,7 +7,6 @@ import com.naminhyeok.fantazzk.room.domain.room.*;
 import com.naminhyeok.fantazzk.room.domain.shared.*;
 
 import com.naminhyeok.fantazzk.CoreException;
-import com.naminhyeok.fantazzk.room.GameView;
 import com.naminhyeok.fantazzk.room.application.port.RoomSnapshotPublisher;
 import java.time.Clock;
 import java.time.Instant;
@@ -36,7 +35,7 @@ public class SettleAuctionAttempt {
             games.save(game);
             Room saved = rooms.saveAndFlush(room);
             roomSnapshotPublisher.publishAfterCommit(
-                new StartedRoomSnapshot(saved.getCode(), saved.getVersion() + game.getVersion(), GameView.from(game))
+                new StartedRoomSnapshot(saved.getCode(), saved.getVersion() + game.getVersion(), RoomViewProjector.toGameView(game))
             );
             return settlement;
         } catch (OptimisticLockingFailureException ex) {
@@ -54,7 +53,7 @@ public class SettleAuctionAttempt {
             games.save(game);
             Room saved = rooms.saveAndFlush(context.room());
             roomSnapshotPublisher.publishAfterCommit(
-                new StartedRoomSnapshot(saved.getCode(), saved.getVersion() + game.getVersion(), GameView.from(game))
+                new StartedRoomSnapshot(saved.getCode(), saved.getVersion() + game.getVersion(), RoomViewProjector.toGameView(game))
             );
             return settlement;
         } catch (OptimisticLockingFailureException ex) {
@@ -75,7 +74,7 @@ public class SettleAuctionAttempt {
         games.save(game);
         Room saved = rooms.saveAndFlush(room);
         roomSnapshotPublisher.publishAfterCommit(
-            new StartedRoomSnapshot(saved.getCode(), saved.getVersion() + game.getVersion(), GameView.from(game))
+            new StartedRoomSnapshot(saved.getCode(), saved.getVersion() + game.getVersion(), RoomViewProjector.toGameView(game))
         );
         return saved;
     }
@@ -94,7 +93,7 @@ public class SettleAuctionAttempt {
         games.save(game);
         Room saved = rooms.saveAndFlush(context.room());
         roomSnapshotPublisher.publishAfterCommit(
-            new StartedRoomSnapshot(saved.getCode(), saved.getVersion() + game.getVersion(), GameView.from(game))
+            new StartedRoomSnapshot(saved.getCode(), saved.getVersion() + game.getVersion(), RoomViewProjector.toGameView(game))
         );
         return game;
     }

@@ -7,11 +7,11 @@ import com.naminhyeok.fantazzk.room.domain.room.*;
 import com.naminhyeok.fantazzk.room.domain.shared.*;
 
 import com.naminhyeok.fantazzk.CoreException;
-import com.naminhyeok.fantazzk.room.GameView;
 import com.naminhyeok.fantazzk.room.application.port.RoomSnapshotPublisher;
 import com.naminhyeok.fantazzk.room.application.support.RoomActionAuthorizer;
 import com.naminhyeok.fantazzk.room.application.support.StartedGameActionContext;
 import com.naminhyeok.fantazzk.room.application.support.StartedGameContextLoader;
+import com.naminhyeok.fantazzk.room.application.support.RoomViewProjector;
 import com.naminhyeok.fantazzk.room.application.support.StartedRoomSnapshot;
 import java.time.Clock;
 import java.time.Instant;
@@ -41,7 +41,7 @@ public class PlaceBid {
             games.save(game);
             Room saved = rooms.saveAndFlush(room);
             roomSnapshotPublisher.publishAfterCommit(
-                new StartedRoomSnapshot(saved.getCode(), saved.getVersion() + game.getVersion(), GameView.from(game))
+                new StartedRoomSnapshot(saved.getCode(), saved.getVersion() + game.getVersion(), RoomViewProjector.toGameView(game))
             );
             return bid;
         } catch (OptimisticLockingFailureException ex) {
@@ -58,7 +58,11 @@ public class PlaceBid {
             games.save(auctionGame);
             Room saved = rooms.saveAndFlush(action.room());
             roomSnapshotPublisher.publishAfterCommit(
-                new StartedRoomSnapshot(saved.getCode(), saved.getVersion() + auctionGame.getVersion(), GameView.from(auctionGame))
+                new StartedRoomSnapshot(
+                    saved.getCode(),
+                    saved.getVersion() + auctionGame.getVersion(),
+                    RoomViewProjector.toGameView(auctionGame)
+                )
             );
             return bid;
         } catch (OptimisticLockingFailureException ex) {

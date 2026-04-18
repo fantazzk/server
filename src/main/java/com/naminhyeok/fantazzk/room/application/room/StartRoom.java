@@ -7,9 +7,9 @@ import com.naminhyeok.fantazzk.room.domain.room.*;
 import com.naminhyeok.fantazzk.room.domain.shared.*;
 
 import com.naminhyeok.fantazzk.CoreException;
-import com.naminhyeok.fantazzk.room.GameView;
 import com.naminhyeok.fantazzk.room.application.port.RoomSnapshotPublisher;
 import com.naminhyeok.fantazzk.room.application.support.RoomActionAuthorizer;
+import com.naminhyeok.fantazzk.room.application.support.RoomViewProjector;
 import com.naminhyeok.fantazzk.room.application.support.StartedRoomSnapshot;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
@@ -42,7 +42,11 @@ public class StartRoom {
             games.save(createdGame);
             Room saved = rooms.saveAndFlush(loaded);
             roomSnapshotPublisher.publishAfterCommit(
-                new StartedRoomSnapshot(saved.getCode(), saved.getVersion() + createdGame.getVersion(), GameView.from(createdGame))
+                new StartedRoomSnapshot(
+                    saved.getCode(),
+                    saved.getVersion() + createdGame.getVersion(),
+                    RoomViewProjector.toGameView(createdGame)
+                )
             );
             return createdGame;
         } catch (OptimisticLockingFailureException ex) {

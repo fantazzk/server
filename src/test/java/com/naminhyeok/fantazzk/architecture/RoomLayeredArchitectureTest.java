@@ -6,6 +6,7 @@ import static com.tngtech.archunit.library.Architectures.layeredArchitecture;
 
 import com.tngtech.archunit.core.domain.Dependency;
 import com.tngtech.archunit.core.domain.JavaClass;
+import com.tngtech.archunit.core.domain.JavaMethod;
 import com.tngtech.archunit.core.domain.JavaModifier;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
@@ -127,6 +128,12 @@ class RoomLayeredArchitectureTest {
         .should(onlyDependOnRoomRootContracts());
 
     @ArchTest
+    static final ArchRule room_root_public_contracts_must_not_expose_internal_parameter_types = classes()
+        .that().resideInAPackage(ROOM_ROOT_PACKAGE)
+        .and().arePublic()
+        .should(notDeclarePublicMethodsWithInternalParameterTypes());
+
+    @ArchTest
     static final ArchRule room_domain_room_must_not_depend_on_game_package = noClasses()
         .that().resideInAPackage("com.naminhyeok.fantazzk.room.domain.room..")
         .should().dependOnClassesThat().resideInAnyPackage("com.naminhyeok.fantazzk.room.domain.game..");
@@ -208,9 +215,42 @@ class RoomLayeredArchitectureTest {
         };
     }
 
+    private static ArchCondition<JavaClass> notDeclarePublicMethodsWithInternalParameterTypes() {
+        return new ArchCondition<>("not declare public methods with room application/domain parameter types") {
+            @Override
+            public void check(JavaClass item, ConditionEvents events) {
+                if (!isRoomRootContract(item)) {
+                    events.add(SimpleConditionEvent.satisfied(item, item.getName() + " is not a root public contract"));
+                    return;
+                }
+                for (JavaMethod method : item.getMethods()) {
+                    if (!method.getOwner().equals(item) || !method.getModifiers().contains(JavaModifier.PUBLIC)) {
+                        continue;
+                    }
+                    for (JavaClass parameterType : method.getRawParameterTypes()) {
+                        if (!isInternalRoomType(parameterType)) {
+                            continue;
+                        }
+                        events.add(SimpleConditionEvent.violated(
+                            method,
+                            "%s declares public method %s with internal parameter type %s"
+                                .formatted(item.getName(), method.getFullName(), parameterType.getName())
+                        ));
+                    }
+                }
+            }
+        };
+    }
+
     private static boolean isRoomRootContract(JavaClass javaClass) {
         return ROOM_ROOT_PACKAGE.equals(javaClass.getPackageName()) &&
             javaClass.getModifiers().contains(JavaModifier.PUBLIC) &&
             javaClass.getSimpleName().matches(".*(Api|View)$");
+    }
+
+    private static boolean isInternalRoomType(JavaClass javaClass) {
+        String packageName = javaClass.getPackageName();
+        return packageName.startsWith("com.naminhyeok.fantazzk.room.domain.")
+            || packageName.startsWith("com.naminhyeok.fantazzk.room.application.");
     }
 }
