@@ -21,21 +21,6 @@ record TemplateResponse(
     }
 
     static TemplateResponse from(TemplateDetail detail) {
-        return new TemplateResponse(
-            detail.template().getId().templateId().toString(),
-            detail.template().getName(),
-            TemplateCatalog.GameType.valueOf(detail.template().getGameType().name()),
-            detail.template().getMode() == TemplateMode.AUCTION ? TemplateCatalog.Mode.AUCTION : TemplateCatalog.Mode.DRAFT,
-            detail.template().getTeamCount(),
-            detail.template().getTeamSize(),
-            detail.template().getBudget(),
-            detail.template().getPickBanTime(),
-            detail.template().getMinBidUnit(),
-            detail.template().getPositionLimit(),
-            detail.template().getDraftOrderStrategy() == null
-                ? null
-                : TemplateCatalog.DraftOrderStrategy.valueOf(detail.template().getDraftOrderStrategy().name()),
-            detail.players().stream().map(TemplatePlayerResponse::from).toList()
-        );
+        return TemplateExternalViewMapper.toResponse(detail);
     }
 }

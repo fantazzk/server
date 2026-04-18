@@ -14,23 +14,7 @@ class ProvideTemplateCatalog implements TemplateCatalog {
     public TemplateBlueprint getTemplate(UUID templateId) {
         try {
             TemplateDetail detail = findTemplates.getDetail(new TemplateId(templateId));
-            return new TemplateBlueprint(
-                detail.template().getMode() == TemplateMode.AUCTION
-                    ? Mode.AUCTION
-                    : Mode.DRAFT,
-                detail.template().getTeamCount(),
-                detail.template().getTeamSize(),
-                detail.template().getBudget(),
-                detail.template().getPickBanTime(),
-                detail.template().getMinBidUnit(),
-                detail.template().getPositionLimit(),
-                detail.template().getDraftOrderStrategy() == null
-                    ? null
-                    : DraftOrderStrategy.valueOf(detail.template().getDraftOrderStrategy().name()),
-                detail.players().stream()
-                    .map(player -> new PlayerBlueprint(player.name(), player.position(), player.displayOrder()))
-                    .toList()
-            );
+            return TemplateExternalViewMapper.toBlueprint(detail);
         } catch (CoreException ex) {
             if (ex.getError() == TemplateErrorType.TEMPLATE_NOT_FOUND) {
                 throw new TemplateCatalog.NotFound(templateId);
