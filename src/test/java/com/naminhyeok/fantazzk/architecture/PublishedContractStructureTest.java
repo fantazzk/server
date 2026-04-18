@@ -28,6 +28,7 @@ class PublishedContractStructureTest {
     @Test
     void template_루트_계약은_public이고_대표_구현은_package_private이다() throws Exception {
         assertThat(isPublic("com.naminhyeok.fantazzk.template.TemplateCatalog")).isTrue();
+        assertThat(isPublic("com.naminhyeok.fantazzk.template.TemplateConfiguration")).isFalse();
         assertClassMissing("com.naminhyeok.fantazzk.template.TemplateManagement");
         assertClassMissing("com.naminhyeok.fantazzk.template.CreateTemplateInput");
         assertClassMissing("com.naminhyeok.fantazzk.template.TemplateSummaryView");
@@ -48,6 +49,7 @@ class PublishedContractStructureTest {
         assertClassMissing("com.naminhyeok.fantazzk.room.domain.Room");
         assertClassMissing("com.naminhyeok.fantazzk.room.repository.Rooms");
         assertClassMissing("com.naminhyeok.fantazzk.room.api.RoomApiController");
+        assertClassMissing("com.naminhyeok.fantazzk.room.GetRoomDetails");
         assertClassMissing("com.naminhyeok.fantazzk.template.application.CreateTemplate");
         assertClassMissing("com.naminhyeok.fantazzk.template.domain.Template");
         assertClassMissing("com.naminhyeok.fantazzk.template.repository.Templates");
@@ -61,6 +63,11 @@ class PublishedContractStructureTest {
         assertClassMissing("com.naminhyeok.fantazzk.room.JpaRooms");
         assertClassMissing("com.naminhyeok.fantazzk.template.JpaTemplateRepository");
         assertClassMissing("com.naminhyeok.fantazzk.template.JpaTemplates");
+    }
+
+    @Test
+    void 사용하지_않는_room_domain_event는_남기지_않는다() {
+        assertClassMissing("com.naminhyeok.fantazzk.room.event.LeaderJoinedRoom");
     }
 
     @Test

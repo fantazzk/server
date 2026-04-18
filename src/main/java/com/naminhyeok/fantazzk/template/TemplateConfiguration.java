@@ -8,7 +8,7 @@ import org.jmolecules.ddd.types.ValueObject;
 
 @Getter
 @EqualsAndHashCode
-public final class TemplateConfiguration implements ValueObject {
+final class TemplateConfiguration implements ValueObject {
     @Enumerated(EnumType.STRING)
     private final GameType gameType;
     @Enumerated(EnumType.STRING)

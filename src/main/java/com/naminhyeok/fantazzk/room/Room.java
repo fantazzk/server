@@ -260,24 +260,6 @@ class Room implements AggregateRoot<Room, RoomId> {
             && leaders.stream().map(RoomTeamLeader::getDraftPosition).distinct().count() == teamCount;
     }
 
-    private List<RoomTeamLeader> getLeadersInDraftOrder() {
-        if (leaders.isEmpty()) {
-            throw RoomStateInvalidException.draftLeaderOrderEmpty();
-        }
-        RoomTeamLeader leaderWithoutDraftPosition =
-            leaders.stream().filter(leader -> leader.getDraftPosition() == null).findFirst().orElse(null);
-        if (leaderWithoutDraftPosition != null) {
-            throw RoomStateInvalidException.draftPositionMissing(leaderWithoutDraftPosition.getId());
-        }
-        return leaders.stream()
-            .sorted(Comparator.comparingInt(RoomTeamLeader::getDraftPosition))
-            .toList();
-    }
-
-    private List<String> getLeaderIdsInDraftOrder() {
-        return getLeadersInDraftOrder().stream().map(RoomTeamLeader::getTeamLeaderId).toList();
-    }
-
     private RoomTeamLeader getLeader(TeamLeaderId teamLeaderId) {
         return leaders.stream()
             .filter(leader -> leader.getId().equals(teamLeaderId))
