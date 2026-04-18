@@ -11,7 +11,7 @@ record StartedGameSnapshot(
     Instant startedAt,
     RoomMode gameMode,
     GameRules rules,
-    List<GameParticipant> participants,
+    List<? extends GameParticipant> participants,
     List<GamePlayer> playerPool
 ) {
     StartedGameSnapshot {

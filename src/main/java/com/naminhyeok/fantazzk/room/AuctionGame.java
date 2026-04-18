@@ -17,6 +17,10 @@ import lombok.Getter;
 @Getter
 @DiscriminatorValue("AUCTION")
 class AuctionGame extends Game {
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "game_participant", joinColumns = @JoinColumn(name = "participants_game_id"))
+    @OrderColumn(name = "participant_order")
+    private final List<AuctionParticipant> participants;
     @Column(name = "current_round")
     private int currentRound;
     @Column(name = "current_round_ends_at")
@@ -31,6 +35,7 @@ class AuctionGame extends Game {
     private final List<RosterMember> members;
 
     protected AuctionGame() {
+        this.participants = new ArrayList<>();
         this.currentRound = 0;
         this.currentRoundEndsAt = null;
         this.bids = new ArrayList<>();
@@ -43,12 +48,13 @@ class AuctionGame extends Game {
         String roomCode,
         Instant startedAt,
         GameRules rules,
-        List<GameParticipant> participants,
+        List<AuctionParticipant> participants,
         List<GamePlayer> playerPool,
         int currentRound,
         Instant currentRoundEndsAt
     ) {
-        super(id, roomId, roomCode, startedAt, GameStatus.IN_PROGRESS, rules, participants, playerPool);
+        super(id, roomId, roomCode, startedAt, GameStatus.IN_PROGRESS, rules, playerPool);
+        this.participants = new ArrayList<>(participants);
         this.currentRound = currentRound;
         this.currentRoundEndsAt = currentRoundEndsAt;
         this.bids = new ArrayList<>();
@@ -70,6 +76,11 @@ class AuctionGame extends Game {
         );
     }
 
+    @Override
+    List<GameParticipant> getParticipants() {
+        return participants.stream().map(GameParticipant.class::cast).toList();
+    }
+
     AuctionBid placeBid(TeamLeaderId teamLeaderId, int amount, Instant now) {
         if (getStatus() != GameStatus.IN_PROGRESS) {
             throw CoreException.of(RoomErrorType.ROOM_PLAY_REQUIRES_IN_PROGRESS);
@@ -84,7 +95,7 @@ class AuctionGame extends Game {
             throw CoreException.of(RoomErrorType.ROOM_BID_REQUIRES_OPEN_ROUND);
         }
 
-        GameParticipant leader = findParticipant(teamLeaderId, RoomErrorType.ROOM_BIDDER_NOT_FOUND);
+        AuctionParticipant leader = findParticipant(teamLeaderId, RoomErrorType.ROOM_BIDDER_NOT_FOUND);
         GameParticipant.AuctionState bidder = leader.auctionState();
         GamePlayer target = requireCurrentAuctionTarget();
         validateAuctionPositionLimit(teamLeaderId, target);
@@ -153,7 +164,7 @@ class AuctionGame extends Game {
             return settlement;
         }
 
-        GameParticipant winner = findParticipant(winningBid.teamLeaderId(), RoomErrorType.ROOM_BIDDER_NOT_FOUND);
+        AuctionParticipant winner = findParticipant(winningBid.teamLeaderId(), RoomErrorType.ROOM_BIDDER_NOT_FOUND);
         validateAuctionPositionLimit(winner.teamLeaderId(), target);
         spend(winner.teamLeaderId(), winningBid.amount());
         members.add(new RosterMember(winningBid.teamLeaderId(), target.name(), members.size()));
@@ -217,9 +228,9 @@ class AuctionGame extends Game {
     }
 
     private void spend(TeamLeaderId leaderId, int amount) {
-        List<GameParticipant> participants = mutableParticipants();
+        List<AuctionParticipant> participants = mutableParticipants();
         for (int index = 0; index < participants.size(); index++) {
-            GameParticipant participant = participants.get(index);
+            AuctionParticipant participant = participants.get(index);
             if (!participant.teamLeaderId().equals(leaderId)) {
                 continue;
             }
@@ -258,7 +269,11 @@ class AuctionGame extends Game {
             .orElse(null);
     }
 
-    private GameParticipant findParticipant(TeamLeaderId teamLeaderId, RoomErrorType errorType) {
+    private List<AuctionParticipant> mutableParticipants() {
+        return participants;
+    }
+
+    private AuctionParticipant findParticipant(TeamLeaderId teamLeaderId, RoomErrorType errorType) {
         return mutableParticipants().stream()
             .filter(participant -> participant.teamLeaderId().equals(teamLeaderId))
             .findFirst()

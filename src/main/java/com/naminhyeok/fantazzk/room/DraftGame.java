@@ -17,6 +17,10 @@ import lombok.Getter;
 @Getter
 @DiscriminatorValue("DRAFT")
 class DraftGame extends Game {
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "game_participant", joinColumns = @JoinColumn(name = "participants_game_id"))
+    @OrderColumn(name = "participant_order")
+    private final List<DraftParticipant> participants;
     @Column(name = "current_turn_index")
     private int currentTurnIndex;
     @ElementCollection(fetch = FetchType.EAGER)
@@ -25,6 +29,7 @@ class DraftGame extends Game {
     private final List<RosterMember> members;
 
     protected DraftGame() {
+        this.participants = new ArrayList<>();
         this.currentTurnIndex = 0;
         this.members = new ArrayList<>();
     }
@@ -35,11 +40,12 @@ class DraftGame extends Game {
         String roomCode,
         Instant startedAt,
         GameRules rules,
-        List<GameParticipant> participants,
+        List<DraftParticipant> participants,
         List<GamePlayer> playerPool,
         int currentTurnIndex
     ) {
-        super(id, roomId, roomCode, startedAt, GameStatus.IN_PROGRESS, rules, participants, playerPool);
+        super(id, roomId, roomCode, startedAt, GameStatus.IN_PROGRESS, rules, playerPool);
+        this.participants = new ArrayList<>(participants);
         this.currentTurnIndex = currentTurnIndex;
         this.members = new ArrayList<>();
     }
@@ -52,6 +58,11 @@ class DraftGame extends Game {
             getPickBanTime(),
             getDraftOrderStrategy()
         );
+    }
+
+    @Override
+    List<GameParticipant> getParticipants() {
+        return participants.stream().map(GameParticipant.class::cast).toList();
     }
 
     RosterMember pick(TeamLeaderId teamLeaderId, String playerName) {
@@ -110,15 +121,19 @@ class DraftGame extends Game {
         return getParticipantsInDraftOrder().stream().map(participant -> participant.teamLeaderId().value()).toList();
     }
 
-    private List<GameParticipant> getParticipantsInDraftOrder() {
+    private List<DraftParticipant> getParticipantsInDraftOrder() {
         if (mutableParticipants().isEmpty()) {
             throw RoomStateInvalidException.draftLeaderOrderEmpty();
         }
-        GameParticipant participantWithoutDraftPosition =
+        DraftParticipant participantWithoutDraftPosition =
             mutableParticipants().stream().filter(participant -> participant.draftPosition() == null).findFirst().orElse(null);
         if (participantWithoutDraftPosition != null) {
             throw RoomStateInvalidException.draftPositionMissing(participantWithoutDraftPosition.teamLeaderId());
         }
         return mutableParticipants().stream().sorted(Comparator.comparingInt(participant -> participant.draftState().draftPosition())).toList();
+    }
+
+    private List<DraftParticipant> mutableParticipants() {
+        return participants;
     }
 }

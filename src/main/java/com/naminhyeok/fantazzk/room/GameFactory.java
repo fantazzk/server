@@ -12,7 +12,7 @@ class GameFactory {
                 snapshot.roomCode(),
                 snapshot.startedAt(),
                 snapshot.rules(),
-                snapshot.participants(),
+                snapshot.participants().stream().map(AuctionParticipant.class::cast).toList(),
                 snapshot.playerPool(),
                 1,
                 snapshot.startedAt().plusSeconds(snapshot.rules().auctionRules().pickBanTime())
@@ -23,7 +23,7 @@ class GameFactory {
                 snapshot.roomCode(),
                 snapshot.startedAt(),
                 snapshot.rules(),
-                snapshot.participants(),
+                snapshot.participants().stream().map(DraftParticipant.class::cast).toList(),
                 snapshot.playerPool(),
                 0
             );

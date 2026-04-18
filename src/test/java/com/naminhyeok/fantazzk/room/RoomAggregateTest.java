@@ -239,9 +239,10 @@ class RoomAggregateTest {
                     )
                 );
             assertThat(snapshot.participants())
+                .extracting(GameParticipant::teamLeaderId, GameParticipant::nickname, GameParticipant::remainingBudget)
                 .containsExactly(
-                    GameParticipant.auction(new TeamLeaderId(HOST_ID), "호스트", 300),
-                    GameParticipant.auction(new TeamLeaderId(GUEST_ID), "게스트", 300)
+                    org.assertj.core.groups.Tuple.tuple(new TeamLeaderId(HOST_ID), "호스트", 300),
+                    org.assertj.core.groups.Tuple.tuple(new TeamLeaderId(GUEST_ID), "게스트", 300)
                 );
             assertThat(snapshot.playerPool())
                 .containsExactly(
