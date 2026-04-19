@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 
 class TemplateExternalViewMapperTest {
     @Test
-    void template_detail을_카탈로그_blueprint와_api_response로_같은_규칙으로_변환한다() {
+    void template_detail을_카탈로그_blueprint와_http_projection으로_같은_규칙으로_변환한다() {
         Template template =
             Template.createDraft(
                 "드래프트전",
@@ -25,7 +25,8 @@ class TemplateExternalViewMapperTest {
         TemplateDetail detail = new TemplateDetail(template, template.getPlayers());
 
         TemplateCatalog.TemplateBlueprint blueprint = TemplateExternalViewMapper.toBlueprint(detail);
-        TemplateResponse response = TemplateExternalViewMapper.toResponse(detail);
+        TemplateSummaryResponse summary = TemplateExternalViewMapper.toSummaryResponse(template);
+        TemplateDetailResponse detailResponse = TemplateExternalViewMapper.toDetailResponse(detail);
 
         assertThat(blueprint.mode()).isEqualTo(TemplateCatalog.Mode.DRAFT);
         assertThat(blueprint.teamCount()).isEqualTo(2);
@@ -42,13 +43,20 @@ class TemplateExternalViewMapperTest {
                 tuple(1, "선수2", "SUPPORT")
             );
 
-        assertThat(response.id()).isEqualTo(template.getId().templateId().toString());
-        assertThat(response.name()).isEqualTo("드래프트전");
-        assertThat(response.gameType()).isEqualTo(TemplateCatalog.GameType.OVERWATCH_2);
-        assertThat(response.mode()).isEqualTo(TemplateCatalog.Mode.DRAFT);
-        assertThat(response.pickBanTime()).isEqualTo(30);
-        assertThat(response.draftOrderStrategy()).isEqualTo(TemplateCatalog.DraftOrderStrategy.SNAKE);
-        assertThat(response.players())
+        assertThat(summary.id()).isEqualTo(template.getId().templateId().toString());
+        assertThat(summary.name()).isEqualTo("드래프트전");
+        assertThat(summary.gameType()).isEqualTo(TemplateCatalog.GameType.OVERWATCH_2);
+        assertThat(summary.mode()).isEqualTo(TemplateCatalog.Mode.DRAFT);
+        assertThat(summary.teamCount()).isEqualTo(2);
+        assertThat(summary.teamSize()).isEqualTo(2);
+
+        assertThat(detailResponse.id()).isEqualTo(template.getId().templateId().toString());
+        assertThat(detailResponse.name()).isEqualTo("드래프트전");
+        assertThat(detailResponse.gameType()).isEqualTo(TemplateCatalog.GameType.OVERWATCH_2);
+        assertThat(detailResponse.mode()).isEqualTo(TemplateCatalog.Mode.DRAFT);
+        assertThat(detailResponse.pickBanTime()).isEqualTo(30);
+        assertThat(detailResponse.draftOrderStrategy()).isEqualTo(TemplateCatalog.DraftOrderStrategy.SNAKE);
+        assertThat(detailResponse.players())
             .extracting(TemplatePlayerResponse::displayOrder, TemplatePlayerResponse::name, TemplatePlayerResponse::position)
             .containsExactly(
                 tuple(0, "선수1", "TANK"),

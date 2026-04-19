@@ -39,11 +39,13 @@ class GameDraftApiControllerWebMvcTest {
     private GetGame getGame;
 
     @Test
-    void pickDraft는_header가_있으면_최신_game_snapshot을_반환한다() throws Exception {
+    void pickDraft는_header가_있으면_지명_결과와_다음_드래프트_진행상황을_반환한다() throws Exception {
         UUID gameId = UUID.fromString(RoomApiTestFixtures.DRAFT_GAME_ID);
+        DraftGame updatedGame = (DraftGame) RoomApiTestFixtures.inProgressDraftDetails().game();
+        updatedGame.pick(new TeamLeaderId(RoomApiTestFixtures.GUEST_ID), "선수3");
         given(pickDraft.pick(gameId, RoomApiTestFixtures.GUEST_TOKEN, "선수3"))
             .willReturn(new RosterMember(new TeamLeaderId(RoomApiTestFixtures.GUEST_ID), "선수3", 2));
-        given(getGame.get(gameId)).willReturn(RoomApiTestFixtures.inProgressDraftDetails().game());
+        given(getGame.get(gameId)).willReturn(updatedGame);
 
         var result = mockMvcTester().perform(
             post("/api/v1/games/{gameId}/draft-picks", RoomApiTestFixtures.DRAFT_GAME_ID)
@@ -61,8 +63,14 @@ class GameDraftApiControllerWebMvcTest {
         result.assertThat().hasStatusOk();
         JsonNode body = objectMapper.readTree(result.getResponse().getContentAsString());
         assertThat(body.at("/resultType").asText()).isEqualTo("SUCCESS");
-        assertThat(body.at("/success/id").asText()).isEqualTo(RoomApiTestFixtures.DRAFT_GAME_ID);
-        assertThat(body.at("/success/status").asText()).isEqualTo("IN_PROGRESS");
+        assertThat(body.at("/success/gameId").asText()).isEqualTo(RoomApiTestFixtures.DRAFT_GAME_ID);
+        assertThat(body.at("/success/leaderId").asText()).isEqualTo(RoomApiTestFixtures.GUEST_ID);
+        assertThat(body.at("/success/pickedPlayerName").asText()).isEqualTo("선수3");
+        assertThat(body.at("/success/assignOrder").asInt()).isEqualTo(2);
+        assertThat(body.at("/success/draftProgress/currentLeaderId").asText()).isEqualTo(RoomApiTestFixtures.HOST_ID);
+        assertThat(body.at("/success/status").isMissingNode()).isTrue();
+        assertThat(body.at("/success/roster").isMissingNode()).isTrue();
+        assertThat(body.at("/success/progress").isMissingNode()).isTrue();
     }
 
     @Test

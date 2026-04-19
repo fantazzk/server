@@ -38,7 +38,7 @@ class RoomQueryApiControllerWebMvcTest {
     private FindJoinableRooms findJoinableRooms;
 
     @Test
-    void get은_public_room_snapshot만_반환한다() throws Exception {
+    void get은_room_detail을_반환한다() throws Exception {
         given(getRoom.get(RoomApiTestFixtures.ROOM_CODE)).willReturn(RoomApiTestFixtures.waitingDraftRoom());
 
         var result = mockMvcTester().perform(get("/api/v1/rooms/{code}", RoomApiTestFixtures.ROOM_CODE));
@@ -46,12 +46,19 @@ class RoomQueryApiControllerWebMvcTest {
         result.assertThat().hasStatusOk();
         JsonNode body = objectMapper.readTree(result.getResponse().getContentAsString());
         assertThat(body.at("/resultType").asText()).isEqualTo("SUCCESS");
-        assertThat(body.at("/success/code").asText()).isEqualTo(RoomApiTestFixtures.ROOM_CODE);
+        assertThat(body.at("/success/roomCode").asText()).isEqualTo(RoomApiTestFixtures.ROOM_CODE);
         assertThat(body.at("/success/status").asText()).isEqualTo("WAITING");
         assertThat(body.at("/success/mode").asText()).isEqualTo("DRAFT");
         assertThat(body.at("/success/startReadiness").asText()).isEqualTo("WAITING_FOR_DRAFT_POSITIONS");
+        assertThat(body.at("/success/leaders/0/nickname").asText()).isEqualTo("호스트");
+        assertThat(body.at("/success/playerPool/0/name").asText()).isEqualTo("선수1");
+        assertThat(body.at("/success/draftOrder/slots/0/leaderId").asText()).isEqualTo(RoomApiTestFixtures.HOST_ID);
+        assertThat(body.at("/success/code").isMissingNode()).isTrue();
+        assertThat(body.at("/success/teamLeaders").isMissingNode()).isTrue();
+        assertThat(body.at("/success/players").isMissingNode()).isTrue();
         assertThat(body.at("/success/members").isMissingNode()).isTrue();
-        assertThat(body.at("/success/progress").isMissingNode()).isTrue();
+        assertThat(body.at("/success/auctionProgress").isMissingNode()).isTrue();
+        assertThat(body.at("/success/draftProgress").isMissingNode()).isTrue();
         assertThat(result.getResponse().getContentAsString()).doesNotContain("teamLeaderSession");
     }
 
@@ -65,7 +72,8 @@ class RoomQueryApiControllerWebMvcTest {
         JsonNode body = objectMapper.readTree(result.getResponse().getContentAsString());
         assertThat(body.at("/success/status").asText()).isEqualTo("STARTED");
         assertThat(body.at("/success/startedGameId").asText()).isEqualTo(RoomApiTestFixtures.GAME_ID);
-        assertThat(body.at("/success/progress").isMissingNode()).isTrue();
+        assertThat(body.at("/success/auctionProgress").isMissingNode()).isTrue();
+        assertThat(body.at("/success/draftProgress").isMissingNode()).isTrue();
         assertThat(body.at("/success/members").isMissingNode()).isTrue();
     }
 

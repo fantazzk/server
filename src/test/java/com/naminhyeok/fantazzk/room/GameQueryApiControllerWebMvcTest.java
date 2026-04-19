@@ -34,7 +34,7 @@ class GameQueryApiControllerWebMvcTest {
     private GetGame getGame;
 
     @Test
-    void get은_started_game_snapshot을_반환한다() throws Exception {
+    void get은_game_detail을_반환한다() throws Exception {
         given(getGame.get(UUID.fromString(RoomApiTestFixtures.GAME_ID)))
             .willReturn(RoomApiTestFixtures.inProgressAuctionDetails().game());
 
@@ -43,9 +43,15 @@ class GameQueryApiControllerWebMvcTest {
         result.assertThat().hasStatusOk();
         JsonNode body = objectMapper.readTree(result.getResponse().getContentAsString());
         assertThat(body.at("/resultType").asText()).isEqualTo("SUCCESS");
-        assertThat(body.at("/success/id").asText()).isEqualTo(RoomApiTestFixtures.GAME_ID);
+        assertThat(body.at("/success/gameId").asText()).isEqualTo(RoomApiTestFixtures.GAME_ID);
         assertThat(body.at("/success/status").asText()).isEqualTo("IN_PROGRESS");
-        assertThat(body.at("/success/progress/currentRound").asInt()).isEqualTo(2);
+        assertThat(body.at("/success/playerPool/0/name").asText()).isEqualTo("선수1");
+        assertThat(body.at("/success/roster/0/playerName").asText()).isEqualTo("선수1");
+        assertThat(body.at("/success/auctionProgress/currentRound").asInt()).isEqualTo(2);
+        assertThat(body.at("/success/id").isMissingNode()).isTrue();
+        assertThat(body.at("/success/players").isMissingNode()).isTrue();
+        assertThat(body.at("/success/members").isMissingNode()).isTrue();
+        assertThat(body.at("/success/progress").isMissingNode()).isTrue();
     }
 
     @Test

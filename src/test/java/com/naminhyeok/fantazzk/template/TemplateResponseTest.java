@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 
 class TemplateResponseTest {
     @Test
-    void 경매_템플릿_응답은_핵심_필드와_선수_표시순서를_매핑한다() {
+    void 경매_템플릿_상세_응답은_핵심_필드와_선수_표시순서를_매핑한다() {
         Template template =
             Template.createAuction(
                 "경매전",
@@ -25,7 +25,7 @@ class TemplateResponseTest {
                 )
             );
 
-        TemplateResponse response = TemplateResponse.from(template);
+        TemplateDetailResponse response = TemplateDetailResponse.from(template);
 
         assertThat(response.name()).isEqualTo("경매전");
         assertThat(response.gameType()).isEqualTo(TemplateCatalog.GameType.LEAGUE_OF_LEGENDS);
@@ -43,7 +43,7 @@ class TemplateResponseTest {
     }
 
     @Test
-    void 드래프트_템플릿_응답은_드래프트_설정을_매핑한다() {
+    void 드래프트_템플릿_상세_응답은_드래프트_설정을_매핑한다() {
         Template template =
             Template.createDraft(
                 "드래프트전",
@@ -58,7 +58,7 @@ class TemplateResponseTest {
                 )
             );
 
-        TemplateResponse response = TemplateResponse.from(template);
+        TemplateDetailResponse response = TemplateDetailResponse.from(template);
 
         assertThat(response.gameType()).isEqualTo(TemplateCatalog.GameType.OVERWATCH_2);
         assertThat(response.mode()).isEqualTo(TemplateCatalog.Mode.DRAFT);
@@ -67,5 +67,33 @@ class TemplateResponseTest {
         assertThat(response.minBidUnit()).isNull();
         assertThat(response.positionLimit()).isNull();
         assertThat(response.draftOrderStrategy()).isEqualTo(TemplateCatalog.DraftOrderStrategy.SNAKE);
+    }
+
+    @Test
+    void 템플릿_요약_응답은_목록에_필요한_필드만_노출한다() {
+        Template template =
+            Template.createAuction(
+                "경매전",
+                TemplateCatalog.GameType.LEAGUE_OF_LEGENDS,
+                2,
+                2,
+                300,
+                45,
+                10,
+                1,
+                List.of(
+                    new TemplatePlayer("선수1", "TOP", 0),
+                    new TemplatePlayer("선수2", "JUNGLE", 1)
+                )
+            );
+
+        TemplateSummaryResponse response = TemplateSummaryResponse.from(template);
+
+        assertThat(response.id()).isEqualTo(template.getId().templateId().toString());
+        assertThat(response.name()).isEqualTo("경매전");
+        assertThat(response.gameType()).isEqualTo(TemplateCatalog.GameType.LEAGUE_OF_LEGENDS);
+        assertThat(response.mode()).isEqualTo(TemplateCatalog.Mode.AUCTION);
+        assertThat(response.teamCount()).isEqualTo(2);
+        assertThat(response.teamSize()).isEqualTo(2);
     }
 }

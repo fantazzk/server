@@ -2,11 +2,12 @@ package com.naminhyeok.fantazzk.room;
 
 import java.time.Instant;
 
-record GameSnapshotUpdatedEvent(
+record GameRosterUpdatedEvent(
     String eventType,
     String roomCode,
     long snapshotVersion,
     Instant publishedAt,
-    GameResponse game
-) implements RealtimeSnapshotEvent {
+    String gameId,
+    GameRosterProjection roster
+) implements RoomRealtimeEvent {
 }

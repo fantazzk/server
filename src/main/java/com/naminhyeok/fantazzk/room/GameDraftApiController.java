@@ -29,7 +29,7 @@ class GameDraftApiController {
     @PostMapping("/{gameId}/draft-picks")
     @Operation(
         summary = "드래프트 픽",
-        description = "현재 턴인 팀장이 선수를 선택합니다. 성공 시 최신 `GameResponse` 를 다시 반환하므로 FE는 응답 그대로 화면을 갱신하면 됩니다.",
+        description = "현재 턴인 팀장이 선수를 선택합니다. 성공 시 지명 결과와 다음 드래프트 진행 상태를 반환합니다.",
         security = @SecurityRequirement(name = OpenApiDocumentation.ROOM_ACTION_TOKEN_SCHEME)
     )
     @io.swagger.v3.oas.annotations.responses.ApiResponses({
@@ -58,14 +58,14 @@ class GameDraftApiController {
             )
         )
     })
-    ApiResponse<GameResponse> pickDraft(
+    ApiResponse<DraftPickResponse> pickDraft(
         @Parameter(description = OpenApiDocumentation.GAME_ID_DESCRIPTION, example = "00000000-0000-0000-0000-000000000202")
         @PathVariable UUID gameId,
         @Parameter(description = OpenApiDocumentation.ROOM_ACTION_TOKEN_DESCRIPTION)
         @RequestHeader(value = OpenApiDocumentation.ROOM_ACTION_TOKEN_HEADER, required = false) String actionToken,
         @Valid @RequestBody PickDraftRequest request
     ) {
-        pickDraft.pick(gameId, actionToken, request.playerName());
-        return ApiResponse.success(GameResponse.from(getGame.get(gameId)));
+        RosterMember picked = pickDraft.pick(gameId, actionToken, request.playerName());
+        return ApiResponse.success(DraftPickResponse.from(picked, getGame.get(gameId)));
     }
 }

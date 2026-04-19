@@ -60,8 +60,10 @@ class RoomSessionApiControllerWebMvcTest {
         result.assertThat().hasStatus(HttpStatus.CREATED);
         RoomSessionApiResponse body = readBody(result, RoomSessionApiResponse.class);
         assertThat(body.resultType()).isEqualTo("SUCCESS");
-        assertThat(body.success().room().code()).isEqualTo(RoomApiTestFixtures.ROOM_CODE);
+        assertThat(body.success().room().roomCode()).isEqualTo(RoomApiTestFixtures.ROOM_CODE);
         assertThat(body.success().room().status()).isEqualTo("WAITING");
+        assertThat(body.success().room().leaders()).hasSize(1);
+        assertThat(body.success().room().playerPool()).hasSize(2);
         assertThat(body.success().teamLeaderSession().leaderId()).isEqualTo(RoomApiTestFixtures.HOST_ID);
         assertThat(body.success().teamLeaderSession().role()).isEqualTo(TeamLeaderRole.HOST);
         assertThat(body.success().teamLeaderSession().actionToken()).isEqualTo(RoomApiTestFixtures.HOST_TOKEN);
@@ -111,7 +113,9 @@ class RoomSessionApiControllerWebMvcTest {
         result.assertThat().hasStatusOk();
         RoomSessionApiResponse body = readBody(result, RoomSessionApiResponse.class);
         assertThat(body.resultType()).isEqualTo("SUCCESS");
-        assertThat(body.success().room().code()).isEqualTo(RoomApiTestFixtures.ROOM_CODE);
+        assertThat(body.success().room().roomCode()).isEqualTo(RoomApiTestFixtures.ROOM_CODE);
+        assertThat(body.success().room().leaders()).hasSize(2);
+        assertThat(body.success().room().playerPool()).hasSize(2);
         assertThat(body.success().teamLeaderSession().leaderId()).isEqualTo(RoomApiTestFixtures.GUEST_ID);
         assertThat(body.success().teamLeaderSession().role()).isEqualTo(TeamLeaderRole.LEADER);
         assertThat(body.success().teamLeaderSession().actionToken()).isEqualTo(RoomApiTestFixtures.GUEST_TOKEN);
@@ -146,7 +150,7 @@ class RoomSessionApiControllerWebMvcTest {
         return objectMapper.readValue(result.getResponse().getContentAsString(), bodyType);
     }
 
-    private record RoomSessionApiResponse(String resultType, RoomSessionResponse success, ErrorMessage error) {}
+    private record RoomSessionApiResponse(String resultType, RoomJoinResponse success, ErrorMessage error) {}
 
     private record VoidApiResponse(String resultType, Void success, ErrorMessage error) {}
 }

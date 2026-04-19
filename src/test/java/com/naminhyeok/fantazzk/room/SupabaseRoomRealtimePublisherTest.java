@@ -31,7 +31,7 @@ class SupabaseRoomRealtimePublisherTest {
     private static final String SERVICE_ROLE_KEY = "service-role-key";
 
     @Test
-    void publishAfterCommit는_트랜잭션이_없으면_즉시_broadcast_rest를_호출한다() {
+    void publishRoomMembershipUpdatedAfterCommit는_트랜잭션이_없으면_즉시_broadcast_rest를_호출한다() {
         RestClient.Builder builder = RestClient.builder();
         MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
         Room room = waitingAuctionRoom();
@@ -43,20 +43,20 @@ class SupabaseRoomRealtimePublisherTest {
             .andExpect(header("apikey", SERVICE_ROLE_KEY))
             .andExpect(header(AUTHORIZATION, "Bearer " + SERVICE_ROLE_KEY))
             .andExpect(jsonPath("$.messages[0].topic").value("room:" + room.getCode()))
-            .andExpect(jsonPath("$.messages[0].event").value("snapshot.updated"))
-            .andExpect(jsonPath("$.messages[0].payload.eventType").value("ROOM_SNAPSHOT_UPDATED"))
+            .andExpect(jsonPath("$.messages[0].event").value("room.membership.updated"))
+            .andExpect(jsonPath("$.messages[0].payload.eventType").value("ROOM_MEMBERSHIP_UPDATED"))
             .andExpect(jsonPath("$.messages[0].payload.snapshotVersion").value(room.getVersion()))
             .andExpect(jsonPath("$.messages[0].payload.publishedAt").value(PUBLISHED_AT.toString()))
-            .andExpect(jsonPath("$.messages[0].payload.room.code").value(room.getCode()))
+            .andExpect(jsonPath("$.messages[0].payload.membership.leaders[0].nickname").value("호스트"))
             .andRespond(withSuccess());
 
-        publisher.publishAfterCommit(room);
+        publisher.publishRoomMembershipUpdatedAfterCommit(room);
 
         server.verify();
     }
 
     @Test
-    void publishAfterCommit는_트랜잭션_동기화가_활성화되면_afterCommit에_보낸다() {
+    void publishRoomMembershipUpdatedAfterCommit는_트랜잭션_동기화가_활성화되면_afterCommit에_보낸다() {
         RestClient.Builder builder = RestClient.builder();
         MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
         Room room = waitingAuctionRoom();
@@ -69,7 +69,7 @@ class SupabaseRoomRealtimePublisherTest {
 
         TransactionSynchronizationManager.initSynchronization();
         try {
-            publisher.publishAfterCommit(room);
+            publisher.publishRoomMembershipUpdatedAfterCommit(room);
 
             List<TransactionSynchronization> synchronizations = TransactionSynchronizationManager.getSynchronizations();
             assertThat(synchronizations).hasSize(1);
@@ -86,7 +86,7 @@ class SupabaseRoomRealtimePublisherTest {
     }
 
     @Test
-    void publishAfterCommit는_스냅샷은_등록시점을_유지하고_publishedAt은_실제_전송시각을_쓴다() {
+    void publishRoomMembershipUpdatedAfterCommit는_스냅샷은_등록시점을_유지하고_publishedAt은_실제_전송시각을_쓴다() {
         RestClient.Builder builder = RestClient.builder();
         MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
         Room room = waitingAuctionRoom();
@@ -99,14 +99,14 @@ class SupabaseRoomRealtimePublisherTest {
             .andExpect(method(POST))
             .andExpect(jsonPath("$.messages[0].payload.roomCode").value(room.getCode()))
             .andExpect(jsonPath("$.messages[0].payload.snapshotVersion").value(snapshotVersion))
-            .andExpect(jsonPath("$.messages[0].payload.room.teamLeaders.length()").value(1))
-            .andExpect(jsonPath("$.messages[0].payload.room.teamLeaders[0].nickname").value("호스트"))
+            .andExpect(jsonPath("$.messages[0].payload.membership.leaders.length()").value(1))
+            .andExpect(jsonPath("$.messages[0].payload.membership.leaders[0].nickname").value("호스트"))
             .andExpect(jsonPath("$.messages[0].payload.publishedAt").value(PUBLISHED_AT.plusSeconds(30).toString()))
             .andRespond(withSuccess());
 
         TransactionSynchronizationManager.initSynchronization();
         try {
-            publisher.publishAfterCommit(room);
+            publisher.publishRoomMembershipUpdatedAfterCommit(room);
             room.join(new TeamLeaderId("leader-guest"), "게스트", "guest-token");
             clock.advanceSeconds(30);
 
@@ -125,7 +125,7 @@ class SupabaseRoomRealtimePublisherTest {
     }
 
     @Test
-    void publishAfterCommit는_started_snapshot을_game_payload로_broadcast한다() {
+    void publishGameStartedAfterCommit는_started_payload를_broadcast한다() {
         RestClient.Builder builder = RestClient.builder();
         MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
         StartedRoomSnapshot snapshot = startedAuctionSnapshot();
@@ -134,21 +134,20 @@ class SupabaseRoomRealtimePublisherTest {
 
         server.expect(requestTo(BASE_URL + "/realtime/v1/api/broadcast"))
             .andExpect(method(POST))
-            .andExpect(jsonPath("$.messages[0].payload.eventType").value("GAME_SNAPSHOT_UPDATED"))
+            .andExpect(jsonPath("$.messages[0].event").value("game.started"))
+            .andExpect(jsonPath("$.messages[0].payload.eventType").value("GAME_STARTED"))
             .andExpect(jsonPath("$.messages[0].payload.roomCode").value(snapshot.room().getCode()))
-            .andExpect(jsonPath("$.messages[0].payload.room").doesNotExist())
-            .andExpect(jsonPath("$.messages[0].payload.game.id").value(snapshot.game().getId().gameId().toString()))
-            .andExpect(jsonPath("$.messages[0].payload.game.roomCode").value(snapshot.room().getCode()))
-            .andExpect(jsonPath("$.messages[0].payload.game.progress.currentRound").value(1))
+            .andExpect(jsonPath("$.messages[0].payload.gameId").value(snapshot.game().getId().gameId().toString()))
+            .andExpect(jsonPath("$.messages[0].payload.gameStart.mode").value("AUCTION"))
             .andRespond(withSuccess());
 
-        publisher.publishAfterCommit(snapshot);
+        publisher.publishGameStartedAfterCommit(snapshot);
 
         server.verify();
     }
 
     @Test
-    void publishAfterCommit는_전송_실패를_호출자에게_전파하지_않는다() {
+    void publishRoomMembershipUpdatedAfterCommit는_전송_실패를_호출자에게_전파하지_않는다() {
         RestClient.Builder builder = RestClient.builder();
         MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
         SupabaseRoomRealtimePublisher publisher =
@@ -158,7 +157,7 @@ class SupabaseRoomRealtimePublisherTest {
             .andExpect(method(POST))
             .andRespond(withServerError());
 
-        assertThatCode(() -> publisher.publishAfterCommit(waitingAuctionRoom())).doesNotThrowAnyException();
+        assertThatCode(() -> publisher.publishRoomMembershipUpdatedAfterCommit(waitingAuctionRoom())).doesNotThrowAnyException();
 
         server.verify();
     }
@@ -169,10 +168,10 @@ class SupabaseRoomRealtimePublisherTest {
             context.getEnvironment()
                 .getPropertySources()
                 .addFirst(new MapPropertySource("test", java.util.Map.of("fantazzk.supabase.realtime.enabled", "false")));
-            context.register(빈선택지원설정.class, RoomSnapshotPublisherConfiguration.class);
+            context.register(빈선택지원설정.class, RoomRealtimeEventPublisherConfiguration.class);
             context.refresh();
 
-            assertThat(context.getBean(RoomSnapshotPublisher.class)).isInstanceOf(NoopRoomSnapshotPublisher.class);
+            assertThat(context.getBean(RoomRealtimeEventPublisher.class)).isInstanceOf(NoopRoomRealtimeEventPublisher.class);
         }
     }
 
@@ -194,15 +193,15 @@ class SupabaseRoomRealtimePublisherTest {
                         )
                     )
                 );
-            context.register(빈선택지원설정.class, RoomSnapshotPublisherConfiguration.class);
+            context.register(빈선택지원설정.class, RoomRealtimeEventPublisherConfiguration.class);
             context.refresh();
 
-            assertThat(context.getBean(RoomSnapshotPublisher.class)).isInstanceOf(SupabaseRoomRealtimePublisher.class);
+            assertThat(context.getBean(RoomRealtimeEventPublisher.class)).isInstanceOf(SupabaseRoomRealtimePublisher.class);
         }
     }
 
     @Test
-    void 다른_roomSnapshotPublisher가_있으면_supabase_publisher를_추가로_등록하지_않는다() {
+    void 다른_roomRealtimeEventPublisher가_있으면_supabase_publisher를_추가로_등록하지_않는다() {
         try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext()) {
             context.getEnvironment()
                 .getPropertySources()
@@ -219,11 +218,11 @@ class SupabaseRoomRealtimePublisherTest {
                         )
                     )
                 );
-            context.register(빈선택지원설정.class, 대체퍼블리셔설정.class, RoomSnapshotPublisherConfiguration.class);
+            context.register(빈선택지원설정.class, 대체퍼블리셔설정.class, RoomRealtimeEventPublisherConfiguration.class);
             context.refresh();
 
-            assertThat(context.getBeansOfType(RoomSnapshotPublisher.class)).hasSize(1);
-            assertThat(context.getBean(RoomSnapshotPublisher.class)).isSameAs(context.getBean("otherPublisher"));
+            assertThat(context.getBeansOfType(RoomRealtimeEventPublisher.class)).hasSize(1);
+            assertThat(context.getBean(RoomRealtimeEventPublisher.class)).isSameAs(context.getBean("otherPublisher"));
         }
     }
 
@@ -277,8 +276,8 @@ class SupabaseRoomRealtimePublisherTest {
     @Configuration(proxyBeanMethods = false)
     static class 대체퍼블리셔설정 {
         @Bean
-        RoomSnapshotPublisher otherPublisher() {
-            return new NoopRoomSnapshotPublisher();
+        RoomRealtimeEventPublisher otherPublisher() {
+            return new NoopRoomRealtimeEventPublisher();
         }
     }
 

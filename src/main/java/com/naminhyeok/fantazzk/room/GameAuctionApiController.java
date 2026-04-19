@@ -30,7 +30,7 @@ class GameAuctionApiController {
     @PostMapping("/{gameId}/bids")
     @Operation(
         summary = "경매 입찰",
-        description = "현재 경매 대상 선수에게 입찰합니다. 성공 시 최신 `GameResponse` 를 반환하며, 입찰 시점 기준으로 라운드 마감 시간이 다시 연장됩니다.",
+        description = "현재 경매 대상 선수에게 입찰합니다. 성공 시 입찰 결과와 최신 경매 진행 상태를 반환하며, 입찰 시점 기준으로 라운드 마감 시간이 다시 연장됩니다.",
         security = @SecurityRequirement(name = OpenApiDocumentation.ROOM_ACTION_TOKEN_SCHEME)
     )
     @io.swagger.v3.oas.annotations.responses.ApiResponses({
@@ -67,21 +67,21 @@ class GameAuctionApiController {
             )
         )
     })
-    ApiResponse<GameResponse> placeBid(
+    ApiResponse<BidPlacementResponse> placeBid(
         @Parameter(description = OpenApiDocumentation.GAME_ID_DESCRIPTION, example = "00000000-0000-0000-0000-000000000201")
         @PathVariable UUID gameId,
         @Parameter(description = OpenApiDocumentation.ROOM_ACTION_TOKEN_DESCRIPTION)
         @RequestHeader(value = OpenApiDocumentation.ROOM_ACTION_TOKEN_HEADER, required = false) String actionToken,
         @Valid @RequestBody PlaceBidRequest request
     ) {
-        placeBid.place(gameId, actionToken, request.amount());
-        return ApiResponse.success(GameResponse.from(getGame.get(gameId)));
+        AuctionBid bid = placeBid.place(gameId, actionToken, request.amount());
+        return ApiResponse.success(BidPlacementResponse.from(bid, getGame.get(gameId)));
     }
 
     @PostMapping("/{gameId}/auction/progress")
     @Operation(
         summary = "경매 진행 상태 갱신",
-        description = "현재 시각 기준으로 경매 라운드가 마감되었는지 확인하고, 필요하면 정산 후 최신 `GameResponse` 를 반환합니다. 실시간 연동이 없을 때 FE 폴링 fallback 으로 사용할 수 있습니다."
+        description = "현재 시각 기준으로 경매 라운드가 마감되었는지 확인하고, 필요하면 정산 후 최신 경매 진행 상태와 로스터를 반환합니다. 실시간 연동이 없을 때 FE 폴링 fallback 으로 사용할 수 있습니다."
     )
     @io.swagger.v3.oas.annotations.responses.ApiResponse(
         responseCode = "200",
@@ -91,10 +91,7 @@ class GameAuctionApiController {
             examples = @ExampleObject(value = OpenApiDocumentation.GAME_AUCTION_SUCCESS_EXAMPLE)
         )
     )
-    ApiResponse<GameResponse> progressAuction(
-        @Parameter(description = OpenApiDocumentation.GAME_ID_DESCRIPTION, example = "00000000-0000-0000-0000-000000000201")
-        @PathVariable UUID gameId
-    ) {
-        return ApiResponse.success(GameResponse.from(settleAuction.settleIfDue(gameId)));
+    ApiResponse<AuctionProgressUpdateResponse> progressAuction(@PathVariable UUID gameId) {
+        return ApiResponse.success(AuctionProgressUpdateResponse.from(settleAuction.settleIfDue(gameId)));
     }
 }

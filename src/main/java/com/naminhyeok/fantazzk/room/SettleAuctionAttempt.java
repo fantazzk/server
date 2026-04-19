@@ -16,7 +16,7 @@ class SettleAuctionAttempt {
     private final Games games;
     private final StartedGameContextLoader startedGameContextLoader;
     private final Clock clock;
-    private final RoomSnapshotPublisher roomSnapshotPublisher;
+    private final RoomRealtimeEventPublisher realtimeEventPublisher;
 
     @Transactional
     AuctionSettlement settle(String code) {
@@ -27,7 +27,7 @@ class SettleAuctionAttempt {
             AuctionSettlement settlement = game.settleAuction(now);
             games.save(game);
             Room saved = rooms.saveAndFlush(room);
-            roomSnapshotPublisher.publishAfterCommit(new StartedRoomSnapshot(saved, game));
+            publishAuctionSettlementEvents(saved, game, settlement);
             return settlement;
         } catch (OptimisticLockingFailureException ex) {
             throw CoreException.of(RoomErrorType.ROOM_CONCURRENT_MODIFICATION);
@@ -43,7 +43,7 @@ class SettleAuctionAttempt {
             AuctionSettlement settlement = game.settleAuction(now);
             games.save(game);
             Room saved = rooms.saveAndFlush(context.room());
-            roomSnapshotPublisher.publishAfterCommit(new StartedRoomSnapshot(saved, game));
+            publishAuctionSettlementEvents(saved, game, settlement);
             return settlement;
         } catch (OptimisticLockingFailureException ex) {
             throw CoreException.of(RoomErrorType.ROOM_CONCURRENT_MODIFICATION);
@@ -59,10 +59,10 @@ class SettleAuctionAttempt {
             return room;
         }
 
-        game.settleAuction(now);
+        AuctionSettlement settlement = game.settleAuction(now);
         games.save(game);
         Room saved = rooms.saveAndFlush(room);
-        roomSnapshotPublisher.publishAfterCommit(new StartedRoomSnapshot(saved, game));
+        publishAuctionSettlementEvents(saved, game, settlement);
         return saved;
     }
 
@@ -76,11 +76,19 @@ class SettleAuctionAttempt {
             return loadedGame;
         }
 
-        game.settleAuction(now);
+        AuctionSettlement settlement = game.settleAuction(now);
         games.save(game);
         Room saved = rooms.saveAndFlush(context.room());
-        roomSnapshotPublisher.publishAfterCommit(new StartedRoomSnapshot(saved, game));
+        publishAuctionSettlementEvents(saved, game, settlement);
         return game;
+    }
+
+    private void publishAuctionSettlementEvents(Room room, AuctionGame game, AuctionSettlement settlement) {
+        StartedRoomSnapshot snapshot = new StartedRoomSnapshot(room, game);
+        if (settlement.outcome() == AuctionOutcome.SOLD) {
+            realtimeEventPublisher.publishGameRosterUpdatedAfterCommit(snapshot);
+        }
+        realtimeEventPublisher.publishGameAuctionProgressUpdatedAfterCommit(snapshot);
     }
 
     private AuctionGame loadAuctionGame(Room room) {

@@ -17,7 +17,7 @@ class StartRoom {
     private final Games games;
     private final RoomActionAuthorizer roomActionAuthorizer;
     private final GameFactory gameFactory;
-    private final RoomSnapshotPublisher roomSnapshotPublisher;
+    private final RoomRealtimeEventPublisher realtimeEventPublisher;
     private final Clock clock;
 
     @Transactional
@@ -31,7 +31,7 @@ class StartRoom {
             Game createdGame = gameFactory.create(startedGameSnapshot);
             games.save(createdGame);
             Room saved = rooms.saveAndFlush(loaded);
-            roomSnapshotPublisher.publishAfterCommit(new StartedRoomSnapshot(saved, createdGame));
+            realtimeEventPublisher.publishGameStartedAfterCommit(new StartedRoomSnapshot(saved, createdGame));
             return createdGame;
         } catch (OptimisticLockingFailureException ex) {
             throw CoreException.of(RoomErrorType.ROOM_CONCURRENT_MODIFICATION);

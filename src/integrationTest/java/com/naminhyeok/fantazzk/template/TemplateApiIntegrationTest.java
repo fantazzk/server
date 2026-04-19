@@ -337,7 +337,8 @@ class TemplateApiIntegrationTest {
         assertThat(templates).anySatisfy(template -> {
             assertThat(template.get("name")).isEqualTo("목록용 경매전");
             assertThat(template.get("mode")).isEqualTo("AUCTION");
-            assertThat(((List<?>) template.get("players"))).hasSize(2);
+            assertThat(template.get("teamCount")).isEqualTo(2);
+            assertThat(template).doesNotContainKey("players");
         });
     }
 }

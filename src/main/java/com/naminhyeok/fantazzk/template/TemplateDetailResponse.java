@@ -3,8 +3,8 @@ package com.naminhyeok.fantazzk.template;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 
-@Schema(description = "템플릿 조회 응답")
-record TemplateResponse(
+@Schema(description = "템플릿 상세 조회 응답")
+record TemplateDetailResponse(
     @Schema(description = "템플릿 ID", example = "11111111-1111-1111-1111-111111111111")
     String id,
     @Schema(description = "템플릿 이름", example = "LOL 2인 드래프트")
@@ -30,11 +30,11 @@ record TemplateResponse(
     @Schema(description = "선수 풀 목록")
     List<TemplatePlayerResponse> players
 ) {
-    static TemplateResponse from(Template template) {
+    static TemplateDetailResponse from(Template template) {
         return from(new TemplateDetail(template, template.getPlayers()));
     }
 
-    static TemplateResponse from(TemplateDetail detail) {
-        return TemplateExternalViewMapper.toResponse(detail);
+    static TemplateDetailResponse from(TemplateDetail detail) {
+        return TemplateExternalViewMapper.toDetailResponse(detail);
     }
 }

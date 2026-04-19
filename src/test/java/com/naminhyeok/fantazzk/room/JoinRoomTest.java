@@ -16,7 +16,7 @@ class JoinRoomTest {
             new JoinRoom(
                 new ReorderingRooms(room),
                 () -> new TeamLeaderIdentityIssuer.TeamLeaderIdentity("guest-joined", "guest-action-token"),
-                new NoopRoomSnapshotPublisher()
+                new NoopRoomRealtimeEventPublisher()
             );
 
         RoomSessionResult joined = joinRoom.join(room.getCode(), "게스트");

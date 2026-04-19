@@ -4,9 +4,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 
 @Schema(description = "로비 화면의 source of truth")
-record RoomViewResponse(
+record RoomDetailResponse(
     @Schema(description = "방 코드", example = "ROOM01")
-    String code,
+    String roomCode,
     @Schema(description = "방 상태", example = "WAITING", allowableValues = {"WAITING", "STARTED"})
     String status,
     @Schema(description = "게임 모드", example = "DRAFT", allowableValues = {"DRAFT", "AUCTION"})
@@ -34,14 +34,14 @@ record RoomViewResponse(
     )
     String startedGameId,
     @Schema(description = "드래프트 로비에서만 제공되는 자리 현황", nullable = true)
-    DraftOrderPreviewResponse draftOrderPreview,
+    DraftOrderPreviewResponse draftOrder,
     @Schema(description = "참가한 팀장 목록")
-    List<TeamLeaderResponse> teamLeaders,
+    List<TeamLeaderResponse> leaders,
     @Schema(description = "로비에서 보여줄 선수 풀")
-    List<RoomPlayerResponse> players
+    List<RoomPlayerResponse> playerPool
 ) {
-    static RoomViewResponse from(Room room) {
-        return new RoomViewResponse(
+    static RoomDetailResponse from(Room room) {
+        return new RoomDetailResponse(
             room.getCode(),
             room.getStatus().name(),
             room.getMode().name(),

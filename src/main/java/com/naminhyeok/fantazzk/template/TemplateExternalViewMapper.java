@@ -21,9 +21,20 @@ final class TemplateExternalViewMapper {
         );
     }
 
-    static TemplateResponse toResponse(TemplateDetail detail) {
+    static TemplateSummaryResponse toSummaryResponse(Template template) {
+        return new TemplateSummaryResponse(
+            template.getId().templateId().toString(),
+            template.getName(),
+            template.getGameType(),
+            template.getMode(),
+            template.getTeamCount(),
+            template.getTeamSize()
+        );
+    }
+
+    static TemplateDetailResponse toDetailResponse(TemplateDetail detail) {
         Template template = detail.template();
-        return new TemplateResponse(
+        return new TemplateDetailResponse(
             template.getId().templateId().toString(),
             template.getName(),
             template.getGameType(),

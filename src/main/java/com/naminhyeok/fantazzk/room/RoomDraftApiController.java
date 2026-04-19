@@ -26,7 +26,6 @@ import org.springframework.web.bind.annotation.RestController;
 class RoomDraftApiController {
     private final SelectDraftPosition selectDraftPosition;
     private final ClearDraftPosition clearDraftPosition;
-    private final GetRoom getRoom;
 
     @PutMapping("/{code}/draft-position")
     @Operation(
@@ -56,15 +55,14 @@ class RoomDraftApiController {
             description = "이미 선점된 자리이거나 대기 상태가 아님"
         )
     })
-    ApiResponse<RoomViewResponse> selectDraftPosition(
+    ApiResponse<RoomDraftOrderResponse> selectDraftPosition(
         @Parameter(description = OpenApiDocumentation.ROOM_CODE_DESCRIPTION, example = "ROOM01")
         @PathVariable String code,
         @Parameter(description = OpenApiDocumentation.ROOM_ACTION_TOKEN_DESCRIPTION)
         @RequestHeader(value = OpenApiDocumentation.ROOM_ACTION_TOKEN_HEADER, required = false) String actionToken,
         @Valid @RequestBody SelectDraftPositionRequest request
     ) {
-        selectDraftPosition.select(code, actionToken, request.draftPosition());
-        return ApiResponse.success(RoomViewResponse.from(getRoom.get(code)));
+        return ApiResponse.success(RoomDraftOrderResponse.from(selectDraftPosition.select(code, actionToken, request.draftPosition())));
     }
 
     @DeleteMapping("/{code}/draft-position")
@@ -91,13 +89,12 @@ class RoomDraftApiController {
             )
         )
     })
-    ApiResponse<RoomViewResponse> clearDraftPosition(
+    ApiResponse<RoomDraftOrderResponse> clearDraftPosition(
         @Parameter(description = OpenApiDocumentation.ROOM_CODE_DESCRIPTION, example = "ROOM01")
         @PathVariable String code,
         @Parameter(description = OpenApiDocumentation.ROOM_ACTION_TOKEN_DESCRIPTION)
         @RequestHeader(value = OpenApiDocumentation.ROOM_ACTION_TOKEN_HEADER, required = false) String actionToken
     ) {
-        clearDraftPosition.clear(code, actionToken);
-        return ApiResponse.success(RoomViewResponse.from(getRoom.get(code)));
+        return ApiResponse.success(RoomDraftOrderResponse.from(clearDraftPosition.clear(code, actionToken)));
     }
 }
