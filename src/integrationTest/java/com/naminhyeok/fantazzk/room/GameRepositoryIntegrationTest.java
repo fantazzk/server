@@ -2,6 +2,25 @@ package com.naminhyeok.fantazzk.room;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.naminhyeok.fantazzk.room.domain.AuctionGame;
+import com.naminhyeok.fantazzk.room.domain.DraftGame;
+import com.naminhyeok.fantazzk.room.domain.DraftOrderStrategy;
+import com.naminhyeok.fantazzk.room.domain.Game;
+import com.naminhyeok.fantazzk.room.domain.GameFactory;
+import com.naminhyeok.fantazzk.room.domain.GameId;
+import com.naminhyeok.fantazzk.room.domain.GameParticipant;
+import com.naminhyeok.fantazzk.room.domain.GamePlayer;
+import com.naminhyeok.fantazzk.room.domain.GameRules;
+import com.naminhyeok.fantazzk.room.domain.GameStatus;
+import com.naminhyeok.fantazzk.room.domain.Room;
+import com.naminhyeok.fantazzk.room.domain.RoomMode;
+import com.naminhyeok.fantazzk.room.domain.RoomPlayerId;
+import com.naminhyeok.fantazzk.room.domain.RoomTemplateSpec;
+import com.naminhyeok.fantazzk.room.domain.RosterMember;
+import com.naminhyeok.fantazzk.room.domain.StartedGameSnapshot;
+import com.naminhyeok.fantazzk.room.domain.TeamLeaderId;
+import com.naminhyeok.fantazzk.room.repository.Games;
+import com.naminhyeok.fantazzk.room.repository.Rooms;
 import jakarta.persistence.EntityManager;
 import java.time.Instant;
 import java.util.List;

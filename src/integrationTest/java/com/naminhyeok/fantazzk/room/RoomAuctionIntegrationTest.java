@@ -4,6 +4,24 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.naminhyeok.fantazzk.CoreException;
+import com.naminhyeok.fantazzk.room.application.CreateRoom;
+import com.naminhyeok.fantazzk.room.application.JoinRoom;
+import com.naminhyeok.fantazzk.room.application.PlaceBid;
+import com.naminhyeok.fantazzk.room.application.RoomSessionResult;
+import com.naminhyeok.fantazzk.room.application.SettleAuction;
+import com.naminhyeok.fantazzk.room.application.StartRoom;
+import com.naminhyeok.fantazzk.room.domain.AuctionBid;
+import com.naminhyeok.fantazzk.room.domain.AuctionGame;
+import com.naminhyeok.fantazzk.room.domain.AuctionOutcome;
+import com.naminhyeok.fantazzk.room.domain.AuctionSettlement;
+import com.naminhyeok.fantazzk.room.domain.BidSequence;
+import com.naminhyeok.fantazzk.room.domain.Room;
+import com.naminhyeok.fantazzk.room.domain.RoomStatus;
+import com.naminhyeok.fantazzk.room.domain.RoomTeamLeader;
+import com.naminhyeok.fantazzk.room.domain.RosterMember;
+import com.naminhyeok.fantazzk.room.infrastructure.schedule.RoomAuctionDeadlineScheduler;
+import com.naminhyeok.fantazzk.room.repository.Games;
+import com.naminhyeok.fantazzk.room.repository.Rooms;
 import com.naminhyeok.fantazzk.template.TemplateFixture;
 import java.time.Clock;
 import java.time.Duration;
@@ -21,14 +39,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.Trigger;
 import org.springframework.test.context.TestConstructor;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @SpringBootTest(
     properties = {

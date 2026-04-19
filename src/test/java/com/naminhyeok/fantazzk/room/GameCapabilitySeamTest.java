@@ -3,6 +3,12 @@ package com.naminhyeok.fantazzk.room;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.naminhyeok.fantazzk.room.domain.DraftOrderStrategy;
+import com.naminhyeok.fantazzk.room.domain.GameParticipant;
+import com.naminhyeok.fantazzk.room.domain.GameRules;
+import com.naminhyeok.fantazzk.room.domain.RoomMode;
+import com.naminhyeok.fantazzk.room.domain.RoomStateInvalidException;
+import com.naminhyeok.fantazzk.room.domain.TeamLeaderId;
 import org.junit.jupiter.api.Test;
 
 class GameCapabilitySeamTest {

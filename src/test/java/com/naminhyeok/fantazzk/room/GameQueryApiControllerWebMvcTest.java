@@ -7,6 +7,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import com.naminhyeok.fantazzk.CoreException;
 import com.naminhyeok.fantazzk.ErrorMessage;
 import com.naminhyeok.fantazzk.GlobalExceptionHandler;
+import com.naminhyeok.fantazzk.room.domain.RoomErrorType;
+import com.naminhyeok.fantazzk.room.query.GetGame;
+import com.naminhyeok.fantazzk.room.web.GameQueryApiController;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

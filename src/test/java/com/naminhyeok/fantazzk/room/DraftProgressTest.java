@@ -3,6 +3,8 @@ package com.naminhyeok.fantazzk.room;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.naminhyeok.fantazzk.room.domain.DraftOrderStrategy;
+import com.naminhyeok.fantazzk.room.domain.DraftProgress;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 

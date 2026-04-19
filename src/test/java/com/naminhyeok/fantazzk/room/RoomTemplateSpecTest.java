@@ -3,6 +3,10 @@ package com.naminhyeok.fantazzk.room;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.naminhyeok.fantazzk.room.domain.DraftOrderStrategy;
+import com.naminhyeok.fantazzk.room.domain.RoomMode;
+import com.naminhyeok.fantazzk.room.domain.RoomPlayerId;
+import com.naminhyeok.fantazzk.room.domain.RoomTemplateSpec;
 import com.naminhyeok.fantazzk.template.TemplateCatalog;
 import java.util.List;
 import java.util.UUID;

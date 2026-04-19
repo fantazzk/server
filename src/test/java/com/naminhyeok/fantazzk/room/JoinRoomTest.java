@@ -2,6 +2,15 @@ package com.naminhyeok.fantazzk.room;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.naminhyeok.fantazzk.room.application.JoinRoom;
+import com.naminhyeok.fantazzk.room.application.RoomSessionResult;
+import com.naminhyeok.fantazzk.room.application.TeamLeaderIdentityIssuer;
+import com.naminhyeok.fantazzk.room.domain.Room;
+import com.naminhyeok.fantazzk.room.domain.RoomId;
+import com.naminhyeok.fantazzk.room.domain.RoomTeamLeader;
+import com.naminhyeok.fantazzk.room.domain.TeamLeaderId;
+import com.naminhyeok.fantazzk.room.infrastructure.realtime.NoopRoomRealtimeEventPublisher;
+import com.naminhyeok.fantazzk.room.repository.Rooms;
 import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.List;

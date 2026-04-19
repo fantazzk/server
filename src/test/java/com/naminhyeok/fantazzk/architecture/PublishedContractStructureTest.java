@@ -3,6 +3,20 @@ package com.naminhyeok.fantazzk.architecture;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.naminhyeok.fantazzk.room.application.CreateRoom;
+import com.naminhyeok.fantazzk.room.domain.AuctionSettled;
+import com.naminhyeok.fantazzk.room.domain.BidPlaced;
+import com.naminhyeok.fantazzk.room.domain.Room;
+import com.naminhyeok.fantazzk.room.domain.RoomSchedulingEvent;
+import com.naminhyeok.fantazzk.room.domain.RoomStarted;
+import com.naminhyeok.fantazzk.room.domain.TeamLeaderId;
+import com.naminhyeok.fantazzk.room.infrastructure.realtime.SupabaseRoomRealtimePublisher;
+import com.naminhyeok.fantazzk.room.query.GetRoom;
+import com.naminhyeok.fantazzk.room.repository.Rooms;
+import com.naminhyeok.fantazzk.room.web.RoomDraftApiController;
+import com.naminhyeok.fantazzk.room.web.RoomQueryApiController;
+import com.naminhyeok.fantazzk.room.web.RoomSessionApiController;
+import com.naminhyeok.fantazzk.room.web.RoomStartApiController;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.time.Instant;
@@ -10,19 +24,26 @@ import org.junit.jupiter.api.Test;
 
 class PublishedContractStructureTest {
     @Test
-    void room_루트_계약은_public이고_대표_구현은_package_private이다() throws Exception {
+    void room_모듈은_역할별_내부_패키지로_구성한다() throws Exception {
         assertClassMissing("com.naminhyeok.fantazzk.room.RoomManagement");
         assertClassMissing("com.naminhyeok.fantazzk.room.RoomView");
         assertClassMissing("com.naminhyeok.fantazzk.room.TeamLeaderView");
         assertClassMissing("com.naminhyeok.fantazzk.room.RoomApiController");
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.RoomQueryApiController")).isFalse();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.RoomSessionApiController")).isFalse();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.RoomStartApiController")).isFalse();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.RoomDraftApiController")).isFalse();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.CreateRoom")).isFalse();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.GetRoom")).isFalse();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.Room")).isFalse();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.Rooms")).isFalse();
+        assertClassMissing("com.naminhyeok.fantazzk.room.RoomQueryApiController");
+        assertClassMissing("com.naminhyeok.fantazzk.room.RoomSessionApiController");
+        assertClassMissing("com.naminhyeok.fantazzk.room.RoomStartApiController");
+        assertClassMissing("com.naminhyeok.fantazzk.room.RoomDraftApiController");
+        assertClassMissing("com.naminhyeok.fantazzk.room.CreateRoom");
+        assertClassMissing("com.naminhyeok.fantazzk.room.GetRoom");
+        assertClassMissing("com.naminhyeok.fantazzk.room.Room");
+        assertClassMissing("com.naminhyeok.fantazzk.room.Rooms");
+
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.domain.Room")).isTrue();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.application.CreateRoom")).isTrue();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.query.GetRoom")).isTrue();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.repository.Rooms")).isTrue();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.web.RoomQueryApiController")).isTrue();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.infrastructure.realtime.SupabaseRoomRealtimePublisher")).isTrue();
     }
 
     @Test
@@ -44,13 +65,7 @@ class PublishedContractStructureTest {
     }
 
     @Test
-    void legacy_layer_packages_are_empty() {
-        assertClassMissing("com.naminhyeok.fantazzk.room.application.CreateRoom");
-        assertClassMissing("com.naminhyeok.fantazzk.room.domain.Room");
-        assertClassMissing("com.naminhyeok.fantazzk.room.repository.Rooms");
-        assertClassMissing("com.naminhyeok.fantazzk.room.api.RoomApiController");
-        assertClassMissing("com.naminhyeok.fantazzk.room.GetRoomDetails");
-        assertClassMissing("com.naminhyeok.fantazzk.room.RoomDetails");
+    void template은_불필요한_레이어_패키지를_만들지_않는다() {
         assertClassMissing("com.naminhyeok.fantazzk.template.application.CreateTemplate");
         assertClassMissing("com.naminhyeok.fantazzk.template.domain.Template");
         assertClassMissing("com.naminhyeok.fantazzk.template.repository.Templates");
@@ -73,15 +88,15 @@ class PublishedContractStructureTest {
         assertClassMissing("com.naminhyeok.fantazzk.room.event.RoomStarted");
         assertClassMissing("com.naminhyeok.fantazzk.room.event.BidPlaced");
         assertClassMissing("com.naminhyeok.fantazzk.room.event.AuctionSettled");
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.RoomSchedulingEvent")).isFalse();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.RoomStarted")).isFalse();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.BidPlaced")).isFalse();
-        assertThat(isPublic("com.naminhyeok.fantazzk.room.AuctionSettled")).isFalse();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.domain.RoomSchedulingEvent")).isTrue();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.domain.RoomStarted")).isTrue();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.domain.BidPlaced")).isTrue();
+        assertThat(isPublic("com.naminhyeok.fantazzk.room.domain.AuctionSettled")).isTrue();
     }
 
     @Test
     void room_aggregate는_준비_행위만_가지고_started_game_live_play를_직접_소유하지_않는다() throws Exception {
-        Class<?> teamLeaderId = Class.forName("com.naminhyeok.fantazzk.room.TeamLeaderId");
+        Class<?> teamLeaderId = Class.forName("com.naminhyeok.fantazzk.room.domain.TeamLeaderId");
 
         assertThat(hasDeclaredMethod("start", teamLeaderId)).isFalse();
         assertThat(hasDeclaredMethod("placeBid", teamLeaderId, int.class)).isFalse();
@@ -102,7 +117,7 @@ class PublishedContractStructureTest {
 
     private boolean hasDeclaredMethod(String name, Class<?>... parameterTypes) {
         try {
-            Method ignored = Class.forName("com.naminhyeok.fantazzk.room.Room").getDeclaredMethod(name, parameterTypes);
+            Method ignored = Class.forName("com.naminhyeok.fantazzk.room.domain.Room").getDeclaredMethod(name, parameterTypes);
             return true;
         } catch (NoSuchMethodException ex) {
             return false;

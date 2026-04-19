@@ -2,8 +2,17 @@ package com.naminhyeok.fantazzk.room;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.time.Instant;
+import com.naminhyeok.fantazzk.room.domain.AuctionOutcome;
+import com.naminhyeok.fantazzk.room.domain.AuctionSettled;
+import com.naminhyeok.fantazzk.room.domain.BidPlaced;
+import com.naminhyeok.fantazzk.room.domain.Game;
+import com.naminhyeok.fantazzk.room.domain.GameId;
+import com.naminhyeok.fantazzk.room.domain.RoomStarted;
+import com.naminhyeok.fantazzk.room.infrastructure.schedule.RoomAuctionDeadlineScheduler;
+import com.naminhyeok.fantazzk.room.infrastructure.schedule.RoomAuctionSchedulingPolicy;
+import com.naminhyeok.fantazzk.room.repository.Games;
 import java.time.Clock;
+import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.List;
 import org.junit.jupiter.api.Test;

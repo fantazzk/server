@@ -4,6 +4,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.naminhyeok.fantazzk.CoreException;
+import com.naminhyeok.fantazzk.room.application.CreateRoom;
+import com.naminhyeok.fantazzk.room.application.CreateRoomAttempt;
+import com.naminhyeok.fantazzk.room.application.RoomCodeGenerator;
+import com.naminhyeok.fantazzk.room.domain.Room;
+import com.naminhyeok.fantazzk.room.domain.RoomErrorType;
+import com.naminhyeok.fantazzk.room.domain.RoomMode;
+import com.naminhyeok.fantazzk.room.domain.RoomPlayerId;
+import com.naminhyeok.fantazzk.room.domain.RoomTemplateSpec;
+import com.naminhyeok.fantazzk.room.domain.TeamLeaderId;
+import com.naminhyeok.fantazzk.room.repository.Rooms;
 import com.naminhyeok.fantazzk.template.TemplateFixture;
 import java.util.ArrayDeque;
 import java.util.Deque;

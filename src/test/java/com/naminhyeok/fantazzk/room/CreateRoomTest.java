@@ -4,6 +4,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.naminhyeok.fantazzk.CoreException;
+import com.naminhyeok.fantazzk.room.application.CreateRoom;
+import com.naminhyeok.fantazzk.room.application.CreateRoomAttempt;
+import com.naminhyeok.fantazzk.room.application.RoomCodeGenerator;
+import com.naminhyeok.fantazzk.room.application.RoomSessionResult;
+import com.naminhyeok.fantazzk.room.application.TeamLeaderIdentityIssuer;
+import com.naminhyeok.fantazzk.room.domain.Room;
+import com.naminhyeok.fantazzk.room.domain.RoomErrorType;
+import com.naminhyeok.fantazzk.room.domain.RoomId;
+import com.naminhyeok.fantazzk.room.domain.RoomPlayer;
+import com.naminhyeok.fantazzk.room.domain.RoomPlayerId;
+import com.naminhyeok.fantazzk.room.domain.TeamLeaderId;
+import com.naminhyeok.fantazzk.room.repository.Rooms;
 import com.naminhyeok.fantazzk.template.TemplateCatalog;
 import java.time.Clock;
 import java.time.Instant;
@@ -14,8 +26,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.UUID;
-import org.junit.jupiter.api.Test;
 import org.hibernate.exception.ConstraintViolationException;
+import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataIntegrityViolationException;
 
 class CreateRoomTest {

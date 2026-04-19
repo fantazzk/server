@@ -2,6 +2,10 @@ package com.naminhyeok.fantazzk.room;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.naminhyeok.fantazzk.room.domain.Room;
+import com.naminhyeok.fantazzk.room.domain.RoomTeamLeader;
+import com.naminhyeok.fantazzk.room.domain.TeamLeaderRole;
+import com.naminhyeok.fantazzk.room.web.TeamLeaderSessionResponse;
 import org.junit.jupiter.api.Test;
 
 class TeamLeaderSessionResponseTest {
@@ -9,7 +13,7 @@ class TeamLeaderSessionResponseTest {
     void role_필드는_enum_타입이다() {
         Class<?> roleType = TeamLeaderSessionResponse.class.getRecordComponents()[1].getType();
 
-        assertThat(roleType.getName()).isEqualTo("com.naminhyeok.fantazzk.room.TeamLeaderRole");
+        assertThat(roleType.getName()).isEqualTo("com.naminhyeok.fantazzk.room.domain.TeamLeaderRole");
         assertThat(roleType.isEnum()).isTrue();
     }
 

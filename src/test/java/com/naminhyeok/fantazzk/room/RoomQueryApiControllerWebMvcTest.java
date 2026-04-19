@@ -7,6 +7,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import com.naminhyeok.fantazzk.CoreException;
 import com.naminhyeok.fantazzk.ErrorMessage;
 import com.naminhyeok.fantazzk.GlobalExceptionHandler;
+import com.naminhyeok.fantazzk.room.domain.Room;
+import com.naminhyeok.fantazzk.room.domain.RoomErrorType;
+import com.naminhyeok.fantazzk.room.query.FindJoinableRooms;
+import com.naminhyeok.fantazzk.room.query.GetRoom;
+import com.naminhyeok.fantazzk.room.query.JoinableRoomResponse;
+import com.naminhyeok.fantazzk.room.web.RoomQueryApiController;
 import java.time.Instant;
 import java.util.List;
 import org.junit.jupiter.api.Test;

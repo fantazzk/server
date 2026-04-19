@@ -2,6 +2,14 @@ package com.naminhyeok.fantazzk.room;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.naminhyeok.fantazzk.room.domain.Room;
+import com.naminhyeok.fantazzk.room.domain.RoomMode;
+import com.naminhyeok.fantazzk.room.domain.RoomPlayerId;
+import com.naminhyeok.fantazzk.room.domain.RoomTemplateSpec;
+import com.naminhyeok.fantazzk.room.domain.TeamLeaderId;
+import com.naminhyeok.fantazzk.room.query.FindJoinableRooms;
+import com.naminhyeok.fantazzk.room.repository.Rooms;
+import com.naminhyeok.fantazzk.room.query.JoinableRoomResponse;
 import java.time.Instant;
 import java.util.List;
 import lombok.RequiredArgsConstructor;

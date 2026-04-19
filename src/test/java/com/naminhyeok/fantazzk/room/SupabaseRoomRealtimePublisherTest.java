@@ -11,6 +11,19 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
+import com.naminhyeok.fantazzk.room.application.RoomRealtimeEventPublisher;
+import com.naminhyeok.fantazzk.room.domain.GameFactory;
+import com.naminhyeok.fantazzk.room.domain.GameId;
+import com.naminhyeok.fantazzk.room.domain.Room;
+import com.naminhyeok.fantazzk.room.domain.RoomMode;
+import com.naminhyeok.fantazzk.room.domain.RoomPlayerId;
+import com.naminhyeok.fantazzk.room.domain.RoomTemplateSpec;
+import com.naminhyeok.fantazzk.room.domain.StartedGameSnapshot;
+import com.naminhyeok.fantazzk.room.domain.StartedRoomSnapshot;
+import com.naminhyeok.fantazzk.room.domain.TeamLeaderId;
+import com.naminhyeok.fantazzk.room.infrastructure.realtime.NoopRoomRealtimeEventPublisher;
+import com.naminhyeok.fantazzk.room.infrastructure.realtime.RoomRealtimeEventPublisherConfiguration;
+import com.naminhyeok.fantazzk.room.infrastructure.realtime.SupabaseRoomRealtimePublisher;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;

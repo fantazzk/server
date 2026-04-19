@@ -3,6 +3,17 @@ package com.naminhyeok.fantazzk.room;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.naminhyeok.fantazzk.room.domain.DraftOrderStrategy;
+import com.naminhyeok.fantazzk.room.domain.GameId;
+import com.naminhyeok.fantazzk.room.domain.Room;
+import com.naminhyeok.fantazzk.room.domain.RoomMode;
+import com.naminhyeok.fantazzk.room.domain.RoomPlayer;
+import com.naminhyeok.fantazzk.room.domain.RoomPlayerId;
+import com.naminhyeok.fantazzk.room.domain.RoomStatus;
+import com.naminhyeok.fantazzk.room.domain.RoomTeamLeader;
+import com.naminhyeok.fantazzk.room.domain.RoomTemplateSpec;
+import com.naminhyeok.fantazzk.room.domain.TeamLeaderId;
+import com.naminhyeok.fantazzk.room.repository.Rooms;
 import jakarta.persistence.EntityManager;
 import java.time.Instant;
 import java.util.List;
