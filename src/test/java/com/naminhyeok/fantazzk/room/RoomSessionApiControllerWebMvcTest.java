@@ -63,7 +63,7 @@ class RoomSessionApiControllerWebMvcTest {
         assertThat(body.success().room().code()).isEqualTo(RoomApiTestFixtures.ROOM_CODE);
         assertThat(body.success().room().status()).isEqualTo("WAITING");
         assertThat(body.success().teamLeaderSession().leaderId()).isEqualTo(RoomApiTestFixtures.HOST_ID);
-        assertThat(body.success().teamLeaderSession().role()).isEqualTo("HOST");
+        assertThat(body.success().teamLeaderSession().role()).isEqualTo(TeamLeaderRole.HOST);
         assertThat(body.success().teamLeaderSession().actionToken()).isEqualTo(RoomApiTestFixtures.HOST_TOKEN);
     }
 
@@ -113,7 +113,7 @@ class RoomSessionApiControllerWebMvcTest {
         assertThat(body.resultType()).isEqualTo("SUCCESS");
         assertThat(body.success().room().code()).isEqualTo(RoomApiTestFixtures.ROOM_CODE);
         assertThat(body.success().teamLeaderSession().leaderId()).isEqualTo(RoomApiTestFixtures.GUEST_ID);
-        assertThat(body.success().teamLeaderSession().role()).isEqualTo("LEADER");
+        assertThat(body.success().teamLeaderSession().role()).isEqualTo(TeamLeaderRole.LEADER);
         assertThat(body.success().teamLeaderSession().actionToken()).isEqualTo(RoomApiTestFixtures.GUEST_TOKEN);
     }
 
