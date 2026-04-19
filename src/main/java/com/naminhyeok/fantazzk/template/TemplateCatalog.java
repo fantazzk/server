@@ -17,11 +17,11 @@ public interface TemplateCatalog {
             this.supportedPositions = supportedPositions;
         }
 
-        boolean supportsPosition(String position) {
+        public boolean supportsPosition(String position) {
             return supportedPositions.contains(normalize(position));
         }
 
-        void validatePosition(String position) {
+        public void validatePosition(String position) {
             String normalizedPosition = normalize(position);
 
             if (!supportsPosition(normalizedPosition)) {
