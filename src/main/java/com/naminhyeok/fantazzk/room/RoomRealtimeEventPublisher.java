@@ -1,15 +1,7 @@
 package com.naminhyeok.fantazzk.room;
 
 interface RoomRealtimeEventPublisher {
-    void publishRoomMembershipUpdatedAfterCommit(Room room);
+    void publishRoomUpdatedAfterCommit(Room room);
 
-    void publishRoomDraftOrderUpdatedAfterCommit(Room room);
-
-    void publishGameStartedAfterCommit(StartedRoomSnapshot snapshot);
-
-    void publishGameAuctionProgressUpdatedAfterCommit(StartedRoomSnapshot snapshot);
-
-    void publishGameDraftProgressUpdatedAfterCommit(StartedRoomSnapshot snapshot);
-
-    void publishGameRosterUpdatedAfterCommit(StartedRoomSnapshot snapshot);
+    void publishGameUpdatedAfterCommit(StartedRoomSnapshot snapshot);
 }

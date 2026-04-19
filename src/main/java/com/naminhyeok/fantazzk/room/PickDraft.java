@@ -26,8 +26,7 @@ class PickDraft {
             games.save(game);
             Room saved = rooms.saveAndFlush(room);
             StartedRoomSnapshot snapshot = new StartedRoomSnapshot(saved, game);
-            realtimeEventPublisher.publishGameRosterUpdatedAfterCommit(snapshot);
-            realtimeEventPublisher.publishGameDraftProgressUpdatedAfterCommit(snapshot);
+            realtimeEventPublisher.publishGameUpdatedAfterCommit(snapshot);
             return member;
         } catch (OptimisticLockingFailureException ex) {
             throw CoreException.of(RoomErrorType.ROOM_CONCURRENT_MODIFICATION);
@@ -43,8 +42,7 @@ class PickDraft {
             games.save(draftGame);
             Room saved = rooms.saveAndFlush(action.room());
             StartedRoomSnapshot snapshot = new StartedRoomSnapshot(saved, draftGame);
-            realtimeEventPublisher.publishGameRosterUpdatedAfterCommit(snapshot);
-            realtimeEventPublisher.publishGameDraftProgressUpdatedAfterCommit(snapshot);
+            realtimeEventPublisher.publishGameUpdatedAfterCommit(snapshot);
             return member;
         } catch (OptimisticLockingFailureException ex) {
             throw CoreException.of(RoomErrorType.ROOM_CONCURRENT_MODIFICATION);

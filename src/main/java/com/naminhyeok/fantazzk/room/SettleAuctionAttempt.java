@@ -85,10 +85,7 @@ class SettleAuctionAttempt {
 
     private void publishAuctionSettlementEvents(Room room, AuctionGame game, AuctionSettlement settlement) {
         StartedRoomSnapshot snapshot = new StartedRoomSnapshot(room, game);
-        if (settlement.outcome() == AuctionOutcome.SOLD) {
-            realtimeEventPublisher.publishGameRosterUpdatedAfterCommit(snapshot);
-        }
-        realtimeEventPublisher.publishGameAuctionProgressUpdatedAfterCommit(snapshot);
+        realtimeEventPublisher.publishGameUpdatedAfterCommit(snapshot);
     }
 
     private AuctionGame loadAuctionGame(Room room) {

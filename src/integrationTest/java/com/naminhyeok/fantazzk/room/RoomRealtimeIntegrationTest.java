@@ -58,7 +58,7 @@ class RoomRealtimeIntegrationTest {
     }
 
     @Test
-    void join이_커밋되면_room_membership_updated를_정확히_하나_publish한다() {
+    void join이_커밋되면_room_updated를_정확히_하나_publish한다() {
         var template =
             templateFixture.createAuctionTemplateId(
                 "실시간 방",
@@ -77,12 +77,12 @@ class RoomRealtimeIntegrationTest {
         Room reloaded = rooms.findByCode(created.getCode()).orElseThrow();
 
         assertThat(recordingRoomRealtimeEventPublisher.publishedEvents()).singleElement()
-            .isInstanceOfSatisfying(RoomMembershipUpdatedEvent.class, event -> {
+            .isInstanceOfSatisfying(RoomUpdatedEvent.class, event -> {
                 assertThat(event.roomCode()).isEqualTo(created.getCode());
                 assertThat(event.snapshotVersion()).isEqualTo(reloaded.getVersion());
                 assertThat(event.publishedAt()).isEqualTo(PUBLISHED_AT);
-                assertThat(event.membership().status()).isEqualTo(RoomStatus.WAITING.name());
-                assertThat(event.membership().leaders()).extracting(TeamLeaderResponse::nickname)
+                assertThat(event.room().status()).isEqualTo(RoomStatus.WAITING.name());
+                assertThat(event.room().leaders()).extracting(TeamLeaderResponse::nickname)
                     .containsExactly("호스트", "게스트");
             });
     }
@@ -122,7 +122,7 @@ class RoomRealtimeIntegrationTest {
     }
 
     @Test
-    void 경매_입찰과_정산_publish는_auction_progress와_roster_update를_구분한다() {
+    void 경매_입찰과_정산_publish는_game_updated를_사용한다() {
         var template =
             templateFixture.createAuctionTemplateId(
                 "실시간 경매",
@@ -146,25 +146,25 @@ class RoomRealtimeIntegrationTest {
         Room reloaded = rooms.findByCode(created.room().getCode()).orElseThrow();
         AuctionGame game = (AuctionGame) games.findById(reloaded.getStartedGameId()).orElseThrow();
 
-        assertThat(recordingRoomRealtimeEventPublisher.publishedEvents())
-            .filteredOn(GameRosterUpdatedEvent.class::isInstance)
-            .singleElement()
-            .isInstanceOfSatisfying(GameRosterUpdatedEvent.class, event -> {
+        assertThat(recordingRoomRealtimeEventPublisher.publishedEvents()).hasSize(2);
+        GameUpdatedEvent firstEvent = (GameUpdatedEvent) recordingRoomRealtimeEventPublisher.publishedEvents().get(0);
+        GameUpdatedEvent secondEvent = (GameUpdatedEvent) recordingRoomRealtimeEventPublisher.publishedEvents().get(1);
+        assertThat(firstEvent.snapshotVersion()).isLessThan(secondEvent.snapshotVersion());
+        assertThat(firstEvent.game().roster()).isEmpty();
+        assertThat(firstEvent.game().auctionProgress().highestBidAmount()).isEqualTo(150);
+        assertThat(secondEvent)
+            .isInstanceOfSatisfying(GameUpdatedEvent.class, event -> {
                 assertThat(event.snapshotVersion()).isEqualTo(reloaded.getVersion() + game.getVersion());
-                assertThat(event.roster().roster())
+                assertThat(event.game().roster())
                     .extracting(GameMemberResponse::teamLeaderId, GameMemberResponse::playerName)
                     .containsExactly(org.assertj.core.groups.Tuple.tuple(guest.getId().value(), "선수1"));
-                assertThat(event.roster().participants())
+                assertThat(event.game().participants())
                     .extracting(GameParticipantResponse::teamLeaderId, GameParticipantResponse::remainingBudget)
                     .containsExactly(
                         org.assertj.core.groups.Tuple.tuple(created.leader().getId().value(), 300),
                         org.assertj.core.groups.Tuple.tuple(guest.getId().value(), 150)
                     );
-            });
-        assertThat(recordingRoomRealtimeEventPublisher.publishedEvents()).last()
-            .isInstanceOfSatisfying(GameAuctionProgressUpdatedEvent.class, event -> {
-                assertThat(event.snapshotVersion()).isEqualTo(reloaded.getVersion() + game.getVersion());
-                assertThat(event.auctionProgress().currentRound()).isEqualTo(2);
+                assertThat(event.game().auctionProgress().currentRound()).isEqualTo(2);
             });
     }
 
@@ -194,7 +194,7 @@ class RoomRealtimeIntegrationTest {
     }
 
     @Test
-    void 드래프트_start_publish는_game_started를_사용한다() {
+    void 드래프트_start_publish는_room_updated와_game_updated를_사용한다() {
         var template =
             templateFixture.createDraftTemplateId(
                 "실시간 드래프트 시작",
@@ -215,17 +215,24 @@ class RoomRealtimeIntegrationTest {
         Room reloaded = rooms.findByCode(created.room().getCode()).orElseThrow();
         DraftGame game = (DraftGame) games.findById(reloaded.getStartedGameId()).orElseThrow();
 
-        assertThat(recordingRoomRealtimeEventPublisher.publishedEvents()).singleElement()
-            .isInstanceOfSatisfying(GameStartedEvent.class, event -> {
+        assertThat(recordingRoomRealtimeEventPublisher.publishedEvents()).hasSize(2);
+        assertThat(recordingRoomRealtimeEventPublisher.publishedEvents().get(0))
+            .isInstanceOfSatisfying(RoomUpdatedEvent.class, event -> {
+                assertThat(event.snapshotVersion()).isEqualTo(reloaded.getVersion());
+                assertThat(event.room().startedGameId()).isEqualTo(game.getId().gameId().toString());
+                assertThat(event.room().status()).isEqualTo(RoomStatus.STARTED.name());
+            });
+        assertThat(recordingRoomRealtimeEventPublisher.publishedEvents().get(1))
+            .isInstanceOfSatisfying(GameUpdatedEvent.class, event -> {
                 assertThat(event.snapshotVersion()).isEqualTo(reloaded.getVersion() + game.getVersion());
-                assertThat(event.gameId()).isEqualTo(game.getId().gameId().toString());
-                assertThat(event.gameStart().status()).isEqualTo(GameStatus.IN_PROGRESS.name());
-                assertThat(event.gameStart().mode()).isEqualTo(RoomMode.DRAFT.name());
+                assertThat(event.game().gameId()).isEqualTo(game.getId().gameId().toString());
+                assertThat(event.game().status()).isEqualTo(GameStatus.IN_PROGRESS.name());
+                assertThat(event.game().mode()).isEqualTo(RoomMode.DRAFT.name());
             });
     }
 
     @Test
-    void 드래프트_픽_publish는_draft_game_live_state를_반영한다() {
+    void 드래프트_픽_publish는_game_updated를_반영한다() {
         var template =
             templateFixture.createDraftTemplateId(
                 "실시간 드래프트 픽",
@@ -247,22 +254,16 @@ class RoomRealtimeIntegrationTest {
         Room reloaded = rooms.findByCode(created.room().getCode()).orElseThrow();
         DraftGame game = (DraftGame) games.findById(reloaded.getStartedGameId()).orElseThrow();
 
-        assertThat(recordingRoomRealtimeEventPublisher.publishedEvents())
-            .filteredOn(GameRosterUpdatedEvent.class::isInstance)
-            .singleElement()
-            .isInstanceOfSatisfying(GameRosterUpdatedEvent.class, event -> {
+        assertThat(recordingRoomRealtimeEventPublisher.publishedEvents()).singleElement()
+            .isInstanceOfSatisfying(GameUpdatedEvent.class, event -> {
                 assertThat(event.snapshotVersion()).isEqualTo(reloaded.getVersion() + game.getVersion());
-                assertThat(event.roster().roster())
+                assertThat(event.game().roster())
                     .extracting(GameMemberResponse::teamLeaderId, GameMemberResponse::playerName)
                     .containsExactly(org.assertj.core.groups.Tuple.tuple(created.leader().getId().value(), "선수1"));
-            });
-        assertThat(recordingRoomRealtimeEventPublisher.publishedEvents())
-            .filteredOn(GameDraftProgressUpdatedEvent.class::isInstance)
-            .singleElement()
-            .isInstanceOfSatisfying(GameDraftProgressUpdatedEvent.class, event -> {
-                assertThat(event.snapshotVersion()).isEqualTo(reloaded.getVersion() + game.getVersion());
-                assertThat(event.draftProgress().currentTurnIndex()).isEqualTo(1);
-                assertThat(event.draftProgress().currentLeaderId()).isEqualTo(guest.getId().value());
+                assertThat(event.game().draftProgress()).satisfies(progress -> {
+                    assertThat(progress.currentTurnIndex()).isEqualTo(1);
+                    assertThat(progress.currentLeaderId()).isEqualTo(guest.getId().value());
+                });
             });
     }
 
@@ -347,33 +348,13 @@ class RoomRealtimeIntegrationTest {
         }
 
         @Override
-        public void publishRoomMembershipUpdatedAfterCommit(Room room) {
-            publish(RoomRealtimeEventFactory.roomMembershipUpdated(room, Instant.now(clock)));
+        public void publishRoomUpdatedAfterCommit(Room room) {
+            publish(RoomRealtimeEventFactory.roomUpdated(room, Instant.now(clock)));
         }
 
         @Override
-        public void publishRoomDraftOrderUpdatedAfterCommit(Room room) {
-            publish(RoomRealtimeEventFactory.roomDraftOrderUpdated(room, Instant.now(clock)));
-        }
-
-        @Override
-        public void publishGameStartedAfterCommit(StartedRoomSnapshot snapshot) {
-            publish(RoomRealtimeEventFactory.gameStarted(snapshot, Instant.now(clock)));
-        }
-
-        @Override
-        public void publishGameAuctionProgressUpdatedAfterCommit(StartedRoomSnapshot snapshot) {
-            publish(RoomRealtimeEventFactory.gameAuctionProgressUpdated(snapshot, Instant.now(clock)));
-        }
-
-        @Override
-        public void publishGameDraftProgressUpdatedAfterCommit(StartedRoomSnapshot snapshot) {
-            publish(RoomRealtimeEventFactory.gameDraftProgressUpdated(snapshot, Instant.now(clock)));
-        }
-
-        @Override
-        public void publishGameRosterUpdatedAfterCommit(StartedRoomSnapshot snapshot) {
-            publish(RoomRealtimeEventFactory.gameRosterUpdated(snapshot, Instant.now(clock)));
+        public void publishGameUpdatedAfterCommit(StartedRoomSnapshot snapshot) {
+            publish(RoomRealtimeEventFactory.gameUpdated(snapshot, Instant.now(clock)));
         }
 
         private void publish(RoomRealtimeEvent event) {

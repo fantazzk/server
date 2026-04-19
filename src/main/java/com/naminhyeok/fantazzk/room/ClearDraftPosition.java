@@ -20,7 +20,7 @@ class ClearDraftPosition {
             RoomTeamLeader caller = roomActionAuthorizer.authenticate(room, actionToken);
             room.clearDraftPosition(caller.getId());
             Room saved = rooms.saveAndFlush(room);
-            realtimeEventPublisher.publishRoomDraftOrderUpdatedAfterCommit(saved);
+            realtimeEventPublisher.publishRoomUpdatedAfterCommit(saved);
             return saved;
         } catch (OptimisticLockingFailureException ex) {
             throw CoreException.of(RoomErrorType.ROOM_CONCURRENT_MODIFICATION);

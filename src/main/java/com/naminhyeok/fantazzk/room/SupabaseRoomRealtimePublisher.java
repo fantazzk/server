@@ -20,12 +20,8 @@ import org.springframework.web.client.RestClientException;
 class SupabaseRoomRealtimePublisher implements RoomRealtimeEventPublisher {
     private static final Logger log = LoggerFactory.getLogger(SupabaseRoomRealtimePublisher.class);
     private static final String BROADCAST_URI = "/realtime/v1/api/broadcast";
-    private static final String ROOM_MEMBERSHIP_UPDATED = "room.membership.updated";
-    private static final String ROOM_DRAFT_ORDER_UPDATED = "room.draft-order.updated";
-    private static final String GAME_STARTED = "game.started";
-    private static final String GAME_AUCTION_PROGRESS_UPDATED = "game.auction-progress.updated";
-    private static final String GAME_DRAFT_PROGRESS_UPDATED = "game.draft-progress.updated";
-    private static final String GAME_ROSTER_UPDATED = "game.roster.updated";
+    private static final String ROOM_UPDATED = "room.updated";
+    private static final String GAME_UPDATED = "game.updated";
 
     private final RestClient restClient;
     private final Clock clock;
@@ -54,33 +50,13 @@ class SupabaseRoomRealtimePublisher implements RoomRealtimeEventPublisher {
     }
 
     @Override
-    public void publishRoomMembershipUpdatedAfterCommit(Room room) {
-        publishAfterCommit(PendingRoomMembershipUpdated.from(room));
+    public void publishRoomUpdatedAfterCommit(Room room) {
+        publishAfterCommit(PendingRoomUpdated.from(room));
     }
 
     @Override
-    public void publishRoomDraftOrderUpdatedAfterCommit(Room room) {
-        publishAfterCommit(PendingRoomDraftOrderUpdated.from(room));
-    }
-
-    @Override
-    public void publishGameStartedAfterCommit(StartedRoomSnapshot snapshot) {
-        publishAfterCommit(PendingGameStarted.from(snapshot));
-    }
-
-    @Override
-    public void publishGameAuctionProgressUpdatedAfterCommit(StartedRoomSnapshot snapshot) {
-        publishAfterCommit(PendingGameAuctionProgressUpdated.from(snapshot));
-    }
-
-    @Override
-    public void publishGameDraftProgressUpdatedAfterCommit(StartedRoomSnapshot snapshot) {
-        publishAfterCommit(PendingGameDraftProgressUpdated.from(snapshot));
-    }
-
-    @Override
-    public void publishGameRosterUpdatedAfterCommit(StartedRoomSnapshot snapshot) {
-        publishAfterCommit(PendingGameRosterUpdated.from(snapshot));
+    public void publishGameUpdatedAfterCommit(StartedRoomSnapshot snapshot) {
+        publishAfterCommit(PendingGameUpdated.from(snapshot));
     }
 
     private void publishAfterCommit(PendingRealtimeEvent pendingEvent) {
@@ -122,13 +98,7 @@ class SupabaseRoomRealtimePublisher implements RoomRealtimeEventPublisher {
     private record BroadcastMessage(String topic, String event, RoomRealtimeEvent payload) {
     }
 
-    private sealed interface PendingRealtimeEvent permits
-        PendingRoomMembershipUpdated,
-        PendingRoomDraftOrderUpdated,
-        PendingGameStarted,
-        PendingGameAuctionProgressUpdated,
-        PendingGameDraftProgressUpdated,
-        PendingGameRosterUpdated {
+    private sealed interface PendingRealtimeEvent permits PendingRoomUpdated, PendingGameUpdated {
 
         String roomCode();
 
@@ -137,139 +107,41 @@ class SupabaseRoomRealtimePublisher implements RoomRealtimeEventPublisher {
         RoomRealtimeEvent toEvent(Instant publishedAt);
     }
 
-    private record PendingRoomMembershipUpdated(String roomCode, long snapshotVersion, RoomMembershipProjection membership)
+    private record PendingRoomUpdated(String roomCode, long snapshotVersion, RoomDetailResponse room)
         implements PendingRealtimeEvent {
-        private static PendingRoomMembershipUpdated from(Room room) {
-            return new PendingRoomMembershipUpdated(room.getCode(), RoomRealtimeEventFactory.snapshotVersionOf(room), RoomMembershipProjection.from(room));
+        private static PendingRoomUpdated from(Room room) {
+            return new PendingRoomUpdated(room.getCode(), RoomRealtimeEventFactory.snapshotVersionOf(room), RoomDetailResponse.from(room));
         }
 
         @Override
         public String messageEvent() {
-            return ROOM_MEMBERSHIP_UPDATED;
+            return ROOM_UPDATED;
         }
 
         @Override
         public RoomRealtimeEvent toEvent(Instant publishedAt) {
-            return new RoomMembershipUpdatedEvent("ROOM_MEMBERSHIP_UPDATED", roomCode, snapshotVersion, publishedAt, membership);
+            return new RoomUpdatedEvent("ROOM_UPDATED", roomCode, snapshotVersion, publishedAt, room);
         }
     }
 
-    private record PendingRoomDraftOrderUpdated(String roomCode, long snapshotVersion, RoomDraftOrderProjection draftOrder)
+    private record PendingGameUpdated(String roomCode, long snapshotVersion, GameDetailResponse game)
         implements PendingRealtimeEvent {
-        private static PendingRoomDraftOrderUpdated from(Room room) {
-            return new PendingRoomDraftOrderUpdated(room.getCode(), RoomRealtimeEventFactory.snapshotVersionOf(room), RoomDraftOrderProjection.from(room));
-        }
-
-        @Override
-        public String messageEvent() {
-            return ROOM_DRAFT_ORDER_UPDATED;
-        }
-
-        @Override
-        public RoomRealtimeEvent toEvent(Instant publishedAt) {
-            return new RoomDraftOrderUpdatedEvent("ROOM_DRAFT_ORDER_UPDATED", roomCode, snapshotVersion, publishedAt, draftOrder);
-        }
-    }
-
-    private record PendingGameStarted(String roomCode, long snapshotVersion, String gameId, GameStartProjection gameStart)
-        implements PendingRealtimeEvent {
-        private static PendingGameStarted from(StartedRoomSnapshot snapshot) {
-            return new PendingGameStarted(
+        private static PendingGameUpdated from(StartedRoomSnapshot snapshot) {
+            return new PendingGameUpdated(
                 snapshot.room().getCode(),
                 RoomRealtimeEventFactory.snapshotVersionOf(snapshot),
-                snapshot.game().getId().gameId().toString(),
-                GameStartProjection.from(snapshot.game())
+                GameDetailResponse.from(snapshot.game())
             );
         }
 
         @Override
         public String messageEvent() {
-            return GAME_STARTED;
+            return GAME_UPDATED;
         }
 
         @Override
         public RoomRealtimeEvent toEvent(Instant publishedAt) {
-            return new GameStartedEvent("GAME_STARTED", roomCode, snapshotVersion, publishedAt, gameId, gameStart);
-        }
-    }
-
-    private record PendingGameAuctionProgressUpdated(String roomCode, long snapshotVersion, String gameId, AuctionProgressResponse auctionProgress)
-        implements PendingRealtimeEvent {
-        private static PendingGameAuctionProgressUpdated from(StartedRoomSnapshot snapshot) {
-            return new PendingGameAuctionProgressUpdated(
-                snapshot.room().getCode(),
-                RoomRealtimeEventFactory.snapshotVersionOf(snapshot),
-                snapshot.game().getId().gameId().toString(),
-                AuctionProgressResponse.from(snapshot.game())
-            );
-        }
-
-        @Override
-        public String messageEvent() {
-            return GAME_AUCTION_PROGRESS_UPDATED;
-        }
-
-        @Override
-        public RoomRealtimeEvent toEvent(Instant publishedAt) {
-            return new GameAuctionProgressUpdatedEvent(
-                "GAME_AUCTION_PROGRESS_UPDATED",
-                roomCode,
-                snapshotVersion,
-                publishedAt,
-                gameId,
-                auctionProgress
-            );
-        }
-    }
-
-    private record PendingGameDraftProgressUpdated(String roomCode, long snapshotVersion, String gameId, DraftProgressResponse draftProgress)
-        implements PendingRealtimeEvent {
-        private static PendingGameDraftProgressUpdated from(StartedRoomSnapshot snapshot) {
-            return new PendingGameDraftProgressUpdated(
-                snapshot.room().getCode(),
-                RoomRealtimeEventFactory.snapshotVersionOf(snapshot),
-                snapshot.game().getId().gameId().toString(),
-                DraftProgressResponse.from(snapshot.game())
-            );
-        }
-
-        @Override
-        public String messageEvent() {
-            return GAME_DRAFT_PROGRESS_UPDATED;
-        }
-
-        @Override
-        public RoomRealtimeEvent toEvent(Instant publishedAt) {
-            return new GameDraftProgressUpdatedEvent(
-                "GAME_DRAFT_PROGRESS_UPDATED",
-                roomCode,
-                snapshotVersion,
-                publishedAt,
-                gameId,
-                draftProgress
-            );
-        }
-    }
-
-    private record PendingGameRosterUpdated(String roomCode, long snapshotVersion, String gameId, GameRosterProjection roster)
-        implements PendingRealtimeEvent {
-        private static PendingGameRosterUpdated from(StartedRoomSnapshot snapshot) {
-            return new PendingGameRosterUpdated(
-                snapshot.room().getCode(),
-                RoomRealtimeEventFactory.snapshotVersionOf(snapshot),
-                snapshot.game().getId().gameId().toString(),
-                GameRosterProjection.from(snapshot.game())
-            );
-        }
-
-        @Override
-        public String messageEvent() {
-            return GAME_ROSTER_UPDATED;
-        }
-
-        @Override
-        public RoomRealtimeEvent toEvent(Instant publishedAt) {
-            return new GameRosterUpdatedEvent("GAME_ROSTER_UPDATED", roomCode, snapshotVersion, publishedAt, gameId, roster);
+            return new GameUpdatedEvent("GAME_UPDATED", roomCode, snapshotVersion, publishedAt, game);
         }
     }
 }
