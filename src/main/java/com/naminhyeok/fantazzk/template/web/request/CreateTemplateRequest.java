@@ -1,4 +1,4 @@
-package com.naminhyeok.fantazzk.template.web;
+package com.naminhyeok.fantazzk.template.web.request;
 
 import com.naminhyeok.fantazzk.CoreException;
 import com.naminhyeok.fantazzk.template.TemplateCatalog;
@@ -47,7 +47,7 @@ public record CreateTemplateRequest(
     ) {
     }
 
-    CreateTemplateCommand toCommand() {
+    public CreateTemplateCommand toCommand() {
         return switch (mode) {
             case AUCTION -> {
                 if (draftOrderStrategy != null) {

@@ -8,6 +8,7 @@ import com.naminhyeok.fantazzk.template.query.FindTemplates;
 import com.naminhyeok.fantazzk.template.query.TemplateDetail;
 import com.naminhyeok.fantazzk.template.query.TemplateDetailResponse;
 import com.naminhyeok.fantazzk.template.query.TemplateSummaryResponse;
+import com.naminhyeok.fantazzk.template.web.request.CreateTemplateRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;

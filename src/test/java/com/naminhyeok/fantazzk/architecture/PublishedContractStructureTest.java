@@ -69,12 +69,14 @@ class PublishedContractStructureTest {
         assertClassMissing("com.naminhyeok.fantazzk.template.TemplateId");
         assertClassMissing("com.naminhyeok.fantazzk.template.Templates");
         assertClassMissing("com.naminhyeok.fantazzk.template.TemplateApiController");
+        assertClassMissing("com.naminhyeok.fantazzk.template.CreateTemplateRequest");
 
         assertThat(isPublic("com.naminhyeok.fantazzk.template.domain.Template")).isTrue();
         assertThat(isPublic("com.naminhyeok.fantazzk.template.application.CreateTemplate")).isTrue();
         assertThat(isPublic("com.naminhyeok.fantazzk.template.query.FindTemplates")).isTrue();
         assertThat(isPublic("com.naminhyeok.fantazzk.template.repository.Templates")).isTrue();
         assertThat(isPublic("com.naminhyeok.fantazzk.template.web.TemplateApiController")).isTrue();
+        assertThat(isPublic("com.naminhyeok.fantazzk.template.web.request.CreateTemplateRequest")).isTrue();
         assertThat(isPublic("com.naminhyeok.fantazzk.template.infrastructure.persistence.JpaTemplateListReader")).isTrue();
     }
 
