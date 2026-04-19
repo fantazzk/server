@@ -2,11 +2,15 @@ package com.naminhyeok.fantazzk.architecture;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
+import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
 
-@AnalyzeClasses(packages = "com.naminhyeok.fantazzk")
+@AnalyzeClasses(
+    packages = "com.naminhyeok.fantazzk",
+    importOptions = ImportOption.DoNotIncludeTests.class
+)
 class RoomInternalPackageIsolationTest {
     @ArchTest
     static final ArchRule room_내부_패키지는_room_모듈_밖에서_직접_의존하지_않는다 =
