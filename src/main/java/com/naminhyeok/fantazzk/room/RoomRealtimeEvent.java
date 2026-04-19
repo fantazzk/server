@@ -3,12 +3,8 @@ package com.naminhyeok.fantazzk.room;
 import java.time.Instant;
 
 sealed interface RoomRealtimeEvent permits
-    RoomMembershipUpdatedEvent,
-    RoomDraftOrderUpdatedEvent,
-    GameStartedEvent,
-    GameAuctionProgressUpdatedEvent,
-    GameDraftProgressUpdatedEvent,
-    GameRosterUpdatedEvent {
+    RoomUpdatedEvent,
+    GameUpdatedEvent {
 
     String eventType();
 

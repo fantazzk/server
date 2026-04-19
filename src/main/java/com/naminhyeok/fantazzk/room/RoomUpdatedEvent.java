@@ -2,11 +2,11 @@ package com.naminhyeok.fantazzk.room;
 
 import java.time.Instant;
 
-record RoomMembershipUpdatedEvent(
+record RoomUpdatedEvent(
     String eventType,
     String roomCode,
     long snapshotVersion,
     Instant publishedAt,
-    RoomMembershipProjection membership
+    RoomDetailResponse room
 ) implements RoomRealtimeEvent {
 }

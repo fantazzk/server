@@ -31,7 +31,9 @@ class StartRoom {
             Game createdGame = gameFactory.create(startedGameSnapshot);
             games.save(createdGame);
             Room saved = rooms.saveAndFlush(loaded);
-            realtimeEventPublisher.publishGameStartedAfterCommit(new StartedRoomSnapshot(saved, createdGame));
+            StartedRoomSnapshot snapshot = new StartedRoomSnapshot(saved, createdGame);
+            realtimeEventPublisher.publishRoomUpdatedAfterCommit(saved);
+            realtimeEventPublisher.publishGameUpdatedAfterCommit(snapshot);
             return createdGame;
         } catch (OptimisticLockingFailureException ex) {
             throw CoreException.of(RoomErrorType.ROOM_CONCURRENT_MODIFICATION);

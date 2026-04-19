@@ -21,7 +21,7 @@ class JoinRoom {
             TeamLeaderId joinedLeaderId = new TeamLeaderId(identity.leaderId());
             room.join(joinedLeaderId, nickname, identity.actionToken());
             Room saved = rooms.saveAndFlush(room);
-            realtimeEventPublisher.publishRoomMembershipUpdatedAfterCommit(saved);
+            realtimeEventPublisher.publishRoomUpdatedAfterCommit(saved);
             return new RoomSessionResult(saved, findLeader(saved, joinedLeaderId));
         } catch (OptimisticLockingFailureException ex) {
             throw CoreException.of(RoomErrorType.ROOM_CONCURRENT_MODIFICATION);
