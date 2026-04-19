@@ -1,10 +1,12 @@
 package com.naminhyeok.fantazzk.room;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.IntStream;
 
+@Schema(description = "드래프트 로비 자리 현황")
 record DraftOrderPreviewResponse(List<DraftOrderSlotResponse> slots) {
     static DraftOrderPreviewResponse from(Room room) {
         if (room.getMode() != RoomMode.DRAFT) {
