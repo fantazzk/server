@@ -19,8 +19,10 @@
 - 공개 surface는 최소로 유지한다.
 - `web`, `config` 같은 같은-모듈 하위 패키지를 위해 모듈 루트 public 진입점을 둘 수 있다.
 - 이런 public 진입점은 자동으로 cross-module API로 승격하지 말고, 다른 모듈이 의존하지 못하게 구조 테스트로 검증한다.
-- aggregate와 핵심 도메인 개념은 모듈 루트 또는 `domain` 아래에 둘 수 있다. 한 모듈 안에서는 한 가지 스타일을 일관되게 유지한다.
-- `application`, `api`, `repository`, `query`, `infrastructure`는 역할이 분명할 때만 둔다.
+- aggregate와 핵심 도메인 개념은 모듈 루트 또는 `domain` 아래에 둘 수 있다.
+- 모듈 규모가 커져 읽기 비용이 올라가면 `domain`, `application`, `query`, `repository`, `web`, `infrastructure` 같은 역할 패키지를 내부 패키지로 둘 수 있다.
+- 한 모듈 안에서는 flat root 스타일과 layered internal package 스타일을 섞지 말고, 선택한 구조를 일관되게 유지한다.
+- `application`, `api`, `repository`, `query`, `infrastructure`는 이름 자체가 목적이 아니라 읽기 비용과 책임 경계를 개선할 때만 둔다.
 - `spi` 패키지는 기본 선택지로 두지 않는다.
 - 의미 없는 port/adapter, interface/impl 쌍은 두지 않는다. 추상화는 모듈 경계, 도메인 개념, 기술적 제약을 분명히 드러낼 때만 유지한다.
 - 새로 손대는 파일은 경로와 패키지 선언을 맞춘다. 기존 어긋남은 점진적으로 해소한다.
@@ -28,6 +30,7 @@
 ## 협력 규칙
 
 - 같은 모듈 내부 협력은 direct call 을 기본으로 한다.
+- layered internal package 스타일을 택한 모듈은 same-module direct call 을 위해 internal package 의 `public` 타입을 사용할 수 있다. 이런 타입은 cross-module contract 가 아니며, 다른 모듈 의존은 구조 테스트로 막는다.
 - 모듈 간 필수 동기 협력은 explicit contract bean 으로 표현한다.
 - 모듈 간 후속 반응이나 비동기 협력은 실제 consumer 가 있을 때만 domain event 로 표현한다.
 - 다른 모듈의 repository, application service, query service를 직접 찌르지 않는다.
@@ -38,7 +41,9 @@
 
 ## Java 와 Spring 규칙
 
-- package-private 을 기본으로 하고, `public` 은 모듈 루트 계약, 외부 API, 프레임워크가 요구하는 타입에만 사용한다.
+- same-package 협력만으로 충분한 타입은 `package-private` 을 기본으로 한다.
+- layered internal package 스타일에서는 same-module 협력을 위해 internal package 의 `public` 타입과 메서드를 허용한다.
+- internal package 의 `public` 은 외부 모듈 공개 계약을 뜻하지 않는다. cross-module 접근 금지는 구조 테스트로 검증한다.
 - 루트 애플리케이션은 `@SpringBootApplication`을 사용한다.
 - 컴포넌트 스캔 기반 등록을 기본으로 한다.
 - `@Configuration`은 실제 bean 조립이 필요한 경우에만 둔다.
@@ -64,6 +69,7 @@
 - 테스트 코드와 fixture 도 관리와 리팩토링의 대상이다. 구현 리팩토링에 과도하게 깨지는 테스트는 설계도 다시 본다.
 - 유지할 테스트는 모듈 규칙, 도메인 invariant, 외부 계약, 실제 regression risk 를 보호해야 한다.
 - thin delegation 이나 일회성 TDD scaffolding, 구현 choreography 만 보존하는 테스트는 정리 대상이다.
+- 구조 테스트는 특정 클래스명 부재나 임의의 디렉터리 취향을 고정하기보다, 외부 모듈의 internal package 접근 금지, public contract 최소화, 실제 layer dependency 같은 성질을 우선 검증한다.
 - 버그를 수정했다면 그 문제가 다시 발생하지 않도록 자동 검증을 추가하는 것을 기본 원칙으로 한다.
 - regression test 는 내부 구현이 아니라 외부 계약, 도메인 규칙, 관찰 가능한 결과를 고정해야 한다.
 - repository 테스트의 기본값은 `@DataJpaTest` 와 H2 다. 락, 격리 수준, DB vendor 고유 동작, 실제 migration 결과처럼 H2 로 충분히 증명할 수 없는 것은 `integrationTest` 에서 실제 데이터베이스로 검증한다.

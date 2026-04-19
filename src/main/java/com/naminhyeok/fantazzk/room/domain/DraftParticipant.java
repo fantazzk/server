@@ -1,0 +1,51 @@
+package com.naminhyeok.fantazzk.room.domain;
+
+import jakarta.persistence.Access;
+import jakarta.persistence.AccessType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Embeddable;
+import lombok.EqualsAndHashCode;
+import org.jmolecules.ddd.types.ValueObject;
+
+@Access(AccessType.FIELD)
+@Embeddable
+@EqualsAndHashCode
+public final class DraftParticipant implements GameParticipant, ValueObject {
+    @Column(name = "team_leader_id")
+    @Convert(converter = TeamLeaderId.JpaConverter.class)
+    private TeamLeaderId teamLeaderId;
+    @Column(name = "nickname")
+    private String nickname;
+    @Column(name = "draft_position")
+    private Integer draftPosition;
+
+    public DraftParticipant() {
+    }
+
+    public DraftParticipant(TeamLeaderId teamLeaderId, String nickname, int draftPosition) {
+        this.teamLeaderId = java.util.Objects.requireNonNull(teamLeaderId, "teamLeaderId must not be null");
+        this.nickname = java.util.Objects.requireNonNull(nickname, "nickname must not be null");
+        this.draftPosition = draftPosition;
+    }
+
+    @Override
+    public TeamLeaderId teamLeaderId() {
+        return teamLeaderId;
+    }
+
+    @Override
+    public String nickname() {
+        return nickname;
+    }
+
+    @Override
+    public RoomMode mode() {
+        return RoomMode.DRAFT;
+    }
+
+    @Override
+    public Integer draftPosition() {
+        return draftPosition;
+    }
+}
