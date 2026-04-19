@@ -24,7 +24,7 @@ class GameQueryApiController {
     @GetMapping("/{gameId}")
     @Operation(
         summary = "게임 진행 상태 조회",
-        description = "방 시작 후 진행 화면의 source of truth 입니다. 드래프트/경매 상태, 참가자, 멤버, 현재 진행 정보를 모두 이 API 기준으로 렌더링합니다."
+        description = "방 시작 후 진행 화면의 source of truth 입니다. 드래프트/경매 상태, 참가자, 로스터, 현재 진행 정보를 모두 이 API 기준으로 렌더링합니다."
     )
     @io.swagger.v3.oas.annotations.responses.ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -43,10 +43,7 @@ class GameQueryApiController {
             description = "게임을 찾을 수 없음"
         )
     })
-    ApiResponse<GameResponse> get(
-        @Parameter(description = OpenApiDocumentation.GAME_ID_DESCRIPTION, example = "00000000-0000-0000-0000-000000000201")
-        @PathVariable UUID gameId
-    ) {
-        return ApiResponse.success(GameResponse.from(getGame.get(gameId)));
+    ApiResponse<GameDetailResponse> get(@PathVariable UUID gameId) {
+        return ApiResponse.success(GameDetailResponse.from(getGame.get(gameId)));
     }
 }

@@ -7,48 +7,49 @@ import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
-class RealtimeSnapshotEventTest {
+class RoomRealtimeEventFactoryTest {
     private static final Instant CREATED_AT = Instant.parse("2026-04-09T00:00:00Z");
     private static final Instant PUBLISHED_AT = Instant.parse("2026-04-09T00:10:00Z");
 
     @Test
-    void waiting_snapshot은_room_payload를_담고_game_payload는_비운다() {
+    void room_membership_updated는_참여자_변경에_필요한_payload를_담는다() {
         Room room = waitingAuctionRoom();
 
-        RealtimeSnapshotEvent event = RealtimeSnapshotEvent.from(room, PUBLISHED_AT);
+        RoomRealtimeEvent event = RoomRealtimeEventFactory.roomMembershipUpdated(room, PUBLISHED_AT);
 
-        assertThat(event).isInstanceOf(RoomSnapshotUpdatedEvent.class);
-        assertThat(event.eventType()).isEqualTo("ROOM_SNAPSHOT_UPDATED");
-        assertThat(event.roomCode()).isEqualTo(room.getCode());
-        assertThat(event.room()).isNotNull();
-        assertThat(event.room().code()).isEqualTo(room.getCode());
-        assertThat(event.game()).isNull();
+        assertThat(event).isInstanceOf(RoomMembershipUpdatedEvent.class);
+        RoomMembershipUpdatedEvent membershipUpdated = (RoomMembershipUpdatedEvent) event;
+        assertThat(membershipUpdated.eventType()).isEqualTo("ROOM_MEMBERSHIP_UPDATED");
+        assertThat(membershipUpdated.roomCode()).isEqualTo(room.getCode());
+        assertThat(membershipUpdated.membership().teamCount()).isEqualTo(2);
+        assertThat(membershipUpdated.membership().joinedLeaderCount()).isEqualTo(1);
+        assertThat(membershipUpdated.membership().leaders()).hasSize(1);
     }
 
     @Test
-    void started_snapshot은_game_payload를_담고_room_payload는_비운다() {
+    void game_started는_게임_진입에_필요한_식별자만_담는다() {
         Room room = startedAuctionRoom();
         Game game = startedGameOf(room);
 
-        RealtimeSnapshotEvent event = RealtimeSnapshotEvent.from(new StartedRoomSnapshot(room, game), PUBLISHED_AT);
+        RoomRealtimeEvent event = RoomRealtimeEventFactory.gameStarted(new StartedRoomSnapshot(room, game), PUBLISHED_AT);
 
-        assertThat(event).isInstanceOf(GameSnapshotUpdatedEvent.class);
-        assertThat(event.eventType()).isEqualTo("GAME_SNAPSHOT_UPDATED");
-        assertThat(event.roomCode()).isEqualTo(room.getCode());
-        assertThat(event.room()).isNull();
-        assertThat(event.game()).isNotNull();
-        assertThat(event.game().id()).isEqualTo(game.getId().gameId().toString());
-        assertThat(event.game().roomCode()).isEqualTo(room.getCode());
+        assertThat(event).isInstanceOf(GameStartedEvent.class);
+        GameStartedEvent gameStarted = (GameStartedEvent) event;
+        assertThat(gameStarted.eventType()).isEqualTo("GAME_STARTED");
+        assertThat(gameStarted.roomCode()).isEqualTo(room.getCode());
+        assertThat(gameStarted.gameId()).isEqualTo(game.getId().gameId().toString());
+        assertThat(gameStarted.gameStart().mode()).isEqualTo("AUCTION");
+        assertThat(gameStarted.gameStart().status()).isEqualTo("IN_PROGRESS");
     }
 
     @Test
-    void started_snapshot_version은_room과_game_version을_합산한다() throws Exception {
+    void game_auction_progress_updated_version은_room과_game_version을_합산한다() throws Exception {
         Room room = startedAuctionRoom();
         Game game = startedGameOf(room);
         setVersion(Room.class, room, 1L);
         setVersion(Game.class, game, 7L);
 
-        RealtimeSnapshotEvent event = RealtimeSnapshotEvent.from(new StartedRoomSnapshot(room, game), PUBLISHED_AT);
+        RoomRealtimeEvent event = RoomRealtimeEventFactory.gameAuctionProgressUpdated(new StartedRoomSnapshot(room, game), PUBLISHED_AT);
 
         assertThat(event.snapshotVersion()).isEqualTo(8L);
     }

@@ -42,11 +42,17 @@ class GameAuctionApiControllerWebMvcTest {
     private GetGame getGame;
 
     @Test
-    void placeBid는_header가_있으면_최신_game_snapshot을_반환한다() throws Exception {
+    void placeBid는_header가_있으면_입찰_결과와_최신_경매_진행상황을_반환한다() throws Exception {
         UUID gameId = UUID.fromString(RoomApiTestFixtures.GAME_ID);
+        AuctionGame updatedGame = (AuctionGame) RoomApiTestFixtures.inProgressAuctionDetails().game();
+        updatedGame.placeBid(
+            new TeamLeaderId(RoomApiTestFixtures.HOST_ID),
+            150,
+            RoomApiTestFixtures.CREATED_AT.plusSeconds(20)
+        );
         given(placeBid.place(gameId, RoomApiTestFixtures.HOST_TOKEN, 150))
             .willReturn(new AuctionBid(1, new BidSequence(1), new TeamLeaderId(RoomApiTestFixtures.HOST_ID), 150));
-        given(getGame.get(gameId)).willReturn(RoomApiTestFixtures.inProgressAuctionDetails().game());
+        given(getGame.get(gameId)).willReturn(updatedGame);
 
         var result = mockMvcTester().perform(
             post("/api/v1/games/{gameId}/bids", RoomApiTestFixtures.GAME_ID)
@@ -64,8 +70,15 @@ class GameAuctionApiControllerWebMvcTest {
         result.assertThat().hasStatusOk();
         JsonNode body = objectMapper.readTree(result.getResponse().getContentAsString());
         assertThat(body.at("/resultType").asText()).isEqualTo("SUCCESS");
-        assertThat(body.at("/success/id").asText()).isEqualTo(RoomApiTestFixtures.GAME_ID);
-        assertThat(body.at("/success/status").asText()).isEqualTo("IN_PROGRESS");
+        assertThat(body.at("/success/gameId").asText()).isEqualTo(RoomApiTestFixtures.GAME_ID);
+        assertThat(body.at("/success/bidderLeaderId").asText()).isEqualTo(RoomApiTestFixtures.HOST_ID);
+        assertThat(body.at("/success/amount").asInt()).isEqualTo(150);
+        assertThat(body.at("/success/auctionProgress/highestBidAmount").asInt()).isEqualTo(150);
+        assertThat(body.at("/success/auctionProgress/leadingLeaderId").asText()).isEqualTo(RoomApiTestFixtures.HOST_ID);
+        assertThat(body.at("/success/status").isMissingNode()).isTrue();
+        assertThat(body.at("/success/participants").isMissingNode()).isTrue();
+        assertThat(body.at("/success/playerPool").isMissingNode()).isTrue();
+        assertThat(body.at("/success/roster").isMissingNode()).isTrue();
     }
 
     @Test
@@ -186,7 +199,7 @@ class GameAuctionApiControllerWebMvcTest {
     }
 
     @Test
-    void auctionProgress는_settle된_game의_latest_snapshot을_반환한다() throws Exception {
+    void auctionProgress는_최신_경매_진행상황과_로스터를_반환한다() throws Exception {
         UUID gameId = UUID.fromString(RoomApiTestFixtures.GAME_ID);
         given(settleAuction.settleIfDue(gameId)).willReturn(RoomApiTestFixtures.inProgressAuctionDetails().game());
 
@@ -195,8 +208,11 @@ class GameAuctionApiControllerWebMvcTest {
         result.assertThat().hasStatusOk();
         JsonNode body = objectMapper.readTree(result.getResponse().getContentAsString());
         assertThat(body.at("/resultType").asText()).isEqualTo("SUCCESS");
-        assertThat(body.at("/success/id").asText()).isEqualTo(RoomApiTestFixtures.GAME_ID);
-        assertThat(body.at("/success/status").asText()).isEqualTo("IN_PROGRESS");
+        assertThat(body.at("/success/gameId").asText()).isEqualTo(RoomApiTestFixtures.GAME_ID);
+        assertThat(body.at("/success/auctionProgress/currentRound").asInt()).isEqualTo(2);
+        assertThat(body.at("/success/roster/0/playerName").asText()).isEqualTo("선수1");
+        assertThat(body.at("/success/status").isMissingNode()).isTrue();
+        assertThat(body.at("/success/playerPool").isMissingNode()).isTrue();
     }
 
     private MockMvcTester mockMvcTester() {

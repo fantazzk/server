@@ -14,7 +14,7 @@ class PickDraft {
     private final Games games;
     private final RoomActionAuthorizer roomActionAuthorizer;
     private final StartedGameContextLoader startedGameContextLoader;
-    private final RoomSnapshotPublisher roomSnapshotPublisher;
+    private final RoomRealtimeEventPublisher realtimeEventPublisher;
 
     @Transactional
     public RosterMember pick(String code, String actionToken, String playerName) {
@@ -25,7 +25,9 @@ class PickDraft {
             RosterMember member = game.pick(caller.getId(), playerName);
             games.save(game);
             Room saved = rooms.saveAndFlush(room);
-            roomSnapshotPublisher.publishAfterCommit(new StartedRoomSnapshot(saved, game));
+            StartedRoomSnapshot snapshot = new StartedRoomSnapshot(saved, game);
+            realtimeEventPublisher.publishGameRosterUpdatedAfterCommit(snapshot);
+            realtimeEventPublisher.publishGameDraftProgressUpdatedAfterCommit(snapshot);
             return member;
         } catch (OptimisticLockingFailureException ex) {
             throw CoreException.of(RoomErrorType.ROOM_CONCURRENT_MODIFICATION);
@@ -40,7 +42,9 @@ class PickDraft {
             RosterMember member = draftGame.pick(action.caller().getId(), playerName);
             games.save(draftGame);
             Room saved = rooms.saveAndFlush(action.room());
-            roomSnapshotPublisher.publishAfterCommit(new StartedRoomSnapshot(saved, draftGame));
+            StartedRoomSnapshot snapshot = new StartedRoomSnapshot(saved, draftGame);
+            realtimeEventPublisher.publishGameRosterUpdatedAfterCommit(snapshot);
+            realtimeEventPublisher.publishGameDraftProgressUpdatedAfterCommit(snapshot);
             return member;
         } catch (OptimisticLockingFailureException ex) {
             throw CoreException.of(RoomErrorType.ROOM_CONCURRENT_MODIFICATION);

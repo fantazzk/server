@@ -42,8 +42,8 @@ class TemplateApiController {
             examples = @ExampleObject(value = OpenApiDocumentation.TEMPLATE_DETAIL_SUCCESS_EXAMPLE)
         )
     )
-    ApiResponse<TemplateResponse> create(@Valid @RequestBody CreateTemplateRequest request) {
-        return ApiResponse.success(TemplateResponse.from(createTemplate.create(request.toCommand())));
+    ApiResponse<TemplateDetailResponse> create(@Valid @RequestBody CreateTemplateRequest request) {
+        return ApiResponse.success(TemplateDetailResponse.from(createTemplate.create(request.toCommand())));
     }
 
     @GetMapping("/{id}")
@@ -59,11 +59,11 @@ class TemplateApiController {
             examples = @ExampleObject(value = OpenApiDocumentation.TEMPLATE_DETAIL_SUCCESS_EXAMPLE)
         )
     )
-    ApiResponse<TemplateResponse> getById(
+    ApiResponse<TemplateDetailResponse> getById(
         @Parameter(description = "조회할 템플릿 ID", example = "11111111-1111-1111-1111-111111111111")
         @PathVariable UUID id
     ) {
-        return ApiResponse.success(TemplateResponse.from(findTemplates.getDetail(new TemplateId(id))));
+        return ApiResponse.success(TemplateDetailResponse.from(findTemplates.getDetail(new TemplateId(id))));
     }
 
     @GetMapping
@@ -79,7 +79,7 @@ class TemplateApiController {
             examples = @ExampleObject(value = OpenApiDocumentation.TEMPLATE_LIST_SUCCESS_EXAMPLE)
         )
     )
-    ApiResponse<List<TemplateResponse>> list() {
-        return ApiResponse.success(findTemplates.list().stream().map(TemplateResponse::from).toList());
+    ApiResponse<List<TemplateSummaryResponse>> list() {
+        return ApiResponse.success(findTemplates.list().stream().map(TemplateDetail::template).map(TemplateSummaryResponse::from).toList());
     }
 }

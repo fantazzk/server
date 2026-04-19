@@ -46,10 +46,13 @@ class RoomStartApiControllerWebMvcTest {
         result.assertThat().hasStatusOk();
         JsonNode body = objectMapper.readTree(result.getResponse().getContentAsString());
         assertThat(body.at("/resultType").asText()).isEqualTo("SUCCESS");
-        assertThat(body.at("/success/id").asText()).isEqualTo(RoomApiTestFixtures.GAME_ID);
+        assertThat(body.at("/success/gameId").asText()).isEqualTo(RoomApiTestFixtures.GAME_ID);
         assertThat(body.at("/success/roomCode").asText()).isEqualTo(RoomApiTestFixtures.ROOM_CODE);
+        assertThat(body.at("/success/mode").asText()).isEqualTo("AUCTION");
         assertThat(body.at("/success/status").asText()).isEqualTo("IN_PROGRESS");
-        assertThat(body.at("/success/startReadiness").isMissingNode()).isTrue();
+        assertThat(body.at("/success/participants").isMissingNode()).isTrue();
+        assertThat(body.at("/success/playerPool").isMissingNode()).isTrue();
+        assertThat(body.at("/success/roster").isMissingNode()).isTrue();
     }
 
     @Test

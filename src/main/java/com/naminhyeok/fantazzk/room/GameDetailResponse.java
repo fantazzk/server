@@ -7,9 +7,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Schema(description = "진행 화면의 source of truth")
-record GameResponse(
+record GameDetailResponse(
     @Schema(description = "게임 ID", example = "00000000-0000-0000-0000-000000000201")
-    String id,
+    String gameId,
     @Schema(description = "원본 방 코드", example = "ROOM01")
     String roomCode,
     @Schema(description = "게임 모드", example = "AUCTION", allowableValues = {"DRAFT", "AUCTION"})
@@ -29,14 +29,16 @@ record GameResponse(
     @Schema(description = "참가 팀장 목록")
     List<GameParticipantResponse> participants,
     @Schema(description = "선수 풀. 드래프트에서는 원래 displayOrder, 경매에서는 현재 경매 순서 기준으로 정렬됩니다.")
-    List<GamePlayerResponse> players,
+    List<GamePlayerResponse> playerPool,
     @Schema(description = "지금까지 확정된 멤버 목록")
-    List<GameMemberResponse> members,
-    @Schema(description = "현재 진행 정보")
-    GameProgressResponse progress
+    List<GameMemberResponse> roster,
+    @Schema(description = "드래프트 게임 현재 진행 정보", nullable = true)
+    DraftProgressResponse draftProgress,
+    @Schema(description = "경매 게임 현재 진행 정보", nullable = true)
+    AuctionProgressResponse auctionProgress
 ) {
-    static GameResponse from(Game game) {
-        return new GameResponse(
+    static GameDetailResponse from(Game game) {
+        return new GameDetailResponse(
             game.getId().gameId().toString(),
             game.getRoomCode(),
             modeOf(game),
@@ -47,18 +49,23 @@ record GameResponse(
             game.getMinBidUnit(),
             game.getDraftOrderStrategy() == null ? null : game.getDraftOrderStrategy().name(),
             game.getParticipants().stream().map(GameParticipantResponse::from).toList(),
-            playerResponses(game),
-            memberResponses(game),
-            GameProgressResponse.from(game)
+            playerPoolOf(game),
+            rosterOf(game),
+            DraftProgressResponse.from(game),
+            AuctionProgressResponse.from(game)
         );
+    }
+
+    static List<GameMemberResponse> rosterOf(Game game) {
+        return membersOf(game).stream().map(GameMemberResponse::from).toList();
     }
 
     private static String modeOf(Game game) {
         return game instanceof AuctionGame ? RoomMode.AUCTION.name() : RoomMode.DRAFT.name();
     }
 
-    private static List<GamePlayerResponse> playerResponses(Game game) {
-        Set<String> assignedPlayerNames = assignedPlayerNamesOf(game);
+    private static List<GamePlayerResponse> playerPoolOf(Game game) {
+        Set<String> assignedPlayerNames = membersOf(game).stream().map(RosterMember::playerName).collect(Collectors.toSet());
         if (game instanceof AuctionGame) {
             List<GamePlayer> playerPool = game.getPlayerPool();
             return playerPool.stream()
@@ -77,14 +84,6 @@ record GameResponse(
                 assignedPlayerNames.contains(player.name())
             ))
             .toList();
-    }
-
-    private static Set<String> assignedPlayerNamesOf(Game game) {
-        return membersOf(game).stream().map(RosterMember::playerName).collect(Collectors.toSet());
-    }
-
-    private static List<GameMemberResponse> memberResponses(Game game) {
-        return membersOf(game).stream().map(GameMemberResponse::from).toList();
     }
 
     private static List<RosterMember> membersOf(Game game) {

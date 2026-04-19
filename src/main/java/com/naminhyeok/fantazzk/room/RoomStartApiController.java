@@ -25,7 +25,7 @@ class RoomStartApiController {
     @PostMapping("/{code}/start")
     @Operation(
         summary = "방 시작",
-        description = "호스트가 로비를 실제 게임으로 시작합니다. 성공 시 응답으로 `GameResponse` 를 반환하며, FE는 이후 `/games/{gameId}` 를 기준으로 진행 화면을 유지해야 합니다.",
+        description = "호스트가 로비를 실제 게임으로 시작합니다. 성공 시 게임 진입에 필요한 최소 식별 정보를 반환하며, FE는 이후 `/games/{gameId}` 를 기준으로 진행 화면을 유지해야 합니다.",
         security = @SecurityRequirement(name = OpenApiDocumentation.ROOM_ACTION_TOKEN_SCHEME)
     )
     @io.swagger.v3.oas.annotations.responses.ApiResponses({
@@ -61,12 +61,12 @@ class RoomStartApiController {
             )
         )
     })
-    ApiResponse<GameResponse> start(
+    ApiResponse<RoomStartResponse> start(
         @Parameter(description = OpenApiDocumentation.ROOM_CODE_DESCRIPTION, example = "ROOM01")
         @PathVariable String code,
         @Parameter(description = OpenApiDocumentation.ROOM_ACTION_TOKEN_DESCRIPTION)
         @RequestHeader(value = OpenApiDocumentation.ROOM_ACTION_TOKEN_HEADER, required = false) String actionToken
     ) {
-        return ApiResponse.success(GameResponse.from(startRoom.start(code, actionToken)));
+        return ApiResponse.success(RoomStartResponse.from(startRoom.start(code, actionToken)));
     }
 }

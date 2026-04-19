@@ -50,10 +50,7 @@ class RoomQueryApiController {
             description = "방을 찾을 수 없음"
         )
     })
-    ApiResponse<RoomViewResponse> getByCode(
-        @Parameter(description = OpenApiDocumentation.ROOM_CODE_DESCRIPTION, example = "ROOM01")
-        @PathVariable String code
-    ) {
-        return ApiResponse.success(RoomViewResponse.from(getRoom.get(code)));
+    ApiResponse<RoomDetailResponse> getByCode(@PathVariable String code) {
+        return ApiResponse.success(RoomDetailResponse.from(getRoom.get(code)));
     }
 }

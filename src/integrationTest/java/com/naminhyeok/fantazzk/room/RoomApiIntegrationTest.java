@@ -71,7 +71,7 @@ class RoomApiIntegrationTest {
     }
 
     @Test
-    void start는_game_id를_포함한_game_snapshot을_반환한다() throws Exception {
+    void start는_game_id를_포함한_game_start_projection을_반환한다() throws Exception {
         rooms.save(fullWaitingAuctionRoom("ROOM10", CREATED_AT));
 
         ResponseEntity<String> response = restTemplate.exchange(
@@ -84,10 +84,11 @@ class RoomApiIntegrationTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(body.at("/resultType").asText()).isEqualTo("SUCCESS");
-        assertThat(UUID.fromString(body.at("/success/id").asText())).isNotNull();
+        assertThat(UUID.fromString(body.at("/success/gameId").asText())).isNotNull();
         assertThat(body.at("/success/roomCode").asText()).isEqualTo("ROOM10");
+        assertThat(body.at("/success/mode").asText()).isEqualTo("AUCTION");
         assertThat(body.at("/success/status").asText()).isEqualTo("IN_PROGRESS");
-        assertThat(body.at("/success/startReadiness").isMissingNode()).isTrue();
+        assertThat(body.at("/success/participants").isMissingNode()).isTrue();
     }
 
     @Test
@@ -99,10 +100,11 @@ class RoomApiIntegrationTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(body.at("/resultType").asText()).isEqualTo("SUCCESS");
-        assertThat(body.at("/success/code").asText()).isEqualTo("ROOM11");
+        assertThat(body.at("/success/roomCode").asText()).isEqualTo("ROOM11");
         assertThat(body.at("/success/status").asText()).isEqualTo("STARTED");
         assertThat(body.at("/success/startedGameId").asText()).isEqualTo(room.getStartedGameId().gameId().toString());
-        assertThat(body.at("/success/progress").isMissingNode()).isTrue();
+        assertThat(body.at("/success/auctionProgress").isMissingNode()).isTrue();
+        assertThat(body.at("/success/draftProgress").isMissingNode()).isTrue();
         assertThat(body.at("/success/members").isMissingNode()).isTrue();
     }
 
@@ -130,16 +132,16 @@ class RoomApiIntegrationTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(body.at("/resultType").asText()).isEqualTo("SUCCESS");
-        assertThat(body.at("/success/id").asText()).isEqualTo(room.getStartedGameId().gameId().toString());
+        assertThat(body.at("/success/gameId").asText()).isEqualTo(room.getStartedGameId().gameId().toString());
         assertThat(body.at("/success/roomCode").asText()).isEqualTo("ROOM12");
         assertThat(body.at("/success/status").asText()).isEqualTo("IN_PROGRESS");
-        assertThat(body.at("/success/progress/currentRound").asInt()).isEqualTo(1);
-        assertThat(body.at("/success/progress/currentAuctionTarget/name").asText()).isEqualTo("선수1");
-        assertThat(body.at("/success/progress/currentAuctionTarget/position").asText()).isEqualTo("TOP");
-        assertThat(body.at("/success/progress/highestBidAmount").asInt()).isEqualTo(120);
-        assertThat(body.at("/success/progress/leadingLeaderId").asText()).isEqualTo("host-ROOM12");
-        assertThat(body.at("/success/progress/bidCount").asInt()).isEqualTo(1);
-        assertThat(body.at("/success/progress/currentAuctionRoundEndsAt").asText())
+        assertThat(body.at("/success/auctionProgress/currentRound").asInt()).isEqualTo(1);
+        assertThat(body.at("/success/auctionProgress/currentAuctionTarget/name").asText()).isEqualTo("선수1");
+        assertThat(body.at("/success/auctionProgress/currentAuctionTarget/position").asText()).isEqualTo("TOP");
+        assertThat(body.at("/success/auctionProgress/highestBidAmount").asInt()).isEqualTo(120);
+        assertThat(body.at("/success/auctionProgress/leadingLeaderId").asText()).isEqualTo("host-ROOM12");
+        assertThat(body.at("/success/auctionProgress/bidCount").asInt()).isEqualTo(1);
+        assertThat(body.at("/success/auctionProgress/currentAuctionRoundEndsAt").asText())
             .isEqualTo("2026-04-09T00:01:05Z");
     }
 
@@ -171,13 +173,13 @@ class RoomApiIntegrationTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(body.at("/resultType").asText()).isEqualTo("SUCCESS");
-        assertThat(body.at("/success/id").asText()).isEqualTo(room.getStartedGameId().gameId().toString());
-        assertThat(body.at("/success/status").asText()).isEqualTo("IN_PROGRESS");
-        assertThat(body.at("/success/progress/currentRound").asInt()).isEqualTo(2);
-        assertThat(body.at("/success/progress/currentAuctionTarget/name").asText()).isEqualTo("선수2");
-        assertThat(body.at("/success/progress/highestBidAmount").isNull()).isTrue();
-        assertThat(body.at("/success/progress/leadingLeaderId").isNull()).isTrue();
-        assertThat(body.at("/success/progress/bidCount").asInt()).isEqualTo(0);
+        assertThat(body.at("/success/gameId").asText()).isEqualTo(room.getStartedGameId().gameId().toString());
+        assertThat(body.at("/success/auctionProgress/currentRound").asInt()).isEqualTo(2);
+        assertThat(body.at("/success/auctionProgress/currentAuctionTarget/name").asText()).isEqualTo("선수2");
+        assertThat(body.at("/success/auctionProgress/highestBidAmount").isNull()).isTrue();
+        assertThat(body.at("/success/auctionProgress/leadingLeaderId").isNull()).isTrue();
+        assertThat(body.at("/success/auctionProgress/bidCount").asInt()).isEqualTo(0);
+        assertThat(body.at("/success/roster/0/playerName").asText()).isEqualTo("선수1");
     }
 
     @Test
@@ -203,15 +205,15 @@ class RoomApiIntegrationTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(body.at("/success/status").asText()).isEqualTo("IN_PROGRESS");
-        assertThat(body.at("/success/members/0/teamLeaderId").asText()).isEqualTo("host-ROOM14");
-        assertThat(body.at("/success/members/0/playerName").asText()).isEqualTo("선수1");
-        assertThat(body.at("/success/players/0/name").asText()).isEqualTo("선수1");
-        assertThat(body.at("/success/players/0/status").asText()).isEqualTo("ASSIGNED");
-        assertThat(body.at("/success/players/1/name").asText()).isEqualTo("선수2");
-        assertThat(body.at("/success/players/1/status").asText()).isEqualTo("AVAILABLE");
-        assertThat(body.at("/success/progress/currentTurnIndex").asInt()).isEqualTo(1);
-        assertThat(body.at("/success/progress/currentRound").asInt()).isEqualTo(1);
-        assertThat(body.at("/success/progress/currentLeaderId").asText()).isEqualTo("guest-ROOM14");
+        assertThat(body.at("/success/roster/0/teamLeaderId").asText()).isEqualTo("host-ROOM14");
+        assertThat(body.at("/success/roster/0/playerName").asText()).isEqualTo("선수1");
+        assertThat(body.at("/success/playerPool/0/name").asText()).isEqualTo("선수1");
+        assertThat(body.at("/success/playerPool/0/status").asText()).isEqualTo("ASSIGNED");
+        assertThat(body.at("/success/playerPool/1/name").asText()).isEqualTo("선수2");
+        assertThat(body.at("/success/playerPool/1/status").asText()).isEqualTo("AVAILABLE");
+        assertThat(body.at("/success/draftProgress/currentTurnIndex").asInt()).isEqualTo(1);
+        assertThat(body.at("/success/draftProgress/currentRound").asInt()).isEqualTo(1);
+        assertThat(body.at("/success/draftProgress/currentLeaderId").asText()).isEqualTo("guest-ROOM14");
     }
 
     private Room startedAuctionRoom(String code, Instant createdAt) {

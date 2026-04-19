@@ -53,8 +53,8 @@ class RoomSessionApiController {
             description = "템플릿을 찾을 수 없음"
         )
     })
-    ApiResponse<RoomSessionResponse> create(@Valid @RequestBody CreateRoomRequest request) {
-        return ApiResponse.success(RoomSessionResponse.from(createRoom.create(request.templateId(), request.hostNickname())));
+    ApiResponse<RoomCreateResponse> create(@Valid @RequestBody CreateRoomRequest request) {
+        return ApiResponse.success(RoomCreateResponse.from(createRoom.create(request.templateId(), request.hostNickname())));
     }
 
     @PostMapping("/{code}/join")
@@ -92,11 +92,11 @@ class RoomSessionApiController {
             )
         )
     })
-    ApiResponse<RoomSessionResponse> join(
+    ApiResponse<RoomJoinResponse> join(
         @Parameter(description = OpenApiDocumentation.ROOM_CODE_DESCRIPTION, example = "ROOM01")
         @PathVariable String code,
         @Valid @RequestBody JoinRoomRequest request
     ) {
-        return ApiResponse.success(RoomSessionResponse.from(joinRoom.join(code, request.nickname())));
+        return ApiResponse.success(RoomJoinResponse.from(joinRoom.join(code, request.nickname())));
     }
 }

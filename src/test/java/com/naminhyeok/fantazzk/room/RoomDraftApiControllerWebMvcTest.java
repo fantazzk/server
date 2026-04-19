@@ -65,9 +65,11 @@ class RoomDraftApiControllerWebMvcTest {
         result.assertThat().hasStatusOk();
         JsonNode body = objectMapper.readTree(result.getResponse().getContentAsString());
         assertThat(body.at("/success/startReadiness").asText()).isEqualTo("STARTABLE");
-        assertThat(body.at("/success/code").asText()).isEqualTo(RoomApiTestFixtures.ROOM_CODE);
-        assertThat(body.at("/success/progress").isMissingNode()).isTrue();
-        assertThat(body.at("/success/members").isMissingNode()).isTrue();
+        assertThat(body.at("/success/roomCode").asText()).isEqualTo(RoomApiTestFixtures.ROOM_CODE);
+        assertThat(body.at("/success/draftOrder/slots/1/leaderId").asText()).isEqualTo(RoomApiTestFixtures.GUEST_ID);
+        assertThat(body.at("/success/code").isMissingNode()).isTrue();
+        assertThat(body.at("/success/leaders").isMissingNode()).isTrue();
+        assertThat(body.at("/success/playerPool").isMissingNode()).isTrue();
     }
 
     @Test
@@ -86,9 +88,11 @@ class RoomDraftApiControllerWebMvcTest {
         result.assertThat().hasStatusOk();
         JsonNode body = objectMapper.readTree(result.getResponse().getContentAsString());
         assertThat(body.at("/success/startReadiness").asText()).isEqualTo("WAITING_FOR_DRAFT_POSITIONS");
-        assertThat(body.at("/success/code").asText()).isEqualTo(RoomApiTestFixtures.ROOM_CODE);
-        assertThat(body.at("/success/progress").isMissingNode()).isTrue();
-        assertThat(body.at("/success/members").isMissingNode()).isTrue();
+        assertThat(body.at("/success/roomCode").asText()).isEqualTo(RoomApiTestFixtures.ROOM_CODE);
+        assertThat(body.at("/success/draftOrder/slots/0/leaderId").isNull()).isTrue();
+        assertThat(body.at("/success/code").isMissingNode()).isTrue();
+        assertThat(body.at("/success/leaders").isMissingNode()).isTrue();
+        assertThat(body.at("/success/playerPool").isMissingNode()).isTrue();
     }
 
     @Test

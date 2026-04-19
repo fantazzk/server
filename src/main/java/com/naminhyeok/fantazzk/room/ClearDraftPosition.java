@@ -11,7 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 class ClearDraftPosition {
     private final Rooms rooms;
     private final RoomActionAuthorizer roomActionAuthorizer;
-    private final RoomSnapshotPublisher roomSnapshotPublisher;
+    private final RoomRealtimeEventPublisher realtimeEventPublisher;
 
     @Transactional
     public Room clear(String code, String actionToken) {
@@ -20,7 +20,7 @@ class ClearDraftPosition {
             RoomTeamLeader caller = roomActionAuthorizer.authenticate(room, actionToken);
             room.clearDraftPosition(caller.getId());
             Room saved = rooms.saveAndFlush(room);
-            roomSnapshotPublisher.publishAfterCommit(saved);
+            realtimeEventPublisher.publishRoomDraftOrderUpdatedAfterCommit(saved);
             return saved;
         } catch (OptimisticLockingFailureException ex) {
             throw CoreException.of(RoomErrorType.ROOM_CONCURRENT_MODIFICATION);
