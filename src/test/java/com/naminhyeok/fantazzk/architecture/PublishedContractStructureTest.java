@@ -17,6 +17,14 @@ import com.naminhyeok.fantazzk.room.web.RoomDraftApiController;
 import com.naminhyeok.fantazzk.room.web.RoomQueryApiController;
 import com.naminhyeok.fantazzk.room.web.RoomSessionApiController;
 import com.naminhyeok.fantazzk.room.web.RoomStartApiController;
+import com.naminhyeok.fantazzk.template.TemplateCatalog;
+import com.naminhyeok.fantazzk.template.application.CreateTemplate;
+import com.naminhyeok.fantazzk.template.domain.Template;
+import com.naminhyeok.fantazzk.template.domain.TemplateId;
+import com.naminhyeok.fantazzk.template.infrastructure.persistence.JpaTemplateListReader;
+import com.naminhyeok.fantazzk.template.query.FindTemplates;
+import com.naminhyeok.fantazzk.template.repository.Templates;
+import com.naminhyeok.fantazzk.template.web.TemplateApiController;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.time.Instant;
@@ -47,28 +55,31 @@ class PublishedContractStructureTest {
     }
 
     @Test
-    void template_루트_계약은_public이고_대표_구현은_package_private이다() throws Exception {
+    void template_모듈은_역할별_내부_패키지로_구성한다() throws Exception {
         assertThat(isPublic("com.naminhyeok.fantazzk.template.TemplateCatalog")).isTrue();
-        assertThat(isPublic("com.naminhyeok.fantazzk.template.TemplateConfiguration")).isFalse();
         assertClassMissing("com.naminhyeok.fantazzk.template.TemplateManagement");
         assertClassMissing("com.naminhyeok.fantazzk.template.CreateTemplateInput");
         assertClassMissing("com.naminhyeok.fantazzk.template.TemplateSummaryView");
         assertClassMissing("com.naminhyeok.fantazzk.template.TemplateDetailView");
         assertClassMissing("com.naminhyeok.fantazzk.template.TemplatePlayerView");
 
-        assertThat(isPublic("com.naminhyeok.fantazzk.template.CreateTemplate")).isFalse();
-        assertThat(isPublic("com.naminhyeok.fantazzk.template.FindTemplates")).isFalse();
-        assertThat(isPublic("com.naminhyeok.fantazzk.template.Template")).isFalse();
-        assertThat(isPublic("com.naminhyeok.fantazzk.template.TemplateId")).isFalse();
-        assertThat(isPublic("com.naminhyeok.fantazzk.template.Templates")).isFalse();
-        assertThat(isPublic("com.naminhyeok.fantazzk.template.TemplateApiController")).isFalse();
+        assertClassMissing("com.naminhyeok.fantazzk.template.CreateTemplate");
+        assertClassMissing("com.naminhyeok.fantazzk.template.FindTemplates");
+        assertClassMissing("com.naminhyeok.fantazzk.template.Template");
+        assertClassMissing("com.naminhyeok.fantazzk.template.TemplateId");
+        assertClassMissing("com.naminhyeok.fantazzk.template.Templates");
+        assertClassMissing("com.naminhyeok.fantazzk.template.TemplateApiController");
+
+        assertThat(isPublic("com.naminhyeok.fantazzk.template.domain.Template")).isTrue();
+        assertThat(isPublic("com.naminhyeok.fantazzk.template.application.CreateTemplate")).isTrue();
+        assertThat(isPublic("com.naminhyeok.fantazzk.template.query.FindTemplates")).isTrue();
+        assertThat(isPublic("com.naminhyeok.fantazzk.template.repository.Templates")).isTrue();
+        assertThat(isPublic("com.naminhyeok.fantazzk.template.web.TemplateApiController")).isTrue();
+        assertThat(isPublic("com.naminhyeok.fantazzk.template.infrastructure.persistence.JpaTemplateListReader")).isTrue();
     }
 
     @Test
-    void template은_불필요한_레이어_패키지를_만들지_않는다() {
-        assertClassMissing("com.naminhyeok.fantazzk.template.application.CreateTemplate");
-        assertClassMissing("com.naminhyeok.fantazzk.template.domain.Template");
-        assertClassMissing("com.naminhyeok.fantazzk.template.repository.Templates");
+    void template은_legacy_layered_name을_남기지_않는다() {
         assertClassMissing("com.naminhyeok.fantazzk.template.api.TemplateApiController");
         assertClassMissing("com.naminhyeok.fantazzk.template.contract.TemplateCatalog");
     }
