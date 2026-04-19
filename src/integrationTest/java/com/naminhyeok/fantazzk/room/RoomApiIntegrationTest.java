@@ -71,7 +71,7 @@ class RoomApiIntegrationTest {
     }
 
     @Test
-    void start는_game_id를_포함한_game_start_projection을_반환한다() throws Exception {
+    void start는_game_id만_포함한_최소_응답을_반환한다() throws Exception {
         rooms.save(fullWaitingAuctionRoom("ROOM10", CREATED_AT));
 
         ResponseEntity<String> response = restTemplate.exchange(
@@ -85,10 +85,10 @@ class RoomApiIntegrationTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(body.at("/resultType").asText()).isEqualTo("SUCCESS");
         assertThat(UUID.fromString(body.at("/success/gameId").asText())).isNotNull();
-        assertThat(body.at("/success/roomCode").asText()).isEqualTo("ROOM10");
-        assertThat(body.at("/success/mode").asText()).isEqualTo("AUCTION");
-        assertThat(body.at("/success/status").asText()).isEqualTo("IN_PROGRESS");
-        assertThat(body.at("/success/participants").isMissingNode()).isTrue();
+        assertThat(body.at("/success/roomCode").isMissingNode()).isTrue();
+        assertThat(body.at("/success/mode").isMissingNode()).isTrue();
+        assertThat(body.at("/success/status").isMissingNode()).isTrue();
+        assertThat(body.at("/error").isNull()).isTrue();
     }
 
     @Test

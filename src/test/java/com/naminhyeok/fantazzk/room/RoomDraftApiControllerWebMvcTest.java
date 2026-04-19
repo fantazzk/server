@@ -38,16 +38,10 @@ class RoomDraftApiControllerWebMvcTest {
     @MockitoBean
     private ClearDraftPosition clearDraftPosition;
 
-    @MockitoBean
-    private GetRoom getRoom;
-
     @Test
     void selectDraftPosition은_header가_있으면_성공한다() throws Exception {
-        Room room = RoomApiTestFixtures.waitingDraftRoom();
-        room.selectDraftPosition(new TeamLeaderId(RoomApiTestFixtures.GUEST_ID), 2);
         given(selectDraftPosition.select(RoomApiTestFixtures.ROOM_CODE, RoomApiTestFixtures.GUEST_TOKEN, 2))
-            .willReturn(room);
-        given(getRoom.get(RoomApiTestFixtures.ROOM_CODE)).willReturn(room);
+            .willReturn(null);
 
         var result = mockMvcTester().perform(
             put("/api/v1/rooms/{code}/draft-position", RoomApiTestFixtures.ROOM_CODE)
@@ -64,21 +58,15 @@ class RoomDraftApiControllerWebMvcTest {
 
         result.assertThat().hasStatusOk();
         JsonNode body = objectMapper.readTree(result.getResponse().getContentAsString());
-        assertThat(body.at("/success/startReadiness").asText()).isEqualTo("STARTABLE");
-        assertThat(body.at("/success/roomCode").asText()).isEqualTo(RoomApiTestFixtures.ROOM_CODE);
-        assertThat(body.at("/success/draftOrder/slots/1/leaderId").asText()).isEqualTo(RoomApiTestFixtures.GUEST_ID);
-        assertThat(body.at("/success/code").isMissingNode()).isTrue();
-        assertThat(body.at("/success/leaders").isMissingNode()).isTrue();
-        assertThat(body.at("/success/playerPool").isMissingNode()).isTrue();
+        assertThat(body.at("/resultType").asText()).isEqualTo("SUCCESS");
+        assertThat(body.at("/success").isNull()).isTrue();
+        assertThat(body.at("/error").isNull()).isTrue();
     }
 
     @Test
     void clearDraftPosition은_header가_있으면_성공한다() throws Exception {
-        Room room = RoomApiTestFixtures.waitingDraftRoom();
-        room.clearDraftPosition(new TeamLeaderId(RoomApiTestFixtures.HOST_ID));
         given(clearDraftPosition.clear(RoomApiTestFixtures.ROOM_CODE, RoomApiTestFixtures.HOST_TOKEN))
-            .willReturn(room);
-        given(getRoom.get(RoomApiTestFixtures.ROOM_CODE)).willReturn(room);
+            .willReturn(null);
 
         var result = mockMvcTester().perform(
             delete("/api/v1/rooms/{code}/draft-position", RoomApiTestFixtures.ROOM_CODE)
@@ -87,12 +75,9 @@ class RoomDraftApiControllerWebMvcTest {
 
         result.assertThat().hasStatusOk();
         JsonNode body = objectMapper.readTree(result.getResponse().getContentAsString());
-        assertThat(body.at("/success/startReadiness").asText()).isEqualTo("WAITING_FOR_DRAFT_POSITIONS");
-        assertThat(body.at("/success/roomCode").asText()).isEqualTo(RoomApiTestFixtures.ROOM_CODE);
-        assertThat(body.at("/success/draftOrder/slots/0/leaderId").isNull()).isTrue();
-        assertThat(body.at("/success/code").isMissingNode()).isTrue();
-        assertThat(body.at("/success/leaders").isMissingNode()).isTrue();
-        assertThat(body.at("/success/playerPool").isMissingNode()).isTrue();
+        assertThat(body.at("/resultType").asText()).isEqualTo("SUCCESS");
+        assertThat(body.at("/success").isNull()).isTrue();
+        assertThat(body.at("/error").isNull()).isTrue();
     }
 
     @Test

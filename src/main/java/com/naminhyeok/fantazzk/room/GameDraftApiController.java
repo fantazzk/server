@@ -24,12 +24,11 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = OpenApiDocumentation.GAME_PLAY_TAG)
 class GameDraftApiController {
     private final PickDraft pickDraft;
-    private final GetGame getGame;
 
     @PostMapping("/{gameId}/draft-picks")
     @Operation(
         summary = "드래프트 픽",
-        description = "현재 턴인 팀장이 선수를 선택합니다. 성공 시 지명 결과와 다음 드래프트 진행 상태를 반환합니다.",
+        description = "현재 턴인 팀장의 드래프트 선택 요청을 전달합니다. 성공 시에는 수락 여부만 빈 성공 응답으로 확인하며, 화면 갱신과 다음 드래프트 진행 상태는 realtime 이벤트나 GET /games/{gameId}로 확인합니다.",
         security = @SecurityRequirement(name = OpenApiDocumentation.ROOM_ACTION_TOKEN_SCHEME)
     )
     @io.swagger.v3.oas.annotations.responses.ApiResponses({
@@ -38,7 +37,7 @@ class GameDraftApiController {
             description = "픽 성공",
             content = @Content(
                 mediaType = "application/json",
-                examples = @ExampleObject(value = OpenApiDocumentation.GAME_DRAFT_SUCCESS_EXAMPLE)
+                examples = @ExampleObject(value = OpenApiDocumentation.EMPTY_SUCCESS_EXAMPLE)
             )
         ),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -58,14 +57,14 @@ class GameDraftApiController {
             )
         )
     })
-    ApiResponse<DraftPickResponse> pickDraft(
+    ApiResponse<Void> pickDraft(
         @Parameter(description = OpenApiDocumentation.GAME_ID_DESCRIPTION, example = "00000000-0000-0000-0000-000000000202")
         @PathVariable UUID gameId,
         @Parameter(description = OpenApiDocumentation.ROOM_ACTION_TOKEN_DESCRIPTION)
         @RequestHeader(value = OpenApiDocumentation.ROOM_ACTION_TOKEN_HEADER, required = false) String actionToken,
         @Valid @RequestBody PickDraftRequest request
     ) {
-        RosterMember picked = pickDraft.pick(gameId, actionToken, request.playerName());
-        return ApiResponse.success(DraftPickResponse.from(picked, getGame.get(gameId)));
+        pickDraft.pick(gameId, actionToken, request.playerName());
+        return ApiResponse.success();
     }
 }
