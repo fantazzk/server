@@ -34,10 +34,7 @@ class RoomStartApiController {
             description = "방 시작 성공",
             content = @Content(
                 mediaType = "application/json",
-                examples = {
-                    @ExampleObject(name = "draft", value = OpenApiDocumentation.GAME_DRAFT_SUCCESS_EXAMPLE),
-                    @ExampleObject(name = "auction", value = OpenApiDocumentation.GAME_AUCTION_SUCCESS_EXAMPLE)
-                }
+                examples = @ExampleObject(value = OpenApiDocumentation.ROOM_START_SUCCESS_EXAMPLE)
             )
         ),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(

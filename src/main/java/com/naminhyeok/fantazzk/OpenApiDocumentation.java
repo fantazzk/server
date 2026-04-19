@@ -40,6 +40,11 @@ public final class OpenApiDocumentation {
         - `games` API 는 시작 후 실시간 진행 상태와 액션을 담당합니다.
         - 즉, 시작 전에는 `room`, 시작 후에는 `game` 이 화면의 source of truth 입니다.
 
+        ## HTTP 와 realtime 의 역할
+        - 이 OpenAPI 문서는 HTTP 계약만 설명합니다.
+        - Supabase realtime payload 는 별도 내부 계약으로 관리하며, 여기에는 포함하지 않습니다.
+        - 일부 mutation API 는 빈 성공 응답만 반환합니다. 이 경우 실제 화면 갱신은 realtime 이벤트 또는 `GET /rooms/{code}`, `GET /games/{gameId}` 재조회로 확인합니다.
+
         ## 액션 인증 방식
         - 로그인 토큰 대신 `X-Room-Action-Token` 헤더를 사용합니다.
         - 이 값은 방 생성/참가 응답에서만 내려오며, 이후 mutation API 호출 시 그대로 전달해야 합니다.
@@ -116,7 +121,7 @@ public final class OpenApiDocumentation {
           "resultType": "SUCCESS",
           "success": {
             "room": {
-              "code": "ROOM01",
+              "roomCode": "ROOM01",
               "status": "WAITING",
               "mode": "DRAFT",
               "teamCount": 2,
@@ -126,7 +131,7 @@ public final class OpenApiDocumentation {
               "draftOrderStrategy": "SNAKE",
               "startReadiness": "WAITING_FOR_DRAFT_POSITIONS",
               "startedGameId": null,
-              "draftOrderPreview": {
+              "draftOrder": {
                 "slots": [
                   {
                     "draftPosition": 1,
@@ -140,7 +145,7 @@ public final class OpenApiDocumentation {
                   }
                 ]
               },
-              "teamLeaders": [
+              "leaders": [
                 {
                   "id": "leader-host",
                   "nickname": "호스트",
@@ -148,7 +153,7 @@ public final class OpenApiDocumentation {
                   "remainingBudget": null
                 }
               ],
-              "players": [
+              "playerPool": [
                 {
                   "name": "선수1",
                   "position": "TOP",
@@ -178,7 +183,7 @@ public final class OpenApiDocumentation {
           "resultType": "SUCCESS",
           "success": {
             "room": {
-              "code": "ROOM01",
+              "roomCode": "ROOM01",
               "status": "WAITING",
               "mode": "DRAFT",
               "teamCount": 2,
@@ -188,7 +193,7 @@ public final class OpenApiDocumentation {
               "draftOrderStrategy": "SNAKE",
               "startReadiness": "WAITING_FOR_DRAFT_POSITIONS",
               "startedGameId": null,
-              "draftOrderPreview": {
+              "draftOrder": {
                 "slots": [
                   {
                     "draftPosition": 1,
@@ -202,7 +207,7 @@ public final class OpenApiDocumentation {
                   }
                 ]
               },
-              "teamLeaders": [
+              "leaders": [
                 {
                   "id": "leader-host",
                   "nickname": "호스트",
@@ -216,7 +221,7 @@ public final class OpenApiDocumentation {
                   "remainingBudget": null
                 }
               ],
-              "players": [
+              "playerPool": [
                 {
                   "name": "선수1",
                   "position": "TOP",
@@ -245,7 +250,7 @@ public final class OpenApiDocumentation {
         {
           "resultType": "SUCCESS",
           "success": {
-            "code": "ROOM01",
+            "roomCode": "ROOM01",
             "status": "WAITING",
             "mode": "DRAFT",
             "teamCount": 2,
@@ -255,7 +260,7 @@ public final class OpenApiDocumentation {
             "draftOrderStrategy": "SNAKE",
             "startReadiness": "STARTABLE",
             "startedGameId": null,
-            "draftOrderPreview": {
+            "draftOrder": {
               "slots": [
                 {
                   "draftPosition": 1,
@@ -269,7 +274,7 @@ public final class OpenApiDocumentation {
                 }
               ]
             },
-            "teamLeaders": [
+            "leaders": [
               {
                 "id": "leader-host",
                 "nickname": "호스트",
@@ -283,7 +288,7 @@ public final class OpenApiDocumentation {
                 "remainingBudget": null
               }
             ],
-            "players": [
+            "playerPool": [
               {
                 "name": "선수1",
                 "position": "TOP",
@@ -306,7 +311,7 @@ public final class OpenApiDocumentation {
         {
           "resultType": "SUCCESS",
           "success": {
-            "id": "00000000-0000-0000-0000-000000000202",
+            "gameId": "00000000-0000-0000-0000-000000000202",
             "roomCode": "ROOM01",
             "mode": "DRAFT",
             "status": "IN_PROGRESS",
@@ -329,7 +334,7 @@ public final class OpenApiDocumentation {
                 "remainingBudget": null
               }
             ],
-            "players": [
+            "playerPool": [
               {
                 "name": "선수1",
                 "position": "TOP",
@@ -343,27 +348,23 @@ public final class OpenApiDocumentation {
                 "status": "AVAILABLE"
               }
             ],
-            "members": [
+            "roster": [
               {
                 "teamLeaderId": "leader-host",
                 "playerName": "선수1",
                 "assignOrder": 0
               }
             ],
-            "progress": {
+            "draftProgress": {
               "currentTurnIndex": 1,
               "currentRound": 1,
               "currentLeaderId": "leader-guest",
               "currentRoundLeaderIds": [
                 "leader-host",
                 "leader-guest"
-              ],
-              "currentAuctionRoundEndsAt": null,
-              "currentAuctionTarget": null,
-              "highestBidAmount": null,
-              "leadingLeaderId": null,
-              "bidCount": null
-            }
+              ]
+            },
+            "auctionProgress": null
           },
           "error": null
         }
@@ -373,7 +374,7 @@ public final class OpenApiDocumentation {
         {
           "resultType": "SUCCESS",
           "success": {
-            "id": "00000000-0000-0000-0000-000000000201",
+            "gameId": "00000000-0000-0000-0000-000000000201",
             "roomCode": "ROOM01",
             "mode": "AUCTION",
             "status": "IN_PROGRESS",
@@ -396,7 +397,7 @@ public final class OpenApiDocumentation {
                 "remainingBudget": 200
               }
             ],
-            "players": [
+            "playerPool": [
               {
                 "name": "선수1",
                 "position": "TOP",
@@ -410,18 +411,16 @@ public final class OpenApiDocumentation {
                 "status": "AVAILABLE"
               }
             ],
-            "members": [
+            "roster": [
               {
                 "teamLeaderId": "leader-guest",
                 "playerName": "선수1",
                 "assignOrder": 0
               }
             ],
-            "progress": {
-              "currentTurnIndex": null,
+            "draftProgress": null,
+            "auctionProgress": {
               "currentRound": 2,
-              "currentLeaderId": null,
-              "currentRoundLeaderIds": null,
               "currentAuctionRoundEndsAt": "2026-04-19T12:00:45Z",
               "currentAuctionTarget": {
                 "name": "선수2",
@@ -431,6 +430,52 @@ public final class OpenApiDocumentation {
               "leadingLeaderId": "leader-guest",
               "bidCount": 2
             }
+          },
+          "error": null
+        }
+        """;
+
+    public static final String EMPTY_SUCCESS_EXAMPLE = """
+        {
+          "resultType": "SUCCESS",
+          "success": null,
+          "error": null
+        }
+        """;
+
+    public static final String ROOM_START_SUCCESS_EXAMPLE = """
+        {
+          "resultType": "SUCCESS",
+          "success": {
+            "gameId": "00000000-0000-0000-0000-000000000201"
+          },
+          "error": null
+        }
+        """;
+
+    public static final String AUCTION_PROGRESS_UPDATE_SUCCESS_EXAMPLE = """
+        {
+          "resultType": "SUCCESS",
+          "success": {
+            "gameId": "00000000-0000-0000-0000-000000000201",
+            "auctionProgress": {
+              "currentRound": 2,
+              "currentAuctionRoundEndsAt": "2026-04-19T12:00:45Z",
+              "currentAuctionTarget": {
+                "name": "선수2",
+                "position": "JUNGLE"
+              },
+              "highestBidAmount": 150,
+              "leadingLeaderId": "leader-guest",
+              "bidCount": 2
+            },
+            "roster": [
+              {
+                "teamLeaderId": "leader-guest",
+                "playerName": "선수1",
+                "assignOrder": 0
+              }
+            ]
           },
           "error": null
         }

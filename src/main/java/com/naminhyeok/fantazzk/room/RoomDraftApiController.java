@@ -30,7 +30,7 @@ class RoomDraftApiController {
     @PutMapping("/{code}/draft-position")
     @Operation(
         summary = "드래프트 자리 선택 또는 변경",
-        description = "드래프트 모드 로비에서 현재 팀장의 드래프트 순번을 선택합니다. `startReadiness` 가 `STARTABLE` 이 되어야 호스트가 방을 시작할 수 있습니다.",
+        description = "드래프트 모드 로비에서 현재 팀장의 드래프트 순번 선택 요청을 전달합니다. 성공 시에는 빈 성공 응답만 반환하며, 로비 갱신은 realtime 이벤트나 GET /rooms/{code}로 확인합니다.",
         security = @SecurityRequirement(name = OpenApiDocumentation.ROOM_ACTION_TOKEN_SCHEME)
     )
     @io.swagger.v3.oas.annotations.responses.ApiResponses({
@@ -39,7 +39,7 @@ class RoomDraftApiController {
             description = "자리 선택 성공",
             content = @Content(
                 mediaType = "application/json",
-                examples = @ExampleObject(value = OpenApiDocumentation.ROOM_VIEW_SUCCESS_EXAMPLE)
+                examples = @ExampleObject(value = OpenApiDocumentation.EMPTY_SUCCESS_EXAMPLE)
             )
         ),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -55,20 +55,21 @@ class RoomDraftApiController {
             description = "이미 선점된 자리이거나 대기 상태가 아님"
         )
     })
-    ApiResponse<RoomDraftOrderResponse> selectDraftPosition(
+    ApiResponse<Void> selectDraftPosition(
         @Parameter(description = OpenApiDocumentation.ROOM_CODE_DESCRIPTION, example = "ROOM01")
         @PathVariable String code,
         @Parameter(description = OpenApiDocumentation.ROOM_ACTION_TOKEN_DESCRIPTION)
         @RequestHeader(value = OpenApiDocumentation.ROOM_ACTION_TOKEN_HEADER, required = false) String actionToken,
         @Valid @RequestBody SelectDraftPositionRequest request
     ) {
-        return ApiResponse.success(RoomDraftOrderResponse.from(selectDraftPosition.select(code, actionToken, request.draftPosition())));
+        selectDraftPosition.select(code, actionToken, request.draftPosition());
+        return ApiResponse.success();
     }
 
     @DeleteMapping("/{code}/draft-position")
     @Operation(
         summary = "드래프트 자리 선택 취소",
-        description = "현재 팀장이 확정했던 드래프트 순번을 해제합니다.",
+        description = "현재 팀장이 확정했던 드래프트 순번 해제 요청을 전달합니다. 성공 시에는 빈 성공 응답만 반환하며, 로비 갱신은 realtime 이벤트나 GET /rooms/{code}로 확인합니다.",
         security = @SecurityRequirement(name = OpenApiDocumentation.ROOM_ACTION_TOKEN_SCHEME)
     )
     @io.swagger.v3.oas.annotations.responses.ApiResponses({
@@ -77,7 +78,7 @@ class RoomDraftApiController {
             description = "자리 선택 취소 성공",
             content = @Content(
                 mediaType = "application/json",
-                examples = @ExampleObject(value = OpenApiDocumentation.ROOM_VIEW_SUCCESS_EXAMPLE)
+                examples = @ExampleObject(value = OpenApiDocumentation.EMPTY_SUCCESS_EXAMPLE)
             )
         ),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -89,12 +90,13 @@ class RoomDraftApiController {
             )
         )
     })
-    ApiResponse<RoomDraftOrderResponse> clearDraftPosition(
+    ApiResponse<Void> clearDraftPosition(
         @Parameter(description = OpenApiDocumentation.ROOM_CODE_DESCRIPTION, example = "ROOM01")
         @PathVariable String code,
         @Parameter(description = OpenApiDocumentation.ROOM_ACTION_TOKEN_DESCRIPTION)
         @RequestHeader(value = OpenApiDocumentation.ROOM_ACTION_TOKEN_HEADER, required = false) String actionToken
     ) {
-        return ApiResponse.success(RoomDraftOrderResponse.from(clearDraftPosition.clear(code, actionToken)));
+        clearDraftPosition.clear(code, actionToken);
+        return ApiResponse.success();
     }
 }

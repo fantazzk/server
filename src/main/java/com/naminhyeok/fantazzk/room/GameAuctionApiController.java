@@ -25,12 +25,11 @@ import org.springframework.web.bind.annotation.RestController;
 class GameAuctionApiController {
     private final PlaceBid placeBid;
     private final SettleAuction settleAuction;
-    private final GetGame getGame;
 
     @PostMapping("/{gameId}/bids")
     @Operation(
         summary = "경매 입찰",
-        description = "현재 경매 대상 선수에게 입찰합니다. 성공 시 입찰 결과와 최신 경매 진행 상태를 반환하며, 입찰 시점 기준으로 라운드 마감 시간이 다시 연장됩니다.",
+        description = "현재 경매 대상 선수에게 입찰 요청을 전달합니다. 성공 시에는 수락 여부만 빈 성공 응답으로 확인하며, 화면 갱신과 최신 경매 진행 상태는 realtime 이벤트나 GET /games/{gameId}로 확인합니다.",
         security = @SecurityRequirement(name = OpenApiDocumentation.ROOM_ACTION_TOKEN_SCHEME)
     )
     @io.swagger.v3.oas.annotations.responses.ApiResponses({
@@ -39,7 +38,7 @@ class GameAuctionApiController {
             description = "입찰 성공",
             content = @Content(
                 mediaType = "application/json",
-                examples = @ExampleObject(value = OpenApiDocumentation.GAME_AUCTION_SUCCESS_EXAMPLE)
+                examples = @ExampleObject(value = OpenApiDocumentation.EMPTY_SUCCESS_EXAMPLE)
             )
         ),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -67,15 +66,15 @@ class GameAuctionApiController {
             )
         )
     })
-    ApiResponse<BidPlacementResponse> placeBid(
+    ApiResponse<Void> placeBid(
         @Parameter(description = OpenApiDocumentation.GAME_ID_DESCRIPTION, example = "00000000-0000-0000-0000-000000000201")
         @PathVariable UUID gameId,
         @Parameter(description = OpenApiDocumentation.ROOM_ACTION_TOKEN_DESCRIPTION)
         @RequestHeader(value = OpenApiDocumentation.ROOM_ACTION_TOKEN_HEADER, required = false) String actionToken,
         @Valid @RequestBody PlaceBidRequest request
     ) {
-        AuctionBid bid = placeBid.place(gameId, actionToken, request.amount());
-        return ApiResponse.success(BidPlacementResponse.from(bid, getGame.get(gameId)));
+        placeBid.place(gameId, actionToken, request.amount());
+        return ApiResponse.success();
     }
 
     @PostMapping("/{gameId}/auction/progress")
@@ -88,7 +87,7 @@ class GameAuctionApiController {
         description = "최신 경매 상태 반환",
         content = @Content(
             mediaType = "application/json",
-            examples = @ExampleObject(value = OpenApiDocumentation.GAME_AUCTION_SUCCESS_EXAMPLE)
+            examples = @ExampleObject(value = OpenApiDocumentation.AUCTION_PROGRESS_UPDATE_SUCCESS_EXAMPLE)
         )
     )
     ApiResponse<AuctionProgressUpdateResponse> progressAuction(@PathVariable UUID gameId) {
