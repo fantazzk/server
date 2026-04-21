@@ -12,6 +12,7 @@ import com.naminhyeok.fantazzk.room.application.RoomSessionResult;
 import com.naminhyeok.fantazzk.room.application.SelectDraftPosition;
 import com.naminhyeok.fantazzk.room.application.StartRoom;
 import com.naminhyeok.fantazzk.room.domain.DraftGame;
+import com.naminhyeok.fantazzk.room.domain.Game;
 import com.naminhyeok.fantazzk.room.domain.PlayerStatus;
 import com.naminhyeok.fantazzk.room.domain.Room;
 import com.naminhyeok.fantazzk.room.domain.RoomErrorType;
@@ -26,6 +27,7 @@ import com.naminhyeok.fantazzk.template.support.TemplateFixture;
 import com.naminhyeok.fantazzk.template.support.TemplateFixture;
 import jakarta.persistence.EntityManager;
 import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -59,7 +61,7 @@ class RoomDraftIntegrationTest {
     @Test
     @Transactional
     void 픽을_처리하면_DraftGame에만_선수_배정과_턴_진행이_반영된다() {
-        var template =
+        UUID template =
             templateFixture.createDraftTemplateId(
                 "드래프트전",
                 2,
@@ -75,9 +77,9 @@ class RoomDraftIntegrationTest {
         RoomTeamLeader guest = joinRoom.join(created.room().getCode(), "게스트").leader();
         selectDraftPosition.select(created.room().getCode(), created.leader().getActionToken(), 2);
         selectDraftPosition.select(created.room().getCode(), guest.getActionToken(), 1);
-        startRoom.start(created.room().getCode(), created.leader().getActionToken());
+        Game startedGame = startRoom.start(created.room().getCode(), created.leader().getActionToken());
 
-        RosterMember member = pickDraft.pick(created.room().getCode(), guest.getActionToken(), "선수1");
+        RosterMember member = pickDraft.pick(startedGame.getId().gameId(), guest.getActionToken(), "선수1");
 
         entityManager.flush();
         entityManager.clear();
@@ -97,7 +99,7 @@ class RoomDraftIntegrationTest {
 
     @Test
     void 픽_요청은_선수이름_해석보다_턴_검증을_먼저_적용한다() {
-        var template =
+        UUID template =
             templateFixture.createDraftTemplateId(
                 "드래프트전",
                 2,
@@ -113,9 +115,9 @@ class RoomDraftIntegrationTest {
         RoomTeamLeader guest = joinRoom.join(created.room().getCode(), "게스트").leader();
         selectDraftPosition.select(created.room().getCode(), created.leader().getActionToken(), 2);
         selectDraftPosition.select(created.room().getCode(), guest.getActionToken(), 1);
-        startRoom.start(created.room().getCode(), created.leader().getActionToken());
+        Game startedGame = startRoom.start(created.room().getCode(), created.leader().getActionToken());
 
-        assertThatThrownBy(() -> pickDraft.pick(created.room().getCode(), created.leader().getActionToken(), "없는선수"))
+        assertThatThrownBy(() -> pickDraft.pick(startedGame.getId().gameId(), created.leader().getActionToken(), "없는선수"))
             .isInstanceOf(CoreException.class)
             .isInstanceOfSatisfying(CoreException.class, ex -> assertThat(ex.getError()).isEqualTo(RoomErrorType.ROOM_PICK_OUT_OF_TURN));
     }
@@ -123,7 +125,7 @@ class RoomDraftIntegrationTest {
     @Test
     @Transactional
     void SNAKE_드래프트는_재조회_후에도_2라운드가_역순으로_진행된다() {
-        var template =
+        UUID template =
             templateFixture.createDraftTemplateId(
                 "드래프트전",
                 2,
@@ -142,10 +144,10 @@ class RoomDraftIntegrationTest {
         RoomTeamLeader host = created.leader();
         selectDraftPosition.select(created.room().getCode(), host.getActionToken(), 1);
         selectDraftPosition.select(created.room().getCode(), guest.getActionToken(), 2);
-        startRoom.start(created.room().getCode(), host.getActionToken());
+        Game startedGame = startRoom.start(created.room().getCode(), host.getActionToken());
 
-        pickDraft.pick(created.room().getCode(), host.getActionToken(), "선수1");
-        pickDraft.pick(created.room().getCode(), guest.getActionToken(), "선수2");
+        pickDraft.pick(startedGame.getId().gameId(), host.getActionToken(), "선수1");
+        pickDraft.pick(startedGame.getId().gameId(), guest.getActionToken(), "선수2");
 
         entityManager.flush();
         entityManager.clear();
@@ -155,7 +157,7 @@ class RoomDraftIntegrationTest {
         assertThat(reloadedAfterSecondPick.getStatus()).isEqualTo(RoomStatus.STARTED);
         assertThat(gameAfterSecondPick.getCurrentTurnIndex()).isEqualTo(2);
 
-        RosterMember thirdPick = pickDraft.pick(created.room().getCode(), guest.getActionToken(), "선수3");
+        RosterMember thirdPick = pickDraft.pick(reloadedAfterSecondPick.getStartedGameId().gameId(), guest.getActionToken(), "선수3");
 
         entityManager.flush();
         entityManager.clear();

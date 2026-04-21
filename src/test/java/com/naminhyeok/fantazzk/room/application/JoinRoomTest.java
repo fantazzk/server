@@ -4,11 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.naminhyeok.fantazzk.room.application.JoinRoom;
 import com.naminhyeok.fantazzk.room.application.RoomSessionResult;
-import com.naminhyeok.fantazzk.room.application.TeamLeaderIdentityIssuer;
 import com.naminhyeok.fantazzk.room.domain.Room;
 import com.naminhyeok.fantazzk.room.domain.RoomId;
 import com.naminhyeok.fantazzk.room.domain.RoomTeamLeader;
-import com.naminhyeok.fantazzk.room.domain.TeamLeaderId;
 import com.naminhyeok.fantazzk.room.infrastructure.realtime.NoopRoomRealtimeEventPublisher;
 import com.naminhyeok.fantazzk.room.repository.Rooms;
 import java.lang.reflect.Field;
@@ -25,17 +23,15 @@ class JoinRoomTest {
         JoinRoom joinRoom =
             new JoinRoom(
                 new ReorderingRooms(room),
-                () -> new TeamLeaderIdentityIssuer.TeamLeaderIdentity("guest-joined", "guest-action-token"),
                 new NoopRoomRealtimeEventPublisher()
             );
 
         RoomSessionResult joined = joinRoom.join(room.getCode(), "게스트");
 
-        assertThat(joined.leader().getId()).isEqualTo(new TeamLeaderId("guest-joined"));
-        assertThat(joined.leader().getActionToken()).isEqualTo("guest-action-token");
+        assertThat(joined.leader().getActionToken()).isNotBlank();
         assertThat(joined.room().getLeaders())
             .extracting(RoomTeamLeader::getId)
-            .containsExactly(new TeamLeaderId("guest-joined"), new TeamLeaderId(RoomApiTestFixtures.HOST_ID));
+            .containsExactly(joined.leader().getId(), room.getLeaders().getLast().getId());
     }
 
     private static final class ReorderingRooms implements Rooms {

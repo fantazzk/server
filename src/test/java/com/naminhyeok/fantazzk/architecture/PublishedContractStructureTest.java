@@ -114,7 +114,7 @@ class PublishedContractStructureTest {
         assertThat(hasDeclaredMethod("start", teamLeaderId)).isFalse();
         assertThat(hasDeclaredMethod("placeBid", teamLeaderId, int.class)).isFalse();
         assertThat(hasDeclaredMethod("settleAuction")).isFalse();
-        assertThat(hasDeclaredMethod("start", teamLeaderId, Instant.class)).isTrue();
+        assertThat(hasDeclaredMethod("start", teamLeaderId, Instant.class)).isFalse();
         assertThat(hasDeclaredMethod("placeBid", teamLeaderId, int.class, Instant.class)).isFalse();
         assertThat(hasDeclaredMethod("settleAuction", Instant.class)).isFalse();
     }

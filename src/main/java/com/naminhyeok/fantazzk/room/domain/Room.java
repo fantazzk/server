@@ -195,10 +195,6 @@ public class Room implements AggregateRoot<Room, RoomId> {
         getLeader(callerLeaderId).clearDraftPosition();
     }
 
-    public void start(TeamLeaderId callerLeaderId, Instant now) {
-        start(callerLeaderId, new GameId(UUID.randomUUID()), now);
-    }
-
     public StartedGameSnapshot start(TeamLeaderId callerLeaderId, GameId gameId, Instant now) {
         if (!hostLeaderId.equals(callerLeaderId)) {
             throw CoreException.of(RoomErrorType.ROOM_START_FORBIDDEN);

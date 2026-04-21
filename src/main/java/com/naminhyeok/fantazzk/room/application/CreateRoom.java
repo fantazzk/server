@@ -27,17 +27,16 @@ public class CreateRoom {
 
     private final CreateRoomAttempt createRoomAttempt;
     private final TemplateCatalog templateCatalog;
-    private final TeamLeaderIdentityIssuer teamLeaderIdentityIssuer;
     private final Clock clock;
     private final RoomCodeGenerator roomCodeGenerator;
 
     public RoomSessionResult create(UUID templateId, String hostNickname) {
         TemplateCatalog.TemplateBlueprint template = getTemplate(templateId);
-        TeamLeaderIdentityIssuer.TeamLeaderIdentity identity = teamLeaderIdentityIssuer.issue();
-        TeamLeaderId hostLeaderId = new TeamLeaderId(identity.leaderId());
+        TeamLeaderId hostLeaderId = new TeamLeaderId(UUID.randomUUID().toString());
+        String hostActionToken = UUID.randomUUID().toString();
 
         for (int attempt = 1; attempt <= MAX_ROOM_CODE_ATTEMPTS; attempt++) {
-            Room room = newRoom(template, hostLeaderId, identity.actionToken(), hostNickname);
+            Room room = newRoom(template, hostLeaderId, hostActionToken, hostNickname);
             try {
                 Room saved = createRoomAttempt.save(room);
                 return new RoomSessionResult(saved, findLeader(saved, hostLeaderId));

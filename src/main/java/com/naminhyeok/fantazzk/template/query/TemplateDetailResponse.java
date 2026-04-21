@@ -37,6 +37,20 @@ public record TemplateDetailResponse(
     }
 
     public static TemplateDetailResponse from(TemplateDetail detail) {
-        return TemplateExternalViewMapper.toDetailResponse(detail);
+        Template template = detail.template();
+        return new TemplateDetailResponse(
+            template.getId().templateId().toString(),
+            template.getName(),
+            template.getGameType(),
+            template.getMode(),
+            template.getTeamCount(),
+            template.getTeamSize(),
+            template.getBudget(),
+            template.getPickBanTime(),
+            template.getMinBidUnit(),
+            template.getPositionLimit(),
+            template.getDraftOrderStrategy(),
+            detail.players().stream().map(TemplatePlayerResponse::from).toList()
+        );
     }
 }

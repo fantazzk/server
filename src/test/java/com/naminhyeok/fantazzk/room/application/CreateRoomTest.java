@@ -8,7 +8,6 @@ import com.naminhyeok.fantazzk.room.application.CreateRoom;
 import com.naminhyeok.fantazzk.room.application.CreateRoomAttempt;
 import com.naminhyeok.fantazzk.room.application.RoomCodeGenerator;
 import com.naminhyeok.fantazzk.room.application.RoomSessionResult;
-import com.naminhyeok.fantazzk.room.application.TeamLeaderIdentityIssuer;
 import com.naminhyeok.fantazzk.room.domain.Room;
 import com.naminhyeok.fantazzk.room.domain.RoomErrorType;
 import com.naminhyeok.fantazzk.room.domain.RoomId;
@@ -42,7 +41,6 @@ class CreateRoomTest {
             new CreateRoom(
                 new CreateRoomAttempt(rooms),
                 new StubTemplateCatalog(),
-                new StubTeamLeaderIdentityIssuer(),
                 Clock.fixed(Instant.parse("2026-04-10T00:00:00Z"), ZoneOffset.UTC),
                 new StubRoomCodeGenerator("ROOM01", "ROOM02", "ROOM03")
             );
@@ -56,7 +54,8 @@ class CreateRoomTest {
         assertThat(created.room().getMinBidUnit()).isEqualTo(10);
         assertThat(created.room().getPlayers().stream().map(RoomPlayer::getId))
             .containsExactly(new RoomPlayerId(0), new RoomPlayerId(1));
-        assertThat(created.leader().getId()).isEqualTo(new TeamLeaderId("host-id"));
+        assertThat(created.room().getLeaders()).singleElement().extracting(leader -> leader.getId()).isEqualTo(created.leader().getId());
+        assertThat(created.leader().getActionToken()).isNotBlank();
     }
 
     @Test
@@ -71,7 +70,6 @@ class CreateRoomTest {
             new CreateRoom(
                 new CreateRoomAttempt(rooms),
                 new StubTemplateCatalog(),
-                new StubTeamLeaderIdentityIssuer(),
                 Clock.fixed(Instant.parse("2026-04-10T00:00:00Z"), ZoneOffset.UTC),
                 new StubRoomCodeGenerator("ROOM01")
             );
@@ -93,7 +91,6 @@ class CreateRoomTest {
             new CreateRoom(
                 new CreateRoomAttempt(rooms),
                 new StubTemplateCatalog(),
-                new StubTeamLeaderIdentityIssuer(),
                 Clock.fixed(Instant.parse("2026-04-10T00:00:00Z"), ZoneOffset.UTC),
                 new StubRoomCodeGenerator("ROOM01", "ROOM02", "ROOM03")
             );
@@ -191,13 +188,6 @@ class CreateRoomTest {
                     new PlayerBlueprint("선수2", "JUNGLE", 1)
                 )
             );
-        }
-    }
-
-    private static final class StubTeamLeaderIdentityIssuer implements TeamLeaderIdentityIssuer {
-        @Override
-        public TeamLeaderIdentity issue() {
-            return new TeamLeaderIdentity("host-id", "action-token");
         }
     }
 

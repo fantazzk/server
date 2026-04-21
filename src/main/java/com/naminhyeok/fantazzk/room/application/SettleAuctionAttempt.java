@@ -2,9 +2,7 @@ package com.naminhyeok.fantazzk.room.application;
 
 import com.naminhyeok.fantazzk.CoreException;
 import com.naminhyeok.fantazzk.room.domain.AuctionGame;
-import com.naminhyeok.fantazzk.room.domain.AuctionSettlement;
 import com.naminhyeok.fantazzk.room.domain.Game;
-import com.naminhyeok.fantazzk.room.domain.GameStatus;
 import com.naminhyeok.fantazzk.room.domain.Room;
 import com.naminhyeok.fantazzk.room.domain.RoomErrorType;
 import com.naminhyeok.fantazzk.room.domain.RoomMode;
@@ -15,7 +13,6 @@ import com.naminhyeok.fantazzk.room.repository.Games;
 import com.naminhyeok.fantazzk.room.repository.Rooms;
 import java.time.Clock;
 import java.time.Instant;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
@@ -26,76 +23,26 @@ import org.springframework.transaction.annotation.Transactional;
 public class SettleAuctionAttempt {
     private final Rooms rooms;
     private final Games games;
-    private final StartedGameContextLoader startedGameContextLoader;
     private final Clock clock;
     private final RoomRealtimeEventPublisher realtimeEventPublisher;
-
-    @Transactional
-    public AuctionSettlement settle(String code) {
-        try {
-            Instant now = Instant.now(clock);
-            Room room = rooms.findByCode(code).orElseThrow(() -> CoreException.of(RoomErrorType.ROOM_NOT_FOUND));
-            AuctionGame game = requireAuctionGame(room);
-            AuctionSettlement settlement = game.settleAuction(now);
-            games.save(game);
-            Room saved = rooms.saveAndFlush(room);
-            publishAuctionSettlementEvents(saved, game, settlement);
-            return settlement;
-        } catch (OptimisticLockingFailureException ex) {
-            throw CoreException.of(RoomErrorType.ROOM_CONCURRENT_MODIFICATION);
-        }
-    }
-
-    @Transactional
-    public AuctionSettlement settle(UUID gameId) {
-        try {
-            Instant now = Instant.now(clock);
-            StartedGameContext context = startedGameContextLoader.load(gameId);
-            AuctionGame game = requireAuctionGame(context.game());
-            AuctionSettlement settlement = game.settleAuction(now);
-            games.save(game);
-            Room saved = rooms.saveAndFlush(context.room());
-            publishAuctionSettlementEvents(saved, game, settlement);
-            return settlement;
-        } catch (OptimisticLockingFailureException ex) {
-            throw CoreException.of(RoomErrorType.ROOM_CONCURRENT_MODIFICATION);
-        }
-    }
 
     @Transactional
     public Room settleIfDue(String code) {
         Instant now = Instant.now(clock);
         Room room = rooms.findByCode(code).orElseThrow(() -> CoreException.of(RoomErrorType.ROOM_NOT_FOUND));
         AuctionGame game = loadAuctionGame(room);
-        if (!isDue(room, game, now)) {
+        if (!isDue(game, now)) {
             return room;
         }
 
-        AuctionSettlement settlement = game.settleAuction(now);
+        game.settleAuction(now);
         games.save(game);
         Room saved = rooms.saveAndFlush(room);
-        publishAuctionSettlementEvents(saved, game, settlement);
+        publishAuctionSettlementEvents(saved, game);
         return saved;
     }
 
-    @Transactional
-    public Game settleIfDue(UUID gameId) {
-        Instant now = Instant.now(clock);
-        StartedGameContext context = startedGameContextLoader.load(gameId);
-        Game loadedGame = context.game();
-        AuctionGame game = loadAuctionGame(loadedGame);
-        if (!isDue(game, now)) {
-            return loadedGame;
-        }
-
-        AuctionSettlement settlement = game.settleAuction(now);
-        games.save(game);
-        Room saved = rooms.saveAndFlush(context.room());
-        publishAuctionSettlementEvents(saved, game, settlement);
-        return game;
-    }
-
-    private void publishAuctionSettlementEvents(Room room, AuctionGame game, AuctionSettlement settlement) {
+    private void publishAuctionSettlementEvents(Room room, AuctionGame game) {
         StartedRoomSnapshot snapshot = new StartedRoomSnapshot(room, game);
         realtimeEventPublisher.publishGameUpdatedAfterCommit(snapshot);
     }
@@ -114,13 +61,6 @@ public class SettleAuctionAttempt {
         return auctionGame;
     }
 
-    private AuctionGame loadAuctionGame(Game game) {
-        if (!(game instanceof AuctionGame auctionGame)) {
-            return null;
-        }
-        return auctionGame;
-    }
-
     private AuctionGame requireAuctionGame(Room room) {
         if (room.getMode() != RoomMode.AUCTION) {
             throw CoreException.of(RoomErrorType.ROOM_BID_REQUIRES_AUCTION_MODE);
@@ -135,22 +75,7 @@ public class SettleAuctionAttempt {
         return game;
     }
 
-    private AuctionGame requireAuctionGame(Game game) {
-        AuctionGame auctionGame = loadAuctionGame(game);
-        if (auctionGame == null) {
-            throw CoreException.of(RoomErrorType.ROOM_BID_REQUIRES_AUCTION_MODE);
-        }
-        if (auctionGame.getStatus() != GameStatus.IN_PROGRESS) {
-            throw CoreException.of(RoomErrorType.ROOM_PLAY_REQUIRES_IN_PROGRESS);
-        }
-        return auctionGame;
-    }
-
     private static boolean isDue(AuctionGame game, Instant now) {
         return game != null && game.isDue(now);
-    }
-
-    private static boolean isDue(Room room, AuctionGame game, Instant now) {
-        return isDue(game, now);
     }
 }

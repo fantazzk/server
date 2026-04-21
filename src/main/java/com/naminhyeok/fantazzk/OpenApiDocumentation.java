@@ -453,34 +453,6 @@ public final class OpenApiDocumentation {
         }
         """;
 
-    public static final String AUCTION_PROGRESS_UPDATE_SUCCESS_EXAMPLE = """
-        {
-          "resultType": "SUCCESS",
-          "success": {
-            "gameId": "00000000-0000-0000-0000-000000000201",
-            "auctionProgress": {
-              "currentRound": 2,
-              "currentAuctionRoundEndsAt": "2026-04-19T12:00:45Z",
-              "currentAuctionTarget": {
-                "name": "선수2",
-                "position": "JUNGLE"
-              },
-              "highestBidAmount": 150,
-              "leadingLeaderId": "leader-guest",
-              "bidCount": 2
-            },
-            "roster": [
-              {
-                "teamLeaderId": "leader-guest",
-                "playerName": "선수1",
-                "assignOrder": 0
-              }
-            ]
-          },
-          "error": null
-        }
-        """;
-
     public static final String ROOM_ACTION_TOKEN_REQUIRED_EXAMPLE = """
         {
           "resultType": "ERROR",

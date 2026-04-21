@@ -3,7 +3,6 @@ package com.naminhyeok.fantazzk.room.web;
 import com.naminhyeok.fantazzk.ApiResponse;
 import com.naminhyeok.fantazzk.OpenApiDocumentation;
 import com.naminhyeok.fantazzk.room.application.PlaceBid;
-import com.naminhyeok.fantazzk.room.application.SettleAuction;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -26,7 +25,6 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = OpenApiDocumentation.GAME_PLAY_TAG)
 public class GameAuctionApiController {
     private final PlaceBid placeBid;
-    private final SettleAuction settleAuction;
 
     @PostMapping("/{gameId}/bids")
     @Operation(
@@ -77,22 +75,5 @@ public class GameAuctionApiController {
     ) {
         placeBid.place(gameId, actionToken, request.amount());
         return ApiResponse.success();
-    }
-
-    @PostMapping("/{gameId}/auction/progress")
-    @Operation(
-        summary = "경매 진행 상태 갱신",
-        description = "현재 시각 기준으로 경매 라운드가 마감되었는지 확인하고, 필요하면 정산 후 최신 경매 진행 상태와 로스터를 반환합니다. 실시간 연동이 없을 때 FE 폴링 fallback 으로 사용할 수 있습니다."
-    )
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-        responseCode = "200",
-        description = "최신 경매 상태 반환",
-        content = @Content(
-            mediaType = "application/json",
-            examples = @ExampleObject(value = OpenApiDocumentation.AUCTION_PROGRESS_UPDATE_SUCCESS_EXAMPLE)
-        )
-    )
-    public ApiResponse<AuctionProgressUpdateResponse> progressAuction(@PathVariable UUID gameId) {
-        return ApiResponse.success(AuctionProgressUpdateResponse.from(settleAuction.settleIfDue(gameId)));
     }
 }
