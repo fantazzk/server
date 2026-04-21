@@ -114,8 +114,9 @@ class AuctionGameTest {
             new GameId(UUID.fromString("00000000-0000-0000-0000-000000000101")),
             new RoomId(UUID.fromString("00000000-0000-0000-0000-000000000001")),
             "ROOM01",
+            "LEAGUE_OF_LEGENDS",
             STARTED_AT,
-            GameRules.auction(2, 2, 300, PICK_BAN_TIME, MIN_BID_UNIT, null),
+            GameRules.auction(2, 2, 300, PICK_BAN_TIME, MIN_BID_UNIT),
             List.of(
                 GameParticipant.auction(HOST_ID, "호스트", 300),
                 GameParticipant.auction(GUEST_ID, "게스트", 300)
@@ -133,8 +134,9 @@ class AuctionGameTest {
             new GameId(UUID.fromString("00000000-0000-0000-0000-000000000102")),
             new RoomId(UUID.fromString("00000000-0000-0000-0000-000000000002")),
             "ROOM02",
+            "LEAGUE_OF_LEGENDS",
             STARTED_AT,
-            GameRules.auction(2, 2, 300, PICK_BAN_TIME, MIN_BID_UNIT, null),
+            GameRules.auction(2, 2, 300, PICK_BAN_TIME, MIN_BID_UNIT),
             List.of(
                 GameParticipant.auction(HOST_ID, "호스트", 300),
                 GameParticipant.auction(GUEST_ID, "게스트", 300)

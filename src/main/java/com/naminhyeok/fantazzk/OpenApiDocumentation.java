@@ -64,7 +64,6 @@ public final class OpenApiDocumentation {
               "budget": null,
               "pickBanTime": 30,
               "minBidUnit": null,
-              "positionLimit": null,
               "draftOrderStrategy": "SNAKE",
               "players": [
                 {
@@ -97,7 +96,6 @@ public final class OpenApiDocumentation {
             "budget": null,
             "pickBanTime": 30,
             "minBidUnit": null,
-            "positionLimit": null,
             "draftOrderStrategy": "SNAKE",
             "players": [
               {
@@ -122,6 +120,7 @@ public final class OpenApiDocumentation {
           "success": {
             "room": {
               "roomCode": "ROOM01",
+              "gameType": "LEAGUE_OF_LEGENDS",
               "status": "WAITING",
               "mode": "DRAFT",
               "teamCount": 2,
@@ -184,6 +183,7 @@ public final class OpenApiDocumentation {
           "success": {
             "room": {
               "roomCode": "ROOM01",
+              "gameType": "LEAGUE_OF_LEGENDS",
               "status": "WAITING",
               "mode": "DRAFT",
               "teamCount": 2,
@@ -251,6 +251,7 @@ public final class OpenApiDocumentation {
           "resultType": "SUCCESS",
           "success": {
             "roomCode": "ROOM01",
+            "gameType": "LEAGUE_OF_LEGENDS",
             "status": "WAITING",
             "mode": "DRAFT",
             "teamCount": 2,
@@ -313,6 +314,7 @@ public final class OpenApiDocumentation {
           "success": {
             "gameId": "00000000-0000-0000-0000-000000000202",
             "roomCode": "ROOM01",
+            "gameType": "LEAGUE_OF_LEGENDS",
             "mode": "DRAFT",
             "status": "IN_PROGRESS",
             "teamCount": 2,
@@ -376,6 +378,7 @@ public final class OpenApiDocumentation {
           "success": {
             "gameId": "00000000-0000-0000-0000-000000000201",
             "roomCode": "ROOM01",
+            "gameType": "LEAGUE_OF_LEGENDS",
             "mode": "AUCTION",
             "status": "IN_PROGRESS",
             "teamCount": 2,

@@ -22,13 +22,13 @@ public class ProvideTemplateCatalog implements TemplateCatalog {
             TemplateDetail detail = findTemplates.getDetail(new TemplateId(templateId));
             Template template = detail.template();
             return new TemplateBlueprint(
+                template.getGameType(),
                 template.getMode(),
                 template.getTeamCount(),
                 template.getTeamSize(),
                 template.getBudget(),
                 template.getPickBanTime(),
                 template.getMinBidUnit(),
-                template.getPositionLimit(),
                 template.getDraftOrderStrategy(),
                 detail.players().stream()
                     .map(player -> new PlayerBlueprint(player.name(), player.position(), player.displayOrder()))

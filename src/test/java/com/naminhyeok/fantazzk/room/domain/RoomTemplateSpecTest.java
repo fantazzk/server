@@ -18,12 +18,12 @@ class RoomTemplateSpecTest {
         RoomTemplateSpec spec =
             RoomTemplateSpec.from(
                 new TemplateCatalog.TemplateBlueprint(
+                    "LEAGUE_OF_LEGENDS",
                     TemplateCatalog.Mode.DRAFT,
                     2,
                     3,
                     null,
                     30,
-                    null,
                     null,
                     TemplateCatalog.DraftOrderStrategy.SNAKE,
                     List.of(
@@ -35,6 +35,7 @@ class RoomTemplateSpecTest {
                 )
             );
 
+        assertThat(spec.gameType()).isEqualTo("LEAGUE_OF_LEGENDS");
         assertThat(spec.mode()).isEqualTo(RoomMode.DRAFT);
         assertThat(spec.teamCount()).isEqualTo(2);
         assertThat(spec.teamSize()).isEqualTo(3);
@@ -55,12 +56,12 @@ class RoomTemplateSpecTest {
         assertThatThrownBy(
             () -> RoomTemplateSpec.from(
                 new TemplateCatalog.TemplateBlueprint(
+                    "LEAGUE_OF_LEGENDS",
                     TemplateCatalog.Mode.DRAFT,
                     2,
                     2,
                     null,
                     30,
-                    null,
                     null,
                     null,
                     List.of(
@@ -79,13 +80,13 @@ class RoomTemplateSpecTest {
         assertThatThrownBy(
             () -> RoomTemplateSpec.from(
                 new TemplateCatalog.TemplateBlueprint(
+                    "LEAGUE_OF_LEGENDS",
                     TemplateCatalog.Mode.AUCTION,
                     2,
                     2,
                     300,
                     null,
                     10,
-                    null,
                     null,
                     List.of(
                         new TemplateCatalog.PlayerBlueprint("선수1", "TOP", 0),

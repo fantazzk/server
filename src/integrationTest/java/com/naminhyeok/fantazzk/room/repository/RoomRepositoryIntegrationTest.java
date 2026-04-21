@@ -52,6 +52,7 @@ class RoomRepositoryIntegrationTest {
                 "호스트",
                 "host-action-token",
                 new RoomTemplateSpec(
+                    "LEAGUE_OF_LEGENDS",
                     RoomMode.DRAFT,
                     2,
                     2,
@@ -104,6 +105,7 @@ class RoomRepositoryIntegrationTest {
                 "호스트",
                 "host-action-token",
                 new RoomTemplateSpec(
+                    "LEAGUE_OF_LEGENDS",
                     RoomMode.DRAFT,
                     2,
                     2,
@@ -130,7 +132,7 @@ class RoomRepositoryIntegrationTest {
 
     @Test
     @Transactional
-    void 경매_방의_minBidUnit과_positionLimit을_저장하고_다시_읽는다() {
+    void 경매_방의_minBidUnit과_gameType을_저장하고_다시_읽는다() {
         Room room =
             Room.createFromTemplate(
                 "ROOM04",
@@ -138,13 +140,13 @@ class RoomRepositoryIntegrationTest {
                 "호스트",
                 "host-action-token",
                 new RoomTemplateSpec(
+                    "LEAGUE_OF_LEGENDS",
                     RoomMode.AUCTION,
                     2,
                     2,
                     300,
                     30,
                     10,
-                    1,
                     null,
                     List.of(
                         new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
@@ -160,8 +162,8 @@ class RoomRepositoryIntegrationTest {
 
         Room reloaded = rooms.findById(saved.getId()).orElseThrow();
 
+        assertThat(reloaded.getGameType()).isEqualTo("LEAGUE_OF_LEGENDS");
         assertThat(reloaded.getMinBidUnit()).isEqualTo(10);
-        assertThat(reloaded.getPositionLimit()).isEqualTo(1);
     }
 
     @Test
@@ -193,6 +195,7 @@ class RoomRepositoryIntegrationTest {
                 "호스트",
                 "host-action-token",
                 new RoomTemplateSpec(
+                    "LEAGUE_OF_LEGENDS",
                     RoomMode.DRAFT,
                     2,
                     2,
@@ -217,6 +220,7 @@ class RoomRepositoryIntegrationTest {
             "호스트",
             "host-action-token",
             new RoomTemplateSpec(
+                "LEAGUE_OF_LEGENDS",
                 RoomMode.AUCTION,
                 2,
                 2,

@@ -8,7 +8,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public record GamePlayerResponse(
     @Schema(description = "선수 이름", example = "선수1")
     String name,
-    @Schema(description = "선수 포지션", example = "TOP")
+    @Schema(description = "FE가 관리하는 선수 포지션 메타데이터", example = "TOP", nullable = true)
     String position,
     @Schema(description = "노출 순서. 경매 모드에서는 현재 경매 순서, 드래프트 모드에서는 원래 displayOrder 입니다.", example = "0")
     int displayOrder,

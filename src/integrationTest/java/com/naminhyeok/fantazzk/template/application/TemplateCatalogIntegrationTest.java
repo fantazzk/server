@@ -38,7 +38,7 @@ class TemplateCatalogIntegrationTest {
             createTemplate.create(
                 new CreateTemplateCommand.Draft(
                     "사내 리그 드래프트",
-                    TemplateCatalog.GameType.OVERWATCH_2,
+                    "OVERWATCH_2",
                     2,
                     3,
                     30,
@@ -54,12 +54,12 @@ class TemplateCatalogIntegrationTest {
 
         TemplateCatalog.TemplateBlueprint blueprint = templateCatalog.getTemplate(created.getId().templateId());
 
+        assertThat(blueprint.gameType()).isEqualTo("OVERWATCH_2");
         assertThat(blueprint.mode()).isEqualTo(TemplateCatalog.Mode.DRAFT);
         assertThat(blueprint.teamCount()).isEqualTo(2);
         assertThat(blueprint.teamSize()).isEqualTo(3);
         assertThat(blueprint.pickBanTime()).isEqualTo(30);
         assertThat(blueprint.minBidUnit()).isNull();
-        assertThat(blueprint.positionLimit()).isNull();
         assertThat(blueprint.draftOrderStrategy()).isEqualTo(TemplateCatalog.DraftOrderStrategy.FIXED);
         assertThat(blueprint.players())
             .extracting("playerIndex", "name", "position")

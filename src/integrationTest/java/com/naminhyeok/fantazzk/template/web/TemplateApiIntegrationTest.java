@@ -51,7 +51,6 @@ class TemplateApiIntegrationTest {
                       "budget": 300,
                       "pickBanTime": 45,
                       "minBidUnit": 10,
-                      "positionLimit": 1,
                       "players": [
                         {"name": "선수1", "position": "TOP"},
                         {"name": "선수2", "position": "JUNGLE"}
@@ -68,7 +67,67 @@ class TemplateApiIntegrationTest {
         assertThat(success.get("name")).isEqualTo("경매전");
         assertThat(success.get("gameType")).isEqualTo("LEAGUE_OF_LEGENDS");
         assertThat(success.get("mode")).isEqualTo("AUCTION");
+        assertThat(success.containsKey("positionLimit")).isFalse();
         assertThat(((List<?>) success.get("players"))).hasSize(2);
+    }
+
+    @Test
+    void gameType이_임의_문자열이고_position이_비어있어도_메타데이터로_저장한다() {
+        ResponseEntity<Map> response = restTemplate.exchange(
+            RequestEntity.post("/api/v1/templates")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                    """
+                    {
+                      "name": "메타데이터 템플릿",
+                      "gameType": "custom-fe-game",
+                      "mode": "DRAFT",
+                      "teamCount": 2,
+                      "teamSize": 2,
+                      "pickBanTime": 30,
+                      "draftOrderStrategy": "SNAKE",
+                      "players": [
+                        {"name": "선수1", "position": ""},
+                        {"name": "선수2", "position": null}
+                      ]
+                    }
+                    """
+                ),
+            Map.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(response.getBody()).containsEntry("resultType", "SUCCESS");
+        Map<?, ?> success = (Map<?, ?>) response.getBody().get("success");
+        String templateId = (String) success.get("id");
+        assertThat(success.get("gameType")).isEqualTo("custom-fe-game");
+        assertThat(success.containsKey("positionLimit")).isFalse();
+        List<Map<String, Object>> players = (List<Map<String, Object>>) success.get("players");
+        assertThat(players).hasSize(2);
+        assertThat(players.get(0)).containsEntry("name", "선수1").containsEntry("position", "").containsEntry("displayOrder", 0);
+        assertThat(players.get(1)).containsEntry("name", "선수2").containsEntry("displayOrder", 1);
+        assertThat(players.get(1).get("position")).isNull();
+
+        ResponseEntity<Map> detailResponse = restTemplate.getForEntity("/api/v1/templates/" + templateId, Map.class);
+        Map<?, ?> detailSuccess = (Map<?, ?>) detailResponse.getBody().get("success");
+        List<Map<String, Object>> detailPlayers = (List<Map<String, Object>>) detailSuccess.get("players");
+        assertThat(detailSuccess.get("gameType")).isEqualTo("custom-fe-game");
+        assertThat(detailSuccess.containsKey("positionLimit")).isFalse();
+        assertThat(detailPlayers.get(0).get("position")).isEqualTo("");
+        assertThat(detailPlayers.get(1).get("position")).isNull();
+
+        ResponseEntity<Map> listResponse = restTemplate.getForEntity("/api/v1/templates", Map.class);
+        List<Map<String, Object>> templates = (List<Map<String, Object>>) listResponse.getBody().get("success");
+        assertThat(templates).anySatisfy(template -> {
+            if (!"메타데이터 템플릿".equals(template.get("name"))) {
+                return;
+            }
+            assertThat(template.get("gameType")).isEqualTo("custom-fe-game");
+            assertThat(template).doesNotContainKey("positionLimit");
+            List<Map<String, Object>> listPlayers = (List<Map<String, Object>>) template.get("players");
+            assertThat(listPlayers.get(0).get("position")).isEqualTo("");
+            assertThat(listPlayers.get(1).get("position")).isNull();
+        });
     }
 
     @Test
@@ -87,7 +146,6 @@ class TemplateApiIntegrationTest {
                       "budget": 300,
                       "pickBanTime": 45,
                       "minBidUnit": 10,
-                      "positionLimit": 1,
                       "players": [
                         {"name": "선수1", "position": "TOP"},
                         {"name": "선수2", "position": "JUNGLE"}
@@ -107,6 +165,7 @@ class TemplateApiIntegrationTest {
         Map<?, ?> success = (Map<?, ?>) response.getBody().get("success");
         assertThat(success.get("id")).isEqualTo(templateId);
         assertThat(success.get("name")).isEqualTo("상세조회용 경매전");
+        assertThat(success.containsKey("positionLimit")).isFalse();
         List<Map<String, Object>> players = (List<Map<String, Object>>) success.get("players");
         assertThat(players)
             .containsExactly(
@@ -164,7 +223,6 @@ class TemplateApiIntegrationTest {
                       "teamSize": 2,
                       "budget": 300,
                       "pickBanTime": 45,
-                      "positionLimit": 1,
                       "players": [
                         {"name": "선수1", "position": "TOP"},
                         {"name": "선수2", "position": "JUNGLE"}
@@ -218,40 +276,6 @@ class TemplateApiIntegrationTest {
     }
 
     @Test
-    void 드래프트_요청에_포지션_제한이_있으면_400을_반환한다() {
-        ResponseEntity<Map> response = restTemplate.exchange(
-            RequestEntity.post("/api/v1/templates")
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(
-                    """
-                    {
-                      "name": "드래프트전",
-                      "gameType": "OVERWATCH_2",
-                      "mode": "DRAFT",
-                      "teamCount": 2,
-                      "teamSize": 2,
-                      "pickBanTime": 30,
-                      "positionLimit": 1,
-                      "draftOrderStrategy": "SNAKE",
-                      "players": [
-                        {"name": "선수1", "position": "TANK"},
-                        {"name": "선수2", "position": "SUPPORT"}
-                      ]
-                    }
-                    """
-                ),
-            Map.class
-        );
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(response.getBody()).containsEntry("resultType", "ERROR");
-        Map<?, ?> error = (Map<?, ?>) response.getBody().get("error");
-        assertThat(error.get("code")).isEqualTo("TEMPLATE_DRAFT_POSITION_LIMIT_NOT_ALLOWED");
-        assertThat(error.get("message")).isEqualTo("드래프트 템플릿에는 포지션 제한을 지정할 수 없습니다");
-        assertThat(error.get("data")).isNull();
-    }
-
-    @Test
     void 요청_필드_검증에_실패하면_400과_필드_에러를_반환한다() {
         ResponseEntity<Map> response = restTemplate.exchange(
             RequestEntity.post("/api/v1/templates")
@@ -267,7 +291,6 @@ class TemplateApiIntegrationTest {
                       "budget": 300,
                       "pickBanTime": 0,
                       "minBidUnit": 10,
-                      "positionLimit": 1,
                       "players": []
                     }
                     """
@@ -318,7 +341,6 @@ class TemplateApiIntegrationTest {
                       "budget": 300,
                       "pickBanTime": 45,
                       "minBidUnit": 10,
-                      "positionLimit": 1,
                       "players": [
                         {"name": "선수1", "position": "TOP"},
                         {"name": "선수2", "position": "JUNGLE"}
@@ -336,9 +358,16 @@ class TemplateApiIntegrationTest {
         List<Map<String, Object>> templates = (List<Map<String, Object>>) response.getBody().get("success");
         assertThat(templates).anySatisfy(template -> {
             assertThat(template.get("name")).isEqualTo("목록용 경매전");
+            assertThat(template.get("gameType")).isEqualTo("LEAGUE_OF_LEGENDS");
             assertThat(template.get("mode")).isEqualTo("AUCTION");
             assertThat(template.get("teamCount")).isEqualTo(2);
-            assertThat(template).doesNotContainKey("players");
+            assertThat(template.get("pickBanTime")).isEqualTo(45);
+            assertThat(template.get("minBidUnit")).isEqualTo(10);
+            assertThat(template).doesNotContainKey("positionLimit");
+            List<Map<String, Object>> players = (List<Map<String, Object>>) template.get("players");
+            assertThat(players).hasSize(2);
+            assertThat(players.get(0)).containsEntry("name", "선수1").containsEntry("position", "TOP").containsEntry("displayOrder", 0);
+            assertThat(players.get(1)).containsEntry("name", "선수2").containsEntry("position", "JUNGLE").containsEntry("displayOrder", 1);
         });
     }
 }

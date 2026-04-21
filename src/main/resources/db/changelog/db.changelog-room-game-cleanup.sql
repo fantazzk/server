@@ -116,7 +116,7 @@ SELECT
     player_rows.player_pool_order,
     player_rows.player_id,
     player_rows.name,
-    player_rows.position,
+    COALESCE(player_rows.position, ''),
     player_rows.display_order
 FROM (
     SELECT

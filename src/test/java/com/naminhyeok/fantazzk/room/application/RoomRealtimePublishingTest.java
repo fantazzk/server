@@ -271,6 +271,7 @@ class RoomRealtimePublishingTest {
             "호스트",
             HOST_ACTION_TOKEN,
             new RoomTemplateSpec(
+                "LEAGUE_OF_LEGENDS",
                 RoomMode.AUCTION,
                 2,
                 2,
@@ -315,6 +316,7 @@ class RoomRealtimePublishingTest {
                 "호스트",
                 HOST_ACTION_TOKEN,
                 new RoomTemplateSpec(
+                    "LEAGUE_OF_LEGENDS",
                     RoomMode.DRAFT,
                     2,
                     2,
@@ -340,6 +342,7 @@ class RoomRealtimePublishingTest {
                 room.getCode(),
                 room.getStartedGameId(),
                 room.getStartedAt(),
+                room.getGameType(),
                 room.getMode(),
                 room.getMode() == RoomMode.AUCTION
                     ? GameRules.auction(
@@ -347,8 +350,7 @@ class RoomRealtimePublishingTest {
                         room.getTeamSize(),
                         room.getBudget(),
                         room.getPickBanTime(),
-                        room.getMinBidUnit(),
-                        room.getPositionLimit()
+                        room.getMinBidUnit()
                     )
                     : GameRules.draft(
                         room.getTeamCount(),

@@ -18,6 +18,8 @@ public record GameDetailResponse(
     String gameId,
     @Schema(description = "원본 방 코드", example = "ROOM01")
     String roomCode,
+    @Schema(description = "FE가 관리하는 게임 타입 메타데이터", example = "LEAGUE_OF_LEGENDS", nullable = true)
+    String gameType,
     @Schema(description = "게임 모드", example = "AUCTION", allowableValues = {"DRAFT", "AUCTION"})
     String mode,
     @Schema(description = "게임 상태", example = "IN_PROGRESS", allowableValues = {"IN_PROGRESS", "COMPLETED"})
@@ -47,6 +49,7 @@ public record GameDetailResponse(
         return new GameDetailResponse(
             game.getId().gameId().toString(),
             game.getRoomCode(),
+            game.getGameType(),
             modeOf(game),
             game.getStatus().name(),
             game.getTeamCount(),

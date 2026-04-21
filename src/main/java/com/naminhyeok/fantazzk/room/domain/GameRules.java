@@ -9,11 +9,10 @@ public record GameRules(
     Integer budget,
     int pickBanTime,
     Integer minBidUnit,
-    Integer positionLimit,
     DraftOrderStrategy draftOrderStrategy
 ) {
-    public static GameRules auction(int teamCount, int teamSize, int budget, int pickBanTime, int minBidUnit, Integer positionLimit) {
-        return new GameRules(RoomMode.AUCTION, teamCount, teamSize, budget, pickBanTime, minBidUnit, positionLimit, null);
+    public static GameRules auction(int teamCount, int teamSize, int budget, int pickBanTime, int minBidUnit) {
+        return new GameRules(RoomMode.AUCTION, teamCount, teamSize, budget, pickBanTime, minBidUnit, null);
     }
 
     public static GameRules draft(int teamCount, int teamSize, int pickBanTime, DraftOrderStrategy draftOrderStrategy) {
@@ -24,7 +23,6 @@ public record GameRules(
             null,
             pickBanTime,
             null,
-            null,
             Objects.requireNonNull(draftOrderStrategy)
         );
     }
@@ -33,7 +31,7 @@ public record GameRules(
         if (mode != RoomMode.AUCTION || budget == null || minBidUnit == null) {
             throw new IllegalStateException("auction rules are not available");
         }
-        return new AuctionRules(budget, pickBanTime, minBidUnit, positionLimit);
+        return new AuctionRules(budget, pickBanTime, minBidUnit);
     }
 
     public DraftRules draftRules() {
@@ -46,8 +44,7 @@ public record GameRules(
     public record AuctionRules(
         int budget,
         int pickBanTime,
-        int minBidUnit,
-        Integer positionLimit
+        int minBidUnit
     ) {
     }
 

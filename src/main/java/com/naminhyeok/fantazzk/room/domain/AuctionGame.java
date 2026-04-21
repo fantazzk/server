@@ -46,6 +46,7 @@ public class AuctionGame extends Game {
         GameId id,
         RoomId roomId,
         String roomCode,
+        String gameType,
         Instant startedAt,
         GameRules rules,
         List<AuctionParticipant> participants,
@@ -53,7 +54,7 @@ public class AuctionGame extends Game {
         int currentRound,
         Instant currentRoundEndsAt
     ) {
-        super(id, roomId, roomCode, startedAt, GameStatus.IN_PROGRESS, rules, playerPool);
+        super(id, roomId, roomCode, gameType, startedAt, GameStatus.IN_PROGRESS, rules, playerPool);
         this.participants = new ArrayList<>(participants);
         this.currentRound = currentRound;
         this.currentRoundEndsAt = currentRoundEndsAt;
@@ -71,8 +72,7 @@ public class AuctionGame extends Game {
             getTeamSize(),
             getBudget(),
             getPickBanTime(),
-            getMinBidUnit(),
-            getPositionLimit()
+            getMinBidUnit()
         );
     }
 
@@ -98,8 +98,6 @@ public class AuctionGame extends Game {
         AuctionParticipant leader = findParticipant(teamLeaderId, RoomErrorType.ROOM_BIDDER_NOT_FOUND);
         GameParticipant.AuctionState bidder = leader.auctionState();
         GamePlayer target = requireCurrentAuctionTarget();
-        validateAuctionPositionLimit(teamLeaderId, target);
-
         if (bidder.remainingBudget() < amount) {
             throw CoreException.of(RoomErrorType.ROOM_BID_BUDGET_EXCEEDED);
         }
@@ -165,7 +163,6 @@ public class AuctionGame extends Game {
         }
 
         AuctionParticipant winner = findParticipant(winningBid.teamLeaderId(), RoomErrorType.ROOM_BIDDER_NOT_FOUND);
-        validateAuctionPositionLimit(winner.teamLeaderId(), target);
         spend(winner.teamLeaderId(), winningBid.amount());
         members.add(new RosterMember(winningBid.teamLeaderId(), target.name(), members.size()));
 
@@ -242,31 +239,6 @@ public class AuctionGame extends Game {
             return;
         }
         throw RoomStateInvalidException.auctionWinnerMissing(leaderId);
-    }
-
-    private void validateAuctionPositionLimit(TeamLeaderId leaderId, GamePlayer target) {
-        Integer positionLimit = getRules().auctionRules().positionLimit();
-        if (positionLimit == null) {
-            return;
-        }
-
-        long assignedCount =
-            members.stream()
-                .filter(member -> member.teamLeaderId().equals(leaderId))
-                .map(this::findAssignedPlayerPosition)
-                .filter(target.position()::equals)
-                .count();
-        if (assignedCount >= positionLimit) {
-            throw CoreException.of(RoomErrorType.ROOM_AUCTION_POSITION_LIMIT_EXCEEDED);
-        }
-    }
-
-    private String findAssignedPlayerPosition(RosterMember member) {
-        return mutablePlayerPool().stream()
-            .filter(player -> player.name().equals(member.playerName()))
-            .findFirst()
-            .map(GamePlayer::position)
-            .orElse(null);
     }
 
     private List<AuctionParticipant> mutableParticipants() {

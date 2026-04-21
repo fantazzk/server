@@ -8,7 +8,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public record AuctionTargetResponse(
     @Schema(description = "선수 이름", example = "선수2")
     String name,
-    @Schema(description = "선수 포지션", example = "JUNGLE")
+    @Schema(description = "FE가 관리하는 선수 포지션 메타데이터", example = "JUNGLE", nullable = true)
     String position
 ) {
     public static AuctionTargetResponse from(RoomPlayer player) {

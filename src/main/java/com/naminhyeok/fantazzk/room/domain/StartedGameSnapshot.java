@@ -9,6 +9,7 @@ public record StartedGameSnapshot(
     String roomCode,
     GameId gameId,
     Instant startedAt,
+    String gameType,
     RoomMode gameMode,
     GameRules rules,
     List<? extends GameParticipant> participants,

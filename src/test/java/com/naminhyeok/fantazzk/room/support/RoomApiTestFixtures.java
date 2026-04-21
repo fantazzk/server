@@ -42,6 +42,7 @@ public final class RoomApiTestFixtures {
             "호스트",
             HOST_TOKEN,
             new RoomTemplateSpec(
+                "LEAGUE_OF_LEGENDS",
                 RoomMode.AUCTION,
                 2,
                 2,
@@ -76,6 +77,7 @@ public final class RoomApiTestFixtures {
                 "호스트",
                 HOST_TOKEN,
                 new RoomTemplateSpec(
+                    "LEAGUE_OF_LEGENDS",
                     RoomMode.DRAFT,
                     2,
                     2,
@@ -118,6 +120,7 @@ public final class RoomApiTestFixtures {
                 "호스트",
                 HOST_TOKEN,
                 new RoomTemplateSpec(
+                    "LEAGUE_OF_LEGENDS",
                     RoomMode.AUCTION,
                     2,
                     3,
@@ -154,6 +157,7 @@ public final class RoomApiTestFixtures {
                 "호스트",
                 HOST_TOKEN,
                 new RoomTemplateSpec(
+                    "LEAGUE_OF_LEGENDS",
                     RoomMode.DRAFT,
                     2,
                     3,
@@ -186,14 +190,14 @@ public final class RoomApiTestFixtures {
             room.getCode(),
             room.getStartedGameId(),
             CREATED_AT,
+            room.getGameType(),
             room.getMode(),
             GameRules.auction(
                 room.getTeamCount(),
                 room.getTeamSize(),
                 room.getBudget(),
                 room.getPickBanTime(),
-                room.getMinBidUnit(),
-                room.getPositionLimit()
+                room.getMinBidUnit()
             ),
             room.getLeaders().stream()
                 .map(leader -> room.getMode() == RoomMode.AUCTION

@@ -91,6 +91,27 @@ class RoomGameCleanupMigrationIntegrationTest {
         );
     }
 
+    @Test
+    void 레거시_null_position도_cleanup과_demotion을_거친다() {
+        JdbcTemplate jdbcTemplate = jdbcTemplate();
+        applyLegacySchema(jdbcTemplate);
+        insertLegacyAuctionRoomWithNullPosition(jdbcTemplate);
+
+        new ResourceDatabasePopulator(
+            new ClassPathResource("db/changelog/db.changelog-room-game-cleanup.sql"),
+            new ClassPathResource("db/changelog/db.changelog-metadata-demotion.sql")
+        ).execute(jdbcTemplate.getDataSource());
+
+        Map<String, Object> migratedPlayer =
+            jdbcTemplate.queryForMap(
+                "select position from game_player where player_pool_game_id = ? and player_id = ?",
+                uuid("00000000-0000-0000-0000-0000000000b1"),
+                0
+            );
+
+        assertThat(migratedPlayer.get("POSITION")).isEqualTo("");
+    }
+
     private JdbcTemplate jdbcTemplate() {
         String databaseName = "room-game-cleanup-" + UUID.randomUUID();
         DriverManagerDataSource dataSource = new DriverManagerDataSource();
@@ -227,6 +248,51 @@ class RoomGameCleanupMigrationIntegrationTest {
             List.of(
                 new Object[] { uuid("00000000-0000-0000-0000-0000000000d1"), 0, "host-d", "선수A" },
                 new Object[] { uuid("00000000-0000-0000-0000-0000000000d1"), 1, "guest-d", "선수B" }
+            )
+        );
+    }
+
+    private void insertLegacyAuctionRoomWithNullPosition(JdbcTemplate jdbcTemplate) {
+        jdbcTemplate.update(
+            """
+            insert into rooms (
+                room_id, code, created_at, host_id, status, mode, team_count, team_size, budget,
+                draft_order_strategy, current_turn_index, current_auction_round, pick_ban_time,
+                min_bid_unit, position_limit, current_auction_round_ends_at, started_game_id, started_at
+            ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            uuid("00000000-0000-0000-0000-0000000000b1"),
+            "AUC902",
+            Instant.parse("2026-04-12T00:00:00Z").toString(),
+            "host-b",
+            "IN_PROGRESS",
+            "AUCTION",
+            2,
+            2,
+            300,
+            null,
+            null,
+            1,
+            45,
+            10,
+            null,
+            Instant.parse("2026-04-12T00:05:00Z").toString(),
+            null,
+            null
+        );
+
+        jdbcTemplate.batchUpdate(
+            "insert into room_player (players_room_id, room_player_id, name, display_order, status, position) values (?, ?, ?, ?, ?, ?)",
+            List.of(
+                new Object[] { uuid("00000000-0000-0000-0000-0000000000b1"), 0, "선수X", 0, "AVAILABLE", null },
+                new Object[] { uuid("00000000-0000-0000-0000-0000000000b1"), 1, "선수Y", 1, "AVAILABLE", "JUNGLE" }
+            )
+        );
+        jdbcTemplate.batchUpdate(
+            "insert into room_team_leader (leaders_room_id, team_leader_id, nickname, remaining_budget, action_token, draft_position) values (?, ?, ?, ?, ?, ?)",
+            List.of(
+                new Object[] { uuid("00000000-0000-0000-0000-0000000000b1"), "host-b", "호스트B", 300, "host-token-b", null },
+                new Object[] { uuid("00000000-0000-0000-0000-0000000000b1"), "guest-b", "게스트B", 300, "guest-token-b", null }
             )
         );
     }

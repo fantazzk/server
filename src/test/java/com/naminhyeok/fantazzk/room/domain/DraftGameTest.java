@@ -124,6 +124,7 @@ class DraftGameTest {
             new GameId(UUID.fromString("00000000-0000-0000-0000-000000000101")),
             new RoomId(UUID.fromString("00000000-0000-0000-0000-000000000001")),
             "ROOM01",
+            "LEAGUE_OF_LEGENDS",
             STARTED_AT,
             GameRules.draft(2, teamSize, 30, draftOrderStrategy),
             List.of(

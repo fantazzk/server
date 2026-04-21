@@ -45,7 +45,7 @@ class TemplateApiControllerWebMvcTest {
     private FindTemplates findTemplates;
 
     @Test
-    void list는_템플릿_요약_목록만_반환한다() throws Exception {
+    void list는_FE_카드에_필요한_메타데이터를_반환한다() throws Exception {
         Template template = auctionTemplate();
         given(findTemplates.list()).willReturn(List.of(new TemplateDetail(template, template.getPlayers())));
 
@@ -56,9 +56,10 @@ class TemplateApiControllerWebMvcTest {
         assertThat(body.at("/resultType").asText()).isEqualTo("SUCCESS");
         assertThat(body.at("/success/0/id").asText()).isEqualTo(template.getId().templateId().toString());
         assertThat(body.at("/success/0/name").asText()).isEqualTo("경매전");
+        assertThat(body.at("/success/0/gameType").asText()).isEqualTo("LEAGUE_OF_LEGENDS");
         assertThat(body.at("/success/0/teamCount").asInt()).isEqualTo(2);
-        assertThat(body.at("/success/0/players").isMissingNode()).isTrue();
-        assertThat(body.at("/success/0/pickBanTime").isMissingNode()).isTrue();
+        assertThat(body.at("/success/0/pickBanTime").asInt()).isEqualTo(45);
+        assertThat(body.at("/success/0/players/0/name").asText()).isEqualTo("선수1");
     }
 
     @Test
@@ -96,7 +97,6 @@ class TemplateApiControllerWebMvcTest {
                       "pickBanTime": 45,
                       "budget": 300,
                       "minBidUnit": 10,
-                      "positionLimit": 1,
                       "players": [
                         { "name": "선수1", "position": "TOP" },
                         { "name": "선수2", "position": "JUNGLE" }
@@ -120,13 +120,12 @@ class TemplateApiControllerWebMvcTest {
     private Template auctionTemplate() {
         return Template.createAuction(
             "경매전",
-            TemplateCatalog.GameType.LEAGUE_OF_LEGENDS,
+            "LEAGUE_OF_LEGENDS",
             2,
             2,
             300,
             45,
             10,
-            1,
             List.of(
                 new TemplatePlayer("선수1", "TOP", 0),
                 new TemplatePlayer("선수2", "JUNGLE", 1)
@@ -137,7 +136,7 @@ class TemplateApiControllerWebMvcTest {
     private Template draftTemplate() {
         return Template.createDraft(
             "드래프트전",
-            TemplateCatalog.GameType.OVERWATCH_2,
+            "OVERWATCH_2",
             2,
             2,
             30,

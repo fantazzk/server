@@ -74,6 +74,7 @@ class FindJoinableRoomsIntegrationTest {
             "호스트-" + code,
             "token-" + code,
             new RoomTemplateSpec(
+                "LEAGUE_OF_LEGENDS",
                 RoomMode.AUCTION,
                 2,
                 2,

@@ -45,13 +45,12 @@ class FindTemplatesTest {
         templates.save(
             Template.createAuction(
                 "첫째",
-                TemplateCatalog.GameType.LEAGUE_OF_LEGENDS,
+                "LEAGUE_OF_LEGENDS",
                 2,
                 2,
                 300,
                 45,
                 10,
-                1,
                 List.of(
                     new TemplatePlayer("선수1", "TOP", 0),
                     new TemplatePlayer("선수2", "JUNGLE", 1)
@@ -61,7 +60,7 @@ class FindTemplatesTest {
         templates.save(
             Template.createDraft(
                 "둘째",
-                TemplateCatalog.GameType.OVERWATCH_2,
+                "OVERWATCH_2",
                 2,
                 2,
                 30,
@@ -84,13 +83,12 @@ class FindTemplatesTest {
         Template template =
             Template.createAuction(
                 "첫째",
-                TemplateCatalog.GameType.LEAGUE_OF_LEGENDS,
+                "LEAGUE_OF_LEGENDS",
                 2,
                 2,
                 300,
                 45,
                 10,
-                1,
                 List.of(
                     new TemplatePlayer("선수1", "TOP", 0),
                     new TemplatePlayer("선수2", "JUNGLE", 1)
@@ -102,10 +100,9 @@ class FindTemplatesTest {
         TemplateDetail detail = cut.getDetail(template.getId());
 
         assertThat(detail.template().getId()).isEqualTo(template.getId());
-        assertThat(detail.template().getGameType()).isEqualTo(TemplateCatalog.GameType.LEAGUE_OF_LEGENDS);
+        assertThat(detail.template().getGameType()).isEqualTo("LEAGUE_OF_LEGENDS");
         assertThat(detail.template().getPickBanTime()).isEqualTo(45);
         assertThat(detail.template().getMinBidUnit()).isEqualTo(10);
-        assertThat(detail.template().getPositionLimit()).isEqualTo(1);
         assertThat(detail.players())
             .extracting(TemplatePlayer::displayOrder, TemplatePlayer::name, TemplatePlayer::position)
             .containsExactly(
@@ -120,13 +117,12 @@ class FindTemplatesTest {
         Template template =
             Template.createAuction(
                 "첫째",
-                TemplateCatalog.GameType.LEAGUE_OF_LEGENDS,
+                "LEAGUE_OF_LEGENDS",
                 2,
                 2,
                 300,
                 45,
                 10,
-                1,
                 List.of(
                     new TemplatePlayer("선수1", "TOP", 0),
                     new TemplatePlayer("선수2", "JUNGLE", 1)
@@ -138,9 +134,9 @@ class FindTemplatesTest {
 
         TemplateCatalog.TemplateBlueprint blueprint = catalog.getTemplate(template.getId().templateId());
 
+        assertThat(blueprint.gameType()).isEqualTo("LEAGUE_OF_LEGENDS");
         assertThat(blueprint.pickBanTime()).isEqualTo(45);
         assertThat(blueprint.minBidUnit()).isEqualTo(10);
-        assertThat(blueprint.positionLimit()).isEqualTo(1);
         assertThat(blueprint.players())
             .extracting("playerIndex", "name", "position")
             .containsExactly(

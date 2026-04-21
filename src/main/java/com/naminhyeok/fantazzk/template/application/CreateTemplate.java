@@ -24,7 +24,6 @@ public class CreateTemplate {
                     auction.budget(),
                     auction.pickBanTime(),
                     auction.minBidUnit(),
-                    auction.positionLimit(),
                     auction.players().stream()
                         .map(player -> new TemplatePlayer(player.name(), player.position(), player.displayOrder()))
                         .toList()

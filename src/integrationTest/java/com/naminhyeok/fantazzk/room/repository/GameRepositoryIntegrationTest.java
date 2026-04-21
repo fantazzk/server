@@ -65,8 +65,9 @@ class GameRepositoryIntegrationTest {
                         room.getCode(),
                         new GameId(UUID.fromString("00000000-0000-0000-0000-000000000101")),
                         STARTED_AT,
+                        room.getGameType(),
                         RoomMode.AUCTION,
-                        GameRules.auction(2, 2, 300, 45, 10, 1),
+                        GameRules.auction(2, 2, 300, 45, 10),
                         List.of(
                             GameParticipant.auction(new TeamLeaderId("host-1"), "호스트", 300),
                             GameParticipant.auction(new TeamLeaderId("guest-1"), "게스트", 300)
@@ -88,9 +89,10 @@ class GameRepositoryIntegrationTest {
         assertThat(reloaded.getId()).isEqualTo(saved.getId());
         assertThat(reloaded.getRoomId()).isEqualTo(room.getId());
         assertThat(reloaded.getRoomCode()).isEqualTo("ROOM01");
+        assertThat(reloaded.getGameType()).isEqualTo(room.getGameType());
         assertThat(reloaded.getStatus()).isEqualTo(GameStatus.IN_PROGRESS);
         assertThat(reloaded.getStartedAt()).isEqualTo(STARTED_AT);
-        assertThat(reloaded.getRules()).isEqualTo(GameRules.auction(2, 2, 300, 45, 10, 1));
+        assertThat(reloaded.getRules()).isEqualTo(GameRules.auction(2, 2, 300, 45, 10));
         assertThat(reloaded.getParticipants())
             .containsExactly(
                 GameParticipant.auction(new TeamLeaderId("host-1"), "호스트", 300),
@@ -121,8 +123,9 @@ class GameRepositoryIntegrationTest {
                         room.getCode(),
                         new GameId(UUID.fromString("00000000-0000-0000-0000-000000000103")),
                         STARTED_AT,
+                        room.getGameType(),
                         RoomMode.AUCTION,
-                        GameRules.auction(2, 2, 300, 45, 10, 1),
+                        GameRules.auction(2, 2, 300, 45, 10),
                         List.of(
                             GameParticipant.auction(new TeamLeaderId("host-1"), "호스트", 300),
                             GameParticipant.auction(new TeamLeaderId("guest-1"), "게스트", 300)
@@ -166,6 +169,7 @@ class GameRepositoryIntegrationTest {
                         room.getCode(),
                         new GameId(UUID.fromString("00000000-0000-0000-0000-000000000102")),
                         STARTED_AT,
+                        room.getGameType(),
                         RoomMode.DRAFT,
                         GameRules.draft(2, 2, 30, DraftOrderStrategy.SNAKE),
                         List.of(
@@ -220,6 +224,7 @@ class GameRepositoryIntegrationTest {
                         room.getCode(),
                         new GameId(UUID.fromString("00000000-0000-0000-0000-000000000104")),
                         STARTED_AT,
+                        room.getGameType(),
                         RoomMode.DRAFT,
                         GameRules.draft(2, 2, 30, DraftOrderStrategy.SNAKE),
                         List.of(
@@ -254,13 +259,13 @@ class GameRepositoryIntegrationTest {
             "호스트",
             "host-action-token",
             new RoomTemplateSpec(
+                "LEAGUE_OF_LEGENDS",
                 RoomMode.AUCTION,
                 2,
                 2,
                 300,
                 45,
                 10,
-                1,
                 null,
                 List.of(
                     new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
@@ -278,6 +283,7 @@ class GameRepositoryIntegrationTest {
             "호스트",
             "host-action-token",
             new RoomTemplateSpec(
+                "LEAGUE_OF_LEGENDS",
                 RoomMode.DRAFT,
                 2,
                 2,

@@ -5,9 +5,7 @@ import com.naminhyeok.fantazzk.OpenApiDocumentation;
 import com.naminhyeok.fantazzk.template.application.CreateTemplate;
 import com.naminhyeok.fantazzk.template.domain.TemplateId;
 import com.naminhyeok.fantazzk.template.query.FindTemplates;
-import com.naminhyeok.fantazzk.template.query.TemplateDetail;
 import com.naminhyeok.fantazzk.template.query.TemplateDetailResponse;
-import com.naminhyeok.fantazzk.template.query.TemplateSummaryResponse;
 import com.naminhyeok.fantazzk.template.web.request.CreateTemplateRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -86,7 +84,7 @@ public class TemplateApiController {
             examples = @ExampleObject(value = OpenApiDocumentation.TEMPLATE_LIST_SUCCESS_EXAMPLE)
         )
     )
-    ApiResponse<List<TemplateSummaryResponse>> list() {
-        return ApiResponse.success(findTemplates.list().stream().map(TemplateDetail::template).map(TemplateSummaryResponse::from).toList());
+    ApiResponse<List<TemplateDetailResponse>> list() {
+        return ApiResponse.success(findTemplates.list().stream().map(TemplateDetailResponse::from).toList());
     }
 }

@@ -42,6 +42,8 @@ public abstract class Game implements AggregateRoot<Game, GameId> {
     private final RoomId roomId;
     @Column(name = "room_code", nullable = false, updatable = false)
     private final String roomCode;
+    @Column(name = "game_type", updatable = false)
+    private final String gameType;
     @Column(name = "started_at", nullable = false, updatable = false)
     private final Instant startedAt;
     @Enumerated(EnumType.STRING)
@@ -57,8 +59,6 @@ public abstract class Game implements AggregateRoot<Game, GameId> {
     private final int pickBanTime;
     @Column(name = "min_bid_unit", updatable = false)
     private final Integer minBidUnit;
-    @Column(name = "position_limit", updatable = false)
-    private final Integer positionLimit;
     @Enumerated(EnumType.STRING)
     @Column(name = "draft_order_strategy", updatable = false)
     private final DraftOrderStrategy draftOrderStrategy;
@@ -74,6 +74,7 @@ public abstract class Game implements AggregateRoot<Game, GameId> {
         this.version = 0L;
         this.roomId = null;
         this.roomCode = null;
+        this.gameType = null;
         this.startedAt = null;
         this.status = null;
         this.teamCount = 0;
@@ -81,7 +82,6 @@ public abstract class Game implements AggregateRoot<Game, GameId> {
         this.budget = null;
         this.pickBanTime = 0;
         this.minBidUnit = null;
-        this.positionLimit = null;
         this.draftOrderStrategy = null;
         this.playerPool = new ArrayList<>();
         this.domainEvents = new ArrayList<>();
@@ -91,6 +91,7 @@ public abstract class Game implements AggregateRoot<Game, GameId> {
         GameId id,
         RoomId roomId,
         String roomCode,
+        String gameType,
         Instant startedAt,
         GameStatus status,
         GameRules rules,
@@ -100,6 +101,7 @@ public abstract class Game implements AggregateRoot<Game, GameId> {
         this.version = 0L;
         this.roomId = roomId;
         this.roomCode = roomCode;
+        this.gameType = gameType;
         this.startedAt = startedAt;
         this.status = status;
         this.teamCount = rules.teamCount();
@@ -107,7 +109,6 @@ public abstract class Game implements AggregateRoot<Game, GameId> {
         this.budget = rules.budget();
         this.pickBanTime = rules.pickBanTime();
         this.minBidUnit = rules.minBidUnit();
-        this.positionLimit = rules.positionLimit();
         this.draftOrderStrategy = rules.draftOrderStrategy();
         this.playerPool = new ArrayList<>(playerPool);
         this.domainEvents = new ArrayList<>();

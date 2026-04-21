@@ -8,6 +8,8 @@ import java.util.List;
 public record RoomDetailResponse(
     @Schema(description = "방 코드", example = "ROOM01")
     String roomCode,
+    @Schema(description = "FE가 관리하는 게임 타입 메타데이터", example = "LEAGUE_OF_LEGENDS", nullable = true)
+    String gameType,
     @Schema(description = "방 상태", example = "WAITING", allowableValues = {"WAITING", "STARTED"})
     String status,
     @Schema(description = "게임 모드", example = "DRAFT", allowableValues = {"DRAFT", "AUCTION"})
@@ -44,6 +46,7 @@ public record RoomDetailResponse(
     public static RoomDetailResponse from(Room room) {
         return new RoomDetailResponse(
             room.getCode(),
+            room.getGameType(),
             room.getStatus().name(),
             room.getMode().name(),
             room.getTeamCount(),

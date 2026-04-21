@@ -17,12 +17,9 @@ public final class TemplatePlayer implements ValueObject {
         if (name == null || name.isBlank()) {
             throw new IllegalArgumentException("선수 이름은 비어 있을 수 없습니다");
         }
-        if (position == null || position.isBlank()) {
-            throw new IllegalArgumentException("선수 포지션은 비어 있을 수 없습니다");
-        }
 
         this.name = name.trim();
-        this.position = position.trim().toUpperCase();
+        this.position = position;
         this.displayOrder = displayOrder;
     }
 

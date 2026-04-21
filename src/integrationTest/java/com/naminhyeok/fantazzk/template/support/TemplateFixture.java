@@ -21,13 +21,12 @@ public class TemplateFixture {
         return createTemplate.create(
             new CreateTemplateCommand.Auction(
                 name,
-                TemplateCatalog.GameType.LEAGUE_OF_LEGENDS,
+                "LEAGUE_OF_LEGENDS",
                 teamCount,
                 teamSize,
                 budget,
                 45,
                 10,
-                1,
                 toPlayers(players)
             )
         ).getId().templateId();
@@ -43,7 +42,7 @@ public class TemplateFixture {
         return createTemplate.create(
             new CreateTemplateCommand.Draft(
                 name,
-                TemplateCatalog.GameType.LEAGUE_OF_LEGENDS,
+                "LEAGUE_OF_LEGENDS",
                 teamCount,
                 teamSize,
                 30,

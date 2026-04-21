@@ -3,7 +3,6 @@ package com.naminhyeok.fantazzk.room.application;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.naminhyeok.fantazzk.CoreException;
 import com.naminhyeok.fantazzk.room.application.CreateRoom;
 import com.naminhyeok.fantazzk.room.application.JoinRoom;
 import com.naminhyeok.fantazzk.room.application.PlaceBid;
@@ -154,7 +153,7 @@ class RoomAuctionIntegrationTest {
     }
 
     @Test
-    void 같은_포지션_제한에_걸리는_선수에게는_재조회_후에도_입찰할_수_없다() {
+    void 같은_포지션이어도_메타데이터일뿐이라_재조회_후에도_입찰할_수_있다() {
         UUID template =
             templateFixture.createAuctionTemplateId(
                 "포지션제한경매전",
@@ -178,13 +177,9 @@ class RoomAuctionIntegrationTest {
         settleAuctionAttempt.settleIfDue(created.room().getCode());
 
         Room reloaded = rooms.findByCode(created.room().getCode()).orElseThrow();
+        AuctionBid secondPositionBid = placeBid.place(reloaded.getStartedGameId().gameId(), guest.getActionToken(), 140);
 
-        assertThatThrownBy(() -> placeBid.place(reloaded.getStartedGameId().gameId(), guest.getActionToken(), 160))
-            .isInstanceOf(CoreException.class)
-            .isInstanceOfSatisfying(
-                CoreException.class,
-                ex -> assertThat(ex.getError().getCode()).isEqualTo("ROOM_AUCTION_POSITION_LIMIT_EXCEEDED")
-            );
+        assertThat(secondPositionBid.amount()).isEqualTo(140);
     }
 
     @Test

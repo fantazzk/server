@@ -150,6 +150,7 @@ class CreateRoomRetryIntegrationTest {
             "선점호스트",
             "existing-token",
             new RoomTemplateSpec(
+                "LEAGUE_OF_LEGENDS",
                 RoomMode.AUCTION,
                 2,
                 2,

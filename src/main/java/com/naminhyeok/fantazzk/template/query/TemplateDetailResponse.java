@@ -11,8 +11,8 @@ public record TemplateDetailResponse(
     String id,
     @Schema(description = "템플릿 이름", example = "LOL 2인 드래프트")
     String name,
-    @Schema(description = "게임 타입", example = "LEAGUE_OF_LEGENDS")
-    TemplateCatalog.GameType gameType,
+    @Schema(description = "FE가 관리하는 게임 타입 메타데이터", example = "LEAGUE_OF_LEGENDS", nullable = true)
+    String gameType,
     @Schema(description = "게임 모드", example = "DRAFT")
     TemplateCatalog.Mode mode,
     @Schema(description = "팀 수", example = "2")
@@ -25,8 +25,6 @@ public record TemplateDetailResponse(
     Integer pickBanTime,
     @Schema(description = "최소 입찰 증가 단위", example = "10", nullable = true)
     Integer minBidUnit,
-    @Schema(description = "동일 포지션 최대 보유 인원", example = "1", nullable = true)
-    Integer positionLimit,
     @Schema(description = "드래프트 순서 전략", example = "SNAKE", nullable = true)
     TemplateCatalog.DraftOrderStrategy draftOrderStrategy,
     @Schema(description = "선수 풀 목록")
@@ -48,7 +46,6 @@ public record TemplateDetailResponse(
             template.getBudget(),
             template.getPickBanTime(),
             template.getMinBidUnit(),
-            template.getPositionLimit(),
             template.getDraftOrderStrategy(),
             detail.players().stream().map(TemplatePlayerResponse::from).toList()
         );
