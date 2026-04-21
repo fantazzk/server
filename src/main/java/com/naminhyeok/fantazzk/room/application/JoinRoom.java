@@ -6,6 +6,7 @@ import com.naminhyeok.fantazzk.room.domain.RoomErrorType;
 import com.naminhyeok.fantazzk.room.domain.RoomTeamLeader;
 import com.naminhyeok.fantazzk.room.domain.TeamLeaderId;
 import com.naminhyeok.fantazzk.room.repository.Rooms;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
@@ -15,16 +16,14 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class JoinRoom {
     private final Rooms rooms;
-    private final TeamLeaderIdentityIssuer teamLeaderIdentityIssuer;
     private final RoomRealtimeEventPublisher realtimeEventPublisher;
 
     @Transactional
     public RoomSessionResult join(String code, String nickname) {
         try {
             Room room = rooms.findByCode(code).orElseThrow(() -> CoreException.of(RoomErrorType.ROOM_NOT_FOUND));
-            TeamLeaderIdentityIssuer.TeamLeaderIdentity identity = teamLeaderIdentityIssuer.issue();
-            TeamLeaderId joinedLeaderId = new TeamLeaderId(identity.leaderId());
-            room.join(joinedLeaderId, nickname, identity.actionToken());
+            TeamLeaderId joinedLeaderId = new TeamLeaderId(UUID.randomUUID().toString());
+            room.join(joinedLeaderId, nickname, UUID.randomUUID().toString());
             Room saved = rooms.saveAndFlush(room);
             realtimeEventPublisher.publishRoomUpdatedAfterCommit(saved);
             return new RoomSessionResult(saved, findLeader(saved, joinedLeaderId));

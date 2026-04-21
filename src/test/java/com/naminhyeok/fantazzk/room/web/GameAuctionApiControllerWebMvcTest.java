@@ -10,10 +10,8 @@ import com.naminhyeok.fantazzk.CoreException;
 import com.naminhyeok.fantazzk.ErrorMessage;
 import com.naminhyeok.fantazzk.GlobalExceptionHandler;
 import com.naminhyeok.fantazzk.room.application.PlaceBid;
-import com.naminhyeok.fantazzk.room.application.SettleAuction;
 import com.naminhyeok.fantazzk.room.domain.AuctionBid;
 import com.naminhyeok.fantazzk.room.domain.BidSequence;
-import com.naminhyeok.fantazzk.room.domain.Room;
 import com.naminhyeok.fantazzk.room.domain.RoomErrorType;
 import com.naminhyeok.fantazzk.room.domain.RoomStateInvalidException;
 import com.naminhyeok.fantazzk.room.domain.TeamLeaderId;
@@ -45,9 +43,6 @@ class GameAuctionApiControllerWebMvcTest {
 
     @MockitoBean
     private PlaceBid placeBid;
-
-    @MockitoBean
-    private SettleAuction settleAuction;
 
     @Test
     void placeBid는_header가_있으면_SUCCESS_빈_응답을_반환한다() throws Exception {
@@ -191,23 +186,6 @@ class GameAuctionApiControllerWebMvcTest {
 
         result.assertThat().hasStatus(HttpStatus.CONFLICT);
         assertThat(readBody(result, VoidApiResponse.class).error().code()).isEqualTo("ROOM_BID_MIN_UNIT_NOT_MET");
-    }
-
-    @Test
-    void auctionProgress는_최신_경매_진행상황과_로스터를_반환한다() throws Exception {
-        UUID gameId = UUID.fromString(RoomApiTestFixtures.GAME_ID);
-        given(settleAuction.settleIfDue(gameId)).willReturn(RoomApiTestFixtures.inProgressAuctionDetails().game());
-
-        var result = mockMvcTester().perform(post("/api/v1/games/{gameId}/auction/progress", RoomApiTestFixtures.GAME_ID));
-
-        result.assertThat().hasStatusOk();
-        JsonNode body = objectMapper.readTree(result.getResponse().getContentAsString());
-        assertThat(body.at("/resultType").asText()).isEqualTo("SUCCESS");
-        assertThat(body.at("/success/gameId").asText()).isEqualTo(RoomApiTestFixtures.GAME_ID);
-        assertThat(body.at("/success/auctionProgress/currentRound").asInt()).isEqualTo(2);
-        assertThat(body.at("/success/roster/0/playerName").asText()).isEqualTo("선수1");
-        assertThat(body.at("/success/status").isMissingNode()).isTrue();
-        assertThat(body.at("/success/playerPool").isMissingNode()).isTrue();
     }
 
     private MockMvcTester mockMvcTester() {

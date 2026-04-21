@@ -12,6 +12,13 @@ public record TemplateSummaryResponse(
     int teamSize
 ) {
     public static TemplateSummaryResponse from(Template template) {
-        return TemplateExternalViewMapper.toSummaryResponse(template);
+        return new TemplateSummaryResponse(
+            template.getId().templateId().toString(),
+            template.getName(),
+            template.getGameType(),
+            template.getMode(),
+            template.getTeamCount(),
+            template.getTeamSize()
+        );
     }
 }

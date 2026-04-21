@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.naminhyeok.fantazzk.CoreException;
+import java.nio.charset.StandardCharsets;
 import com.naminhyeok.fantazzk.room.domain.DraftOrderStrategy;
 import com.naminhyeok.fantazzk.room.domain.GameId;
 import com.naminhyeok.fantazzk.room.domain.GameParticipant;
@@ -84,7 +85,7 @@ class RoomAggregateTest {
 
         Room started = auctionWaitingRoom(CREATED_AT.plusSeconds(120));
         started.join(new TeamLeaderId(GUEST_ID), "게스트", GUEST_ACTION_TOKEN);
-        started.start(new TeamLeaderId(HOST_ID), STARTED_AT);
+        started.start(new TeamLeaderId(HOST_ID), deterministicGameId(started), STARTED_AT);
 
         assertThat(joinable.isJoinable()).isTrue();
         assertThat(full.isJoinable()).isFalse();
@@ -274,7 +275,7 @@ class RoomAggregateTest {
             Room room = auctionWaitingRoom();
             room.join(new TeamLeaderId(GUEST_ID), "게스트", GUEST_ACTION_TOKEN);
 
-            room.start(new TeamLeaderId(HOST_ID), STARTED_AT);
+            room.start(new TeamLeaderId(HOST_ID), deterministicGameId(room), STARTED_AT);
 
             assertThat(room.getStatus()).isEqualTo(RoomStatus.STARTED);
             assertThat(room.getStartedGameId()).isNotNull();
@@ -288,7 +289,7 @@ class RoomAggregateTest {
             room.selectDraftPosition(new TeamLeaderId(HOST_ID), 1);
             room.selectDraftPosition(new TeamLeaderId(GUEST_ID), 2);
 
-            room.start(new TeamLeaderId(HOST_ID), STARTED_AT);
+            room.start(new TeamLeaderId(HOST_ID), deterministicGameId(room), STARTED_AT);
 
             assertThat(room.getStatus()).isEqualTo(RoomStatus.STARTED);
             assertThat(room.getStartedGameId()).isNotNull();
@@ -302,7 +303,7 @@ class RoomAggregateTest {
             room.selectDraftPosition(new TeamLeaderId(HOST_ID), 1);
 
             assertThat(room.getStartReadiness()).isEqualTo(RoomStartReadiness.WAITING_FOR_DRAFT_POSITIONS);
-            assertThatThrownBy(() -> room.start(new TeamLeaderId(HOST_ID), STARTED_AT))
+            assertThatThrownBy(() -> room.start(new TeamLeaderId(HOST_ID), deterministicGameId(room), STARTED_AT))
                 .isInstanceOf(CoreException.class)
                 .satisfies(ex -> {
                     CoreException coreException = (CoreException) ex;
@@ -315,7 +316,7 @@ class RoomAggregateTest {
         void 팀장_자리가_다_차지_않으면_시작할_수_없다() {
             Room room = auctionWaitingRoom();
 
-            assertThatThrownBy(() -> room.start(new TeamLeaderId(HOST_ID), STARTED_AT))
+            assertThatThrownBy(() -> room.start(new TeamLeaderId(HOST_ID), deterministicGameId(room), STARTED_AT))
                 .isInstanceOf(CoreException.class)
                 .satisfies(ex -> {
                     CoreException coreException = (CoreException) ex;
@@ -329,7 +330,7 @@ class RoomAggregateTest {
             Room room = auctionWaitingRoom();
             room.join(new TeamLeaderId(GUEST_ID), "게스트", GUEST_ACTION_TOKEN);
 
-            assertThatThrownBy(() -> room.start(new TeamLeaderId(GUEST_ID), STARTED_AT))
+            assertThatThrownBy(() -> room.start(new TeamLeaderId(GUEST_ID), deterministicGameId(room), STARTED_AT))
                 .isInstanceOf(CoreException.class)
                 .satisfies(ex -> {
                     CoreException coreException = (CoreException) ex;
@@ -369,8 +370,13 @@ class RoomAggregateTest {
     private static Room startedAuctionRoom() {
         Room room = auctionWaitingRoom();
         room.join(new TeamLeaderId(GUEST_ID), "게스트", GUEST_ACTION_TOKEN);
-        room.start(new TeamLeaderId(HOST_ID), STARTED_AT);
+        room.start(new TeamLeaderId(HOST_ID), deterministicGameId(room), STARTED_AT);
         return room;
+    }
+
+    private static GameId deterministicGameId(Room room) {
+        String source = "game:%s".formatted(room.getId().roomId());
+        return new GameId(UUID.nameUUIDFromBytes(source.getBytes(StandardCharsets.UTF_8)));
     }
 
     private static Room waitingDraftRoom() {

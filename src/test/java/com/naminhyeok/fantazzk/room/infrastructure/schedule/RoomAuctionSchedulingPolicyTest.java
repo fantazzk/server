@@ -4,10 +4,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.naminhyeok.fantazzk.room.domain.AuctionOutcome;
 import com.naminhyeok.fantazzk.room.domain.AuctionSettled;
+import com.naminhyeok.fantazzk.room.domain.AuctionGame;
 import com.naminhyeok.fantazzk.room.domain.BidPlaced;
 import com.naminhyeok.fantazzk.room.domain.Game;
 import com.naminhyeok.fantazzk.room.domain.GameId;
 import com.naminhyeok.fantazzk.room.domain.RoomStarted;
+import com.naminhyeok.fantazzk.room.infrastructure.persistence.AuctionScheduleJpaRepository;
+import com.naminhyeok.fantazzk.room.infrastructure.persistence.JpaAuctionScheduleReader;
 import com.naminhyeok.fantazzk.room.infrastructure.schedule.RoomAuctionDeadlineScheduler;
 import com.naminhyeok.fantazzk.room.infrastructure.schedule.RoomAuctionSchedulingPolicy;
 import com.naminhyeok.fantazzk.room.repository.Games;
@@ -16,13 +19,20 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.List;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.Pageable;
 
 class RoomAuctionSchedulingPolicyTest {
     @Test
     void roomStarted는_deadline을_예약한다() {
         FakeTaskScheduler taskScheduler = new FakeTaskScheduler();
         RoomAuctionSchedulingPolicy policy = new RoomAuctionSchedulingPolicy(
-            new RoomAuctionDeadlineScheduler(taskScheduler, null, List::of, Clock.fixed(Instant.EPOCH, ZoneOffset.UTC), emptyGames())
+            new RoomAuctionDeadlineScheduler(
+                taskScheduler,
+                null,
+                new JpaAuctionScheduleReader(new EmptyScheduleRepository()),
+                Clock.fixed(Instant.EPOCH, ZoneOffset.UTC),
+                emptyGames()
+            )
         );
 
         policy.on(new RoomStarted("ROOM01", Instant.parse("2026-04-09T00:00:15Z")));
@@ -34,7 +44,13 @@ class RoomAuctionSchedulingPolicyTest {
     void bidPlaced는_deadline을_갱신한다() {
         FakeTaskScheduler taskScheduler = new FakeTaskScheduler();
         RoomAuctionDeadlineScheduler scheduler =
-            new RoomAuctionDeadlineScheduler(taskScheduler, null, List::of, Clock.fixed(Instant.EPOCH, ZoneOffset.UTC), emptyGames());
+            new RoomAuctionDeadlineScheduler(
+                taskScheduler,
+                null,
+                new JpaAuctionScheduleReader(new EmptyScheduleRepository()),
+                Clock.fixed(Instant.EPOCH, ZoneOffset.UTC),
+                emptyGames()
+            );
         scheduler.refresh("ROOM01", Instant.parse("2026-04-09T00:00:15Z"));
         RoomAuctionSchedulingPolicy policy = new RoomAuctionSchedulingPolicy(scheduler);
 
@@ -48,7 +64,13 @@ class RoomAuctionSchedulingPolicyTest {
     void auctionSettled는_다음_deadline이_없으면_예약을_해제한다() {
         FakeTaskScheduler taskScheduler = new FakeTaskScheduler();
         RoomAuctionDeadlineScheduler scheduler =
-            new RoomAuctionDeadlineScheduler(taskScheduler, null, List::of, Clock.fixed(Instant.EPOCH, ZoneOffset.UTC), emptyGames());
+            new RoomAuctionDeadlineScheduler(
+                taskScheduler,
+                null,
+                new JpaAuctionScheduleReader(new EmptyScheduleRepository()),
+                Clock.fixed(Instant.EPOCH, ZoneOffset.UTC),
+                emptyGames()
+            );
         scheduler.refresh("ROOM01", Instant.parse("2026-04-09T00:00:30Z"));
         RoomAuctionSchedulingPolicy policy = new RoomAuctionSchedulingPolicy(scheduler);
 
@@ -71,4 +93,12 @@ class RoomAuctionSchedulingPolicyTest {
             }
         };
     }
+
+    private static final class EmptyScheduleRepository implements AuctionScheduleJpaRepository {
+        @Override
+        public List<AuctionGame> findByCurrentRoundEndsAtNotNullOrderByRoomCodeAsc(Pageable pageable) {
+            return List.of();
+        }
+    }
+
 }

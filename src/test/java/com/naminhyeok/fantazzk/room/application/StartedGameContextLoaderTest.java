@@ -23,6 +23,7 @@ import com.naminhyeok.fantazzk.room.domain.StartedGameSnapshot;
 import com.naminhyeok.fantazzk.room.domain.TeamLeaderId;
 import com.naminhyeok.fantazzk.room.repository.Games;
 import com.naminhyeok.fantazzk.room.repository.Rooms;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
@@ -56,7 +57,7 @@ class StartedGameContextLoaderTest {
         StartedGameContextLoader loader =
             new StartedGameContextLoader(new InMemoryRooms(Map.of()), new InMemoryGames(Map.of()), new RoomActionAuthorizer());
 
-        assertThatThrownBy(() -> loader.load(UUID.randomUUID()))
+        assertThatThrownBy(() -> loader.authenticate(UUID.randomUUID(), "any-token"))
             .isInstanceOfSatisfying(
                 CoreException.class,
                 ex -> assertThat(ex.getError()).isEqualTo(RoomErrorType.GAME_NOT_FOUND)
@@ -70,7 +71,7 @@ class StartedGameContextLoaderTest {
         StartedGameContextLoader loader =
             new StartedGameContextLoader(new InMemoryRooms(Map.of()), new InMemoryGames(Map.of(game.getId(), game)), new RoomActionAuthorizer());
 
-        assertThatThrownBy(() -> loader.load(game.getId().gameId()))
+        assertThatThrownBy(() -> loader.authenticate(game.getId().gameId(), "any-token"))
             .isInstanceOfSatisfying(
                 CoreException.class,
                 ex -> assertThat(ex.getError()).isEqualTo(RoomErrorType.GAME_NOT_FOUND)
@@ -116,9 +117,9 @@ class StartedGameContextLoaderTest {
                     )
                 ),
                 CREATED_AT
-            );
+        );
         room.join(new TeamLeaderId("guest-1"), "게스트", "guest-action-token");
-        room.start(new TeamLeaderId("host-1"), CREATED_AT);
+        room.start(new TeamLeaderId("host-1"), deterministicGameId(room), CREATED_AT);
         return room;
     }
 
@@ -141,6 +142,11 @@ class StartedGameContextLoaderTest {
                 )
             )
         );
+    }
+
+    private static GameId deterministicGameId(Room room) {
+        String source = "game:%s".formatted(room.getId().roomId());
+        return new GameId(UUID.nameUUIDFromBytes(source.getBytes(StandardCharsets.UTF_8)));
     }
 
     private static final class InMemoryRooms implements Rooms {

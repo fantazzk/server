@@ -8,13 +8,12 @@ import com.naminhyeok.fantazzk.room.application.CreateRoom;
 import com.naminhyeok.fantazzk.room.application.JoinRoom;
 import com.naminhyeok.fantazzk.room.application.PlaceBid;
 import com.naminhyeok.fantazzk.room.application.RoomSessionResult;
-import com.naminhyeok.fantazzk.room.application.SettleAuction;
+import com.naminhyeok.fantazzk.room.application.SettleAuctionAttempt;
 import com.naminhyeok.fantazzk.room.application.StartRoom;
 import com.naminhyeok.fantazzk.room.domain.AuctionBid;
 import com.naminhyeok.fantazzk.room.domain.AuctionGame;
-import com.naminhyeok.fantazzk.room.domain.AuctionOutcome;
-import com.naminhyeok.fantazzk.room.domain.AuctionSettlement;
 import com.naminhyeok.fantazzk.room.domain.BidSequence;
+import com.naminhyeok.fantazzk.room.domain.Game;
 import com.naminhyeok.fantazzk.room.domain.Room;
 import com.naminhyeok.fantazzk.room.domain.RoomStatus;
 import com.naminhyeok.fantazzk.room.domain.RoomTeamLeader;
@@ -28,9 +27,11 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -69,7 +70,7 @@ class RoomAuctionIntegrationTest {
     private final JoinRoom joinRoom;
     private final StartRoom startRoom;
     private final PlaceBid placeBid;
-    private final SettleAuction settleAuction;
+    private final SettleAuctionAttempt settleAuctionAttempt;
     private final Rooms rooms;
     private final Games games;
     private final RoomAuctionDeadlineScheduler roomAuctionDeadlineScheduler;
@@ -84,7 +85,7 @@ class RoomAuctionIntegrationTest {
     @Test
     @Transactional
     void 입찰과_정산을_처리하면_선수_배정과_예산_차감이_반영된다() {
-        var template =
+        UUID template =
             templateFixture.createAuctionTemplateId(
                 "경매전",
                 2,
@@ -98,19 +99,18 @@ class RoomAuctionIntegrationTest {
 
         RoomSessionResult created = createRoom.create(template, "호스트");
         RoomTeamLeader guest = joinRoom.join(created.room().getCode(), "게스트").leader();
-        startRoom.start(created.room().getCode(), created.leader().getActionToken());
+        Game startedGame = startRoom.start(created.room().getCode(), created.leader().getActionToken());
 
-        AuctionBid bid = placeBid.place(created.room().getCode(), guest.getActionToken(), 150);
+        AuctionBid bid = placeBid.place(startedGame.getId().gameId(), guest.getActionToken(), 150);
         expireAuctionRound(created.room().getCode(), Instant.parse("1999-12-31T23:59:55Z"));
-        AuctionSettlement settlement = settleAuction.settle(created.room().getCode());
+        Room settled = settleAuctionAttempt.settleIfDue(created.room().getCode());
 
         Room reloaded = rooms.findByCode(created.room().getCode()).orElseThrow();
         AuctionGame game = (AuctionGame) games.findById(reloaded.getStartedGameId()).orElseThrow();
 
         assertThat(bid.teamLeaderId()).isEqualTo(guest.getId());
         assertThat(bid.amount()).isEqualTo(150);
-        assertThat(settlement.outcome()).isEqualTo(AuctionOutcome.SOLD);
-        assertThat(settlement.playerName()).isEqualTo("선수1");
+        assertThat(settled.getStatus()).isEqualTo(RoomStatus.STARTED);
         assertThat(reloaded.getStatus()).isEqualTo(RoomStatus.STARTED);
         assertThat(game.getBids()).singleElement()
             .extracting(AuctionBid::teamLeaderId, AuctionBid::amount)
@@ -128,7 +128,7 @@ class RoomAuctionIntegrationTest {
 
     @Test
     void 같은_라운드의_입찰_순번은_재조회_후에도_누적된다() {
-        var template =
+        UUID template =
             templateFixture.createAuctionTemplateId(
                 "경매전",
                 2,
@@ -142,11 +142,11 @@ class RoomAuctionIntegrationTest {
 
         RoomSessionResult created = createRoom.create(template, "호스트");
         RoomTeamLeader guest = joinRoom.join(created.room().getCode(), "게스트").leader();
-        startRoom.start(created.room().getCode(), created.leader().getActionToken());
+        Game startedGame = startRoom.start(created.room().getCode(), created.leader().getActionToken());
 
-        AuctionBid firstBid = placeBid.place(created.room().getCode(), created.leader().getActionToken(), 100);
+        AuctionBid firstBid = placeBid.place(startedGame.getId().gameId(), created.leader().getActionToken(), 100);
         Room reloaded = rooms.findByCode(created.room().getCode()).orElseThrow();
-        AuctionBid secondBid = placeBid.place(reloaded.getCode(), guest.getActionToken(), 150);
+        AuctionBid secondBid = placeBid.place(reloaded.getStartedGameId().gameId(), guest.getActionToken(), 150);
 
         assertThat(firstBid.sequence()).isEqualTo(new BidSequence(1));
         assertThat(secondBid.sequence()).isEqualTo(new BidSequence(2));
@@ -155,7 +155,7 @@ class RoomAuctionIntegrationTest {
 
     @Test
     void 같은_포지션_제한에_걸리는_선수에게는_재조회_후에도_입찰할_수_없다() {
-        var template =
+        UUID template =
             templateFixture.createAuctionTemplateId(
                 "포지션제한경매전",
                 2,
@@ -171,15 +171,15 @@ class RoomAuctionIntegrationTest {
 
         RoomSessionResult created = createRoom.create(template, "호스트");
         RoomTeamLeader guest = joinRoom.join(created.room().getCode(), "게스트").leader();
-        startRoom.start(created.room().getCode(), created.leader().getActionToken());
+        Game startedGame = startRoom.start(created.room().getCode(), created.leader().getActionToken());
 
-        placeBid.place(created.room().getCode(), guest.getActionToken(), 150);
+        placeBid.place(startedGame.getId().gameId(), guest.getActionToken(), 150);
         expireAuctionRound(created.room().getCode(), Instant.parse("1999-12-31T23:59:55Z"));
-        settleAuction.settle(created.room().getCode());
+        settleAuctionAttempt.settleIfDue(created.room().getCode());
 
         Room reloaded = rooms.findByCode(created.room().getCode()).orElseThrow();
 
-        assertThatThrownBy(() -> placeBid.place(reloaded.getCode(), guest.getActionToken(), 160))
+        assertThatThrownBy(() -> placeBid.place(reloaded.getStartedGameId().gameId(), guest.getActionToken(), 160))
             .isInstanceOf(CoreException.class)
             .isInstanceOfSatisfying(
                 CoreException.class,
@@ -189,7 +189,7 @@ class RoomAuctionIntegrationTest {
 
     @Test
     void catchUpAndReschedule는_due_room을_즉시_정산한다() {
-        var template =
+        UUID template =
             templateFixture.createAuctionTemplateId(
                 "경매전",
                 2,
@@ -203,8 +203,8 @@ class RoomAuctionIntegrationTest {
 
         RoomSessionResult created = createRoom.create(template, "호스트");
         RoomTeamLeader guest = joinRoom.join(created.room().getCode(), "게스트").leader();
-        startRoom.start(created.room().getCode(), created.leader().getActionToken());
-        placeBid.place(created.room().getCode(), guest.getActionToken(), 150);
+        Game startedGame = startRoom.start(created.room().getCode(), created.leader().getActionToken());
+        placeBid.place(startedGame.getId().gameId(), guest.getActionToken(), 150);
 
         expireAuctionRound(created.room().getCode(), Instant.parse("1999-12-31T23:59:55Z"));
 
@@ -219,7 +219,7 @@ class RoomAuctionIntegrationTest {
 
     @Test
     void start_rollback되면_deadline_task는_등록되지_않는다() {
-        var template =
+        UUID template =
             templateFixture.createAuctionTemplateId(
                 "경매전",
                 2,
@@ -255,7 +255,7 @@ class RoomAuctionIntegrationTest {
 
     private static void setCurrentAuctionRoundEndsAt(AuctionGame game, Instant deadline) {
         try {
-            var field = AuctionGame.class.getDeclaredField("currentRoundEndsAt");
+            Field field = AuctionGame.class.getDeclaredField("currentRoundEndsAt");
             field.setAccessible(true);
             field.set(game, deadline);
         } catch (ReflectiveOperationException ex) {

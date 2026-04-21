@@ -20,6 +20,7 @@ import com.naminhyeok.fantazzk.room.infrastructure.realtime.GameUpdatedEvent;
 import com.naminhyeok.fantazzk.room.infrastructure.realtime.RoomRealtimeEvent;
 import com.naminhyeok.fantazzk.room.infrastructure.realtime.RoomRealtimeEventFactory;
 import com.naminhyeok.fantazzk.room.infrastructure.realtime.RoomUpdatedEvent;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -100,7 +101,7 @@ class RoomRealtimeEventFactoryTest {
     private Room startedAuctionRoom() {
         Room room = waitingAuctionRoom();
         room.join(new TeamLeaderId("guest-1"), "게스트1", "guest-action-token");
-        room.start(new TeamLeaderId("host-1"), CREATED_AT);
+        room.start(new TeamLeaderId("host-1"), deterministicGameId(room), CREATED_AT);
         return room;
     }
 
@@ -128,5 +129,12 @@ class RoomRealtimeEventFactoryTest {
         var field = owner.getDeclaredField("version");
         field.setAccessible(true);
         field.setLong(target, version);
+    }
+
+    private static com.naminhyeok.fantazzk.room.domain.GameId deterministicGameId(Room room) {
+        String source = "game:%s".formatted(room.getId().roomId());
+        return new com.naminhyeok.fantazzk.room.domain.GameId(
+            UUID.nameUUIDFromBytes(source.getBytes(StandardCharsets.UTF_8))
+        );
     }
 }

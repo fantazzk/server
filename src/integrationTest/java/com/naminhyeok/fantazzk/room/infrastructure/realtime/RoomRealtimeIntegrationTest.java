@@ -9,11 +9,12 @@ import com.naminhyeok.fantazzk.room.application.PickDraft;
 import com.naminhyeok.fantazzk.room.application.PlaceBid;
 import com.naminhyeok.fantazzk.room.application.RoomRealtimeEventPublisher;
 import com.naminhyeok.fantazzk.room.application.RoomSessionResult;
-import com.naminhyeok.fantazzk.room.application.SettleAuction;
+import com.naminhyeok.fantazzk.room.application.SettleAuctionAttempt;
 import com.naminhyeok.fantazzk.room.application.StartRoom;
 import com.naminhyeok.fantazzk.room.domain.AuctionGame;
 import com.naminhyeok.fantazzk.room.domain.DraftGame;
 import com.naminhyeok.fantazzk.room.domain.DraftOrderStrategy;
+import com.naminhyeok.fantazzk.room.domain.Game;
 import com.naminhyeok.fantazzk.room.domain.GameStatus;
 import com.naminhyeok.fantazzk.room.domain.Room;
 import com.naminhyeok.fantazzk.room.domain.RoomMode;
@@ -35,8 +36,10 @@ import com.naminhyeok.fantazzk.template.support.TemplateFixture;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -74,7 +77,7 @@ class RoomRealtimeIntegrationTest {
     private final StartRoom startRoom;
     private final PlaceBid placeBid;
     private final PickDraft pickDraft;
-    private final SettleAuction settleAuction;
+    private final SettleAuctionAttempt settleAuctionAttempt;
     private final Rooms rooms;
     private final Games games;
     private final RecordingRoomRealtimeEventPublisher recordingRoomRealtimeEventPublisher;
@@ -87,7 +90,7 @@ class RoomRealtimeIntegrationTest {
 
     @Test
     void join이_커밋되면_room_updated를_정확히_하나_publish한다() {
-        var template =
+        UUID template =
             templateFixture.createAuctionTemplateId(
                 "실시간 방",
                 2,
@@ -117,7 +120,7 @@ class RoomRealtimeIntegrationTest {
 
     @Test
     void 바깥_트랜잭션이_롤백되면_room_snapshot을_publish하지_않는다() {
-        var template =
+        UUID template =
             templateFixture.createAuctionTemplateId(
                 "실시간 롤백",
                 2,
@@ -151,7 +154,7 @@ class RoomRealtimeIntegrationTest {
 
     @Test
     void 경매_입찰과_정산_publish는_game_updated를_사용한다() {
-        var template =
+        UUID template =
             templateFixture.createAuctionTemplateId(
                 "실시간 경매",
                 2,
@@ -165,12 +168,12 @@ class RoomRealtimeIntegrationTest {
 
         RoomSessionResult created = createRoom.create(template, "호스트");
         RoomTeamLeader guest = joinRoom.join(created.room().getCode(), "게스트").leader();
-        startRoom.start(created.room().getCode(), created.leader().getActionToken());
+        Game startedGame = startRoom.start(created.room().getCode(), created.leader().getActionToken());
         recordingRoomRealtimeEventPublisher.clear();
 
-        placeBid.place(created.room().getCode(), guest.getActionToken(), 150);
+        placeBid.place(startedGame.getId().gameId(), guest.getActionToken(), 150);
         expireAuctionRound(created.room().getCode(), Instant.parse("1999-12-31T23:59:55Z"));
-        settleAuction.settle(created.room().getCode());
+        settleAuctionAttempt.settleIfDue(created.room().getCode());
         Room reloaded = rooms.findByCode(created.room().getCode()).orElseThrow();
         AuctionGame game = (AuctionGame) games.findById(reloaded.getStartedGameId()).orElseThrow();
 
@@ -197,33 +200,8 @@ class RoomRealtimeIntegrationTest {
     }
 
     @Test
-    void started_draft_room의_auction_progress는_기존처럼_noop_응답을_유지한다() {
-        var template =
-            templateFixture.createDraftTemplateId(
-                "실시간 드래프트",
-                2,
-                2,
-                com.naminhyeok.fantazzk.template.TemplateCatalog.DraftOrderStrategy.SNAKE,
-                List.of(
-                    new TemplateFixture.PlayerSpec("선수1", "TOP"),
-                    new TemplateFixture.PlayerSpec("선수2", "JUNGLE")
-                )
-            );
-
-        RoomSessionResult created = createRoom.create(template, "호스트");
-        RoomTeamLeader guest = joinRoom.join(created.room().getCode(), "게스트").leader();
-        selectDraftPositionsAndStart(created.room().getCode(), created.leader().getActionToken(), guest.getActionToken());
-        recordingRoomRealtimeEventPublisher.clear();
-
-        Room current = settleAuction.settleIfDue(created.room().getCode());
-
-        assertThat(current.getMode()).isEqualTo(RoomMode.DRAFT);
-        assertThat(recordingRoomRealtimeEventPublisher.publishedEvents()).isEmpty();
-    }
-
-    @Test
     void 드래프트_start_publish는_room_updated와_game_updated를_사용한다() {
-        var template =
+        UUID template =
             templateFixture.createDraftTemplateId(
                 "실시간 드래프트 시작",
                 2,
@@ -261,7 +239,7 @@ class RoomRealtimeIntegrationTest {
 
     @Test
     void 드래프트_픽_publish는_game_updated를_반영한다() {
-        var template =
+        UUID template =
             templateFixture.createDraftTemplateId(
                 "실시간 드래프트 픽",
                 2,
@@ -278,7 +256,8 @@ class RoomRealtimeIntegrationTest {
         selectDraftPositionsAndStart(created.room().getCode(), created.leader().getActionToken(), guest.getActionToken());
         recordingRoomRealtimeEventPublisher.clear();
 
-        pickDraft.pick(created.room().getCode(), created.leader().getActionToken(), "선수1");
+        Room startedRoom = rooms.findByCode(created.room().getCode()).orElseThrow();
+        pickDraft.pick(startedRoom.getStartedGameId().gameId(), created.leader().getActionToken(), "선수1");
         Room reloaded = rooms.findByCode(created.room().getCode()).orElseThrow();
         DraftGame game = (DraftGame) games.findById(reloaded.getStartedGameId()).orElseThrow();
 
@@ -297,7 +276,7 @@ class RoomRealtimeIntegrationTest {
 
     @Test
     void 시작_스냅샷_이후_드래프트_live_update의_snapshot_version은_단조증가한다() {
-        var template =
+        UUID template =
             templateFixture.createDraftTemplateId(
                 "실시간 드래프트 버전",
                 2,
@@ -317,14 +296,15 @@ class RoomRealtimeIntegrationTest {
         long startSnapshotVersion = recordingRoomRealtimeEventPublisher.publishedEvents().getLast().snapshotVersion();
 
         recordingRoomRealtimeEventPublisher.clear();
-        pickDraft.pick(created.room().getCode(), created.leader().getActionToken(), "선수1");
+        Room startedRoom = rooms.findByCode(created.room().getCode()).orElseThrow();
+        pickDraft.pick(startedRoom.getStartedGameId().gameId(), created.leader().getActionToken(), "선수1");
         long firstPickSnapshotVersion = recordingRoomRealtimeEventPublisher.publishedEvents().getLast().snapshotVersion();
 
         assertThat(firstPickSnapshotVersion).isGreaterThan(startSnapshotVersion);
     }
 
     private void selectDraftPositionsAndStart(String code, String hostToken, String guestToken) {
-        var tx = new TransactionTemplate(transactionManager);
+        TransactionTemplate tx = new TransactionTemplate(transactionManager);
         tx.executeWithoutResult(status -> {
             Room room = rooms.findByCode(code).orElseThrow();
             room.selectDraftPosition(room.getLeaders().getFirst().getId(), 1);
@@ -344,7 +324,7 @@ class RoomRealtimeIntegrationTest {
 
     private static void setCurrentAuctionRoundEndsAt(AuctionGame game, Instant deadline) {
         try {
-            var field = AuctionGame.class.getDeclaredField("currentRoundEndsAt");
+            Field field = AuctionGame.class.getDeclaredField("currentRoundEndsAt");
             field.setAccessible(true);
             field.set(game, deadline);
         } catch (ReflectiveOperationException ex) {

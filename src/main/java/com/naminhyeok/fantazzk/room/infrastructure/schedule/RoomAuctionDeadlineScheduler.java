@@ -1,13 +1,13 @@
 package com.naminhyeok.fantazzk.room.infrastructure.schedule;
 
 import com.naminhyeok.fantazzk.room.application.SettleAuction;
+import com.naminhyeok.fantazzk.room.infrastructure.persistence.JpaAuctionScheduleReader;
 import com.naminhyeok.fantazzk.room.domain.AuctionGame;
 import com.naminhyeok.fantazzk.room.domain.Room;
 import com.naminhyeok.fantazzk.room.domain.RoomMode;
 import com.naminhyeok.fantazzk.room.domain.RoomStateInvalidException;
 import com.naminhyeok.fantazzk.room.domain.RoomStatus;
 import com.naminhyeok.fantazzk.room.query.AuctionScheduleCandidate;
-import com.naminhyeok.fantazzk.room.query.AuctionScheduleReader;
 import com.naminhyeok.fantazzk.room.repository.Games;
 import java.time.Clock;
 import java.time.Instant;
@@ -27,7 +27,7 @@ import org.springframework.stereotype.Component;
 public class RoomAuctionDeadlineScheduler {
     private final TaskScheduler taskScheduler;
     private final SettleAuction settleAuction;
-    private final AuctionScheduleReader auctionScheduleReader;
+    private final JpaAuctionScheduleReader auctionScheduleReader;
     private final Clock clock;
     private final Games games;
     private final ConcurrentMap<String, ScheduledFuture<?>> scheduledTasks = new ConcurrentHashMap<>();
