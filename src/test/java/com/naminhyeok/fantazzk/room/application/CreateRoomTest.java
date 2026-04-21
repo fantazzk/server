@@ -175,13 +175,13 @@ class CreateRoomTest {
         @Override
         public TemplateBlueprint getTemplate(UUID templateId) {
             return new TemplateBlueprint(
+                "LEAGUE_OF_LEGENDS",
                 Mode.AUCTION,
                 2,
                 2,
                 300,
                 45,
                 10,
-                1,
                 null,
                 List.of(
                     new PlayerBlueprint("선수1", "TOP", 0),

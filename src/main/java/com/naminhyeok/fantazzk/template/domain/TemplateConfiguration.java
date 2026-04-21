@@ -11,32 +11,24 @@ import org.jmolecules.ddd.types.ValueObject;
 @EqualsAndHashCode
 public final class TemplateConfiguration implements ValueObject {
     @Enumerated(EnumType.STRING)
-    private final TemplateCatalog.GameType gameType;
-    @Enumerated(EnumType.STRING)
     private final TemplateCatalog.Mode mode;
     private final int teamCount;
     private final int teamSize;
     private final Integer budget;
     private final int pickBanTime;
     private final Integer minBidUnit;
-    private final Integer positionLimit;
     @Enumerated(EnumType.STRING)
     private final TemplateCatalog.DraftOrderStrategy draftOrderStrategy;
 
     private TemplateConfiguration(
-        TemplateCatalog.GameType gameType,
         TemplateCatalog.Mode mode,
         int teamCount,
         int teamSize,
         Integer budget,
         int pickBanTime,
         Integer minBidUnit,
-        Integer positionLimit,
         TemplateCatalog.DraftOrderStrategy draftOrderStrategy
     ) {
-        if (gameType == null) {
-            throw new IllegalArgumentException("게임 타입은 필수입니다");
-        }
         if (teamCount <= 0) {
             throw new IllegalArgumentException("팀 수는 0보다 커야 합니다");
         }
@@ -60,9 +52,6 @@ public final class TemplateConfiguration implements ValueObject {
             if (minBidUnit <= 0) {
                 throw new IllegalArgumentException("최소 입찰 단위는 0보다 커야 합니다");
             }
-            if (positionLimit != null && positionLimit <= 0) {
-                throw new IllegalArgumentException("포지션 제한은 0보다 커야 합니다");
-            }
             if (draftOrderStrategy != null) {
                 throw new IllegalArgumentException("경매 템플릿에는 드래프트 순서 전략을 지정할 수 없습니다");
             }
@@ -75,76 +64,62 @@ public final class TemplateConfiguration implements ValueObject {
             if (minBidUnit != null) {
                 throw new IllegalArgumentException("드래프트 템플릿에는 최소 입찰 단위를 지정할 수 없습니다");
             }
-            if (positionLimit != null) {
-                throw new IllegalArgumentException("드래프트 템플릿에는 포지션 제한을 지정할 수 없습니다");
-            }
             if (draftOrderStrategy == null) {
                 throw new IllegalArgumentException("드래프트 템플릿에는 순서 전략이 필요합니다");
             }
         }
 
-        this.gameType = gameType;
         this.mode = mode;
         this.teamCount = teamCount;
         this.teamSize = teamSize;
         this.budget = budget;
         this.pickBanTime = pickBanTime;
         this.minBidUnit = minBidUnit;
-        this.positionLimit = positionLimit;
         this.draftOrderStrategy = draftOrderStrategy;
     }
 
     public static TemplateConfiguration auction(
-        TemplateCatalog.GameType gameType,
         int teamCount,
         int teamSize,
         int budget,
         int pickBanTime,
-        int minBidUnit,
-        Integer positionLimit
+        int minBidUnit
     ) {
         return new TemplateConfiguration(
-            gameType,
             TemplateCatalog.Mode.AUCTION,
             teamCount,
             teamSize,
             budget,
             pickBanTime,
             minBidUnit,
-            positionLimit,
             null
         );
     }
 
     public static TemplateConfiguration draft(
-        TemplateCatalog.GameType gameType,
         int teamCount,
         int teamSize,
         int pickBanTime,
         TemplateCatalog.DraftOrderStrategy strategy
     ) {
         return new TemplateConfiguration(
-            gameType,
             TemplateCatalog.Mode.DRAFT,
             teamCount,
             teamSize,
             null,
             pickBanTime,
             null,
-            null,
             strategy
         );
     }
 
     public static TemplateConfiguration from(
-        TemplateCatalog.GameType gameType,
         TemplateCatalog.Mode mode,
         int teamCount,
         int teamSize,
         Integer budget,
         int pickBanTime,
         Integer minBidUnit,
-        Integer positionLimit,
         TemplateCatalog.DraftOrderStrategy draftOrderStrategy
     ) {
         return switch (mode) {
@@ -158,7 +133,7 @@ public final class TemplateConfiguration implements ValueObject {
                 if (minBidUnit == null) {
                     throw new IllegalArgumentException("경매 템플릿에는 최소 입찰 단위가 필요합니다");
                 }
-                yield auction(gameType, teamCount, teamSize, budget, pickBanTime, minBidUnit, positionLimit);
+                yield auction(teamCount, teamSize, budget, pickBanTime, minBidUnit);
             }
             case DRAFT -> {
                 if (budget != null) {
@@ -167,13 +142,10 @@ public final class TemplateConfiguration implements ValueObject {
                 if (minBidUnit != null) {
                     throw new IllegalArgumentException("드래프트 템플릿에는 최소 입찰 단위를 지정할 수 없습니다");
                 }
-                if (positionLimit != null) {
-                    throw new IllegalArgumentException("드래프트 템플릿에는 포지션 제한을 지정할 수 없습니다");
-                }
                 if (draftOrderStrategy == null) {
                     throw new IllegalArgumentException("드래프트 템플릿에는 순서 전략이 필요합니다");
                 }
-                yield draft(gameType, teamCount, teamSize, pickBanTime, draftOrderStrategy);
+                yield draft(teamCount, teamSize, pickBanTime, draftOrderStrategy);
             }
         };
     }

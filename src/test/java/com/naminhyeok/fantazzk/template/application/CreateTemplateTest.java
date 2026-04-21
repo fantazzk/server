@@ -30,13 +30,12 @@ class CreateTemplateTest {
             cut.create(
                 new CreateTemplateCommand.Auction(
                     "경매전",
-                    TemplateCatalog.GameType.LEAGUE_OF_LEGENDS,
+                    "LEAGUE_OF_LEGENDS",
                     2,
                     2,
                     500,
                     45,
                     10,
-                    1,
                     List.of(
                         new CreateTemplateCommand.Player("선수A", "TOP", 0),
                         new CreateTemplateCommand.Player("선수B", "JUNGLE", 1)
@@ -45,8 +44,9 @@ class CreateTemplateTest {
             );
 
         assertThat(template.getName()).isEqualTo("경매전");
+        assertThat(template.getGameType()).isEqualTo("LEAGUE_OF_LEGENDS");
         assertThat(template.getConfiguration())
-            .isEqualTo(TemplateConfiguration.auction(TemplateCatalog.GameType.LEAGUE_OF_LEGENDS, 2, 2, 500, 45, 10, 1));
+            .isEqualTo(TemplateConfiguration.auction(2, 2, 500, 45, 10));
         assertThat(template.getPlayers())
             .extracting(TemplatePlayer::displayOrder, TemplatePlayer::name, TemplatePlayer::position)
             .containsExactly(
@@ -65,7 +65,7 @@ class CreateTemplateTest {
             cut.create(
                 new CreateTemplateCommand.Draft(
                     "드래프트전",
-                    TemplateCatalog.GameType.OVERWATCH_2,
+                    "OVERWATCH_2",
                     2,
                     2,
                     30,
@@ -78,7 +78,8 @@ class CreateTemplateTest {
             );
 
         assertThat(template.getConfiguration())
-            .isEqualTo(TemplateConfiguration.draft(TemplateCatalog.GameType.OVERWATCH_2, 2, 2, 30, TemplateCatalog.DraftOrderStrategy.SNAKE));
+            .isEqualTo(TemplateConfiguration.draft(2, 2, 30, TemplateCatalog.DraftOrderStrategy.SNAKE));
+        assertThat(template.getGameType()).isEqualTo("OVERWATCH_2");
         assertThat(template.getBudget()).isNull();
     }
 
@@ -90,13 +91,12 @@ class CreateTemplateTest {
             cut.create(
                 new CreateTemplateCommand.Auction(
                     "실패",
-                    TemplateCatalog.GameType.LEAGUE_OF_LEGENDS,
+                    "LEAGUE_OF_LEGENDS",
                     2,
                     2,
                     300,
                     45,
                     10,
-                    1,
                     List.of(new CreateTemplateCommand.Player("선수1", "TOP", 0))
                 )
             )

@@ -37,6 +37,8 @@ public class Room implements AggregateRoot<Room, RoomId> {
     private final TeamLeaderId hostLeaderId;
     @Enumerated(EnumType.STRING)
     private RoomStatus status;
+    @Column(name = "game_type")
+    private final String gameType;
     @Enumerated(EnumType.STRING)
     private final RoomMode mode;
     private final int teamCount;
@@ -45,8 +47,6 @@ public class Room implements AggregateRoot<Room, RoomId> {
     @Column(name = "pick_ban_time")
     private final int pickBanTime;
     private final Integer minBidUnit;
-    @Column(name = "position_limit")
-    private final Integer positionLimit;
     @Enumerated(EnumType.STRING)
     private final DraftOrderStrategy draftOrderStrategy;
     @Column(name = "started_game_id")
@@ -65,13 +65,13 @@ public class Room implements AggregateRoot<Room, RoomId> {
         String code,
         Instant createdAt,
         TeamLeaderId hostLeaderId,
+        String gameType,
         RoomMode mode,
         int teamCount,
         int teamSize,
         Integer budget,
         int pickBanTime,
         Integer minBidUnit,
-        Integer positionLimit,
         DraftOrderStrategy draftOrderStrategy
     ) {
         this.id = new RoomId(UUID.randomUUID());
@@ -79,13 +79,13 @@ public class Room implements AggregateRoot<Room, RoomId> {
         this.createdAt = Objects.requireNonNull(createdAt, "createdAt must not be null");
         this.hostLeaderId = Objects.requireNonNull(hostLeaderId, "hostLeaderId must not be null");
         this.status = RoomStatus.WAITING;
+        this.gameType = gameType;
         this.mode = mode;
         this.teamCount = teamCount;
         this.teamSize = teamSize;
         this.budget = budget;
         this.pickBanTime = pickBanTime;
         this.minBidUnit = minBidUnit;
-        this.positionLimit = positionLimit;
         this.draftOrderStrategy = draftOrderStrategy;
         this.startedGameId = null;
         this.startedAt = null;
@@ -106,13 +106,13 @@ public class Room implements AggregateRoot<Room, RoomId> {
                 code,
                 createdAt,
                 hostLeaderId,
+                spec.gameType(),
                 spec.mode() == RoomMode.AUCTION ? RoomMode.AUCTION : RoomMode.DRAFT,
                 spec.teamCount(),
                 spec.teamSize(),
                 spec.budget(),
                 spec.pickBanTime(),
                 spec.minBidUnit(),
-                spec.positionLimit(),
                 spec.draftOrderStrategy()
             );
 
@@ -219,9 +219,10 @@ public class Room implements AggregateRoot<Room, RoomId> {
             code,
             startedGameId,
             startedAt,
+            gameType,
             mode,
             mode == RoomMode.AUCTION
-                ? GameRules.auction(teamCount, teamSize, budget, pickBanTime, minBidUnit, positionLimit)
+                ? GameRules.auction(teamCount, teamSize, budget, pickBanTime, minBidUnit)
                 : GameRules.draft(teamCount, teamSize, pickBanTime, draftOrderStrategy),
             leaders.stream()
                 .map(leader -> mode == RoomMode.AUCTION

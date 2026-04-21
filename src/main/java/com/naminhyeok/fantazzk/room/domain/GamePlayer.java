@@ -28,7 +28,7 @@ public class GamePlayer implements ValueObject {
     public GamePlayer(RoomPlayerId playerId, String name, String position, int displayOrder) {
         this.playerId = java.util.Objects.requireNonNull(playerId, "playerId must not be null");
         this.name = java.util.Objects.requireNonNull(name, "name must not be null");
-        this.position = java.util.Objects.requireNonNull(position, "position must not be null");
+        this.position = position;
         this.displayOrder = displayOrder;
     }
 

@@ -12,6 +12,31 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 class TemplateAggregateTest {
+    @Test
+    void 메타데이터인_gameType과_position은_비어있어도_보관한다() {
+        Template template =
+            Template.createDraft(
+                "메타데이터 테스트",
+                null,
+                2,
+                2,
+                30,
+                TemplateCatalog.DraftOrderStrategy.FIXED,
+                List.of(
+                    new TemplatePlayer("선수1", "", 0),
+                    new TemplatePlayer("선수2", null, 1)
+                )
+            );
+
+        assertThat(template.getGameType()).isNull();
+        assertThat(template.getPlayers())
+            .extracting(TemplatePlayer::name, TemplatePlayer::position)
+            .containsExactly(
+                tuple("선수1", ""),
+                tuple("선수2", null)
+            );
+    }
+
     @Nested
     class 경매_템플릿_생성 {
         @Test
@@ -19,13 +44,12 @@ class TemplateAggregateTest {
             Template template =
                 Template.createAuction(
                     "주말 경매전",
-                    TemplateCatalog.GameType.LEAGUE_OF_LEGENDS,
+                    "LEAGUE_OF_LEGENDS",
                     2,
                     2,
                     300,
                     45,
                     10,
-                    1,
                     List.of(
                         new TemplatePlayer("선수2", "JUNGLE", 0),
                         new TemplatePlayer("선수1", "TOP", 1)
@@ -45,13 +69,12 @@ class TemplateAggregateTest {
             assertThatThrownBy(() ->
                 Template.createAuction(
                     "주말 경매전",
-                    TemplateCatalog.GameType.LEAGUE_OF_LEGENDS,
+                    "LEAGUE_OF_LEGENDS",
                     2,
                     2,
                     300,
                     45,
                     10,
-                    1,
                     List.of(new TemplatePlayer("선수1", "TOP", 0))
                 )
             )
@@ -60,39 +83,16 @@ class TemplateAggregateTest {
         }
 
         @Test
-        void 선택한_게임_타입에서_지원하지_않는_포지션이면_거부한다() {
-            assertThatThrownBy(() ->
-                Template.createAuction(
-                    "주말 경매전",
-                    TemplateCatalog.GameType.LEAGUE_OF_LEGENDS,
-                    2,
-                    2,
-                    300,
-                    45,
-                    10,
-                    1,
-                    List.of(
-                        new TemplatePlayer("선수1", "TANK", 0),
-                        new TemplatePlayer("선수2", "SUPPORT", 1)
-                    )
-                )
-            )
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("LEAGUE_OF_LEGENDS 게임은 TANK 포지션을 지원하지 않습니다");
-        }
-
-        @Test
         void 경매_설정을_flat_필드로_노출한다() {
             Template template =
                 Template.createAuction(
                     "경매전",
-                    TemplateCatalog.GameType.LEAGUE_OF_LEGENDS,
+                    "LEAGUE_OF_LEGENDS",
                     2,
                     3,
                     300,
                     45,
                     10,
-                    2,
                     List.of(
                         new TemplatePlayer("선수1", "TOP", 0),
                         new TemplatePlayer("선수2", "JUNGLE", 1),
@@ -102,14 +102,13 @@ class TemplateAggregateTest {
                 );
 
             assertThat(template.getName()).isEqualTo("경매전");
-            assertThat(template.getGameType()).isEqualTo(TemplateCatalog.GameType.LEAGUE_OF_LEGENDS);
+            assertThat(template.getGameType()).isEqualTo("LEAGUE_OF_LEGENDS");
             assertThat(template.getMode()).isEqualTo(TemplateCatalog.Mode.AUCTION);
             assertThat(template.getTeamCount()).isEqualTo(2);
             assertThat(template.getTeamSize()).isEqualTo(3);
             assertThat(template.getBudget()).isEqualTo(300);
             assertThat(template.getPickBanTime()).isEqualTo(45);
             assertThat(template.getMinBidUnit()).isEqualTo(10);
-            assertThat(template.getPositionLimit()).isEqualTo(2);
             assertThat(template.getDraftOrderStrategy()).isNull();
             assertThat(template.getPicksPerTeam()).isEqualTo(2);
         }
@@ -122,7 +121,7 @@ class TemplateAggregateTest {
             Template template =
                 Template.createDraft(
                     "사내 리그 드래프트",
-                    TemplateCatalog.GameType.OVERWATCH_2,
+                    "OVERWATCH_2",
                     2,
                     2,
                     30,
@@ -133,12 +132,11 @@ class TemplateAggregateTest {
                     )
                 );
 
-            assertThat(template.getGameType()).isEqualTo(TemplateCatalog.GameType.OVERWATCH_2);
+            assertThat(template.getGameType()).isEqualTo("OVERWATCH_2");
             assertThat(template.getMode()).isEqualTo(TemplateCatalog.Mode.DRAFT);
             assertThat(template.getBudget()).isNull();
             assertThat(template.getPickBanTime()).isEqualTo(30);
             assertThat(template.getMinBidUnit()).isNull();
-            assertThat(template.getPositionLimit()).isNull();
             assertThat(template.getDraftOrderStrategy()).isEqualTo(TemplateCatalog.DraftOrderStrategy.FIXED);
         }
     }

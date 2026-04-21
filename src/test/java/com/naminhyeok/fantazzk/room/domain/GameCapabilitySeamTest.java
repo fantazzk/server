@@ -14,17 +14,16 @@ import org.junit.jupiter.api.Test;
 class GameCapabilitySeamTest {
     @Test
     void 경매_규칙은_auction_seam으로_드러난다() {
-        GameRules rules = GameRules.auction(2, 2, 300, 45, 10, 1);
+        GameRules rules = GameRules.auction(2, 2, 300, 45, 10);
 
         assertThat(rules.mode()).isEqualTo(RoomMode.AUCTION);
         assertThat(rules.auctionRules())
             .extracting(
                 GameRules.AuctionRules::budget,
                 GameRules.AuctionRules::pickBanTime,
-                GameRules.AuctionRules::minBidUnit,
-                GameRules.AuctionRules::positionLimit
+                GameRules.AuctionRules::minBidUnit
             )
-            .containsExactly(300, 45, 10, 1);
+            .containsExactly(300, 45, 10);
         assertThatThrownBy(rules::draftRules).isInstanceOf(IllegalStateException.class);
     }
 

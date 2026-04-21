@@ -8,7 +8,6 @@ import com.naminhyeok.fantazzk.template.domain.Template;
 import com.naminhyeok.fantazzk.template.domain.TemplatePlayer;
 import com.naminhyeok.fantazzk.template.query.TemplateDetailResponse;
 import com.naminhyeok.fantazzk.template.query.TemplatePlayerResponse;
-import com.naminhyeok.fantazzk.template.query.TemplateSummaryResponse;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -18,13 +17,12 @@ class TemplateResponseTest {
         Template template =
             Template.createAuction(
                 "경매전",
-                TemplateCatalog.GameType.LEAGUE_OF_LEGENDS,
+                "LEAGUE_OF_LEGENDS",
                 2,
                 2,
                 300,
                 45,
                 10,
-                1,
                 List.of(
                     new TemplatePlayer("선수1", "TOP", 0),
                     new TemplatePlayer("선수2", "JUNGLE", 1)
@@ -34,12 +32,11 @@ class TemplateResponseTest {
         TemplateDetailResponse response = TemplateDetailResponse.from(template);
 
         assertThat(response.name()).isEqualTo("경매전");
-        assertThat(response.gameType()).isEqualTo(TemplateCatalog.GameType.LEAGUE_OF_LEGENDS);
+        assertThat(response.gameType()).isEqualTo("LEAGUE_OF_LEGENDS");
         assertThat(response.mode()).isEqualTo(TemplateCatalog.Mode.AUCTION);
         assertThat(response.budget()).isEqualTo(300);
         assertThat(response.pickBanTime()).isEqualTo(45);
         assertThat(response.minBidUnit()).isEqualTo(10);
-        assertThat(response.positionLimit()).isEqualTo(1);
         assertThat(response.players())
             .extracting(TemplatePlayerResponse::displayOrder, TemplatePlayerResponse::name, TemplatePlayerResponse::position)
             .containsExactly(
@@ -53,7 +50,7 @@ class TemplateResponseTest {
         Template template =
             Template.createDraft(
                 "드래프트전",
-                TemplateCatalog.GameType.OVERWATCH_2,
+                "OVERWATCH_2",
                 2,
                 2,
                 30,
@@ -66,40 +63,40 @@ class TemplateResponseTest {
 
         TemplateDetailResponse response = TemplateDetailResponse.from(template);
 
-        assertThat(response.gameType()).isEqualTo(TemplateCatalog.GameType.OVERWATCH_2);
+        assertThat(response.gameType()).isEqualTo("OVERWATCH_2");
         assertThat(response.mode()).isEqualTo(TemplateCatalog.Mode.DRAFT);
         assertThat(response.budget()).isNull();
         assertThat(response.pickBanTime()).isEqualTo(30);
         assertThat(response.minBidUnit()).isNull();
-        assertThat(response.positionLimit()).isNull();
         assertThat(response.draftOrderStrategy()).isEqualTo(TemplateCatalog.DraftOrderStrategy.SNAKE);
     }
 
     @Test
-    void 템플릿_요약_응답은_목록에_필요한_필드만_노출한다() {
+    void 템플릿_목록_아이템은_카드에_필요한_메타데이터를_노출한다() {
         Template template =
             Template.createAuction(
                 "경매전",
-                TemplateCatalog.GameType.LEAGUE_OF_LEGENDS,
+                "LEAGUE_OF_LEGENDS",
                 2,
                 2,
                 300,
                 45,
                 10,
-                1,
                 List.of(
                     new TemplatePlayer("선수1", "TOP", 0),
                     new TemplatePlayer("선수2", "JUNGLE", 1)
                 )
             );
 
-        TemplateSummaryResponse response = TemplateSummaryResponse.from(template);
+        TemplateDetailResponse response = TemplateDetailResponse.from(template);
 
         assertThat(response.id()).isEqualTo(template.getId().templateId().toString());
         assertThat(response.name()).isEqualTo("경매전");
-        assertThat(response.gameType()).isEqualTo(TemplateCatalog.GameType.LEAGUE_OF_LEGENDS);
+        assertThat(response.gameType()).isEqualTo("LEAGUE_OF_LEGENDS");
         assertThat(response.mode()).isEqualTo(TemplateCatalog.Mode.AUCTION);
         assertThat(response.teamCount()).isEqualTo(2);
         assertThat(response.teamSize()).isEqualTo(2);
+        assertThat(response.pickBanTime()).isEqualTo(45);
+        assertThat(response.players()).hasSize(2);
     }
 }

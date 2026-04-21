@@ -200,6 +200,7 @@ class RoomApiIntegrationTest {
             "호스트-" + code,
             "host-action-token-" + code,
             new RoomTemplateSpec(
+                "LEAGUE_OF_LEGENDS",
                 RoomMode.AUCTION,
                 2,
                 2,
@@ -239,6 +240,7 @@ class RoomApiIntegrationTest {
             "호스트-" + code,
             "host-action-token-" + code,
             new RoomTemplateSpec(
+                "LEAGUE_OF_LEGENDS",
                 RoomMode.AUCTION,
                 2,
                 2,
@@ -274,6 +276,7 @@ class RoomApiIntegrationTest {
             "호스트-" + code,
             "host-action-token-" + code,
             new RoomTemplateSpec(
+                "LEAGUE_OF_LEGENDS",
                 RoomMode.DRAFT,
                 2,
                 2,

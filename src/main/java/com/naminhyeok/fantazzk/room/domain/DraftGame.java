@@ -38,13 +38,14 @@ public class DraftGame extends Game {
         GameId id,
         RoomId roomId,
         String roomCode,
+        String gameType,
         Instant startedAt,
         GameRules rules,
         List<DraftParticipant> participants,
         List<GamePlayer> playerPool,
         int currentTurnIndex
     ) {
-        super(id, roomId, roomCode, startedAt, GameStatus.IN_PROGRESS, rules, playerPool);
+        super(id, roomId, roomCode, gameType, startedAt, GameStatus.IN_PROGRESS, rules, playerPool);
         this.participants = new ArrayList<>(participants);
         this.currentTurnIndex = currentTurnIndex;
         this.members = new ArrayList<>();

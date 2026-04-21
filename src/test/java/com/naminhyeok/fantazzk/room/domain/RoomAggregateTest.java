@@ -44,6 +44,7 @@ class RoomAggregateTest {
                 "  호스트  ",
                 HOST_ACTION_TOKEN,
                 new RoomTemplateSpec(
+                    "LEAGUE_OF_LEGENDS",
                     RoomMode.AUCTION,
                     2,
                     3,
@@ -112,6 +113,7 @@ class RoomAggregateTest {
                 "Faker",
                 HOST_ACTION_TOKEN,
                 new RoomTemplateSpec(
+                    "LEAGUE_OF_LEGENDS",
                     RoomMode.AUCTION,
                     2,
                     2,
@@ -205,6 +207,7 @@ class RoomAggregateTest {
                 "호스트",
                 HOST_ACTION_TOKEN,
                 new RoomTemplateSpec(
+                    "LEAGUE_OF_LEGENDS",
                     RoomMode.AUCTION,
                     1,
                     2,
@@ -243,6 +246,7 @@ class RoomAggregateTest {
             assertThat(snapshot.roomCode()).isEqualTo(room.getCode());
             assertThat(snapshot.gameId()).isEqualTo(gameId);
             assertThat(snapshot.startedAt()).isEqualTo(STARTED_AT);
+            assertThat(snapshot.gameType()).isEqualTo("LEAGUE_OF_LEGENDS");
             assertThat(snapshot.gameMode()).isEqualTo(room.getMode());
             assertThat(snapshot.rules())
                 .isEqualTo(
@@ -251,8 +255,7 @@ class RoomAggregateTest {
                         room.getTeamSize(),
                         room.getBudget(),
                         room.getPickBanTime(),
-                        room.getMinBidUnit(),
-                        room.getPositionLimit()
+                        room.getMinBidUnit()
                     )
                 );
             assertThat(snapshot.participants())
@@ -351,6 +354,7 @@ class RoomAggregateTest {
             "호스트",
             HOST_ACTION_TOKEN,
             new RoomTemplateSpec(
+                "LEAGUE_OF_LEGENDS",
                 RoomMode.AUCTION,
                 2,
                 2,
@@ -390,6 +394,7 @@ class RoomAggregateTest {
             "호스트",
             HOST_ACTION_TOKEN,
             new RoomTemplateSpec(
+                "LEAGUE_OF_LEGENDS",
                 RoomMode.DRAFT,
                 2,
                 2,

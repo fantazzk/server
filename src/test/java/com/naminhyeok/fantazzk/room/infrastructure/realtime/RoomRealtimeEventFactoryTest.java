@@ -82,6 +82,7 @@ class RoomRealtimeEventFactoryTest {
             "호스트",
             "host-action-token",
             new RoomTemplateSpec(
+                "LEAGUE_OF_LEGENDS",
                 RoomMode.AUCTION,
                 2,
                 2,
@@ -111,8 +112,9 @@ class RoomRealtimeEventFactoryTest {
             room.getCode(),
             room.getStartedGameId(),
             room.getStartedAt(),
+            room.getGameType(),
             room.getMode(),
-            GameRules.auction(room.getTeamCount(), room.getTeamSize(), room.getBudget(), room.getPickBanTime(), room.getMinBidUnit(), room.getPositionLimit()),
+            GameRules.auction(room.getTeamCount(), room.getTeamSize(), room.getBudget(), room.getPickBanTime(), room.getMinBidUnit()),
             List.of(
                 GameParticipant.auction(new TeamLeaderId("host-1"), "호스트", 300),
                 GameParticipant.auction(new TeamLeaderId("guest-1"), "게스트1", 300)

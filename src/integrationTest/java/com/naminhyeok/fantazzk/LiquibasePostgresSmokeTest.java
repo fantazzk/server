@@ -33,10 +33,10 @@ class LiquibasePostgresSmokeTest {
     void liquibase_실제_postgresql_스키마에서_rooms_변경을_검증한다() {
         assertThat(countTable("rooms")).isEqualTo(1);
         assertThat(countColumn("rooms", "created_at")).isEqualTo(1);
+        assertThat(countColumn("rooms", "game_type")).isEqualTo(1);
         assertThat(countColumn("rooms", "min_bid_unit")).isEqualTo(1);
         assertThat(isNullable("rooms", "min_bid_unit")).isTrue();
-        assertThat(countColumn("rooms", "position_limit")).isEqualTo(1);
-        assertThat(isNullable("rooms", "position_limit")).isTrue();
+        assertThat(countColumn("rooms", "position_limit")).isZero();
         assertThat(countColumn("rooms", "started_game_id")).isEqualTo(1);
         assertThat(countColumn("rooms", "started_at")).isEqualTo(1);
         assertThat(countColumn("rooms", "current_turn_index")).isZero();
@@ -47,6 +47,8 @@ class LiquibasePostgresSmokeTest {
         assertThat(countTable("room_team_member")).isZero();
         assertThat(countTable("room_bid")).isZero();
         assertThat(countTable("game_draft_member")).isEqualTo(1);
+        assertThat(countColumn("games", "game_type")).isEqualTo(1);
+        assertThat(countColumn("games", "position_limit")).isZero();
         assertThat(countColumn("game_draft_member", "members_game_id")).isEqualTo(1);
         assertThat(countColumn("game_draft_member", "member_order")).isEqualTo(1);
         assertThat(countColumn("game_draft_member", "team_leader_id")).isEqualTo(1);

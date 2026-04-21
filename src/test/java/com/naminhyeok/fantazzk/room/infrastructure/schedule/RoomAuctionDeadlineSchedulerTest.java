@@ -209,6 +209,7 @@ class RoomAuctionDeadlineSchedulerTest {
                 "호스트",
                 "host-token-" + code,
                 new RoomTemplateSpec(
+                    "LEAGUE_OF_LEGENDS",
                     RoomMode.AUCTION,
                     2,
                     2,

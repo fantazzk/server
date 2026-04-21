@@ -103,13 +103,13 @@ class StartedGameContextLoaderTest {
                 "호스트",
                 "host-action-token",
                 new RoomTemplateSpec(
+                    "LEAGUE_OF_LEGENDS",
                     RoomMode.AUCTION,
                     2,
                     2,
                     300,
                     45,
                     10,
-                    1,
                     null,
                     List.of(
                         new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
@@ -130,8 +130,9 @@ class StartedGameContextLoaderTest {
                 room.getCode(),
                 room.getStartedGameId(),
                 room.getStartedAt(),
+                room.getGameType(),
                 room.getMode(),
-                GameRules.auction(room.getTeamCount(), room.getTeamSize(), room.getBudget(), room.getPickBanTime(), room.getMinBidUnit(), room.getPositionLimit()),
+                GameRules.auction(room.getTeamCount(), room.getTeamSize(), room.getBudget(), room.getPickBanTime(), room.getMinBidUnit()),
                 List.of(
                     GameParticipant.auction(new TeamLeaderId("host-1"), "호스트", 300),
                     GameParticipant.auction(new TeamLeaderId("guest-1"), "게스트", 300)

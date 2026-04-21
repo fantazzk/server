@@ -38,13 +38,12 @@ class TemplateRepositoryIntegrationTest {
             templates.save(
                 Template.createAuction(
                     "주말 풋살 경매전",
-                    TemplateCatalog.GameType.LEAGUE_OF_LEGENDS,
+                    "LEAGUE_OF_LEGENDS",
                     2,
                     2,
                     300,
                     45,
                     10,
-                    1,
                     List.of(
                         new TemplatePlayer("선수1", "TOP", 0),
                         new TemplatePlayer("선수2", "JUNGLE", 1)
@@ -59,11 +58,10 @@ class TemplateRepositoryIntegrationTest {
 
         assertThat(reloaded.getId()).isEqualTo(saved.getId());
         assertThat(reloaded.getName()).isEqualTo("주말 풋살 경매전");
-        assertThat(reloaded.getGameType()).isEqualTo(TemplateCatalog.GameType.LEAGUE_OF_LEGENDS);
+        assertThat(reloaded.getGameType()).isEqualTo("LEAGUE_OF_LEGENDS");
         assertThat(reloaded.getMode()).isEqualTo(TemplateCatalog.Mode.AUCTION);
         assertThat(reloaded.getPickBanTime()).isEqualTo(45);
         assertThat(reloaded.getMinBidUnit()).isEqualTo(10);
-        assertThat(reloaded.getPositionLimit()).isEqualTo(1);
         assertThat(reloaded.getPlayers())
             .extracting(TemplatePlayer::displayOrder, TemplatePlayer::name, TemplatePlayer::position)
             .containsExactly(

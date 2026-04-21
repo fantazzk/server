@@ -246,6 +246,7 @@ class SupabaseRoomRealtimePublisherTest {
             "호스트",
             "host-token",
             new RoomTemplateSpec(
+                "LEAGUE_OF_LEGENDS",
                 RoomMode.AUCTION,
                 2,
                 2,

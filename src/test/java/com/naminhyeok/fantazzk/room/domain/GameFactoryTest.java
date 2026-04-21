@@ -35,8 +35,9 @@ class GameFactoryTest {
                 "ROOM01",
                 new GameId(UUID.fromString("00000000-0000-0000-0000-000000000101")),
                 STARTED_AT,
+                "LEAGUE_OF_LEGENDS",
                 RoomMode.AUCTION,
-                GameRules.auction(2, 2, 300, 45, 10, 1),
+                GameRules.auction(2, 2, 300, 45, 10),
                 List.of(
                     GameParticipant.auction(new TeamLeaderId("host-1"), "호스트", 300),
                     GameParticipant.auction(new TeamLeaderId("guest-1"), "게스트", 300)
@@ -53,6 +54,7 @@ class GameFactoryTest {
         assertThat(created.getId()).isEqualTo(snapshot.gameId());
         assertThat(created.getRoomId()).isEqualTo(snapshot.roomId());
         assertThat(created.getRoomCode()).isEqualTo(snapshot.roomCode());
+        assertThat(created.getGameType()).isEqualTo(snapshot.gameType());
         assertThat(created.getStatus()).isEqualTo(GameStatus.IN_PROGRESS);
         assertThat(created.getStartedAt()).isEqualTo(snapshot.startedAt());
         assertThat(created.getRules()).isEqualTo(snapshot.rules());
@@ -71,6 +73,7 @@ class GameFactoryTest {
                 "ROOM02",
                 new GameId(UUID.fromString("00000000-0000-0000-0000-000000000102")),
                 STARTED_AT,
+                "LEAGUE_OF_LEGENDS",
                 RoomMode.DRAFT,
                 GameRules.draft(2, 2, 30, DraftOrderStrategy.SNAKE),
                 List.of(
@@ -89,6 +92,7 @@ class GameFactoryTest {
         assertThat(created.getId()).isEqualTo(snapshot.gameId());
         assertThat(created.getRoomId()).isEqualTo(snapshot.roomId());
         assertThat(created.getRoomCode()).isEqualTo(snapshot.roomCode());
+        assertThat(created.getGameType()).isEqualTo(snapshot.gameType());
         assertThat(created.getStatus()).isEqualTo(GameStatus.IN_PROGRESS);
         assertThat(created.getStartedAt()).isEqualTo(snapshot.startedAt());
         assertThat(created.getRules()).isEqualTo(snapshot.rules());

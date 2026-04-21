@@ -6,7 +6,7 @@ import com.naminhyeok.fantazzk.template.domain.Template;
 public record TemplateSummaryResponse(
     String id,
     String name,
-    TemplateCatalog.GameType gameType,
+    String gameType,
     TemplateCatalog.Mode mode,
     int teamCount,
     int teamSize

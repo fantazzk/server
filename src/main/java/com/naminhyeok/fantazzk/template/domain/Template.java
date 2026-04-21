@@ -15,47 +15,48 @@ import org.jmolecules.ddd.types.AggregateRoot;
 public class Template implements AggregateRoot<Template, TemplateId> {
     private final TemplateId id;
     private String name;
+    private String gameType;
     private TemplateConfiguration configuration;
     @ElementCollection
     @CollectionTable(name = "template_player", joinColumns = @JoinColumn(name = "players_template_id"))
     private List<TemplatePlayer> players;
 
-    Template(String name, TemplateConfiguration configuration) {
+    Template(String name, String gameType, TemplateConfiguration configuration) {
         if (name == null || name.isBlank()) {
             throw new IllegalArgumentException("템플릿 이름은 비어 있을 수 없습니다");
         }
 
         this.id = new TemplateId(UUID.randomUUID());
         this.name = name;
+        this.gameType = gameType;
         this.configuration = configuration;
         this.players = new ArrayList<>();
     }
 
     public static Template createAuction(
         String name,
-        TemplateCatalog.GameType gameType,
+        String gameType,
         int teamCount,
         int teamSize,
         int budget,
         int pickBanTime,
         int minBidUnit,
-        Integer positionLimit,
         List<TemplatePlayer> players
     ) {
-        return new Template(name, TemplateConfiguration.auction(gameType, teamCount, teamSize, budget, pickBanTime, minBidUnit, positionLimit))
+        return new Template(name, gameType, TemplateConfiguration.auction(teamCount, teamSize, budget, pickBanTime, minBidUnit))
             .registerPlayers(players);
     }
 
     public static Template createDraft(
         String name,
-        TemplateCatalog.GameType gameType,
+        String gameType,
         int teamCount,
         int teamSize,
         int pickBanTime,
         TemplateCatalog.DraftOrderStrategy strategy,
         List<TemplatePlayer> players
     ) {
-        return new Template(name, TemplateConfiguration.draft(gameType, teamCount, teamSize, pickBanTime, strategy))
+        return new Template(name, gameType, TemplateConfiguration.draft(teamCount, teamSize, pickBanTime, strategy))
             .registerPlayers(players);
     }
 
@@ -63,8 +64,8 @@ public class Template implements AggregateRoot<Template, TemplateId> {
         return configuration.getMode();
     }
 
-    public TemplateCatalog.GameType getGameType() {
-        return configuration.getGameType();
+    public String getGameType() {
+        return gameType;
     }
 
     public int getTeamCount() {
@@ -87,10 +88,6 @@ public class Template implements AggregateRoot<Template, TemplateId> {
         return configuration.getMinBidUnit();
     }
 
-    public Integer getPositionLimit() {
-        return configuration.getPositionLimit();
-    }
-
     public TemplateCatalog.DraftOrderStrategy getDraftOrderStrategy() {
         return configuration.getDraftOrderStrategy();
     }
@@ -111,10 +108,7 @@ public class Template implements AggregateRoot<Template, TemplateId> {
         }
 
         players.clear();
-        for (TemplatePlayer player : templatePlayers) {
-            configuration.getGameType().validatePosition(player.position());
-            players.add(player);
-        }
+        players.addAll(templatePlayers);
 
         return this;
     }

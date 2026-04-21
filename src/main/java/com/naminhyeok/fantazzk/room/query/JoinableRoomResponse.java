@@ -7,6 +7,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public record JoinableRoomResponse(
     @Schema(description = "방 코드", example = "ROOM01")
     String code,
+    @Schema(description = "FE가 관리하는 게임 타입 메타데이터", example = "LEAGUE_OF_LEGENDS", nullable = true)
+    String gameType,
     @Schema(description = "게임 모드", example = "DRAFT", allowableValues = {"DRAFT", "AUCTION"})
     String mode,
     @Schema(description = "총 팀 수", example = "2")
@@ -26,6 +28,7 @@ public record JoinableRoomResponse(
         int joinedLeaderCount = room.getLeaders().size();
         return new JoinableRoomResponse(
             room.getCode(),
+            room.getGameType(),
             room.getMode().name(),
             room.getTeamCount(),
             joinedLeaderCount,

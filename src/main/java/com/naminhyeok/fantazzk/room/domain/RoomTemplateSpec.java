@@ -5,13 +5,13 @@ import java.util.List;
 import java.util.Objects;
 
 public record RoomTemplateSpec(
+    String gameType,
     RoomMode mode,
     int teamCount,
     int teamSize,
     Integer budget,
     int pickBanTime,
     Integer minBidUnit,
-    Integer positionLimit,
     DraftOrderStrategy draftOrderStrategy,
     List<Player> players
 ) {
@@ -47,26 +47,10 @@ public record RoomTemplateSpec(
             if (minBidUnit != null) {
                 throw new IllegalArgumentException("드래프트 방 생성 명세에는 최소 입찰 단위를 지정할 수 없습니다");
             }
-            if (positionLimit != null) {
-                throw new IllegalArgumentException("드래프트 방 생성 명세에는 포지션 제한을 지정할 수 없습니다");
-            }
             if (draftOrderStrategy == null) {
                 throw new IllegalArgumentException("드래프트 방 생성 명세에는 순서 전략이 필요합니다");
             }
         }
-    }
-
-    public RoomTemplateSpec(
-        RoomMode mode,
-        int teamCount,
-        int teamSize,
-        Integer budget,
-        int pickBanTime,
-        Integer minBidUnit,
-        DraftOrderStrategy draftOrderStrategy,
-        List<Player> players
-    ) {
-        this(mode, teamCount, teamSize, budget, pickBanTime, minBidUnit, null, draftOrderStrategy, players);
     }
 
     public static RoomTemplateSpec from(TemplateCatalog.TemplateBlueprint template) {
@@ -77,13 +61,13 @@ public record RoomTemplateSpec(
             throw new IllegalArgumentException("선수 수는 정확히 " + requiredPlayerCount + "명이어야 합니다");
         }
         return new RoomTemplateSpec(
+            template.gameType(),
             RoomMode.from(template.mode()),
             template.teamCount(),
             template.teamSize(),
             template.budget(),
             requirePickBanTime(template.pickBanTime()),
             template.minBidUnit(),
-            template.positionLimit(),
             DraftOrderStrategy.from(template.draftOrderStrategy()),
             players
         );

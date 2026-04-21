@@ -6,7 +6,7 @@ import java.util.List;
 public sealed interface CreateTemplateCommand permits CreateTemplateCommand.Auction, CreateTemplateCommand.Draft {
     String name();
 
-    TemplateCatalog.GameType gameType();
+    String gameType();
 
     int teamCount();
 
@@ -21,20 +21,19 @@ public sealed interface CreateTemplateCommand permits CreateTemplateCommand.Auct
 
     record Auction(
         String name,
-        TemplateCatalog.GameType gameType,
+        String gameType,
         int teamCount,
         int teamSize,
         int budget,
         int pickBanTime,
         int minBidUnit,
-        Integer positionLimit,
         List<Player> players
     ) implements CreateTemplateCommand {
     }
 
     record Draft(
         String name,
-        TemplateCatalog.GameType gameType,
+        String gameType,
         int teamCount,
         int teamSize,
         int pickBanTime,
