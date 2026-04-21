@@ -82,6 +82,7 @@ class RoomApiIntegrationTest {
         assertThat(body.resultType()).isEqualTo("SUCCESS");
         assertThat(body.success()).hasSize(2);
         assertThat(body.success()).extracting(JoinableRoomResponse::code).containsExactly("ROOM99", "ROOM01");
+        assertThat(body.success()).extracting(JoinableRoomResponse::gameType).containsOnly("LEAGUE_OF_LEGENDS");
     }
 
     @Test
@@ -115,6 +116,7 @@ class RoomApiIntegrationTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(body.at("/resultType").asText()).isEqualTo("SUCCESS");
         assertThat(body.at("/success/roomCode").asText()).isEqualTo("ROOM11");
+        assertThat(body.at("/success/gameType").asText()).isEqualTo("LEAGUE_OF_LEGENDS");
         assertThat(body.at("/success/status").asText()).isEqualTo("STARTED");
         assertThat(body.at("/success/startedGameId").asText()).isEqualTo(room.getStartedGameId().gameId().toString());
         assertThat(body.at("/success/auctionProgress").isMissingNode()).isTrue();
@@ -148,6 +150,7 @@ class RoomApiIntegrationTest {
         assertThat(body.at("/resultType").asText()).isEqualTo("SUCCESS");
         assertThat(body.at("/success/gameId").asText()).isEqualTo(room.getStartedGameId().gameId().toString());
         assertThat(body.at("/success/roomCode").asText()).isEqualTo("ROOM12");
+        assertThat(body.at("/success/gameType").asText()).isEqualTo("LEAGUE_OF_LEGENDS");
         assertThat(body.at("/success/status").asText()).isEqualTo("IN_PROGRESS");
         assertThat(body.at("/success/auctionProgress/currentRound").asInt()).isEqualTo(1);
         assertThat(body.at("/success/auctionProgress/currentAuctionTarget/name").asText()).isEqualTo("선수1");
@@ -181,6 +184,7 @@ class RoomApiIntegrationTest {
         JsonNode body = readBody(response);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(body.at("/success/gameType").asText()).isEqualTo("LEAGUE_OF_LEGENDS");
         assertThat(body.at("/success/status").asText()).isEqualTo("IN_PROGRESS");
         assertThat(body.at("/success/roster/0/teamLeaderId").asText()).isEqualTo("host-ROOM14");
         assertThat(body.at("/success/roster/0/playerName").asText()).isEqualTo("선수1");

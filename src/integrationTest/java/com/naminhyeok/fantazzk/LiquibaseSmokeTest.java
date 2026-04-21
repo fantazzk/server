@@ -34,10 +34,16 @@ class LiquibaseSmokeTest {
     @Test
     void liquibase_초기_스키마로_자바_jpa_구조를_검증하며_부팅한다() {
         assertThat(countTable("template")).isEqualTo(1);
+        assertThat(countColumn("template", "game_type")).isEqualTo(1);
+        assertThat(isNullable("template", "game_type")).isTrue();
+        assertThat(countColumn("template", "position_limit")).isZero();
         assertThat(countTable("template_player")).isEqualTo(1);
+        assertThat(countColumn("template_player", "position")).isEqualTo(1);
+        assertThat(isNullable("template_player", "position")).isTrue();
         assertThat(countTable("rooms")).isEqualTo(1);
         assertThat(countColumn("rooms", "created_at")).isEqualTo(1);
         assertThat(countColumn("rooms", "game_type")).isEqualTo(1);
+        assertThat(isNullable("rooms", "game_type")).isTrue();
         assertThat(countColumn("rooms", "min_bid_unit")).isEqualTo(1);
         assertThat(isNullable("rooms", "min_bid_unit")).isTrue();
         assertThat(countColumn("rooms", "position_limit")).isZero();
@@ -58,7 +64,10 @@ class LiquibaseSmokeTest {
         assertThat(countTable("room_bid")).isZero();
         assertThat(countTable("game_draft_member")).isEqualTo(1);
         assertThat(countColumn("games", "game_type")).isEqualTo(1);
+        assertThat(isNullable("games", "game_type")).isTrue();
         assertThat(countColumn("games", "position_limit")).isZero();
+        assertThat(countColumn("game_player", "position")).isEqualTo(1);
+        assertThat(isNullable("game_player", "position")).isTrue();
         assertThat(countColumn("game_draft_member", "members_game_id")).isEqualTo(1);
         assertThat(countColumn("game_draft_member", "member_order")).isEqualTo(1);
         assertThat(countColumn("game_draft_member", "team_leader_id")).isEqualTo(1);

@@ -67,6 +67,7 @@ class TemplateApiIntegrationTest {
         assertThat(success.get("name")).isEqualTo("경매전");
         assertThat(success.get("gameType")).isEqualTo("LEAGUE_OF_LEGENDS");
         assertThat(success.get("mode")).isEqualTo("AUCTION");
+        assertThat(success.containsKey("positionLimit")).isFalse();
         assertThat(((List<?>) success.get("players"))).hasSize(2);
     }
 
@@ -98,12 +99,35 @@ class TemplateApiIntegrationTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         assertThat(response.getBody()).containsEntry("resultType", "SUCCESS");
         Map<?, ?> success = (Map<?, ?>) response.getBody().get("success");
+        String templateId = (String) success.get("id");
         assertThat(success.get("gameType")).isEqualTo("custom-fe-game");
+        assertThat(success.containsKey("positionLimit")).isFalse();
         List<Map<String, Object>> players = (List<Map<String, Object>>) success.get("players");
         assertThat(players).hasSize(2);
         assertThat(players.get(0)).containsEntry("name", "선수1").containsEntry("position", "").containsEntry("displayOrder", 0);
         assertThat(players.get(1)).containsEntry("name", "선수2").containsEntry("displayOrder", 1);
         assertThat(players.get(1).get("position")).isNull();
+
+        ResponseEntity<Map> detailResponse = restTemplate.getForEntity("/api/v1/templates/" + templateId, Map.class);
+        Map<?, ?> detailSuccess = (Map<?, ?>) detailResponse.getBody().get("success");
+        List<Map<String, Object>> detailPlayers = (List<Map<String, Object>>) detailSuccess.get("players");
+        assertThat(detailSuccess.get("gameType")).isEqualTo("custom-fe-game");
+        assertThat(detailSuccess.containsKey("positionLimit")).isFalse();
+        assertThat(detailPlayers.get(0).get("position")).isEqualTo("");
+        assertThat(detailPlayers.get(1).get("position")).isNull();
+
+        ResponseEntity<Map> listResponse = restTemplate.getForEntity("/api/v1/templates", Map.class);
+        List<Map<String, Object>> templates = (List<Map<String, Object>>) listResponse.getBody().get("success");
+        assertThat(templates).anySatisfy(template -> {
+            if (!"메타데이터 템플릿".equals(template.get("name"))) {
+                return;
+            }
+            assertThat(template.get("gameType")).isEqualTo("custom-fe-game");
+            assertThat(template).doesNotContainKey("positionLimit");
+            List<Map<String, Object>> listPlayers = (List<Map<String, Object>>) template.get("players");
+            assertThat(listPlayers.get(0).get("position")).isEqualTo("");
+            assertThat(listPlayers.get(1).get("position")).isNull();
+        });
     }
 
     @Test
@@ -141,6 +165,7 @@ class TemplateApiIntegrationTest {
         Map<?, ?> success = (Map<?, ?>) response.getBody().get("success");
         assertThat(success.get("id")).isEqualTo(templateId);
         assertThat(success.get("name")).isEqualTo("상세조회용 경매전");
+        assertThat(success.containsKey("positionLimit")).isFalse();
         List<Map<String, Object>> players = (List<Map<String, Object>>) success.get("players");
         assertThat(players)
             .containsExactly(
@@ -338,6 +363,7 @@ class TemplateApiIntegrationTest {
             assertThat(template.get("teamCount")).isEqualTo(2);
             assertThat(template.get("pickBanTime")).isEqualTo(45);
             assertThat(template.get("minBidUnit")).isEqualTo(10);
+            assertThat(template).doesNotContainKey("positionLimit");
             List<Map<String, Object>> players = (List<Map<String, Object>>) template.get("players");
             assertThat(players).hasSize(2);
             assertThat(players.get(0)).containsEntry("name", "선수1").containsEntry("position", "TOP").containsEntry("displayOrder", 0);
