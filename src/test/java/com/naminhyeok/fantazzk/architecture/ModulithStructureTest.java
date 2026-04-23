@@ -1,5 +1,6 @@
 package com.naminhyeok.fantazzk.architecture;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
 import com.naminhyeok.fantazzk.FantazzkApplication;
@@ -22,9 +23,17 @@ class ModulithStructureTest {
         Path outputDirectory = Path.of("build/spring-modulith");
         Files.createDirectories(outputDirectory);
 
-        new Documenter(modules, outputDirectory.toString())
+        new Documenter(modules, Documenter.Options.defaults().withOutputFolder(outputDirectory.toString()))
             .writeModulesAsPlantUml()
             .writeIndividualModulesAsPlantUml()
-            .writeModuleCanvases();
+            .writeModuleCanvases(Documenter.CanvasOptions.defaults().revealInternals());
+
+        String roomCanvas = Files.readString(outputDirectory.resolve("module-room.adoc"));
+        String templateCanvas = Files.readString(outputDirectory.resolve("module-template.adoc"));
+
+        assertThat(roomCanvas).contains("CreateRoom");
+        assertThat(roomCanvas).contains("RoomApiController");
+        assertThat(templateCanvas).contains("ProvideTemplateCatalog");
+        assertThat(templateCanvas).contains("CreateTemplate");
     }
 }

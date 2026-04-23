@@ -9,6 +9,7 @@ on:
 permissions:
   contents: read
   checks: write
+  issues: write
   pull-requests: write
 
 jobs:
@@ -65,3 +66,115 @@ jobs:
         with:
           check_name: 'JUnit Test Report'
           report_paths: '**/build/test-results/*[tT]est/TEST-*.xml'
+      - name: render modulith PR comment
+        if: always() && github.event_name == 'pull_request'
+        run: |
+          mkdir -p build
+          if ! python3 scripts/render_modulith_pr_comment.py > build/modulith-pr-comment.md; then
+            printf '%s\n' \
+              '<!-- modulith-pr-comment -->' \
+              '## Spring Modulith 구조 보고서' \
+              '' \
+              'Modulith PR 코멘트 생성에 실패했습니다.' \
+              'workflow 로그에서 `render modulith PR comment` step을 확인해 주세요.' \
+              > build/modulith-pr-comment.md
+          fi
+      - name: render modulith PR body
+        if: always() && github.event_name == 'pull_request'
+        run: |
+          mkdir -p build
+          if ! python3 scripts/render_modulith_pr_comment.py --target body > build/modulith-pr-body.md; then
+            printf '%s\n' \
+              '<!-- modulith-pr-body:start -->' \
+              '## Spring Modulith 구조도' \
+              '' \
+              'Modulith PR 본문 섹션 생성에 실패했습니다.' \
+              'workflow 로그에서 `render modulith PR body` step을 확인해 주세요.' \
+              '<!-- modulith-pr-body:end -->' \
+              > build/modulith-pr-body.md
+          fi
+      - name: publish modulith PR body
+        if: always() && github.event_name == 'pull_request'
+        continue-on-error: true
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const startMarker = '<!-- modulith-pr-body:start -->';
+            const endMarker = '<!-- modulith-pr-body:end -->';
+            const managedSection = fs.readFileSync('build/modulith-pr-body.md', 'utf8').trim();
+            const pull_number = context.payload.pull_request.number;
+            const { owner, repo } = context.repo;
+
+            const pull = await github.rest.pulls.get({
+              owner,
+              repo,
+              pull_number,
+            });
+
+            const currentBody = pull.data.body ?? '';
+            const escapedStart = startMarker.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const escapedEnd = endMarker.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const managedSectionPattern = new RegExp(`${escapedStart}[\\s\\S]*?${escapedEnd}`, 'm');
+
+            let nextBody;
+
+            if (managedSectionPattern.test(currentBody)) {
+              nextBody = currentBody.replace(managedSectionPattern, managedSection);
+            } else if (currentBody.trim().length > 0) {
+              nextBody = `${managedSection}\n\n${currentBody}`;
+            } else {
+              nextBody = managedSection;
+            }
+
+            if (nextBody !== currentBody) {
+              await github.rest.pulls.update({
+                owner,
+                repo,
+                pull_number,
+                body: nextBody,
+              });
+              core.info(`Updated Modulith PR body for PR #${pull_number}`);
+            } else {
+              core.info(`Modulith PR body already up to date for PR #${pull_number}`);
+            }
+      - name: publish modulith PR comment
+        if: always() && github.event_name == 'pull_request'
+        continue-on-error: true
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const marker = '<!-- modulith-pr-comment -->';
+            const body = fs.readFileSync('build/modulith-pr-comment.md', 'utf8');
+            const issue_number = context.payload.pull_request.number;
+            const { owner, repo } = context.repo;
+
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner,
+              repo,
+              issue_number,
+              per_page: 100,
+            });
+
+            const existing = comments.find((comment) =>
+              comment.body && comment.body.includes(marker)
+            );
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: existing.id,
+                body,
+              });
+              core.info(`Updated Modulith PR comment: ${existing.id}`);
+            } else {
+              const created = await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number,
+                body,
+              });
+              core.info(`Created Modulith PR comment: ${created.data.id}`);
+            }
