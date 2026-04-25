@@ -6,8 +6,10 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Embeddable;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
+@NoArgsConstructor
 @Access(AccessType.FIELD)
 @Embeddable
 public class RoomTeamLeader {
@@ -23,19 +25,12 @@ public class RoomTeamLeader {
     @Column(name = "remaining_budget")
     private Integer remainingBudget;
 
-    public RoomTeamLeader() {
-    }
-
     public RoomTeamLeader(TeamLeaderId id, String nickname, String actionToken, Integer remainingBudget) {
         this.id = id;
         this.nickname = nickname;
         this.actionToken = actionToken;
         this.draftPosition = null;
         this.remainingBudget = remainingBudget;
-    }
-
-    public TeamLeaderId getId() {
-        return id;
     }
 
     public void assignDraftPosition(int draftPosition) {

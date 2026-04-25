@@ -31,11 +31,6 @@ public record TemplateDetailResponse(
     List<TemplatePlayerResponse> players
 ) {
     public static TemplateDetailResponse from(Template template) {
-        return from(new TemplateDetail(template, template.getPlayers()));
-    }
-
-    public static TemplateDetailResponse from(TemplateDetail detail) {
-        Template template = detail.template();
         return new TemplateDetailResponse(
             template.getId().templateId().toString(),
             template.getName(),
@@ -47,7 +42,7 @@ public record TemplateDetailResponse(
             template.getPickBanTime(),
             template.getMinBidUnit(),
             template.getDraftOrderStrategy(),
-            detail.players().stream().map(TemplatePlayerResponse::from).toList()
+            template.getPlayers().stream().map(TemplatePlayerResponse::from).toList()
         );
     }
 }

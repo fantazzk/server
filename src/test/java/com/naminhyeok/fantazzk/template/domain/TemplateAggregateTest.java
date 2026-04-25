@@ -5,8 +5,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.groups.Tuple.tuple;
 
 import com.naminhyeok.fantazzk.template.TemplateCatalog;
-import com.naminhyeok.fantazzk.template.domain.Template;
-import com.naminhyeok.fantazzk.template.domain.TemplatePlayer;
 import java.util.List;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -83,7 +81,7 @@ class TemplateAggregateTest {
         }
 
         @Test
-        void 경매_설정을_flat_필드로_노출한다() {
+        void 경매_템플릿은_경매_계약에_필요한_명세를_제공한다() {
             Template template =
                 Template.createAuction(
                     "경매전",
@@ -110,14 +108,13 @@ class TemplateAggregateTest {
             assertThat(template.getPickBanTime()).isEqualTo(45);
             assertThat(template.getMinBidUnit()).isEqualTo(10);
             assertThat(template.getDraftOrderStrategy()).isNull();
-            assertThat(template.getPicksPerTeam()).isEqualTo(2);
         }
     }
 
     @Nested
     class 드래프트_템플릿_생성 {
         @Test
-        void 드래프트_설정을_flat_필드로_노출한다() {
+        void 드래프트_템플릿은_드래프트_계약에_필요한_명세를_제공한다() {
             Template template =
                 Template.createDraft(
                     "사내 리그 드래프트",

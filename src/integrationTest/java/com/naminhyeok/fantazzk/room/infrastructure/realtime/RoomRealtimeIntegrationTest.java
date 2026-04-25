@@ -89,7 +89,7 @@ class RoomRealtimeIntegrationTest {
     }
 
     @Test
-    void join이_커밋되면_room_updated를_정확히_하나_publish한다() {
+    void 방_참가가_커밋되면_로비_스냅샷을_하나만_발행한다() {
         UUID template =
             templateFixture.createAuctionTemplateId(
                 "실시간 방",
@@ -119,7 +119,7 @@ class RoomRealtimeIntegrationTest {
     }
 
     @Test
-    void 바깥_트랜잭션이_롤백되면_room_snapshot을_publish하지_않는다() {
+    void 바깥_트랜잭션이_롤백되면_로비_스냅샷을_발행하지_않는다() {
         UUID template =
             templateFixture.createAuctionTemplateId(
                 "실시간 롤백",
@@ -153,7 +153,7 @@ class RoomRealtimeIntegrationTest {
     }
 
     @Test
-    void 경매_입찰과_정산_publish는_game_updated를_사용한다() {
+    void 경매_입찰과_정산은_게임_스냅샷으로_발행된다() {
         UUID template =
             templateFixture.createAuctionTemplateId(
                 "실시간 경매",
@@ -200,7 +200,7 @@ class RoomRealtimeIntegrationTest {
     }
 
     @Test
-    void 드래프트_start_publish는_room_updated와_game_updated를_사용한다() {
+    void 드래프트_시작은_로비와_게임_스냅샷으로_발행된다() {
         UUID template =
             templateFixture.createDraftTemplateId(
                 "실시간 드래프트 시작",
@@ -238,7 +238,7 @@ class RoomRealtimeIntegrationTest {
     }
 
     @Test
-    void 드래프트_픽_publish는_game_updated를_반영한다() {
+    void 드래프트_픽은_게임_스냅샷으로_발행된다() {
         UUID template =
             templateFixture.createDraftTemplateId(
                 "실시간 드래프트 픽",
@@ -275,7 +275,7 @@ class RoomRealtimeIntegrationTest {
     }
 
     @Test
-    void 시작_스냅샷_이후_드래프트_live_update의_snapshot_version은_단조증가한다() {
+    void 시작_스냅샷_이후_드래프트_진행_스냅샷_버전은_단조증가한다() {
         UUID template =
             templateFixture.createDraftTemplateId(
                 "실시간 드래프트 버전",

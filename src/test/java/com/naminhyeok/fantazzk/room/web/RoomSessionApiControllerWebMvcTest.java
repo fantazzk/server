@@ -48,7 +48,7 @@ class RoomSessionApiControllerWebMvcTest {
     private JoinRoom joinRoom;
 
     @Test
-    void create는_room과_teamLeaderSession을_반환한다() throws Exception {
+    void 방_생성_API는_방과_호스트_세션을_반환한다() throws Exception {
         Room room = RoomApiTestFixtures.waitingAuctionRoom();
         RoomTeamLeader host = room.getLeaders().getFirst();
         given(createRoom.create(any(), eq("호스트")))
@@ -80,7 +80,7 @@ class RoomSessionApiControllerWebMvcTest {
     }
 
     @Test
-    void create는_템플릿이_없으면_404를_반환한다() throws Exception {
+    void 방_생성_API는_템플릿이_없으면_404를_반환한다() throws Exception {
         given(createRoom.create(any(), eq("호스트")))
             .willThrow(CoreException.of(RoomErrorType.ROOM_TEMPLATE_NOT_FOUND));
 
@@ -102,7 +102,7 @@ class RoomSessionApiControllerWebMvcTest {
     }
 
     @Test
-    void join은_room과_teamLeaderSession을_반환한다() throws Exception {
+    void 방_참가_API는_방과_참가자_세션을_반환한다() throws Exception {
         Room room = RoomApiTestFixtures.joinedAuctionRoom();
         RoomTeamLeader guest = room.getLeaders().getLast();
         given(joinRoom.join(RoomApiTestFixtures.ROOM_CODE, "게스트"))
@@ -132,7 +132,7 @@ class RoomSessionApiControllerWebMvcTest {
     }
 
     @Test
-    void join은_닉네임이_중복되면_409를_반환한다() throws Exception {
+    void 방_참가_API는_닉네임이_중복되면_409를_반환한다() throws Exception {
         given(joinRoom.join(RoomApiTestFixtures.ROOM_CODE, "게스트"))
             .willThrow(CoreException.of(RoomErrorType.ROOM_NICKNAME_ALREADY_TAKEN));
 

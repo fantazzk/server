@@ -44,7 +44,7 @@ class GameDraftApiControllerWebMvcTest {
     private PickDraft pickDraft;
 
     @Test
-    void pickDraft는_header가_있으면_SUCCESS_빈_응답을_반환한다() throws Exception {
+    void 드래프트_픽_API는_액션_토큰이_있으면_빈_SUCCESS를_반환한다() throws Exception {
         UUID gameId = UUID.fromString(RoomApiTestFixtures.DRAFT_GAME_ID);
         given(pickDraft.pick(gameId, RoomApiTestFixtures.GUEST_TOKEN, "선수3"))
             .willReturn(new RosterMember(new TeamLeaderId(RoomApiTestFixtures.GUEST_ID), "선수3", 2));
@@ -71,7 +71,7 @@ class GameDraftApiControllerWebMvcTest {
     }
 
     @Test
-    void pickDraft는_header가_없으면_401을_반환한다() throws Exception {
+    void 드래프트_픽_API는_액션_토큰이_없으면_401을_반환한다() throws Exception {
         UUID gameId = UUID.fromString(RoomApiTestFixtures.DRAFT_GAME_ID);
         doThrow(CoreException.of(RoomErrorType.ROOM_ACTION_TOKEN_REQUIRED))
             .when(pickDraft)
@@ -94,7 +94,7 @@ class GameDraftApiControllerWebMvcTest {
     }
 
     @Test
-    void pickDraft는_optimistic_lock_conflict를_409로_반환한다() throws Exception {
+    void 드래프트_픽_API는_동시_수정_충돌을_409로_반환한다() throws Exception {
         UUID gameId = UUID.fromString(RoomApiTestFixtures.DRAFT_GAME_ID);
         doThrow(CoreException.of(RoomErrorType.ROOM_CONCURRENT_MODIFICATION))
             .when(pickDraft)

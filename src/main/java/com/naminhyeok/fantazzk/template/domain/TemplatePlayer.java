@@ -23,13 +23,6 @@ public final class TemplatePlayer implements ValueObject {
         this.displayOrder = displayOrder;
     }
 
-    @SuppressWarnings("unused")
-    private TemplatePlayer() {
-        this.name = null;
-        this.position = null;
-        this.displayOrder = 0;
-    }
-
     public String name() {
         return name;
     }
@@ -42,7 +35,4 @@ public final class TemplatePlayer implements ValueObject {
         return displayOrder;
     }
 
-    public String getName() {
-        return name();
-    }
 }

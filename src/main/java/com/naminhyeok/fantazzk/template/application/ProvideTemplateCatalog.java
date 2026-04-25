@@ -6,7 +6,6 @@ import com.naminhyeok.fantazzk.template.domain.Template;
 import com.naminhyeok.fantazzk.template.domain.TemplateErrorType;
 import com.naminhyeok.fantazzk.template.domain.TemplateId;
 import com.naminhyeok.fantazzk.template.query.FindTemplates;
-import com.naminhyeok.fantazzk.template.query.TemplateDetail;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,8 +18,7 @@ public class ProvideTemplateCatalog implements TemplateCatalog {
     @Override
     public TemplateBlueprint getTemplate(UUID templateId) {
         try {
-            TemplateDetail detail = findTemplates.getDetail(new TemplateId(templateId));
-            Template template = detail.template();
+            Template template = findTemplates.getDetail(new TemplateId(templateId));
             return new TemplateBlueprint(
                 template.getGameType(),
                 template.getMode(),
@@ -30,7 +28,7 @@ public class ProvideTemplateCatalog implements TemplateCatalog {
                 template.getPickBanTime(),
                 template.getMinBidUnit(),
                 template.getDraftOrderStrategy(),
-                detail.players().stream()
+                template.getPlayers().stream()
                     .map(player -> new PlayerBlueprint(player.name(), player.position(), player.displayOrder()))
                     .toList()
             );

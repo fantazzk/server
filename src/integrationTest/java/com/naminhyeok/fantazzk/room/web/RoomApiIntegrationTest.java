@@ -68,7 +68,7 @@ class RoomApiIntegrationTest {
     private final PlatformTransactionManager transactionManager;
 
     @Test
-    void list는_joinable_waiting_room만_응답하고_정렬과_JSON_필드를_보장한다() {
+    void 방_목록_API는_참여_가능한_대기방만_정렬해_반환한다() {
         rooms.save(joinableAuctionRoom("ROOM99", Instant.parse("2026-04-09T00:03:00Z")));
         rooms.save(fullWaitingAuctionRoom("ROOM08", Instant.parse("2026-04-09T00:02:00Z")));
         rooms.save(inProgressAuctionRoom("ROOM07", Instant.parse("2026-04-09T00:01:00Z")));
@@ -86,7 +86,7 @@ class RoomApiIntegrationTest {
     }
 
     @Test
-    void start는_game_id만_포함한_최소_응답을_반환한다() throws Exception {
+    void 방_시작_API는_게임_ID만_포함한_최소_응답을_반환한다() throws Exception {
         rooms.save(fullWaitingAuctionRoom("ROOM10", CREATED_AT));
 
         ResponseEntity<String> response = restTemplate.exchange(
@@ -107,7 +107,7 @@ class RoomApiIntegrationTest {
     }
 
     @Test
-    void get_room은_startedGameId만_반환하고_live_game_progress는_포함하지_않는다() throws Exception {
+    void 방_조회_API는_시작된_게임_ID만_반환하고_진행_상태는_포함하지_않는다() throws Exception {
         Room room = startedAuctionRoom("ROOM11", CREATED_AT);
 
         ResponseEntity<String> response = restTemplate.getForEntity("/api/v1/rooms/ROOM11", String.class);
@@ -125,7 +125,7 @@ class RoomApiIntegrationTest {
     }
 
     @Test
-    void get_game은_경매의_deadline_projection을_반환한다() throws Exception {
+    void 게임_조회_API는_경매_마감_진행상태를_반환한다() throws Exception {
         Room room = startedAuctionRoom("ROOM12", CREATED_AT);
 
         restTemplate.exchange(
@@ -163,7 +163,7 @@ class RoomApiIntegrationTest {
     }
 
     @Test
-    void get_game은_시작된_드래프트의_live_progress와_멤버와_선수상태를_반환한다() throws Exception {
+    void 게임_조회_API는_드래프트_진행상태와_선수상태를_반환한다() throws Exception {
         Room room = startedDraftRoom("ROOM14", CREATED_AT);
         restTemplate.exchange(
             "/api/v1/games/" + room.getStartedGameId().gameId() + "/draft-picks",

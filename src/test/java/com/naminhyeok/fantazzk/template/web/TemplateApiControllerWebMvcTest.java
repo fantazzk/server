@@ -12,7 +12,6 @@ import com.naminhyeok.fantazzk.template.application.CreateTemplate;
 import com.naminhyeok.fantazzk.template.domain.Template;
 import com.naminhyeok.fantazzk.template.domain.TemplatePlayer;
 import com.naminhyeok.fantazzk.template.query.FindTemplates;
-import com.naminhyeok.fantazzk.template.query.TemplateDetail;
 import com.naminhyeok.fantazzk.template.web.TemplateApiController;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -45,9 +44,9 @@ class TemplateApiControllerWebMvcTest {
     private FindTemplates findTemplates;
 
     @Test
-    void list는_FE_카드에_필요한_메타데이터를_반환한다() throws Exception {
+    void 템플릿_목록_API는_카드에_필요한_요약_계약을_반환한다() throws Exception {
         Template template = auctionTemplate();
-        given(findTemplates.list()).willReturn(List.of(new TemplateDetail(template, template.getPlayers())));
+        given(findTemplates.list()).willReturn(List.of(template));
 
         var result = mockMvcTester().perform(get("/api/v1/templates"));
 
@@ -63,9 +62,9 @@ class TemplateApiControllerWebMvcTest {
     }
 
     @Test
-    void getById는_템플릿_상세를_반환한다() throws Exception {
+    void 템플릿_상세_API는_드래프트_설정을_포함한다() throws Exception {
         Template template = draftTemplate();
-        given(findTemplates.getDetail(template.getId())).willReturn(new TemplateDetail(template, template.getPlayers()));
+        given(findTemplates.getDetail(template.getId())).willReturn(template);
 
         var result = mockMvcTester().perform(get("/api/v1/templates/{id}", template.getId().templateId()));
 
@@ -79,7 +78,7 @@ class TemplateApiControllerWebMvcTest {
     }
 
     @Test
-    void create는_생성된_템플릿_상세를_반환한다() throws Exception {
+    void 템플릿_생성_API는_생성된_상세_계약을_반환한다() throws Exception {
         Template template = auctionTemplate();
         given(createTemplate.create(any())).willReturn(template);
 

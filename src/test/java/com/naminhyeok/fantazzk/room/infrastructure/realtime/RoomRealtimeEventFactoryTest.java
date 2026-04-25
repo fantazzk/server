@@ -31,7 +31,7 @@ class RoomRealtimeEventFactoryTest {
     private static final Instant PUBLISHED_AT = Instant.parse("2026-04-09T00:10:00Z");
 
     @Test
-    void room_updated는_로비_화면_스냅샷을_담는다() {
+    void 로비_갱신_이벤트는_로비_화면_스냅샷을_담는다() {
         Room room = waitingAuctionRoom();
 
         RoomRealtimeEvent event = RoomRealtimeEventFactory.roomUpdated(room, PUBLISHED_AT);
@@ -47,7 +47,7 @@ class RoomRealtimeEventFactoryTest {
     }
 
     @Test
-    void game_updated는_진행_화면_스냅샷을_담는다() {
+    void 게임_갱신_이벤트는_진행_화면_스냅샷을_담는다() {
         Room room = startedAuctionRoom();
         Game game = startedGameOf(room);
 
@@ -64,7 +64,7 @@ class RoomRealtimeEventFactoryTest {
     }
 
     @Test
-    void game_updated_version은_room과_game_version을_합산한다() throws Exception {
+    void 게임_갱신_스냅샷_버전은_방과_게임_버전을_합산한다() throws Exception {
         Room room = startedAuctionRoom();
         Game game = startedGameOf(room);
         setVersion(Room.class, room, 1L);

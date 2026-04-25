@@ -6,11 +6,13 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Embeddable;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import org.jmolecules.ddd.types.ValueObject;
 
 @Access(AccessType.FIELD)
 @Embeddable
 @EqualsAndHashCode
+@NoArgsConstructor
 public final class AuctionParticipant implements GameParticipant, ValueObject {
     @Column(name = "team_leader_id")
     @Convert(converter = TeamLeaderId.JpaConverter.class)
@@ -19,9 +21,6 @@ public final class AuctionParticipant implements GameParticipant, ValueObject {
     private String nickname;
     @Column(name = "remaining_budget")
     private Integer remainingBudget;
-
-    public AuctionParticipant() {
-    }
 
     public AuctionParticipant(TeamLeaderId teamLeaderId, String nickname, int remainingBudget) {
         this.teamLeaderId = java.util.Objects.requireNonNull(teamLeaderId, "teamLeaderId must not be null");

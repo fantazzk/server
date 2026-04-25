@@ -54,7 +54,7 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    void core_exception_renders_error_response_from_descriptor_and_data() throws Exception {
+    void CoreException은_descriptor의_status_code_message_data로_응답한다() throws Exception {
         String response = mockMvc.perform(get("/core"))
             .andExpect(status().isConflict())
             .andExpect(jsonPath("$.resultType").value("ERROR"))
@@ -74,7 +74,7 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    void room_exception_renders_room_error_response_from_descriptor_and_data() throws Exception {
+    void 도메인_오류는_descriptor의_status_code_message로_응답한다() throws Exception {
         String response = mockMvc.perform(get("/room"))
             .andExpect(status().isNotFound())
             .andExpect(jsonPath("$.resultType").value("ERROR"))
@@ -93,7 +93,7 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    void illegal_argument_exception_renders_bad_request_error_response() throws Exception {
+    void IllegalArgumentException은_bad_request_공통_오류로_응답한다() throws Exception {
         String response = mockMvc.perform(get("/illegal"))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.resultType").value("ERROR"))
@@ -112,7 +112,7 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    void illegal_argument_exception_with_null_message_renders_bad_request_without_detail_map() throws Exception {
+    void 메시지가_없는_잘못된_요청도_detail없이_bad_request로_응답한다() throws Exception {
         String response = mockMvc.perform(get("/illegal-null-message"))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.resultType").value("ERROR"))
@@ -129,7 +129,7 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    void generic_exception_renders_internal_server_error_response() throws Exception {
+    void 예상하지_못한_예외는_internal_server_error로_응답한다() throws Exception {
         String response = mockMvc.perform(get("/generic"))
             .andExpect(status().isInternalServerError())
             .andExpect(jsonPath("$.resultType").value("ERROR"))
@@ -165,7 +165,7 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    void validation_exception_renders_field_error_map_in_data() throws Exception {
+    void 검증_실패는_필드별_오류를_data에_담는다() throws Exception {
         String response = mockMvc.perform(
                 post("/validation")
                     .contentType(MediaType.APPLICATION_JSON)

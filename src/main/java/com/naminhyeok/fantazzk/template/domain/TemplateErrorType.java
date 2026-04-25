@@ -38,12 +38,6 @@ public enum TemplateErrorType implements ErrorDescriptor {
         "드래프트 템플릿에는 최소 입찰 단위를 지정할 수 없습니다",
         Level.INFO
     ),
-    TEMPLATE_DRAFT_POSITION_LIMIT_NOT_ALLOWED(
-        HttpStatus.BAD_REQUEST,
-        "TEMPLATE_DRAFT_POSITION_LIMIT_NOT_ALLOWED",
-        "드래프트 템플릿에는 포지션 제한을 지정할 수 없습니다",
-        Level.INFO
-    ),
     TEMPLATE_DRAFT_ORDER_STRATEGY_REQUIRED(
         HttpStatus.BAD_REQUEST,
         "TEMPLATE_DRAFT_ORDER_STRATEGY_REQUIRED",

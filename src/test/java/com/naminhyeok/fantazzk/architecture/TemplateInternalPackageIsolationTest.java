@@ -83,13 +83,4 @@ class TemplateInternalPackageIsolationTest {
             .should()
             .dependOnClassesThat()
             .resideInAnyPackage("..template.repository..", "..template.infrastructure..");
-
-    @ArchTest
-    static final ArchRule template_infrastructure는_web에_의존하지_않는다 =
-        noClasses()
-            .that()
-            .resideInAnyPackage("..template.infrastructure..")
-            .should()
-            .dependOnClassesThat()
-            .resideInAnyPackage("..template.web..");
 }

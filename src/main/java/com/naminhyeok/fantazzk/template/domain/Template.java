@@ -8,15 +8,17 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
+import lombok.AccessLevel;
 import lombok.Getter;
 import org.jmolecules.ddd.types.AggregateRoot;
 
 @Getter
 public class Template implements AggregateRoot<Template, TemplateId> {
     private final TemplateId id;
-    private String name;
-    private String gameType;
-    private TemplateConfiguration configuration;
+    private final String name;
+    private final String gameType;
+    @Getter(AccessLevel.NONE)
+    private final TemplateConfiguration configuration;
     @ElementCollection
     @CollectionTable(name = "template_player", joinColumns = @JoinColumn(name = "players_template_id"))
     private List<TemplatePlayer> players;
@@ -64,10 +66,6 @@ public class Template implements AggregateRoot<Template, TemplateId> {
         return configuration.getMode();
     }
 
-    public String getGameType() {
-        return gameType;
-    }
-
     public int getTeamCount() {
         return configuration.getTeamCount();
     }
@@ -96,10 +94,6 @@ public class Template implements AggregateRoot<Template, TemplateId> {
         return players.stream()
             .sorted(Comparator.comparingInt(TemplatePlayer::displayOrder))
             .toList();
-    }
-
-    public int getPicksPerTeam() {
-        return configuration.getTeamSize() - 1;
     }
 
     private Template registerPlayers(List<TemplatePlayer> templatePlayers) {

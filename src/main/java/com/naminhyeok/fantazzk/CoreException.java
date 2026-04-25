@@ -1,5 +1,8 @@
 package com.naminhyeok.fantazzk;
 
+import lombok.Getter;
+
+@Getter
 public class CoreException extends RuntimeException {
     private final ErrorDescriptor error;
     private final Object data;
@@ -20,13 +23,5 @@ public class CoreException extends RuntimeException {
         super(error.getMessage());
         this.error = error;
         this.data = data;
-    }
-
-    public ErrorDescriptor getError() {
-        return error;
-    }
-
-    public Object getData() {
-        return data;
     }
 }
