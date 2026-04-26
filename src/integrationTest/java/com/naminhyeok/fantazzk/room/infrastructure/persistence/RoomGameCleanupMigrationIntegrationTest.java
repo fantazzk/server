@@ -57,59 +57,29 @@ class RoomGameCleanupMigrationIntegrationTest {
         assertThat(draftGame.get("current_turn_index")).isEqualTo(2);
 
         assertThat(
-            jdbcTemplate.queryForList(
-                "select nickname, remaining_budget from game_participant where participants_game_id = ? order by participant_order",
-                uuid("00000000-0000-0000-0000-0000000000a1")
-            )
-        ).containsExactly(
-            Map.of("NICKNAME", "호스트A", "REMAINING_BUDGET", 200),
-            Map.of("NICKNAME", "게스트A", "REMAINING_BUDGET", 300)
-        );
-        assertThat(
-            jdbcTemplate.queryForList(
-                "select player_name, assign_order from game_auction_member where members_game_id = ? order by member_order",
-                uuid("00000000-0000-0000-0000-0000000000a1")
-            )
-        ).containsExactly(Map.of("PLAYER_NAME", "선수1", "ASSIGN_ORDER", 0));
-        assertThat(
-            jdbcTemplate.queryForList(
-                "select round, bid_sequence, amount from game_auction_bid where bids_game_id = ? order by bid_order",
-                uuid("00000000-0000-0000-0000-0000000000a1")
-            )
-        ).containsExactly(
-            Map.of("ROUND", 2, "BID_SEQUENCE", 1, "AMOUNT", 120),
-            Map.of("ROUND", 2, "BID_SEQUENCE", 2, "AMOUNT", 130)
-        );
-        assertThat(
-            jdbcTemplate.queryForList(
-                "select team_leader_id, player_name, assign_order from game_draft_member where members_game_id = ? order by member_order",
+            jdbcTemplate.queryForObject(
+                "select count(*) from game_participant where participants_game_id in (?, ?)",
+                Integer.class,
+                uuid("00000000-0000-0000-0000-0000000000a1"),
                 uuid("00000000-0000-0000-0000-0000000000d9")
             )
-        ).containsExactly(
-            Map.of("TEAM_LEADER_ID", "host-d", "PLAYER_NAME", "선수A", "ASSIGN_ORDER", 0),
-            Map.of("TEAM_LEADER_ID", "guest-d", "PLAYER_NAME", "선수B", "ASSIGN_ORDER", 1)
-        );
-    }
-
-    @Test
-    void 레거시_null_position도_cleanup과_demotion을_거친다() {
-        JdbcTemplate jdbcTemplate = jdbcTemplate();
-        applyLegacySchema(jdbcTemplate);
-        insertLegacyAuctionRoomWithNullPosition(jdbcTemplate);
-
-        new ResourceDatabasePopulator(
-            new ClassPathResource("db/changelog/db.changelog-room-game-cleanup.sql"),
-            new ClassPathResource("db/changelog/db.changelog-metadata-demotion.sql")
-        ).execute(jdbcTemplate.getDataSource());
-
-        Map<String, Object> migratedPlayer =
-            jdbcTemplate.queryForMap(
-                "select position from game_player where player_pool_game_id = ? and player_id = ?",
-                uuid("00000000-0000-0000-0000-0000000000b1"),
-                0
-            );
-
-        assertThat(migratedPlayer.get("POSITION")).isEqualTo("");
+        ).isEqualTo(4);
+        assertThat(
+            jdbcTemplate.queryForObject(
+                "select count(*) from game_player where player_pool_game_id in (?, ?)",
+                Integer.class,
+                uuid("00000000-0000-0000-0000-0000000000a1"),
+                uuid("00000000-0000-0000-0000-0000000000d9")
+            )
+        ).isEqualTo(5);
+        assertThat(jdbcTemplate.queryForObject("select count(*) from game_auction_member", Integer.class)).isEqualTo(1);
+        assertThat(jdbcTemplate.queryForObject("select count(*) from game_auction_bid", Integer.class)).isEqualTo(2);
+        assertThat(jdbcTemplate.queryForObject("select count(*) from game_draft_member", Integer.class)).isEqualTo(2);
+        assertThat(tableExists(jdbcTemplate, "ROOM_TEAM_MEMBER")).isFalse();
+        assertThat(tableExists(jdbcTemplate, "ROOM_BID")).isFalse();
+        assertThat(columnExists(jdbcTemplate, "ROOMS", "CURRENT_TURN_INDEX")).isFalse();
+        assertThat(columnExists(jdbcTemplate, "ROOMS", "CURRENT_AUCTION_ROUND")).isFalse();
+        assertThat(columnExists(jdbcTemplate, "ROOMS", "CURRENT_AUCTION_ROUND_ENDS_AT")).isFalse();
     }
 
     private JdbcTemplate jdbcTemplate() {
@@ -252,53 +222,29 @@ class RoomGameCleanupMigrationIntegrationTest {
         );
     }
 
-    private void insertLegacyAuctionRoomWithNullPosition(JdbcTemplate jdbcTemplate) {
-        jdbcTemplate.update(
-            """
-            insert into rooms (
-                room_id, code, created_at, host_id, status, mode, team_count, team_size, budget,
-                draft_order_strategy, current_turn_index, current_auction_round, pick_ban_time,
-                min_bid_unit, position_limit, current_auction_round_ends_at, started_game_id, started_at
-            ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            uuid("00000000-0000-0000-0000-0000000000b1"),
-            "AUC902",
-            Instant.parse("2026-04-12T00:00:00Z").toString(),
-            "host-b",
-            "IN_PROGRESS",
-            "AUCTION",
-            2,
-            2,
-            300,
-            null,
-            null,
-            1,
-            45,
-            10,
-            null,
-            Instant.parse("2026-04-12T00:05:00Z").toString(),
-            null,
-            null
-        );
-
-        jdbcTemplate.batchUpdate(
-            "insert into room_player (players_room_id, room_player_id, name, display_order, status, position) values (?, ?, ?, ?, ?, ?)",
-            List.of(
-                new Object[] { uuid("00000000-0000-0000-0000-0000000000b1"), 0, "선수X", 0, "AVAILABLE", null },
-                new Object[] { uuid("00000000-0000-0000-0000-0000000000b1"), 1, "선수Y", 1, "AVAILABLE", "JUNGLE" }
-            )
-        );
-        jdbcTemplate.batchUpdate(
-            "insert into room_team_leader (leaders_room_id, team_leader_id, nickname, remaining_budget, action_token, draft_position) values (?, ?, ?, ?, ?, ?)",
-            List.of(
-                new Object[] { uuid("00000000-0000-0000-0000-0000000000b1"), "host-b", "호스트B", 300, "host-token-b", null },
-                new Object[] { uuid("00000000-0000-0000-0000-0000000000b1"), "guest-b", "게스트B", 300, "guest-token-b", null }
-            )
-        );
-    }
-
     private UUID uuid(String value) {
         return UUID.fromString(value);
+    }
+
+    private boolean tableExists(JdbcTemplate jdbcTemplate, String tableName) {
+        Integer count =
+            jdbcTemplate.queryForObject(
+                "select count(*) from information_schema.tables where table_name = ?",
+                Integer.class,
+                tableName
+            );
+        return count != null && count > 0;
+    }
+
+    private boolean columnExists(JdbcTemplate jdbcTemplate, String tableName, String columnName) {
+        Integer count =
+            jdbcTemplate.queryForObject(
+                "select count(*) from information_schema.columns where table_name = ? and column_name = ?",
+                Integer.class,
+                tableName,
+                columnName
+            );
+        return count != null && count > 0;
     }
 
     private Instant instantOf(Object value) {

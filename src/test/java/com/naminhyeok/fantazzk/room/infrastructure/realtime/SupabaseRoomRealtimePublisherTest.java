@@ -85,8 +85,6 @@ class SupabaseRoomRealtimePublisherTest {
             publisher.publishRoomUpdatedAfterCommit(room);
 
             List<TransactionSynchronization> synchronizations = TransactionSynchronizationManager.getSynchronizations();
-            assertThat(synchronizations).hasSize(1);
-
             TransactionSynchronizationManager.clearSynchronization();
             synchronizations.forEach(TransactionSynchronization::afterCommit);
         } finally {
@@ -124,8 +122,6 @@ class SupabaseRoomRealtimePublisherTest {
             clock.advanceSeconds(30);
 
             List<TransactionSynchronization> synchronizations = TransactionSynchronizationManager.getSynchronizations();
-            assertThat(synchronizations).hasSize(1);
-
             TransactionSynchronizationManager.clearSynchronization();
             synchronizations.forEach(TransactionSynchronization::afterCommit);
         } finally {

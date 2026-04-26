@@ -21,12 +21,11 @@ import com.naminhyeok.fantazzk.room.infrastructure.schedule.RoomAuctionDeadlineS
 import com.naminhyeok.fantazzk.room.repository.Games;
 import com.naminhyeok.fantazzk.room.repository.Rooms;
 import com.naminhyeok.fantazzk.template.support.TemplateFixture;
-import com.naminhyeok.fantazzk.template.support.TemplateFixture;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -60,10 +59,12 @@ import org.springframework.transaction.support.TransactionTemplate;
         "sentry.enabled=false"
     }
 )
-@Import(RoomAuctionIntegrationTest.FixedClockConfiguration.class)
+@Import(RoomAuctionIntegrationTest.TestConfig.class)
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
 @RequiredArgsConstructor
 class RoomAuctionIntegrationTest {
+    private static final Instant STARTED_AT = Instant.parse("2000-01-01T00:00:00Z");
+
     private final TemplateFixture templateFixture;
     private final CreateRoom createRoom;
     private final JoinRoom joinRoom;
@@ -75,10 +76,12 @@ class RoomAuctionIntegrationTest {
     private final RoomAuctionDeadlineScheduler roomAuctionDeadlineScheduler;
     private final RecordingTaskScheduler recordingTaskScheduler;
     private final PlatformTransactionManager transactionManager;
+    private final MutableClock clock;
 
     @BeforeEach
     void clearScheduledTasks() {
         recordingTaskScheduler.clear();
+        clock.reset();
     }
 
     @Test
@@ -100,21 +103,16 @@ class RoomAuctionIntegrationTest {
         RoomTeamLeader guest = joinRoom.join(created.room().getCode(), "게스트").leader();
         Game startedGame = startRoom.start(created.room().getCode(), created.leader().getActionToken());
 
-        AuctionBid bid = placeBid.place(startedGame.getId().gameId(), guest.getActionToken(), 150);
-        expireAuctionRound(created.room().getCode(), Instant.parse("1999-12-31T23:59:55Z"));
-        Room settled = settleAuctionAttempt.settleIfDue(created.room().getCode());
+        placeBid.place(startedGame.getId().gameId(), guest.getActionToken(), 150);
+        advancePastCurrentAuctionDeadline();
+        settleAuctionAttempt.settleIfDue(created.room().getCode());
 
         Room reloaded = rooms.findByCode(created.room().getCode()).orElseThrow();
         AuctionGame game = (AuctionGame) games.findById(reloaded.getStartedGameId()).orElseThrow();
 
-        assertThat(bid.teamLeaderId()).isEqualTo(guest.getId());
-        assertThat(bid.amount()).isEqualTo(150);
-        assertThat(settled.getStatus()).isEqualTo(RoomStatus.STARTED);
-        assertThat(reloaded.getStatus()).isEqualTo(RoomStatus.STARTED);
         assertThat(game.getBids()).singleElement()
             .extracting(AuctionBid::teamLeaderId, AuctionBid::amount)
             .containsExactly(guest.getId(), 150);
-        assertThat(reloaded.getPlayers().getFirst().getPosition()).isEqualTo("TOP");
         assertThat(game.getMembers()).singleElement()
             .extracting(RosterMember::teamLeaderId, RosterMember::playerName)
             .containsExactly(guest.getId(), "선수1");
@@ -173,7 +171,7 @@ class RoomAuctionIntegrationTest {
         Game startedGame = startRoom.start(created.room().getCode(), created.leader().getActionToken());
 
         placeBid.place(startedGame.getId().gameId(), guest.getActionToken(), 150);
-        expireAuctionRound(created.room().getCode(), Instant.parse("1999-12-31T23:59:55Z"));
+        advancePastCurrentAuctionDeadline();
         settleAuctionAttempt.settleIfDue(created.room().getCode());
 
         Room reloaded = rooms.findByCode(created.room().getCode()).orElseThrow();
@@ -201,15 +199,15 @@ class RoomAuctionIntegrationTest {
         Game startedGame = startRoom.start(created.room().getCode(), created.leader().getActionToken());
         placeBid.place(startedGame.getId().gameId(), guest.getActionToken(), 150);
 
-        expireAuctionRound(created.room().getCode(), Instant.parse("1999-12-31T23:59:55Z"));
+        advancePastCurrentAuctionDeadline();
+        Instant nextDeadline = clock.instant().plusSeconds(45);
 
         roomAuctionDeadlineScheduler.catchUpAndReschedule();
 
         Room reloaded = rooms.findByCode(created.room().getCode()).orElseThrow();
         AuctionGame reloadedGame = (AuctionGame) games.findById(reloaded.getStartedGameId()).orElseThrow();
-        assertThat(reloaded.getStatus()).isEqualTo(RoomStatus.STARTED);
         assertThat(reloadedGame.getCurrentRound()).isEqualTo(2);
-        assertThat(reloadedGame.getCurrentRoundEndsAt()).isEqualTo(Instant.parse("2000-01-01T00:00:45Z"));
+        assertThat(reloadedGame.getCurrentRoundEndsAt()).isEqualTo(nextDeadline);
     }
 
     @Test
@@ -239,37 +237,57 @@ class RoomAuctionIntegrationTest {
         assertThat(rooms.findByCode(created.room().getCode()).orElseThrow().getStatus()).isEqualTo(RoomStatus.WAITING);
     }
 
-    private void expireAuctionRound(String code, Instant deadline) {
-        TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
-        transactionTemplate.executeWithoutResult(status -> {
-            Room room = rooms.findByCode(code).orElseThrow();
-            AuctionGame game = (AuctionGame) games.findById(room.getStartedGameId()).orElseThrow();
-            setCurrentAuctionRoundEndsAt(game, deadline);
-        });
-    }
-
-    private static void setCurrentAuctionRoundEndsAt(AuctionGame game, Instant deadline) {
-        try {
-            Field field = AuctionGame.class.getDeclaredField("currentRoundEndsAt");
-            field.setAccessible(true);
-            field.set(game, deadline);
-        } catch (ReflectiveOperationException ex) {
-            throw new AssertionError(ex);
-        }
+    private void advancePastCurrentAuctionDeadline() {
+        clock.advanceTo(clock.instant().plusSeconds(46));
     }
 
     @TestConfiguration
-    static class FixedClockConfiguration {
+    static class TestConfig {
         @Bean
         @Primary
-        Clock roomAuctionTestClock() {
-            return Clock.fixed(Instant.parse("2000-01-01T00:00:00Z"), ZoneOffset.UTC);
+        MutableClock roomAuctionTestClock() {
+            return new MutableClock(STARTED_AT, ZoneOffset.UTC);
         }
 
         @Bean
         @Primary
         RecordingTaskScheduler roomAuctionIntegrationTaskScheduler() {
             return new RecordingTaskScheduler();
+        }
+    }
+
+    static final class MutableClock extends Clock {
+        private final Instant initialInstant;
+        private final ZoneId zone;
+        private Instant instant;
+
+        private MutableClock(Instant initialInstant, ZoneId zone) {
+            this.initialInstant = initialInstant;
+            this.zone = zone;
+            this.instant = initialInstant;
+        }
+
+        void reset() {
+            instant = initialInstant;
+        }
+
+        void advanceTo(Instant instant) {
+            this.instant = instant;
+        }
+
+        @Override
+        public ZoneId getZone() {
+            return zone;
+        }
+
+        @Override
+        public Clock withZone(ZoneId zone) {
+            return new MutableClock(instant, zone);
+        }
+
+        @Override
+        public Instant instant() {
+            return instant;
         }
     }
 

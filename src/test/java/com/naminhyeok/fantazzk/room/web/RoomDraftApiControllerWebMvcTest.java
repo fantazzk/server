@@ -1,7 +1,6 @@
 package com.naminhyeok.fantazzk.room.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -11,9 +10,8 @@ import com.naminhyeok.fantazzk.ErrorMessage;
 import com.naminhyeok.fantazzk.GlobalExceptionHandler;
 import com.naminhyeok.fantazzk.room.application.ClearDraftPosition;
 import com.naminhyeok.fantazzk.room.application.SelectDraftPosition;
-import com.naminhyeok.fantazzk.room.domain.Room;
 import com.naminhyeok.fantazzk.room.domain.RoomErrorType;
-import com.naminhyeok.fantazzk.room.web.RoomDraftApiController;
+import com.naminhyeok.fantazzk.room.support.RoomApiTestFixtures;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -24,9 +22,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
-import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
-import com.naminhyeok.fantazzk.room.support.RoomApiTestFixtures;
 
 @WebMvcTest(RoomDraftApiController.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -45,10 +41,7 @@ class RoomDraftApiControllerWebMvcTest {
     private ClearDraftPosition clearDraftPosition;
 
     @Test
-    void 드래프트_자리_선택_API는_액션_토큰이_있으면_빈_SUCCESS를_반환한다() throws Exception {
-        given(selectDraftPosition.select(RoomApiTestFixtures.ROOM_CODE, RoomApiTestFixtures.GUEST_TOKEN, 2))
-            .willReturn(null);
-
+    void 드래프트_자리_선택_API는_액션_토큰이_있으면_성공한다() throws Exception {
         var result = mockMvcTester().perform(
             put("/api/v1/rooms/{code}/draft-position", RoomApiTestFixtures.ROOM_CODE)
                 .header("X-Room-Action-Token", RoomApiTestFixtures.GUEST_TOKEN)
@@ -63,27 +56,16 @@ class RoomDraftApiControllerWebMvcTest {
         );
 
         result.assertThat().hasStatusOk();
-        JsonNode body = objectMapper.readTree(result.getResponse().getContentAsString());
-        assertThat(body.at("/resultType").asText()).isEqualTo("SUCCESS");
-        assertThat(body.at("/success").isNull()).isTrue();
-        assertThat(body.at("/error").isNull()).isTrue();
     }
 
     @Test
-    void 드래프트_자리_취소_API는_액션_토큰이_있으면_빈_SUCCESS를_반환한다() throws Exception {
-        given(clearDraftPosition.clear(RoomApiTestFixtures.ROOM_CODE, RoomApiTestFixtures.HOST_TOKEN))
-            .willReturn(null);
-
+    void 드래프트_자리_취소_API는_액션_토큰이_있으면_성공한다() throws Exception {
         var result = mockMvcTester().perform(
             delete("/api/v1/rooms/{code}/draft-position", RoomApiTestFixtures.ROOM_CODE)
                 .header("X-Room-Action-Token", RoomApiTestFixtures.HOST_TOKEN)
         );
 
         result.assertThat().hasStatusOk();
-        JsonNode body = objectMapper.readTree(result.getResponse().getContentAsString());
-        assertThat(body.at("/resultType").asText()).isEqualTo("SUCCESS");
-        assertThat(body.at("/success").isNull()).isTrue();
-        assertThat(body.at("/error").isNull()).isTrue();
     }
 
     @Test

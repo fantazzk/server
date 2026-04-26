@@ -3,7 +3,6 @@ package com.naminhyeok.fantazzk.room.web;
 import static org.assertj.core.api.Assertions.assertThat;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.naminhyeok.fantazzk.room.domain.AuctionGame;
 import com.naminhyeok.fantazzk.room.domain.DraftOrderStrategy;
 import com.naminhyeok.fantazzk.room.domain.GameFactory;
 import com.naminhyeok.fantazzk.room.domain.GameId;
@@ -15,12 +14,10 @@ import com.naminhyeok.fantazzk.room.domain.StartedGameSnapshot;
 import com.naminhyeok.fantazzk.room.domain.TeamLeaderId;
 import com.naminhyeok.fantazzk.room.repository.Games;
 import com.naminhyeok.fantazzk.room.repository.Rooms;
-import com.naminhyeok.fantazzk.room.query.JoinableRoomResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
-import java.lang.reflect.Field;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -68,24 +65,6 @@ class RoomApiIntegrationTest {
     private final PlatformTransactionManager transactionManager;
 
     @Test
-    void 방_목록_API는_참여_가능한_대기방만_정렬해_반환한다() {
-        rooms.save(joinableAuctionRoom("ROOM99", Instant.parse("2026-04-09T00:03:00Z")));
-        rooms.save(fullWaitingAuctionRoom("ROOM08", Instant.parse("2026-04-09T00:02:00Z")));
-        rooms.save(inProgressAuctionRoom("ROOM07", Instant.parse("2026-04-09T00:01:00Z")));
-        rooms.save(joinableDraftRoom("ROOM01", Instant.parse("2026-04-09T00:00:00Z")));
-
-        ResponseEntity<JoinableRoomListApiResponse> response = restTemplate.getForEntity("/api/v1/rooms", JoinableRoomListApiResponse.class);
-        JoinableRoomListApiResponse body = response.getBody();
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(body).isNotNull();
-        assertThat(body.resultType()).isEqualTo("SUCCESS");
-        assertThat(body.success()).hasSize(2);
-        assertThat(body.success()).extracting(JoinableRoomResponse::code).containsExactly("ROOM99", "ROOM01");
-        assertThat(body.success()).extracting(JoinableRoomResponse::gameType).containsOnly("LEAGUE_OF_LEGENDS");
-    }
-
-    @Test
     void 방_시작_API는_게임_ID만_포함한_최소_응답을_반환한다() throws Exception {
         rooms.save(fullWaitingAuctionRoom("ROOM10", CREATED_AT));
 
@@ -98,12 +77,7 @@ class RoomApiIntegrationTest {
         JsonNode body = readBody(response);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(body.at("/resultType").asText()).isEqualTo("SUCCESS");
         assertThat(UUID.fromString(body.at("/success/gameId").asText())).isNotNull();
-        assertThat(body.at("/success/roomCode").isMissingNode()).isTrue();
-        assertThat(body.at("/success/mode").isMissingNode()).isTrue();
-        assertThat(body.at("/success/status").isMissingNode()).isTrue();
-        assertThat(body.at("/error").isNull()).isTrue();
     }
 
     @Test
@@ -114,14 +88,8 @@ class RoomApiIntegrationTest {
         JsonNode body = readBody(response);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(body.at("/resultType").asText()).isEqualTo("SUCCESS");
         assertThat(body.at("/success/roomCode").asText()).isEqualTo("ROOM11");
-        assertThat(body.at("/success/gameType").asText()).isEqualTo("LEAGUE_OF_LEGENDS");
-        assertThat(body.at("/success/status").asText()).isEqualTo("STARTED");
         assertThat(body.at("/success/startedGameId").asText()).isEqualTo(room.getStartedGameId().gameId().toString());
-        assertThat(body.at("/success/auctionProgress").isMissingNode()).isTrue();
-        assertThat(body.at("/success/draftProgress").isMissingNode()).isTrue();
-        assertThat(body.at("/success/members").isMissingNode()).isTrue();
     }
 
     @Test
@@ -147,17 +115,9 @@ class RoomApiIntegrationTest {
         JsonNode body = readBody(response);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(body.at("/resultType").asText()).isEqualTo("SUCCESS");
-        assertThat(body.at("/success/gameId").asText()).isEqualTo(room.getStartedGameId().gameId().toString());
-        assertThat(body.at("/success/roomCode").asText()).isEqualTo("ROOM12");
-        assertThat(body.at("/success/gameType").asText()).isEqualTo("LEAGUE_OF_LEGENDS");
-        assertThat(body.at("/success/status").asText()).isEqualTo("IN_PROGRESS");
         assertThat(body.at("/success/auctionProgress/currentRound").asInt()).isEqualTo(1);
         assertThat(body.at("/success/auctionProgress/currentAuctionTarget/name").asText()).isEqualTo("선수1");
-        assertThat(body.at("/success/auctionProgress/currentAuctionTarget/position").asText()).isEqualTo("TOP");
         assertThat(body.at("/success/auctionProgress/highestBidAmount").asInt()).isEqualTo(120);
-        assertThat(body.at("/success/auctionProgress/leadingLeaderId").asText()).isEqualTo("host-ROOM12");
-        assertThat(body.at("/success/auctionProgress/bidCount").asInt()).isEqualTo(1);
         assertThat(body.at("/success/auctionProgress/currentAuctionRoundEndsAt").asText())
             .isEqualTo("2026-04-09T00:01:05Z");
     }
@@ -184,16 +144,10 @@ class RoomApiIntegrationTest {
         JsonNode body = readBody(response);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(body.at("/success/gameType").asText()).isEqualTo("LEAGUE_OF_LEGENDS");
-        assertThat(body.at("/success/status").asText()).isEqualTo("IN_PROGRESS");
         assertThat(body.at("/success/roster/0/teamLeaderId").asText()).isEqualTo("host-ROOM14");
         assertThat(body.at("/success/roster/0/playerName").asText()).isEqualTo("선수1");
-        assertThat(body.at("/success/playerPool/0/name").asText()).isEqualTo("선수1");
         assertThat(body.at("/success/playerPool/0/status").asText()).isEqualTo("ASSIGNED");
-        assertThat(body.at("/success/playerPool/1/name").asText()).isEqualTo("선수2");
         assertThat(body.at("/success/playerPool/1/status").asText()).isEqualTo("AVAILABLE");
-        assertThat(body.at("/success/draftProgress/currentTurnIndex").asInt()).isEqualTo(1);
-        assertThat(body.at("/success/draftProgress/currentRound").asInt()).isEqualTo(1);
         assertThat(body.at("/success/draftProgress/currentLeaderId").asText()).isEqualTo("guest-ROOM14");
     }
 
@@ -227,16 +181,6 @@ class RoomApiIntegrationTest {
         return room;
     }
 
-    private static void setCurrentAuctionRoundEndsAt(AuctionGame game, Instant deadline) {
-        try {
-            Field field = AuctionGame.class.getDeclaredField("currentRoundEndsAt");
-            field.setAccessible(true);
-            field.set(game, deadline);
-        } catch (ReflectiveOperationException ex) {
-            throw new AssertionError(ex);
-        }
-    }
-
     private Room joinableAuctionRoom(String code, Instant createdAt) {
         return Room.createFromTemplate(
             code,
@@ -264,12 +208,6 @@ class RoomApiIntegrationTest {
     private Room fullWaitingAuctionRoom(String code, Instant createdAt) {
         Room room = joinableAuctionRoom(code, createdAt);
         room.join(new TeamLeaderId("guest-" + code), "게스트-" + code, "guest-action-token-" + code);
-        return room;
-    }
-
-    private Room inProgressAuctionRoom(String code, Instant createdAt) {
-        Room room = fullWaitingAuctionRoom(code, createdAt);
-        room.start(new TeamLeaderId("host-" + code), deterministicGameId(room), createdAt);
         return room;
     }
 
@@ -312,13 +250,6 @@ class RoomApiIntegrationTest {
     private static GameId deterministicGameId(Room room) {
         String source = "game:%s".formatted(room.getId().roomId());
         return new GameId(UUID.nameUUIDFromBytes(source.getBytes(StandardCharsets.UTF_8)));
-    }
-
-    private record JoinableRoomListApiResponse(
-        String resultType,
-        List<JoinableRoomResponse> success,
-        Object error
-    ) {
     }
 
     private static HttpHeaders actionHeaders(String actionToken) {

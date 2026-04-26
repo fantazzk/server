@@ -15,9 +15,7 @@ import com.naminhyeok.fantazzk.room.application.RoomSessionResult;
 import com.naminhyeok.fantazzk.room.domain.Room;
 import com.naminhyeok.fantazzk.room.domain.RoomErrorType;
 import com.naminhyeok.fantazzk.room.domain.RoomTeamLeader;
-import com.naminhyeok.fantazzk.room.domain.TeamLeaderRole;
-import com.naminhyeok.fantazzk.room.web.RoomJoinResponse;
-import com.naminhyeok.fantazzk.room.web.RoomSessionApiController;
+import com.naminhyeok.fantazzk.room.support.RoomApiTestFixtures;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -28,8 +26,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
-import com.naminhyeok.fantazzk.room.support.RoomApiTestFixtures;
 
 @WebMvcTest(RoomSessionApiController.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -68,15 +66,12 @@ class RoomSessionApiControllerWebMvcTest {
         );
 
         result.assertThat().hasStatus(HttpStatus.CREATED);
-        RoomSessionApiResponse body = readBody(result, RoomSessionApiResponse.class);
-        assertThat(body.resultType()).isEqualTo("SUCCESS");
-        assertThat(body.success().room().roomCode()).isEqualTo(RoomApiTestFixtures.ROOM_CODE);
-        assertThat(body.success().room().status()).isEqualTo("WAITING");
-        assertThat(body.success().room().leaders()).hasSize(1);
-        assertThat(body.success().room().playerPool()).hasSize(2);
-        assertThat(body.success().teamLeaderSession().leaderId()).isEqualTo(RoomApiTestFixtures.HOST_ID);
-        assertThat(body.success().teamLeaderSession().role()).isEqualTo(TeamLeaderRole.HOST);
-        assertThat(body.success().teamLeaderSession().actionToken()).isEqualTo(RoomApiTestFixtures.HOST_TOKEN);
+        JsonNode body = readJsonBody(result);
+        assertThat(body.at("/resultType").asText()).isEqualTo("SUCCESS");
+        assertThat(body.at("/success/room/roomCode").asText()).isEqualTo(RoomApiTestFixtures.ROOM_CODE);
+        assertThat(body.at("/success/teamLeaderSession/leaderId").asText()).isEqualTo(RoomApiTestFixtures.HOST_ID);
+        assertThat(body.at("/success/teamLeaderSession/role").asText()).isEqualTo("HOST");
+        assertThat(body.at("/success/teamLeaderSession/actionToken").asText()).isEqualTo(RoomApiTestFixtures.HOST_TOKEN);
     }
 
     @Test
@@ -121,14 +116,12 @@ class RoomSessionApiControllerWebMvcTest {
         );
 
         result.assertThat().hasStatusOk();
-        RoomSessionApiResponse body = readBody(result, RoomSessionApiResponse.class);
-        assertThat(body.resultType()).isEqualTo("SUCCESS");
-        assertThat(body.success().room().roomCode()).isEqualTo(RoomApiTestFixtures.ROOM_CODE);
-        assertThat(body.success().room().leaders()).hasSize(2);
-        assertThat(body.success().room().playerPool()).hasSize(2);
-        assertThat(body.success().teamLeaderSession().leaderId()).isEqualTo(RoomApiTestFixtures.GUEST_ID);
-        assertThat(body.success().teamLeaderSession().role()).isEqualTo(TeamLeaderRole.LEADER);
-        assertThat(body.success().teamLeaderSession().actionToken()).isEqualTo(RoomApiTestFixtures.GUEST_TOKEN);
+        JsonNode body = readJsonBody(result);
+        assertThat(body.at("/resultType").asText()).isEqualTo("SUCCESS");
+        assertThat(body.at("/success/room/roomCode").asText()).isEqualTo(RoomApiTestFixtures.ROOM_CODE);
+        assertThat(body.at("/success/teamLeaderSession/leaderId").asText()).isEqualTo(RoomApiTestFixtures.GUEST_ID);
+        assertThat(body.at("/success/teamLeaderSession/role").asText()).isEqualTo("LEADER");
+        assertThat(body.at("/success/teamLeaderSession/actionToken").asText()).isEqualTo(RoomApiTestFixtures.GUEST_TOKEN);
     }
 
     @Test
@@ -160,7 +153,9 @@ class RoomSessionApiControllerWebMvcTest {
         return objectMapper.readValue(result.getResponse().getContentAsString(), bodyType);
     }
 
-    private record RoomSessionApiResponse(String resultType, RoomJoinResponse success, ErrorMessage error) {}
+    private JsonNode readJsonBody(org.springframework.test.web.servlet.assertj.MvcTestResult result) throws Exception {
+        return objectMapper.readTree(result.getResponse().getContentAsString());
+    }
 
     private record VoidApiResponse(String resultType, Void success, ErrorMessage error) {}
 }

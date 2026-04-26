@@ -10,5 +10,5 @@ import org.springframework.data.repository.Repository;
 
 public interface JoinableRoomJpaRepository extends Repository<Room, RoomId> {
     @EntityGraph(attributePaths = "leaders")
-    public List<Room> findByStatusOrderByCreatedAtDescCodeDesc(RoomStatus status, Pageable pageable);
+    List<Room> findByStatusOrderByCreatedAtDescCodeDesc(RoomStatus status, Pageable pageable);
 }

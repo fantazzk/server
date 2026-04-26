@@ -61,20 +61,6 @@ public class SettleAuctionAttempt {
         return auctionGame;
     }
 
-    private AuctionGame requireAuctionGame(Room room) {
-        if (room.getMode() != RoomMode.AUCTION) {
-            throw CoreException.of(RoomErrorType.ROOM_BID_REQUIRES_AUCTION_MODE);
-        }
-        if (room.getStatus() != RoomStatus.STARTED) {
-            throw CoreException.of(RoomErrorType.ROOM_PLAY_REQUIRES_IN_PROGRESS);
-        }
-        AuctionGame game = loadAuctionGame(room);
-        if (game == null) {
-            throw RoomStateInvalidException.auctionRoundMissing();
-        }
-        return game;
-    }
-
     private static boolean isDue(AuctionGame game, Instant now) {
         return game != null && game.isDue(now);
     }

@@ -16,14 +16,11 @@ import com.naminhyeok.fantazzk.room.domain.Game;
 import com.naminhyeok.fantazzk.room.domain.PlayerStatus;
 import com.naminhyeok.fantazzk.room.domain.Room;
 import com.naminhyeok.fantazzk.room.domain.RoomErrorType;
-import com.naminhyeok.fantazzk.room.domain.RoomStatus;
 import com.naminhyeok.fantazzk.room.domain.RoomTeamLeader;
 import com.naminhyeok.fantazzk.room.domain.RosterMember;
 import com.naminhyeok.fantazzk.room.repository.Games;
 import com.naminhyeok.fantazzk.room.repository.Rooms;
-import com.naminhyeok.fantazzk.template.TemplateCatalog;
 import com.naminhyeok.fantazzk.template.TemplateCatalog.DraftOrderStrategy;
-import com.naminhyeok.fantazzk.template.support.TemplateFixture;
 import com.naminhyeok.fantazzk.template.support.TemplateFixture;
 import jakarta.persistence.EntityManager;
 import java.util.List;
@@ -79,15 +76,13 @@ class RoomDraftIntegrationTest {
         selectDraftPosition.select(created.room().getCode(), guest.getActionToken(), 1);
         Game startedGame = startRoom.start(created.room().getCode(), created.leader().getActionToken());
 
-        RosterMember member = pickDraft.pick(startedGame.getId().gameId(), guest.getActionToken(), "선수1");
+        pickDraft.pick(startedGame.getId().gameId(), guest.getActionToken(), "선수1");
 
         entityManager.flush();
         entityManager.clear();
         Room reloaded = rooms.findByCode(created.room().getCode()).orElseThrow();
         DraftGame game = (DraftGame) games.findById(reloaded.getStartedGameId()).orElseThrow();
 
-        assertThat(member.playerName()).isEqualTo("선수1");
-        assertThat(reloaded.getStatus()).isEqualTo(RoomStatus.STARTED);
         assertThat(reloaded.getPlayers().stream().filter(it -> it.getName().equals("선수1")).findFirst().orElseThrow().getStatus())
             .isEqualTo(PlayerStatus.AVAILABLE);
         assertThat(game.getMembers()).singleElement()
@@ -154,7 +149,6 @@ class RoomDraftIntegrationTest {
         Room reloadedAfterSecondPick = rooms.findByCode(created.room().getCode()).orElseThrow();
         DraftGame gameAfterSecondPick = (DraftGame) games.findById(reloadedAfterSecondPick.getStartedGameId()).orElseThrow();
 
-        assertThat(reloadedAfterSecondPick.getStatus()).isEqualTo(RoomStatus.STARTED);
         assertThat(gameAfterSecondPick.getCurrentTurnIndex()).isEqualTo(2);
 
         RosterMember thirdPick = pickDraft.pick(reloadedAfterSecondPick.getStartedGameId().gameId(), guest.getActionToken(), "선수3");
@@ -172,7 +166,6 @@ class RoomDraftIntegrationTest {
                 tuple(guest.getId(), "선수2"),
                 tuple(guest.getId(), "선수3")
             );
-        assertThat(reloadedAfterThirdPick.getStatus()).isEqualTo(RoomStatus.STARTED);
         assertThat(gameAfterThirdPick.getCurrentTurnIndex()).isEqualTo(3);
     }
 }

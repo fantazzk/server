@@ -37,9 +37,10 @@ public class CreateRoom {
 
         for (int attempt = 1; attempt <= MAX_ROOM_CODE_ATTEMPTS; attempt++) {
             Room room = newRoom(template, hostLeaderId, hostActionToken, hostNickname);
+            RoomTeamLeader hostLeader = room.getLeaders().getFirst();
             try {
                 Room saved = createRoomAttempt.save(room);
-                return new RoomSessionResult(saved, findLeader(saved, hostLeaderId));
+                return new RoomSessionResult(saved, hostLeader);
             } catch (DataIntegrityViolationException ex) {
                 if (!isRoomCodeCollision(ex)) {
                     throw ex;
@@ -76,13 +77,6 @@ public class CreateRoom {
             spec,
             Instant.now(clock)
         );
-    }
-
-    private RoomTeamLeader findLeader(Room room, TeamLeaderId leaderId) {
-        return room.getLeaders().stream()
-            .filter(leader -> leader.getId().equals(leaderId))
-            .findFirst()
-            .orElseThrow();
     }
 
     private String generateCode() {

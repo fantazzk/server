@@ -97,11 +97,13 @@ class RoomAggregateTest {
     void 참가하면_팀장을_추가한다() {
         Room room = auctionWaitingRoom();
 
-        room.join(new TeamLeaderId(GUEST_ID), "  게스트  ", GUEST_ACTION_TOKEN);
+        RoomTeamLeader joinedLeader = room.join(new TeamLeaderId(GUEST_ID), "  게스트  ", GUEST_ACTION_TOKEN);
 
         assertThat(room.getLeaders()).hasSize(2);
-        assertThat(room.getLeaders().getLast().getNickname()).isEqualTo("게스트");
-        assertThat(room.getLeaders().getLast().getActionToken()).isEqualTo(GUEST_ACTION_TOKEN);
+        assertThat(joinedLeader.getId()).isEqualTo(new TeamLeaderId(GUEST_ID));
+        assertThat(joinedLeader.getNickname()).isEqualTo("게스트");
+        assertThat(joinedLeader.getActionToken()).isEqualTo(GUEST_ACTION_TOKEN);
+        assertThat(room.getLeaders().getLast()).isSameAs(joinedLeader);
     }
 
     @Test

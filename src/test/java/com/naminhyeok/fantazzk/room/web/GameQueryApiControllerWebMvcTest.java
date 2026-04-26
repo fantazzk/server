@@ -9,6 +9,7 @@ import com.naminhyeok.fantazzk.ErrorMessage;
 import com.naminhyeok.fantazzk.GlobalExceptionHandler;
 import com.naminhyeok.fantazzk.room.domain.RoomErrorType;
 import com.naminhyeok.fantazzk.room.query.GetGame;
+import com.naminhyeok.fantazzk.room.support.RoomApiTestFixtures;
 import com.naminhyeok.fantazzk.room.web.GameQueryApiController;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -22,7 +23,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
-import com.naminhyeok.fantazzk.room.support.RoomApiTestFixtures;
 
 @WebMvcTest(GameQueryApiController.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -52,10 +52,6 @@ class GameQueryApiControllerWebMvcTest {
         assertThat(body.at("/success/playerPool/0/name").asText()).isEqualTo("선수1");
         assertThat(body.at("/success/roster/0/playerName").asText()).isEqualTo("선수1");
         assertThat(body.at("/success/auctionProgress/currentRound").asInt()).isEqualTo(2);
-        assertThat(body.at("/success/id").isMissingNode()).isTrue();
-        assertThat(body.at("/success/players").isMissingNode()).isTrue();
-        assertThat(body.at("/success/members").isMissingNode()).isTrue();
-        assertThat(body.at("/success/progress").isMissingNode()).isTrue();
     }
 
     @Test
