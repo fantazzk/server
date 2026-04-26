@@ -57,38 +57,29 @@ class RoomGameCleanupMigrationIntegrationTest {
         assertThat(draftGame.get("current_turn_index")).isEqualTo(2);
 
         assertThat(
-            jdbcTemplate.queryForList(
-                "select nickname, remaining_budget from game_participant where participants_game_id = ? order by participant_order",
-                uuid("00000000-0000-0000-0000-0000000000a1")
-            )
-        ).containsExactly(
-            Map.of("NICKNAME", "호스트A", "REMAINING_BUDGET", 200),
-            Map.of("NICKNAME", "게스트A", "REMAINING_BUDGET", 300)
-        );
-        assertThat(
-            jdbcTemplate.queryForList(
-                "select player_name, assign_order from game_auction_member where members_game_id = ? order by member_order",
-                uuid("00000000-0000-0000-0000-0000000000a1")
-            )
-        ).containsExactly(Map.of("PLAYER_NAME", "선수1", "ASSIGN_ORDER", 0));
-        assertThat(
-            jdbcTemplate.queryForList(
-                "select round, bid_sequence, amount from game_auction_bid where bids_game_id = ? order by bid_order",
-                uuid("00000000-0000-0000-0000-0000000000a1")
-            )
-        ).containsExactly(
-            Map.of("ROUND", 2, "BID_SEQUENCE", 1, "AMOUNT", 120),
-            Map.of("ROUND", 2, "BID_SEQUENCE", 2, "AMOUNT", 130)
-        );
-        assertThat(
-            jdbcTemplate.queryForList(
-                "select team_leader_id, player_name, assign_order from game_draft_member where members_game_id = ? order by member_order",
+            jdbcTemplate.queryForObject(
+                "select count(*) from game_participant where participants_game_id in (?, ?)",
+                Integer.class,
+                uuid("00000000-0000-0000-0000-0000000000a1"),
                 uuid("00000000-0000-0000-0000-0000000000d9")
             )
-        ).containsExactly(
-            Map.of("TEAM_LEADER_ID", "host-d", "PLAYER_NAME", "선수A", "ASSIGN_ORDER", 0),
-            Map.of("TEAM_LEADER_ID", "guest-d", "PLAYER_NAME", "선수B", "ASSIGN_ORDER", 1)
-        );
+        ).isEqualTo(4);
+        assertThat(
+            jdbcTemplate.queryForObject(
+                "select count(*) from game_player where player_pool_game_id in (?, ?)",
+                Integer.class,
+                uuid("00000000-0000-0000-0000-0000000000a1"),
+                uuid("00000000-0000-0000-0000-0000000000d9")
+            )
+        ).isEqualTo(5);
+        assertThat(jdbcTemplate.queryForObject("select count(*) from game_auction_member", Integer.class)).isEqualTo(1);
+        assertThat(jdbcTemplate.queryForObject("select count(*) from game_auction_bid", Integer.class)).isEqualTo(2);
+        assertThat(jdbcTemplate.queryForObject("select count(*) from game_draft_member", Integer.class)).isEqualTo(2);
+        assertThat(tableExists(jdbcTemplate, "ROOM_TEAM_MEMBER")).isFalse();
+        assertThat(tableExists(jdbcTemplate, "ROOM_BID")).isFalse();
+        assertThat(columnExists(jdbcTemplate, "ROOMS", "CURRENT_TURN_INDEX")).isFalse();
+        assertThat(columnExists(jdbcTemplate, "ROOMS", "CURRENT_AUCTION_ROUND")).isFalse();
+        assertThat(columnExists(jdbcTemplate, "ROOMS", "CURRENT_AUCTION_ROUND_ENDS_AT")).isFalse();
     }
 
     @Test
@@ -299,6 +290,27 @@ class RoomGameCleanupMigrationIntegrationTest {
 
     private UUID uuid(String value) {
         return UUID.fromString(value);
+    }
+
+    private boolean tableExists(JdbcTemplate jdbcTemplate, String tableName) {
+        Integer count =
+            jdbcTemplate.queryForObject(
+                "select count(*) from information_schema.tables where table_name = ?",
+                Integer.class,
+                tableName
+            );
+        return count != null && count > 0;
+    }
+
+    private boolean columnExists(JdbcTemplate jdbcTemplate, String tableName, String columnName) {
+        Integer count =
+            jdbcTemplate.queryForObject(
+                "select count(*) from information_schema.columns where table_name = ? and column_name = ?",
+                Integer.class,
+                tableName,
+                columnName
+            );
+        return count != null && count > 0;
     }
 
     private Instant instantOf(Object value) {

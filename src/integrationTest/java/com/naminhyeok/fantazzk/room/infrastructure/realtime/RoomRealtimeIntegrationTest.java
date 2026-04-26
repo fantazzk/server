@@ -32,9 +32,9 @@ import com.naminhyeok.fantazzk.room.repository.Games;
 import com.naminhyeok.fantazzk.room.repository.Rooms;
 import com.naminhyeok.fantazzk.template.TemplateCatalog;
 import com.naminhyeok.fantazzk.template.support.TemplateFixture;
-import java.lang.reflect.Field;
 import java.time.Clock;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
@@ -81,10 +81,12 @@ class RoomRealtimeIntegrationTest {
     private final Games games;
     private final RecordingRoomRealtimeEventPublisher recordingRoomRealtimeEventPublisher;
     private final PlatformTransactionManager transactionManager;
+    private final MutableClock clock;
 
     @BeforeEach
     void clearPublishedEvents() {
         recordingRoomRealtimeEventPublisher.clear();
+        clock.reset();
     }
 
     @Test
@@ -171,7 +173,7 @@ class RoomRealtimeIntegrationTest {
         recordingRoomRealtimeEventPublisher.clear();
 
         placeBid.place(startedGame.getId().gameId(), guest.getActionToken(), 150);
-        expireAuctionRound(created.room().getCode(), Instant.parse("1999-12-31T23:59:55Z"));
+        advancePastCurrentAuctionDeadline();
         settleAuctionAttempt.settleIfDue(created.room().getCode());
         Room reloaded = rooms.findByCode(created.room().getCode()).orElseThrow();
         AuctionGame game = (AuctionGame) games.findById(reloaded.getStartedGameId()).orElseThrow();
@@ -312,37 +314,57 @@ class RoomRealtimeIntegrationTest {
         startRoom.start(code, hostToken);
     }
 
-    private void expireAuctionRound(String code, Instant deadline) {
-        TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
-        transactionTemplate.executeWithoutResult(status -> {
-            Room room = rooms.findByCode(code).orElseThrow();
-            AuctionGame game = (AuctionGame) games.findById(room.getStartedGameId()).orElseThrow();
-            setCurrentAuctionRoundEndsAt(game, deadline);
-        });
-    }
-
-    private static void setCurrentAuctionRoundEndsAt(AuctionGame game, Instant deadline) {
-        try {
-            Field field = AuctionGame.class.getDeclaredField("currentRoundEndsAt");
-            field.setAccessible(true);
-            field.set(game, deadline);
-        } catch (ReflectiveOperationException ex) {
-            throw new AssertionError(ex);
-        }
+    private void advancePastCurrentAuctionDeadline() {
+        clock.advanceTo(clock.instant().plusSeconds(46));
     }
 
     @TestConfiguration
     static class TestConfig {
         @Bean
         @Primary
-        Clock roomSnapshotTestClock() {
-            return Clock.fixed(PUBLISHED_AT, ZoneOffset.UTC);
+        MutableClock roomSnapshotTestClock() {
+            return new MutableClock(PUBLISHED_AT, ZoneOffset.UTC);
         }
 
         @Bean
         @Primary
         RecordingRoomRealtimeEventPublisher recordingRoomRealtimeEventPublisher(Clock clock) {
             return new RecordingRoomRealtimeEventPublisher(clock);
+        }
+    }
+
+    static final class MutableClock extends Clock {
+        private final Instant initialInstant;
+        private final ZoneId zone;
+        private Instant instant;
+
+        private MutableClock(Instant initialInstant, ZoneId zone) {
+            this.initialInstant = initialInstant;
+            this.zone = zone;
+            this.instant = initialInstant;
+        }
+
+        void reset() {
+            instant = initialInstant;
+        }
+
+        void advanceTo(Instant instant) {
+            this.instant = instant;
+        }
+
+        @Override
+        public ZoneId getZone() {
+            return zone;
+        }
+
+        @Override
+        public Clock withZone(ZoneId zone) {
+            return new MutableClock(instant, zone);
+        }
+
+        @Override
+        public Instant instant() {
+            return instant;
         }
     }
 

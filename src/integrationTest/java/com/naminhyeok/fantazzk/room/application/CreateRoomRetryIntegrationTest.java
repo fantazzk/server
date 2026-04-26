@@ -15,7 +15,6 @@ import com.naminhyeok.fantazzk.room.domain.RoomTemplateSpec;
 import com.naminhyeok.fantazzk.room.domain.TeamLeaderId;
 import com.naminhyeok.fantazzk.room.repository.Rooms;
 import com.naminhyeok.fantazzk.template.support.TemplateFixture;
-import com.naminhyeok.fantazzk.template.support.TemplateFixture;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
