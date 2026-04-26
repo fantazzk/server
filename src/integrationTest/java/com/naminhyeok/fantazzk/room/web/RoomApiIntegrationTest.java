@@ -3,7 +3,6 @@ package com.naminhyeok.fantazzk.room.web;
 import static org.assertj.core.api.Assertions.assertThat;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.naminhyeok.fantazzk.room.domain.AuctionGame;
 import com.naminhyeok.fantazzk.room.domain.DraftOrderStrategy;
 import com.naminhyeok.fantazzk.room.domain.GameFactory;
 import com.naminhyeok.fantazzk.room.domain.GameId;
@@ -20,7 +19,6 @@ import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
-import java.lang.reflect.Field;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -225,16 +223,6 @@ class RoomApiIntegrationTest {
         rooms.save(room);
         games.save(new GameFactory().create(snapshot));
         return room;
-    }
-
-    private static void setCurrentAuctionRoundEndsAt(AuctionGame game, Instant deadline) {
-        try {
-            Field field = AuctionGame.class.getDeclaredField("currentRoundEndsAt");
-            field.setAccessible(true);
-            field.set(game, deadline);
-        } catch (ReflectiveOperationException ex) {
-            throw new AssertionError(ex);
-        }
     }
 
     private Room joinableAuctionRoom(String code, Instant createdAt) {

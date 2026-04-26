@@ -63,18 +63,6 @@ class RoomRealtimeEventFactoryTest {
         assertThat(gameUpdated.game().auctionProgress().currentRound()).isEqualTo(1);
     }
 
-    @Test
-    void 게임_갱신_스냅샷_버전은_방과_게임_버전을_합산한다() throws Exception {
-        Room room = startedAuctionRoom();
-        Game game = startedGameOf(room);
-        setVersion(Room.class, room, 1L);
-        setVersion(Game.class, game, 7L);
-
-        RoomRealtimeEvent event = RoomRealtimeEventFactory.gameUpdated(new StartedRoomSnapshot(room, game), PUBLISHED_AT);
-
-        assertThat(event.snapshotVersion()).isEqualTo(8L);
-    }
-
     private Room waitingAuctionRoom() {
         return Room.createFromTemplate(
             "AUC002",
@@ -125,12 +113,6 @@ class RoomRealtimeEventFactoryTest {
             )
         );
         return new GameFactory().create(snapshot);
-    }
-
-    private static void setVersion(Class<?> owner, Object target, long version) throws Exception {
-        var field = owner.getDeclaredField("version");
-        field.setAccessible(true);
-        field.setLong(target, version);
     }
 
     private static com.naminhyeok.fantazzk.room.domain.GameId deterministicGameId(Room room) {

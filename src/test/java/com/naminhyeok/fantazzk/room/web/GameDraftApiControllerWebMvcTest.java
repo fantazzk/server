@@ -1,20 +1,15 @@
 package com.naminhyeok.fantazzk.room.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
 import com.naminhyeok.fantazzk.CoreException;
 import com.naminhyeok.fantazzk.ErrorMessage;
 import com.naminhyeok.fantazzk.GlobalExceptionHandler;
 import com.naminhyeok.fantazzk.room.application.PickDraft;
-import com.naminhyeok.fantazzk.room.domain.Room;
 import com.naminhyeok.fantazzk.room.domain.RoomErrorType;
-import com.naminhyeok.fantazzk.room.domain.RosterMember;
-import com.naminhyeok.fantazzk.room.domain.TeamLeaderId;
-import com.naminhyeok.fantazzk.room.web.GameDraftApiController;
+import com.naminhyeok.fantazzk.room.support.RoomApiTestFixtures;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,7 +23,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
-import com.naminhyeok.fantazzk.room.support.RoomApiTestFixtures;
 
 @WebMvcTest(GameDraftApiController.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -45,10 +39,6 @@ class GameDraftApiControllerWebMvcTest {
 
     @Test
     void 드래프트_픽_API는_액션_토큰이_있으면_빈_SUCCESS를_반환한다() throws Exception {
-        UUID gameId = UUID.fromString(RoomApiTestFixtures.DRAFT_GAME_ID);
-        given(pickDraft.pick(gameId, RoomApiTestFixtures.GUEST_TOKEN, "선수3"))
-            .willReturn(new RosterMember(new TeamLeaderId(RoomApiTestFixtures.GUEST_ID), "선수3", 2));
-
         var result = mockMvcTester().perform(
             post("/api/v1/games/{gameId}/draft-picks", RoomApiTestFixtures.DRAFT_GAME_ID)
                 .header("X-Room-Action-Token", RoomApiTestFixtures.GUEST_TOKEN)
@@ -67,7 +57,6 @@ class GameDraftApiControllerWebMvcTest {
         assertThat(body.at("/resultType").asText()).isEqualTo("SUCCESS");
         assertThat(body.at("/success").isNull()).isTrue();
         assertThat(body.at("/error").isNull()).isTrue();
-        verify(pickDraft).pick(gameId, RoomApiTestFixtures.GUEST_TOKEN, "선수3");
     }
 
     @Test

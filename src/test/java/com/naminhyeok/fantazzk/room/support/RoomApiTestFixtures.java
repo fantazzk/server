@@ -1,7 +1,6 @@
 package com.naminhyeok.fantazzk.room.support;
 
 import com.naminhyeok.fantazzk.room.domain.AuctionGame;
-import com.naminhyeok.fantazzk.room.domain.DraftGame;
 import com.naminhyeok.fantazzk.room.domain.DraftOrderStrategy;
 import com.naminhyeok.fantazzk.room.domain.GameFactory;
 import com.naminhyeok.fantazzk.room.domain.GameId;
@@ -108,10 +107,6 @@ public final class RoomApiTestFixtures {
         return new StartedRoomSnapshot(room, startedAuctionGame(room));
     }
 
-    public static Room inProgressAuctionRoom() {
-        return inProgressAuctionDetails().room();
-    }
-
     public static StartedRoomSnapshot inProgressAuctionDetails() {
         Room room =
             Room.createFromTemplate(
@@ -142,45 +137,6 @@ public final class RoomApiTestFixtures {
         AuctionGame game = (AuctionGame) new GameFactory().create(snapshot);
         game.placeBid(new TeamLeaderId(HOST_ID), 100, CREATED_AT.plusSeconds(1));
         game.settleAuction(CREATED_AT.plusSeconds(16));
-        return new StartedRoomSnapshot(room, game);
-    }
-
-    public static Room inProgressDraftRoom() {
-        return inProgressDraftDetails().room();
-    }
-
-    public static StartedRoomSnapshot inProgressDraftDetails() {
-        Room room =
-            Room.createFromTemplate(
-                ROOM_CODE,
-                new TeamLeaderId(HOST_ID),
-                "호스트",
-                HOST_TOKEN,
-                new RoomTemplateSpec(
-                    "LEAGUE_OF_LEGENDS",
-                    RoomMode.DRAFT,
-                    2,
-                    3,
-                    null,
-                    30,
-                    null,
-                    DraftOrderStrategy.SNAKE,
-                    List.of(
-                        new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
-                        new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", "JUNGLE", 1),
-                        new RoomTemplateSpec.Player(new RoomPlayerId(2), "선수3", "MID", 2),
-                        new RoomTemplateSpec.Player(new RoomPlayerId(3), "선수4", "ADC", 3)
-                    )
-                ),
-                CREATED_AT
-            );
-        room.join(new TeamLeaderId(GUEST_ID), "게스트", GUEST_TOKEN);
-        room.selectDraftPosition(new TeamLeaderId(HOST_ID), 1);
-        room.selectDraftPosition(new TeamLeaderId(GUEST_ID), 2);
-        StartedGameSnapshot snapshot = room.start(new TeamLeaderId(HOST_ID), new GameId(UUID.fromString(DRAFT_GAME_ID)), CREATED_AT);
-        DraftGame game = (DraftGame) new GameFactory().create(snapshot);
-        game.pick(new TeamLeaderId(HOST_ID), "선수1");
-        game.pick(new TeamLeaderId(GUEST_ID), "선수2");
         return new StartedRoomSnapshot(room, game);
     }
 

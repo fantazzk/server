@@ -21,12 +21,11 @@ import com.naminhyeok.fantazzk.room.infrastructure.schedule.RoomAuctionDeadlineS
 import com.naminhyeok.fantazzk.room.repository.Games;
 import com.naminhyeok.fantazzk.room.repository.Rooms;
 import com.naminhyeok.fantazzk.template.support.TemplateFixture;
-import com.naminhyeok.fantazzk.template.support.TemplateFixture;
+import java.lang.reflect.Field;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
