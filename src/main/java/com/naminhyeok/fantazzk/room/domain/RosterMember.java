@@ -6,11 +6,13 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Embeddable;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import org.jmolecules.ddd.types.ValueObject;
 
 @Access(AccessType.FIELD)
 @Embeddable
 @EqualsAndHashCode
+@NoArgsConstructor
 public class RosterMember implements ValueObject {
     @Column(name = "team_leader_id")
     @Convert(converter = TeamLeaderId.JpaConverter.class)
@@ -19,9 +21,6 @@ public class RosterMember implements ValueObject {
     private String playerName;
     @Column(name = "assign_order")
     private int assignOrder;
-
-    public RosterMember() {
-    }
 
     public RosterMember(TeamLeaderId teamLeaderId, String playerName, int assignOrder) {
         this.teamLeaderId = teamLeaderId;

@@ -45,7 +45,7 @@ class RoomDraftApiControllerWebMvcTest {
     private ClearDraftPosition clearDraftPosition;
 
     @Test
-    void selectDraftPosition은_header가_있으면_성공한다() throws Exception {
+    void 드래프트_자리_선택_API는_액션_토큰이_있으면_빈_SUCCESS를_반환한다() throws Exception {
         given(selectDraftPosition.select(RoomApiTestFixtures.ROOM_CODE, RoomApiTestFixtures.GUEST_TOKEN, 2))
             .willReturn(null);
 
@@ -70,7 +70,7 @@ class RoomDraftApiControllerWebMvcTest {
     }
 
     @Test
-    void clearDraftPosition은_header가_있으면_성공한다() throws Exception {
+    void 드래프트_자리_취소_API는_액션_토큰이_있으면_빈_SUCCESS를_반환한다() throws Exception {
         given(clearDraftPosition.clear(RoomApiTestFixtures.ROOM_CODE, RoomApiTestFixtures.HOST_TOKEN))
             .willReturn(null);
 
@@ -87,7 +87,7 @@ class RoomDraftApiControllerWebMvcTest {
     }
 
     @Test
-    void selectDraftPosition은_header가_없으면_401을_반환한다() throws Exception {
+    void 드래프트_자리_선택_API는_액션_토큰이_없으면_401을_반환한다() throws Exception {
         doThrow(CoreException.of(RoomErrorType.ROOM_ACTION_TOKEN_REQUIRED))
             .when(selectDraftPosition)
             .select(RoomApiTestFixtures.ROOM_CODE, null, 2);

@@ -45,7 +45,7 @@ class RoomQueryApiControllerWebMvcTest {
     private FindJoinableRooms findJoinableRooms;
 
     @Test
-    void get은_room_detail을_반환한다() throws Exception {
+    void 방_조회_API는_로비_화면_계약만_반환한다() throws Exception {
         given(getRoom.get(RoomApiTestFixtures.ROOM_CODE)).willReturn(RoomApiTestFixtures.waitingDraftRoom());
 
         var result = mockMvcTester().perform(get("/api/v1/rooms/{code}", RoomApiTestFixtures.ROOM_CODE));
@@ -70,7 +70,7 @@ class RoomQueryApiControllerWebMvcTest {
     }
 
     @Test
-    void 시작된_room_get은_startedGameId만_노출하고_live_game_progress는_포함하지_않는다() throws Exception {
+    void 시작된_방_조회_API는_게임_ID만_연결하고_진행_상태는_분리한다() throws Exception {
         given(getRoom.get(RoomApiTestFixtures.ROOM_CODE)).willReturn(RoomApiTestFixtures.startedAuctionRoom());
 
         var result = mockMvcTester().perform(get("/api/v1/rooms/{code}", RoomApiTestFixtures.ROOM_CODE));
@@ -85,7 +85,7 @@ class RoomQueryApiControllerWebMvcTest {
     }
 
     @Test
-    void get은_방이_없으면_404를_반환한다() throws Exception {
+    void 방_조회_API는_없는_방을_404로_반환한다() throws Exception {
         given(getRoom.get(RoomApiTestFixtures.ROOM_CODE)).willThrow(CoreException.of(RoomErrorType.ROOM_NOT_FOUND));
 
         var result = mockMvcTester().perform(get("/api/v1/rooms/{code}", RoomApiTestFixtures.ROOM_CODE));
@@ -95,7 +95,7 @@ class RoomQueryApiControllerWebMvcTest {
     }
 
     @Test
-    void list는_참여_가능한_room_목록을_반환한다() throws Exception {
+    void 방_목록_API는_참여_가능한_방만_반환한다() throws Exception {
         Room latest = RoomApiTestFixtures.waitingAuctionRoom("ROOM99", Instant.parse("2026-04-09T00:03:00Z"));
         Room older = RoomApiTestFixtures.waitingDraftRoom("ROOM01", Instant.parse("2026-04-09T00:01:00Z"));
         given(findJoinableRooms.list()).willReturn(List.of(

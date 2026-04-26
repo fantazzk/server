@@ -183,7 +183,7 @@ class RoomAuctionIntegrationTest {
     }
 
     @Test
-    void catchUpAndReschedule는_due_room을_즉시_정산한다() {
+    void 재시작_보정은_지난_경매_마감을_즉시_정산한다() {
         UUID template =
             templateFixture.createAuctionTemplateId(
                 "경매전",
@@ -213,7 +213,7 @@ class RoomAuctionIntegrationTest {
     }
 
     @Test
-    void start_rollback되면_deadline_task는_등록되지_않는다() {
+    void 방_시작_트랜잭션이_롤백되면_마감_예약도_남지_않는다() {
         UUID template =
             templateFixture.createAuctionTemplateId(
                 "경매전",

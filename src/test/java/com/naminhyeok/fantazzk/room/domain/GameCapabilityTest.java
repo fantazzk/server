@@ -11,9 +11,9 @@ import com.naminhyeok.fantazzk.room.domain.RoomStateInvalidException;
 import com.naminhyeok.fantazzk.room.domain.TeamLeaderId;
 import org.junit.jupiter.api.Test;
 
-class GameCapabilitySeamTest {
+class GameCapabilityTest {
     @Test
-    void 경매_규칙은_auction_seam으로_드러난다() {
+    void 경매_규칙은_경매_전용_설정으로만_조회된다() {
         GameRules rules = GameRules.auction(2, 2, 300, 45, 10);
 
         assertThat(rules.mode()).isEqualTo(RoomMode.AUCTION);
@@ -28,7 +28,7 @@ class GameCapabilitySeamTest {
     }
 
     @Test
-    void 드래프트_규칙은_draft_seam으로_드러난다() {
+    void 드래프트_규칙은_드래프트_전용_설정으로만_조회된다() {
         GameRules rules = GameRules.draft(2, 2, 30, DraftOrderStrategy.SNAKE);
 
         assertThat(rules.mode()).isEqualTo(RoomMode.DRAFT);
@@ -42,7 +42,7 @@ class GameCapabilitySeamTest {
     }
 
     @Test
-    void 경매_참가자는_auction_state로_예산을_드러낸다() {
+    void 경매_참가자는_예산_상태만_가진다() {
         GameParticipant participant = GameParticipant.auction(new TeamLeaderId("host-1"), "호스트", 300);
 
         assertThat(participant.mode()).isEqualTo(RoomMode.AUCTION);
@@ -57,7 +57,7 @@ class GameCapabilitySeamTest {
     }
 
     @Test
-    void 드래프트_참가자는_draft_state로_순서를_드러낸다() {
+    void 드래프트_참가자는_드래프트_순서만_가진다() {
         GameParticipant participant = GameParticipant.draft(new TeamLeaderId("guest-1"), "게스트", 2);
 
         assertThat(participant.mode()).isEqualTo(RoomMode.DRAFT);

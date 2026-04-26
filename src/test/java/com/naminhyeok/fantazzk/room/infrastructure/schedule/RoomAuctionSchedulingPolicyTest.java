@@ -23,7 +23,7 @@ import org.springframework.data.domain.Pageable;
 
 class RoomAuctionSchedulingPolicyTest {
     @Test
-    void roomStarted는_deadline을_예약한다() {
+    void 경매_시작_이벤트는_첫_마감_정산을_예약한다() {
         FakeTaskScheduler taskScheduler = new FakeTaskScheduler();
         RoomAuctionSchedulingPolicy policy = new RoomAuctionSchedulingPolicy(
             new RoomAuctionDeadlineScheduler(
@@ -41,7 +41,7 @@ class RoomAuctionSchedulingPolicyTest {
     }
 
     @Test
-    void bidPlaced는_deadline을_갱신한다() {
+    void 입찰_이벤트는_기존_마감을_새_마감으로_교체한다() {
         FakeTaskScheduler taskScheduler = new FakeTaskScheduler();
         RoomAuctionDeadlineScheduler scheduler =
             new RoomAuctionDeadlineScheduler(
@@ -61,7 +61,7 @@ class RoomAuctionSchedulingPolicyTest {
     }
 
     @Test
-    void auctionSettled는_다음_deadline이_없으면_예약을_해제한다() {
+    void 정산_이벤트에_다음_마감이_없으면_예약을_해제한다() {
         FakeTaskScheduler taskScheduler = new FakeTaskScheduler();
         RoomAuctionDeadlineScheduler scheduler =
             new RoomAuctionDeadlineScheduler(

@@ -35,7 +35,7 @@ class RoomAuctionDeadlineSchedulerTest {
     private static final Instant NOW = Instant.parse("2026-04-09T00:00:10Z");
 
     @Test
-    void schedule는_경매_room_deadline에_맞춰_정산_task를_등록하고_다음_deadline을_재예약한다() {
+    void 경매_마감_예약은_정산_후_다음_라운드_마감으로_이어진다() {
         FakeTaskScheduler taskScheduler = new FakeTaskScheduler();
         SettleAuction settleAuction = mock(SettleAuction.class);
         StartedAuctionContext room = auctionRoomWithDeadline("ROOM01", Instant.parse("2026-04-09T00:00:15Z"));
@@ -61,7 +61,7 @@ class RoomAuctionDeadlineSchedulerTest {
     }
 
     @Test
-    void schedule는_같은_room의_기존_deadline_예약을_취소하고_새_deadline만_남긴다() {
+    void 같은_방의_마감은_하나만_활성화된다() {
         FakeTaskScheduler taskScheduler = new FakeTaskScheduler();
         SettleAuction settleAuction = mock(SettleAuction.class);
         StartedAuctionContext first = auctionRoomWithDeadline("ROOM01", Instant.parse("2026-04-09T00:00:15Z"));
@@ -83,7 +83,7 @@ class RoomAuctionDeadlineSchedulerTest {
     }
 
     @Test
-    void 애플리케이션_시작시_due_room은_즉시_catch_up하고_future_deadline은_재예약한다() {
+    void 재시작_시점에_지난_마감은_즉시_정산하고_미래_마감은_다시_예약한다() {
         FakeTaskScheduler taskScheduler = new FakeTaskScheduler();
         SettleAuction settleAuction = mock(SettleAuction.class);
         JpaAuctionScheduleReader scheduleReader =
@@ -108,7 +108,7 @@ class RoomAuctionDeadlineSchedulerTest {
     }
 
     @Test
-    void 애플리케이션_시작시_손상된_due_room이_있어도_뒤따르는_정상_room은_계속_처리한다() {
+    void 재시작_정산_중_손상된_방이_있어도_다음_방은_계속_처리한다() {
         FakeTaskScheduler taskScheduler = new FakeTaskScheduler();
         SettleAuction settleAuction = mock(SettleAuction.class);
         JpaAuctionScheduleReader scheduleReader =
@@ -143,7 +143,7 @@ class RoomAuctionDeadlineSchedulerTest {
     }
 
     @Test
-    void 애플리케이션_시작시_schedulable_room은_application_layer_정렬규칙으로_처리한다() {
+    void 재시작_정산은_저장소_정렬보다_마감_시각을_우선한다() {
         FakeTaskScheduler taskScheduler = new FakeTaskScheduler();
         SettleAuction settleAuction = mock(SettleAuction.class);
         JpaAuctionScheduleReader scheduleReader =
@@ -179,7 +179,7 @@ class RoomAuctionDeadlineSchedulerTest {
     }
 
     @Test
-    void 애플리케이션_시작시_첫_페이지를_넘는_future_deadline도_모두_재예약한다() {
+    void 재시작_예약은_첫_페이지를_넘는_미래_마감도_모두_처리한다() {
         FakeTaskScheduler taskScheduler = new FakeTaskScheduler();
         SettleAuction settleAuction = mock(SettleAuction.class);
         JpaAuctionScheduleReader scheduleReader = new JpaAuctionScheduleReader(new RecordingScheduleRepository(manyFutureSchedules(205)));

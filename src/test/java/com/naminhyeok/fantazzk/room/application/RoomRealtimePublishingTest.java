@@ -61,7 +61,7 @@ class RoomRealtimePublishingTest {
     private static final String GUEST_ACTION_TOKEN = "guest-token";
 
     @Test
-    void join은_room_updated를_publish한다() {
+    void 방_참가는_로비_스냅샷을_발행한다() {
         Room room = waitingAuctionRoom();
         RecordingRoomRealtimeEventPublisher publisher = new RecordingRoomRealtimeEventPublisher();
         JoinRoom joinRoom = new JoinRoom(new SaveAndFlushOnlyRooms(room), publisher);
@@ -77,7 +77,7 @@ class RoomRealtimePublishingTest {
     }
 
     @Test
-    void join은_optimistic_lock을_room_concurrent_modification으로_번역한다() {
+    void 방_참가_저장_충돌은_동시_수정_오류로_번역하고_이벤트를_발행하지_않는다() {
         Room room = waitingAuctionRoom();
         RecordingRoomRealtimeEventPublisher publisher = new RecordingRoomRealtimeEventPublisher();
         JoinRoom joinRoom = new JoinRoom(new OptimisticLockFailureRooms(room), publisher);
@@ -88,7 +88,7 @@ class RoomRealtimePublishingTest {
     }
 
     @Test
-    void start는_room_updated와_game_updated를_publish한다() {
+    void 방_시작은_로비와_게임_스냅샷을_함께_발행한다() {
         Room room = joinedAuctionRoom();
         RecordingRoomRealtimeEventPublisher publisher = new RecordingRoomRealtimeEventPublisher();
         StartRoom startRoom = new StartRoom(
@@ -113,7 +113,7 @@ class RoomRealtimePublishingTest {
     }
 
     @Test
-    void placeBid는_game_updated를_publish한다() {
+    void 입찰은_게임_스냅샷을_발행한다() {
         Room room = startedAuctionRoom();
         AuctionGame game = (AuctionGame) gameFor(room);
         RecordingRoomRealtimeEventPublisher publisher = new RecordingRoomRealtimeEventPublisher();
@@ -138,7 +138,7 @@ class RoomRealtimePublishingTest {
     }
 
     @Test
-    void pickDraft는_game_updated를_publish한다() {
+    void 드래프트_픽은_게임_스냅샷을_발행한다() {
         Room room = startedDraftRoom();
         DraftGame game = (DraftGame) gameFor(room);
         RecordingRoomRealtimeEventPublisher publisher = new RecordingRoomRealtimeEventPublisher();
@@ -158,7 +158,7 @@ class RoomRealtimePublishingTest {
     }
 
     @Test
-    void selectDraftPosition은_room_updated를_publish한다() {
+    void 드래프트_자리_선택은_로비_스냅샷을_발행한다() {
         Room room = waitingDraftRoomForPositionChange();
         RecordingRoomRealtimeEventPublisher publisher = new RecordingRoomRealtimeEventPublisher();
         SelectDraftPosition selectDraftPosition =
@@ -174,7 +174,7 @@ class RoomRealtimePublishingTest {
     }
 
     @Test
-    void clearDraftPosition은_room_updated를_publish한다() {
+    void 드래프트_자리_취소는_로비_스냅샷을_발행한다() {
         Room room = waitingDraftRoomForPositionChange();
         room.selectDraftPosition(new TeamLeaderId(HOST_ID), 1);
         RecordingRoomRealtimeEventPublisher publisher = new RecordingRoomRealtimeEventPublisher();
@@ -190,7 +190,7 @@ class RoomRealtimePublishingTest {
     }
 
     @Test
-    void settleIfDue는_유찰이어도_game_updated만_publish한다() {
+    void 유찰_정산은_게임_스냅샷만_발행한다() {
         Room room = startedAuctionRoom();
         AuctionGame game = (AuctionGame) gameFor(room);
         RecordingRoomRealtimeEventPublisher publisher = new RecordingRoomRealtimeEventPublisher();
@@ -212,7 +212,7 @@ class RoomRealtimePublishingTest {
     }
 
     @Test
-    void settleIfDue는_낙찰이어도_game_updated를_publish한다() {
+    void 낙찰_정산은_게임_스냅샷을_발행한다() {
         Room room = startedAuctionRoom();
         AuctionGame game = (AuctionGame) gameFor(room);
         game.placeBid(new TeamLeaderId(HOST_ID), 100, CREATED_AT.plusSeconds(1));
@@ -236,7 +236,7 @@ class RoomRealtimePublishingTest {
     }
 
     @Test
-    void settleIfDue는_기한이_아직_아니면_publish하지_않는다() {
+    void 마감_전_정산은_스냅샷을_발행하지_않는다() {
         Room room = startedAuctionRoom();
         AuctionGame game = (AuctionGame) gameFor(room);
         RecordingRoomRealtimeEventPublisher publisher = new RecordingRoomRealtimeEventPublisher();

@@ -38,7 +38,7 @@ class GameQueryApiControllerWebMvcTest {
     private GetGame getGame;
 
     @Test
-    void get은_game_detail을_반환한다() throws Exception {
+    void 게임_조회_API는_진행_화면_계약만_반환한다() throws Exception {
         given(getGame.get(UUID.fromString(RoomApiTestFixtures.GAME_ID)))
             .willReturn(RoomApiTestFixtures.inProgressAuctionDetails().game());
 
@@ -59,7 +59,7 @@ class GameQueryApiControllerWebMvcTest {
     }
 
     @Test
-    void get은_game이_없으면_404를_반환한다() throws Exception {
+    void 게임_조회_API는_없는_게임을_404로_반환한다() throws Exception {
         given(getGame.get(UUID.fromString(RoomApiTestFixtures.GAME_ID))).willThrow(CoreException.of(RoomErrorType.GAME_NOT_FOUND));
 
         var result = mockMvcTester().perform(get("/api/v1/games/{gameId}", RoomApiTestFixtures.GAME_ID));

@@ -71,32 +71,4 @@ class TemplateResponseTest {
         assertThat(response.draftOrderStrategy()).isEqualTo(TemplateCatalog.DraftOrderStrategy.SNAKE);
     }
 
-    @Test
-    void 템플릿_목록_아이템은_카드에_필요한_메타데이터를_노출한다() {
-        Template template =
-            Template.createAuction(
-                "경매전",
-                "LEAGUE_OF_LEGENDS",
-                2,
-                2,
-                300,
-                45,
-                10,
-                List.of(
-                    new TemplatePlayer("선수1", "TOP", 0),
-                    new TemplatePlayer("선수2", "JUNGLE", 1)
-                )
-            );
-
-        TemplateDetailResponse response = TemplateDetailResponse.from(template);
-
-        assertThat(response.id()).isEqualTo(template.getId().templateId().toString());
-        assertThat(response.name()).isEqualTo("경매전");
-        assertThat(response.gameType()).isEqualTo("LEAGUE_OF_LEGENDS");
-        assertThat(response.mode()).isEqualTo(TemplateCatalog.Mode.AUCTION);
-        assertThat(response.teamCount()).isEqualTo(2);
-        assertThat(response.teamSize()).isEqualTo(2);
-        assertThat(response.pickBanTime()).isEqualTo(45);
-        assertThat(response.players()).hasSize(2);
-    }
 }

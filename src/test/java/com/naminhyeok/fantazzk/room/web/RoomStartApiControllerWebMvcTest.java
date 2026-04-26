@@ -39,7 +39,7 @@ class RoomStartApiControllerWebMvcTest {
     private StartRoom startRoom;
 
     @Test
-    void start는_header가_있으면_성공한다() throws Exception {
+    void 방_시작_API는_액션_토큰이_있으면_게임_ID만_반환한다() throws Exception {
         given(startRoom.start(RoomApiTestFixtures.ROOM_CODE, RoomApiTestFixtures.HOST_TOKEN))
             .willReturn(RoomApiTestFixtures.startedAuctionDetails().game());
 
@@ -58,7 +58,7 @@ class RoomStartApiControllerWebMvcTest {
     }
 
     @Test
-    void start는_header가_없으면_401을_반환한다() throws Exception {
+    void 방_시작_API는_액션_토큰이_없으면_401을_반환한다() throws Exception {
         doThrow(CoreException.of(RoomErrorType.ROOM_ACTION_TOKEN_REQUIRED))
             .when(startRoom)
             .start(RoomApiTestFixtures.ROOM_CODE, null);
@@ -70,7 +70,7 @@ class RoomStartApiControllerWebMvcTest {
     }
 
     @Test
-    void start는_optimistic_lock_conflict를_409로_반환한다() throws Exception {
+    void 방_시작_API는_동시_수정_충돌을_409로_반환한다() throws Exception {
         doThrow(CoreException.of(RoomErrorType.ROOM_CONCURRENT_MODIFICATION))
             .when(startRoom)
             .start(RoomApiTestFixtures.ROOM_CODE, RoomApiTestFixtures.HOST_TOKEN);

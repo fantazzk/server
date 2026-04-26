@@ -6,11 +6,13 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Embeddable;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import org.jmolecules.ddd.types.ValueObject;
 
 @Access(AccessType.FIELD)
 @Embeddable
 @EqualsAndHashCode
+@NoArgsConstructor
 public class GamePlayer implements ValueObject {
     @Column(name = "player_id")
     @Convert(converter = RoomPlayerId.JpaConverter.class)
@@ -21,9 +23,6 @@ public class GamePlayer implements ValueObject {
     private String position;
     @Column(name = "display_order")
     private int displayOrder;
-
-    public GamePlayer() {
-    }
 
     public GamePlayer(RoomPlayerId playerId, String name, String position, int displayOrder) {
         this.playerId = java.util.Objects.requireNonNull(playerId, "playerId must not be null");

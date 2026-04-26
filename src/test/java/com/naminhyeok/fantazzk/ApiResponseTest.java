@@ -12,7 +12,7 @@ class ApiResponseTest {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
-    void success_serializes_success_result_type_and_payload() throws Exception {
+    void 성공_응답은_SUCCESS와_payload를_공통_envelope에_담는다() throws Exception {
         ApiResponse<String> response = ApiResponse.success("ok");
         JsonNode json = objectMapper.readTree(objectMapper.writeValueAsString(response));
 
@@ -25,7 +25,7 @@ class ApiResponseTest {
     }
 
     @Test
-    void error_serializes_error_result_type_and_descriptor_message() throws Exception {
+    void 실패_응답은_descriptor_기반_error_envelope을_사용한다() throws Exception {
         ApiResponse<Void> response = ApiResponse.error(new FakeErrorDescriptor(), "detail");
         JsonNode json = objectMapper.readTree(objectMapper.writeValueAsString(response));
 

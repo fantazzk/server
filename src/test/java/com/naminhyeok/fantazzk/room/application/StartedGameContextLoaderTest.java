@@ -36,7 +36,7 @@ class StartedGameContextLoaderTest {
     private static final Instant CREATED_AT = Instant.parse("2026-04-18T00:00:00Z");
 
     @Test
-    void gameId로_started_game_action_context를_읽고_room_기반으로_인증한다() {
+    void 시작된_게임_행위는_방의_액션_토큰으로_인증한다() {
         Room room = startedAuctionRoom();
         Game game = startedGameOf(room);
         StartedGameContextLoader loader = new StartedGameContextLoader(
@@ -53,7 +53,7 @@ class StartedGameContextLoaderTest {
     }
 
     @Test
-    void 없는_gameId면_GAME_NOT_FOUND를_반환한다() {
+    void 시작된_게임이_없으면_GAME_NOT_FOUND를_반환한다() {
         StartedGameContextLoader loader =
             new StartedGameContextLoader(new InMemoryRooms(Map.of()), new InMemoryGames(Map.of()), new RoomActionAuthorizer());
 
@@ -65,7 +65,7 @@ class StartedGameContextLoaderTest {
     }
 
     @Test
-    void room이_없어도_GAME_NOT_FOUND를_반환한다() {
+    void 게임의_방이_없어도_GAME_NOT_FOUND를_반환한다() {
         Room room = startedAuctionRoom();
         Game game = startedGameOf(room);
         StartedGameContextLoader loader =
@@ -79,7 +79,7 @@ class StartedGameContextLoaderTest {
     }
 
     @Test
-    void actionToken이_유효하지_않으면_room_auth_error를_반환한다() {
+    void 액션_토큰이_유효하지_않으면_ROOM_ACTION_TOKEN_INVALID를_반환한다() {
         Room room = startedAuctionRoom();
         Game game = startedGameOf(room);
         StartedGameContextLoader loader = new StartedGameContextLoader(

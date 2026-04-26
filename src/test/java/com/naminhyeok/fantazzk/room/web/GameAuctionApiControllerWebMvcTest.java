@@ -45,7 +45,7 @@ class GameAuctionApiControllerWebMvcTest {
     private PlaceBid placeBid;
 
     @Test
-    void placeBid는_header가_있으면_SUCCESS_빈_응답을_반환한다() throws Exception {
+    void 입찰_API는_액션_토큰이_있으면_빈_SUCCESS를_반환한다() throws Exception {
         UUID gameId = UUID.fromString(RoomApiTestFixtures.GAME_ID);
         given(placeBid.place(gameId, RoomApiTestFixtures.HOST_TOKEN, 150))
             .willReturn(new AuctionBid(1, new BidSequence(1), new TeamLeaderId(RoomApiTestFixtures.HOST_ID), 150));
@@ -72,7 +72,7 @@ class GameAuctionApiControllerWebMvcTest {
     }
 
     @Test
-    void placeBid는_header가_없으면_401을_반환한다() throws Exception {
+    void 입찰_API는_액션_토큰이_없으면_401을_반환한다() throws Exception {
         UUID gameId = UUID.fromString(RoomApiTestFixtures.GAME_ID);
         doThrow(CoreException.of(RoomErrorType.ROOM_ACTION_TOKEN_REQUIRED))
             .when(placeBid)
@@ -95,7 +95,7 @@ class GameAuctionApiControllerWebMvcTest {
     }
 
     @Test
-    void placeBid는_0원이면_400을_반환한다() throws Exception {
+    void 입찰_API는_0원_입찰을_400으로_거부한다() throws Exception {
         var result = mockMvcTester().perform(
             post("/api/v1/games/{gameId}/bids", RoomApiTestFixtures.GAME_ID)
                 .header("X-Room-Action-Token", RoomApiTestFixtures.HOST_TOKEN)
@@ -114,7 +114,7 @@ class GameAuctionApiControllerWebMvcTest {
     }
 
     @Test
-    void placeBid는_optimistic_lock_conflict를_409로_반환한다() throws Exception {
+    void 입찰_API는_동시_수정_충돌을_409로_반환한다() throws Exception {
         UUID gameId = UUID.fromString(RoomApiTestFixtures.GAME_ID);
         doThrow(CoreException.of(RoomErrorType.ROOM_CONCURRENT_MODIFICATION))
             .when(placeBid)
@@ -138,7 +138,7 @@ class GameAuctionApiControllerWebMvcTest {
     }
 
     @Test
-    void placeBid는_내부_상태_예외를_500으로_반환한다() throws Exception {
+    void 입찰_API는_손상된_게임_상태를_500으로_반환한다() throws Exception {
         UUID gameId = UUID.fromString(RoomApiTestFixtures.GAME_ID);
         doThrow(RoomStateInvalidException.auctionRoundMissing())
             .when(placeBid)
@@ -165,7 +165,7 @@ class GameAuctionApiControllerWebMvcTest {
     }
 
     @Test
-    void placeBid는_최소_입찰_증가폭을_만족하지_못하면_409를_반환한다() throws Exception {
+    void 입찰_API는_최소_입찰_증가폭을_만족하지_못하면_409를_반환한다() throws Exception {
         UUID gameId = UUID.fromString(RoomApiTestFixtures.GAME_ID);
         doThrow(CoreException.of(RoomErrorType.ROOM_BID_MIN_UNIT_NOT_MET))
             .when(placeBid)

@@ -6,11 +6,13 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Embeddable;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import org.jmolecules.ddd.types.ValueObject;
 
 @Access(AccessType.FIELD)
 @Embeddable
 @EqualsAndHashCode
+@NoArgsConstructor
 public class AuctionBid implements ValueObject {
     @Column(name = "round")
     private int round;
@@ -22,9 +24,6 @@ public class AuctionBid implements ValueObject {
     private TeamLeaderId teamLeaderId;
     @Column(name = "amount")
     private int amount;
-
-    public AuctionBid() {
-    }
 
     public AuctionBid(int round, BidSequence sequence, TeamLeaderId teamLeaderId, int amount) {
         this.round = round;
