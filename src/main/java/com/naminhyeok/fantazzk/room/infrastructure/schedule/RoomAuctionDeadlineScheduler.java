@@ -1,13 +1,13 @@
 package com.naminhyeok.fantazzk.room.infrastructure.schedule;
 
-import com.naminhyeok.fantazzk.room.application.SettleAuction;
-import com.naminhyeok.fantazzk.room.infrastructure.persistence.JpaAuctionScheduleReader;
+import com.naminhyeok.fantazzk.room.application.AuctionSettlementRunner;
 import com.naminhyeok.fantazzk.room.domain.AuctionGame;
 import com.naminhyeok.fantazzk.room.domain.Room;
 import com.naminhyeok.fantazzk.room.domain.RoomMode;
 import com.naminhyeok.fantazzk.room.domain.RoomStateInvalidException;
 import com.naminhyeok.fantazzk.room.domain.RoomStatus;
 import com.naminhyeok.fantazzk.room.query.AuctionScheduleCandidate;
+import com.naminhyeok.fantazzk.room.query.AuctionScheduleReader;
 import com.naminhyeok.fantazzk.room.repository.Games;
 import java.time.Clock;
 import java.time.Instant;
@@ -26,17 +26,17 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class RoomAuctionDeadlineScheduler {
     private final TaskScheduler taskScheduler;
-    private final SettleAuction settleAuction;
-    private final JpaAuctionScheduleReader auctionScheduleReader;
+    private final AuctionSettlementRunner settleAuction;
+    private final AuctionScheduleReader auctionScheduleReader;
     private final Clock clock;
     private final Games games;
     private final ConcurrentMap<String, ScheduledFuture<?>> scheduledTasks = new ConcurrentHashMap<>();
 
-    public void schedule(Room room) {
+    void schedule(Room room) {
         refresh(room.getCode(), resolveDeadline(room));
     }
 
-    public void refresh(String code, Instant deadline) {
+    void refresh(String code, Instant deadline) {
         cancel(code);
         if (deadline == null) {
             return;
@@ -51,7 +51,7 @@ public class RoomAuctionDeadlineScheduler {
         }
     }
 
-    public void cancel(String code) {
+    void cancel(String code) {
         ScheduledFuture<?> future = scheduledTasks.remove(code);
         if (future != null) {
             future.cancel(false);

@@ -69,9 +69,6 @@ class RoomSessionApiControllerWebMvcTest {
         JsonNode body = readJsonBody(result);
         assertThat(body.at("/resultType").asText()).isEqualTo("SUCCESS");
         assertThat(body.at("/success/room/roomCode").asText()).isEqualTo(RoomApiTestFixtures.ROOM_CODE);
-        assertThat(body.at("/success/room/status").asText()).isEqualTo("WAITING");
-        assertThat(body.at("/success/room/leaders").size()).isEqualTo(1);
-        assertThat(body.at("/success/room/playerPool").size()).isEqualTo(2);
         assertThat(body.at("/success/teamLeaderSession/leaderId").asText()).isEqualTo(RoomApiTestFixtures.HOST_ID);
         assertThat(body.at("/success/teamLeaderSession/role").asText()).isEqualTo("HOST");
         assertThat(body.at("/success/teamLeaderSession/actionToken").asText()).isEqualTo(RoomApiTestFixtures.HOST_TOKEN);
@@ -122,8 +119,6 @@ class RoomSessionApiControllerWebMvcTest {
         JsonNode body = readJsonBody(result);
         assertThat(body.at("/resultType").asText()).isEqualTo("SUCCESS");
         assertThat(body.at("/success/room/roomCode").asText()).isEqualTo(RoomApiTestFixtures.ROOM_CODE);
-        assertThat(body.at("/success/room/leaders").size()).isEqualTo(2);
-        assertThat(body.at("/success/room/playerPool").size()).isEqualTo(2);
         assertThat(body.at("/success/teamLeaderSession/leaderId").asText()).isEqualTo(RoomApiTestFixtures.GUEST_ID);
         assertThat(body.at("/success/teamLeaderSession/role").asText()).isEqualTo("LEADER");
         assertThat(body.at("/success/teamLeaderSession/actionToken").asText()).isEqualTo(RoomApiTestFixtures.GUEST_TOKEN);

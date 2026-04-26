@@ -1,6 +1,5 @@
 package com.naminhyeok.fantazzk.room.query;
 
-import com.naminhyeok.fantazzk.room.domain.PlayerStatus;
 import com.naminhyeok.fantazzk.room.domain.RoomPlayer;
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -24,12 +23,4 @@ public record RoomPlayerResponse(
         );
     }
 
-    public static RoomPlayerResponse from(RoomPlayer player, int displayOrder, boolean assigned) {
-        return new RoomPlayerResponse(
-            player.getName(),
-            player.getPosition(),
-            displayOrder,
-            assigned ? PlayerStatus.ASSIGNED.name() : PlayerStatus.AVAILABLE.name()
-        );
-    }
 }

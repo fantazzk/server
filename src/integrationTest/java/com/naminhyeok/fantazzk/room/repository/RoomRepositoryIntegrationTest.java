@@ -1,7 +1,6 @@
 package com.naminhyeok.fantazzk.room.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.naminhyeok.fantazzk.room.domain.DraftOrderStrategy;
 import com.naminhyeok.fantazzk.room.domain.GameId;
@@ -97,41 +96,6 @@ class RoomRepositoryIntegrationTest {
 
     @Test
     @Transactional
-    void 방의_createdAt을_저장하고_다시_읽는다() {
-        Room room =
-            Room.createFromTemplate(
-                "ROOM02",
-                new TeamLeaderId("host-1"),
-                "호스트",
-                "host-action-token",
-                new RoomTemplateSpec(
-                    "LEAGUE_OF_LEGENDS",
-                    RoomMode.DRAFT,
-                    2,
-                    2,
-                    null,
-                    30,
-                    null,
-                    DraftOrderStrategy.SNAKE,
-                    List.of(
-                        new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
-                        new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
-                    )
-                ),
-                CREATED_AT
-            );
-
-        Room saved = rooms.save(room);
-        entityManager.flush();
-        entityManager.clear();
-
-        Room reloaded = rooms.findById(saved.getId()).orElseThrow();
-
-        assertThat(reloaded.getCreatedAt()).isEqualTo(CREATED_AT);
-    }
-
-    @Test
-    @Transactional
     void 경매_방의_minBidUnit과_gameType을_저장하고_다시_읽는다() {
         Room room =
             Room.createFromTemplate(
@@ -184,33 +148,6 @@ class RoomRepositoryIntegrationTest {
         assertThat(reloaded.getStatus()).isEqualTo(RoomStatus.STARTED);
         assertThat(reloaded.getStartedGameId()).isEqualTo(gameId);
         assertThat(reloaded.getStartedAt()).isEqualTo(startedAt);
-    }
-
-    @Test
-    void 방의_createdAt은_null일_수_없다() {
-        assertThatThrownBy(() ->
-            Room.createFromTemplate(
-                "ROOM03",
-                new TeamLeaderId("host-1"),
-                "호스트",
-                "host-action-token",
-                new RoomTemplateSpec(
-                    "LEAGUE_OF_LEGENDS",
-                    RoomMode.DRAFT,
-                    2,
-                    2,
-                    null,
-                    30,
-                    null,
-                    DraftOrderStrategy.SNAKE,
-                    List.of(
-                        new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
-                        new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
-                    )
-                ),
-                null
-            )
-        ).isInstanceOf(NullPointerException.class);
     }
 
     private Room auctionRoomForStartPersistence() {

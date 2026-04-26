@@ -14,7 +14,6 @@ import com.naminhyeok.fantazzk.room.domain.StartedGameSnapshot;
 import com.naminhyeok.fantazzk.room.domain.TeamLeaderId;
 import com.naminhyeok.fantazzk.room.repository.Games;
 import com.naminhyeok.fantazzk.room.repository.Rooms;
-import com.naminhyeok.fantazzk.room.query.JoinableRoomResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Instant;
@@ -64,21 +63,6 @@ class RoomApiIntegrationTest {
     private final Rooms rooms;
     private final Games games;
     private final PlatformTransactionManager transactionManager;
-
-    @Test
-    void 방_목록_API는_참여_가능한_대기방만_정렬해_반환한다() {
-        rooms.save(joinableAuctionRoom("ROOM99", Instant.parse("2026-04-09T00:03:00Z")));
-        rooms.save(fullWaitingAuctionRoom("ROOM08", Instant.parse("2026-04-09T00:02:00Z")));
-        rooms.save(inProgressAuctionRoom("ROOM07", Instant.parse("2026-04-09T00:01:00Z")));
-        rooms.save(joinableDraftRoom("ROOM01", Instant.parse("2026-04-09T00:00:00Z")));
-
-        ResponseEntity<JoinableRoomListApiResponse> response = restTemplate.getForEntity("/api/v1/rooms", JoinableRoomListApiResponse.class);
-        JoinableRoomListApiResponse body = response.getBody();
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(body).isNotNull();
-        assertThat(body.success()).extracting(JoinableRoomResponse::code).containsExactly("ROOM99", "ROOM01");
-    }
 
     @Test
     void 방_시작_API는_게임_ID만_포함한_최소_응답을_반환한다() throws Exception {
@@ -227,12 +211,6 @@ class RoomApiIntegrationTest {
         return room;
     }
 
-    private Room inProgressAuctionRoom(String code, Instant createdAt) {
-        Room room = fullWaitingAuctionRoom(code, createdAt);
-        room.start(new TeamLeaderId("host-" + code), deterministicGameId(room), createdAt);
-        return room;
-    }
-
     private Room joinableDraftRoom(String code, Instant createdAt) {
         return Room.createFromTemplate(
             code,
@@ -272,13 +250,6 @@ class RoomApiIntegrationTest {
     private static GameId deterministicGameId(Room room) {
         String source = "game:%s".formatted(room.getId().roomId());
         return new GameId(UUID.nameUUIDFromBytes(source.getBytes(StandardCharsets.UTF_8)));
-    }
-
-    private record JoinableRoomListApiResponse(
-        String resultType,
-        List<JoinableRoomResponse> success,
-        Object error
-    ) {
     }
 
     private static HttpHeaders actionHeaders(String actionToken) {

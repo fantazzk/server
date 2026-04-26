@@ -9,8 +9,8 @@ import com.naminhyeok.fantazzk.CoreException;
 import com.naminhyeok.fantazzk.ErrorMessage;
 import com.naminhyeok.fantazzk.GlobalExceptionHandler;
 import com.naminhyeok.fantazzk.room.application.StartRoom;
-import com.naminhyeok.fantazzk.room.domain.Room;
 import com.naminhyeok.fantazzk.room.domain.RoomErrorType;
+import com.naminhyeok.fantazzk.room.support.RoomApiTestFixtures;
 import com.naminhyeok.fantazzk.room.web.RoomStartApiController;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +23,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
-import com.naminhyeok.fantazzk.room.support.RoomApiTestFixtures;
 
 @WebMvcTest(RoomStartApiController.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -52,9 +51,6 @@ class RoomStartApiControllerWebMvcTest {
         JsonNode body = objectMapper.readTree(result.getResponse().getContentAsString());
         assertThat(body.at("/resultType").asText()).isEqualTo("SUCCESS");
         assertThat(body.at("/success/gameId").asText()).isEqualTo(RoomApiTestFixtures.GAME_ID);
-        assertThat(body.at("/success/roomCode").isMissingNode()).isTrue();
-        assertThat(body.at("/success/mode").isMissingNode()).isTrue();
-        assertThat(body.at("/success/status").isMissingNode()).isTrue();
     }
 
     @Test

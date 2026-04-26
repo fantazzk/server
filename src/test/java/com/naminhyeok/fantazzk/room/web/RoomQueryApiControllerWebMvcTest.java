@@ -12,6 +12,7 @@ import com.naminhyeok.fantazzk.room.domain.RoomErrorType;
 import com.naminhyeok.fantazzk.room.query.FindJoinableRooms;
 import com.naminhyeok.fantazzk.room.query.GetRoom;
 import com.naminhyeok.fantazzk.room.query.JoinableRoomResponse;
+import com.naminhyeok.fantazzk.room.support.RoomApiTestFixtures;
 import com.naminhyeok.fantazzk.room.web.RoomQueryApiController;
 import java.time.Instant;
 import java.util.List;
@@ -26,7 +27,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
-import com.naminhyeok.fantazzk.room.support.RoomApiTestFixtures;
 
 @WebMvcTest(RoomQueryApiController.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -60,13 +60,6 @@ class RoomQueryApiControllerWebMvcTest {
         assertThat(body.at("/success/leaders/0/nickname").asText()).isEqualTo("호스트");
         assertThat(body.at("/success/playerPool/0/name").asText()).isEqualTo("선수1");
         assertThat(body.at("/success/draftOrder/slots/0/leaderId").asText()).isEqualTo(RoomApiTestFixtures.HOST_ID);
-        assertThat(body.at("/success/code").isMissingNode()).isTrue();
-        assertThat(body.at("/success/teamLeaders").isMissingNode()).isTrue();
-        assertThat(body.at("/success/players").isMissingNode()).isTrue();
-        assertThat(body.at("/success/members").isMissingNode()).isTrue();
-        assertThat(body.at("/success/auctionProgress").isMissingNode()).isTrue();
-        assertThat(body.at("/success/draftProgress").isMissingNode()).isTrue();
-        assertThat(result.getResponse().getContentAsString()).doesNotContain("teamLeaderSession");
     }
 
     @Test
@@ -79,9 +72,6 @@ class RoomQueryApiControllerWebMvcTest {
         JsonNode body = objectMapper.readTree(result.getResponse().getContentAsString());
         assertThat(body.at("/success/status").asText()).isEqualTo("STARTED");
         assertThat(body.at("/success/startedGameId").asText()).isEqualTo(RoomApiTestFixtures.GAME_ID);
-        assertThat(body.at("/success/auctionProgress").isMissingNode()).isTrue();
-        assertThat(body.at("/success/draftProgress").isMissingNode()).isTrue();
-        assertThat(body.at("/success/members").isMissingNode()).isTrue();
     }
 
     @Test

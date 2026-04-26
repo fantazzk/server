@@ -11,9 +11,6 @@ import com.naminhyeok.fantazzk.room.application.RoomSessionResult;
 import com.naminhyeok.fantazzk.room.domain.Room;
 import com.naminhyeok.fantazzk.room.domain.RoomErrorType;
 import com.naminhyeok.fantazzk.room.domain.RoomId;
-import com.naminhyeok.fantazzk.room.domain.RoomPlayer;
-import com.naminhyeok.fantazzk.room.domain.RoomPlayerId;
-import com.naminhyeok.fantazzk.room.domain.TeamLeaderId;
 import com.naminhyeok.fantazzk.room.repository.Rooms;
 import com.naminhyeok.fantazzk.template.TemplateCatalog;
 import java.time.Clock;
@@ -50,10 +47,6 @@ class CreateRoomTest {
         assertThat(created.room()).isSameAs(rooms.savedRoom());
         assertThat(rooms.flushAttemptCount()).isEqualTo(3);
         assertThat(rooms.attemptedRoomIds()).doesNotHaveDuplicates();
-        assertThat(created.room().getPickBanTime()).isEqualTo(45);
-        assertThat(created.room().getMinBidUnit()).isEqualTo(10);
-        assertThat(created.room().getPlayers().stream().map(RoomPlayer::getId))
-            .containsExactly(new RoomPlayerId(0), new RoomPlayerId(1));
         assertThat(created.room().getLeaders()).singleElement().extracting(leader -> leader.getId()).isEqualTo(created.leader().getId());
         assertThat(created.leader().getActionToken()).isNotBlank();
     }

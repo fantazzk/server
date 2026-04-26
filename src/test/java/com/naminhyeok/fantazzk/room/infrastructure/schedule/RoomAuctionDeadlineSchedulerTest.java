@@ -2,7 +2,7 @@ package com.naminhyeok.fantazzk.room.infrastructure.schedule;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.naminhyeok.fantazzk.room.application.SettleAuction;
+import com.naminhyeok.fantazzk.room.application.AuctionSettlementRunner;
 import com.naminhyeok.fantazzk.room.domain.AuctionGame;
 import com.naminhyeok.fantazzk.room.domain.AuctionParticipant;
 import com.naminhyeok.fantazzk.room.domain.Game;
@@ -15,8 +15,8 @@ import com.naminhyeok.fantazzk.room.domain.RoomPlayerId;
 import com.naminhyeok.fantazzk.room.domain.RoomStateInvalidException;
 import com.naminhyeok.fantazzk.room.domain.RoomTemplateSpec;
 import com.naminhyeok.fantazzk.room.domain.TeamLeaderId;
-import com.naminhyeok.fantazzk.room.infrastructure.persistence.AuctionScheduleJpaRepository;
-import com.naminhyeok.fantazzk.room.infrastructure.persistence.JpaAuctionScheduleReader;
+import com.naminhyeok.fantazzk.room.query.AuctionScheduleCandidate;
+import com.naminhyeok.fantazzk.room.query.AuctionScheduleReader;
 import com.naminhyeok.fantazzk.room.repository.Games;
 import java.time.Clock;
 import java.time.Instant;
@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
-import org.springframework.data.domain.Pageable;
 
 class RoomAuctionDeadlineSchedulerTest {
     private static final Instant NOW = Instant.parse("2026-04-09T00:00:10Z");
@@ -43,7 +42,7 @@ class RoomAuctionDeadlineSchedulerTest {
             new RoomAuctionDeadlineScheduler(
                 taskScheduler,
                 settleAuction,
-                new JpaAuctionScheduleReader(new RecordingScheduleRepository()),
+                new RecordingScheduleReader(),
                 Clock.fixed(NOW, ZoneOffset.UTC),
                 new InMemoryGames(room.game(), nextRoundRoom.game())
             );
@@ -68,7 +67,7 @@ class RoomAuctionDeadlineSchedulerTest {
             new RoomAuctionDeadlineScheduler(
                 taskScheduler,
                 settleAuction,
-                new JpaAuctionScheduleReader(new RecordingScheduleRepository()),
+                new RecordingScheduleReader(),
                 Clock.fixed(NOW, ZoneOffset.UTC),
                 new InMemoryGames(first.game(), second.game())
             );
@@ -84,11 +83,11 @@ class RoomAuctionDeadlineSchedulerTest {
     void 재시작_시점에_지난_마감은_즉시_정산하고_미래_마감은_다시_예약한다() {
         FakeTaskScheduler taskScheduler = new FakeTaskScheduler();
         RecordingSettleAuction settleAuction = new RecordingSettleAuction();
-        JpaAuctionScheduleReader scheduleReader =
-            new JpaAuctionScheduleReader(new RecordingScheduleRepository(
+        AuctionScheduleReader scheduleReader =
+            new RecordingScheduleReader(
                 schedule("DUE01", Instant.parse("2026-04-09T00:00:05Z")),
                 schedule("FUTURE01", Instant.parse("2026-04-09T00:00:15Z"))
-            ));
+            );
         settleAuction.returnRoom("DUE01", completedAuctionRoom("DUE01"));
         RoomAuctionDeadlineScheduler scheduler =
             new RoomAuctionDeadlineScheduler(
@@ -109,14 +108,14 @@ class RoomAuctionDeadlineSchedulerTest {
     void 재시작_정산_중_손상된_방이_있어도_다음_방은_계속_처리한다() {
         FakeTaskScheduler taskScheduler = new FakeTaskScheduler();
         RecordingSettleAuction settleAuction = new RecordingSettleAuction();
-        JpaAuctionScheduleReader scheduleReader =
-            new JpaAuctionScheduleReader(new RecordingScheduleRepository(
+        AuctionScheduleReader scheduleReader =
+            new RecordingScheduleReader(
                 List.of(
                     schedule("BROKEN01", Instant.parse("2026-04-09T00:00:05Z")),
                     schedule("DUE02", Instant.parse("2026-04-09T00:00:06Z")),
                     schedule("FUTURE01", Instant.parse("2026-04-09T00:00:15Z"))
                 )
-            ));
+            );
         StartedAuctionContext due02 = auctionRoomWithDeadline("DUE02", Instant.parse("2026-04-09T00:00:25Z"));
         settleAuction.throwFailure("BROKEN01", RoomStateInvalidException.auctionRoundMissing());
         settleAuction.returnRoom("DUE02", due02.room());
@@ -137,64 +136,6 @@ class RoomAuctionDeadlineSchedulerTest {
                 Instant.parse("2026-04-09T00:00:25Z"),
                 Instant.parse("2026-04-09T00:00:15Z")
             );
-    }
-
-    @Test
-    void 재시작_정산은_저장소_정렬보다_마감_시각을_우선한다() {
-        FakeTaskScheduler taskScheduler = new FakeTaskScheduler();
-        RecordingSettleAuction settleAuction = new RecordingSettleAuction();
-        JpaAuctionScheduleReader scheduleReader =
-            new JpaAuctionScheduleReader(new RecordingScheduleRepository(
-                List.of(
-                    schedule("FUTURE01", Instant.parse("2026-04-09T00:00:15Z")),
-                    schedule("DUE01", Instant.parse("2026-04-09T00:00:05Z")),
-                    schedule("LEGACY01", Instant.parse("2026-04-09T00:00:01Z"))
-                )
-            ));
-        StartedAuctionContext legacy01 = auctionRoomWithDeadline("LEGACY01", Instant.parse("2026-04-09T00:00:20Z"));
-        settleAuction.returnRoom("LEGACY01", legacy01.room());
-        settleAuction.returnRoom("DUE01", completedAuctionRoom("DUE01"));
-        RoomAuctionDeadlineScheduler scheduler =
-            new RoomAuctionDeadlineScheduler(
-                taskScheduler,
-                settleAuction,
-                scheduleReader,
-                Clock.fixed(NOW, ZoneOffset.UTC),
-                new InMemoryGames(legacy01.game())
-            );
-
-        scheduler.catchUpAndReschedule();
-
-        assertThat(settleAuction.settledCodes()).containsExactly("LEGACY01", "DUE01");
-        assertThat(taskScheduler.activeScheduledInstants())
-            .containsExactly(
-                Instant.parse("2026-04-09T00:00:20Z"),
-                Instant.parse("2026-04-09T00:00:15Z")
-            );
-    }
-
-    @Test
-    void 재시작_예약은_첫_페이지를_넘는_미래_마감도_모두_처리한다() {
-        FakeTaskScheduler taskScheduler = new FakeTaskScheduler();
-        RecordingSettleAuction settleAuction = new RecordingSettleAuction();
-        JpaAuctionScheduleReader scheduleReader = new JpaAuctionScheduleReader(new RecordingScheduleRepository(manyFutureSchedules(205)));
-        RoomAuctionDeadlineScheduler scheduler =
-            new RoomAuctionDeadlineScheduler(
-                taskScheduler,
-                settleAuction,
-                scheduleReader,
-                Clock.fixed(NOW, ZoneOffset.UTC),
-                new InMemoryGames()
-            );
-
-        scheduler.catchUpAndReschedule();
-
-        assertThat(taskScheduler.activeScheduledInstants()).hasSize(205);
-        assertThat(taskScheduler.activeScheduledInstants()).contains(
-            Instant.parse("2026-04-09T00:01:00Z"),
-            Instant.parse("2026-04-09T00:04:24Z")
-        );
-        assertThat(settleAuction.settledCodes()).isEmpty();
     }
 
     private static StartedAuctionContext auctionRoomWithDeadline(String code, Instant deadline) {
@@ -258,37 +199,16 @@ class RoomAuctionDeadlineSchedulerTest {
         return auctionRoomWithDeadline(code, Instant.parse("2026-04-09T00:00:05Z")).room();
     }
 
-    private static ScheduledAuctionGame schedule(String code, Instant deadline) {
-        return new ScheduledAuctionGame(code, deadline);
-    }
-
-    private static List<ScheduledAuctionGame> manyFutureSchedules(int count) {
-        List<ScheduledAuctionGame> candidates = new ArrayList<>();
-        for (int index = 0; index < count; index++) {
-            int second = 60 + index;
-            candidates.add(
-                schedule(
-                    "ROOM%03d".formatted(index),
-                    Instant.parse("2026-04-09T00:%02d:%02dZ".formatted(second / 60, second % 60))
-                )
-            );
-        }
-        return candidates;
+    private static AuctionScheduleCandidate schedule(String code, Instant deadline) {
+        return new AuctionScheduleCandidate(code, deadline);
     }
 
     private record StartedAuctionContext(Room room, AuctionGame game) {
     }
 
-    private record ScheduledAuctionGame(String code, Instant deadline) {
-    }
-
-    private static final class RecordingSettleAuction extends SettleAuction {
+    private static final class RecordingSettleAuction implements AuctionSettlementRunner {
         private final Map<String, Object> outcomes = new LinkedHashMap<>();
         private final List<String> settledCodes = new ArrayList<>();
-
-        private RecordingSettleAuction() {
-            super(null, null);
-        }
 
         private void returnRoom(String code, Room room) {
             outcomes.put(code, room);
@@ -337,27 +257,20 @@ class RoomAuctionDeadlineSchedulerTest {
         }
     }
 
-    private static final class RecordingScheduleRepository implements AuctionScheduleJpaRepository {
-        private final List<ScheduledAuctionGame> games;
+    private static final class RecordingScheduleReader implements AuctionScheduleReader {
+        private final List<AuctionScheduleCandidate> candidates;
 
-        private RecordingScheduleRepository(ScheduledAuctionGame... games) {
-            this.games = List.of(games);
+        private RecordingScheduleReader(AuctionScheduleCandidate... candidates) {
+            this.candidates = List.of(candidates);
         }
 
-        private RecordingScheduleRepository(List<ScheduledAuctionGame> games) {
-            this.games = List.copyOf(games);
+        private RecordingScheduleReader(List<AuctionScheduleCandidate> candidates) {
+            this.candidates = List.copyOf(candidates);
         }
 
         @Override
-        public List<AuctionGame> findByCurrentRoundEndsAtNotNullOrderByRoomCodeAsc(Pageable pageable) {
-            int fromIndex = (int) pageable.getOffset();
-            if (fromIndex >= games.size()) {
-                return List.of();
-            }
-            int toIndex = Math.min(fromIndex + pageable.getPageSize(), games.size());
-            return games.subList(fromIndex, toIndex).stream()
-                .map(candidate -> auctionRoomWithDeadline(candidate.code(), candidate.deadline()).game())
-                .toList();
+        public List<AuctionScheduleCandidate> findInProgressAuctionSchedules() {
+            return candidates;
         }
     }
 }

@@ -16,8 +16,8 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.UUID;
 import lombok.Getter;
 import org.jmolecules.ddd.types.AggregateRoot;
@@ -150,7 +150,7 @@ public class Room implements AggregateRoot<Room, RoomId> {
         return status == RoomStatus.WAITING && leaders.size() < teamCount;
     }
 
-    public void join(TeamLeaderId teamLeaderId, String nickname, String actionToken) {
+    public RoomTeamLeader join(TeamLeaderId teamLeaderId, String nickname, String actionToken) {
         if (status != RoomStatus.WAITING) {
             throw CoreException.of(RoomErrorType.ROOM_JOIN_REQUIRES_WAITING);
         }
@@ -168,7 +168,9 @@ public class Room implements AggregateRoot<Room, RoomId> {
             throw CoreException.of(RoomErrorType.ROOM_NICKNAME_ALREADY_TAKEN);
         }
 
-        leaders.add(new RoomTeamLeader(teamLeaderId, nickname.trim(), actionToken, budget));
+        RoomTeamLeader joinedLeader = new RoomTeamLeader(teamLeaderId, nickname.trim(), actionToken, budget);
+        leaders.add(joinedLeader);
+        return joinedLeader;
     }
 
     private String normalizeNickname(String nickname) {

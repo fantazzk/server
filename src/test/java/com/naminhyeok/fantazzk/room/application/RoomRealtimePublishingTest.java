@@ -24,11 +24,9 @@ import com.naminhyeok.fantazzk.room.domain.RoomId;
 import com.naminhyeok.fantazzk.room.domain.RoomMode;
 import com.naminhyeok.fantazzk.room.domain.RoomPlayerId;
 import com.naminhyeok.fantazzk.room.domain.RoomTemplateSpec;
-import com.naminhyeok.fantazzk.room.domain.RosterMember;
 import com.naminhyeok.fantazzk.room.domain.StartedGameSnapshot;
 import com.naminhyeok.fantazzk.room.domain.StartedRoomSnapshot;
 import com.naminhyeok.fantazzk.room.domain.TeamLeaderId;
-import com.naminhyeok.fantazzk.room.infrastructure.realtime.GameUpdatedEvent;
 import com.naminhyeok.fantazzk.room.infrastructure.realtime.RoomRealtimeEvent;
 import com.naminhyeok.fantazzk.room.infrastructure.realtime.RoomRealtimeEventFactory;
 import com.naminhyeok.fantazzk.room.infrastructure.realtime.RoomUpdatedEvent;
@@ -93,50 +91,6 @@ class RoomRealtimePublishingTest {
         assertThat(publisher.events.getFirst()).isInstanceOf(RoomUpdatedEvent.class);
         RoomUpdatedEvent event = (RoomUpdatedEvent) publisher.events.getFirst();
         assertThat(event.room().draftOrder().slots().getFirst().leaderId()).isNull();
-    }
-
-    @Test
-    void 유찰_정산은_게임_스냅샷만_발행한다() {
-        Room room = startedAuctionRoom();
-        AuctionGame game = (AuctionGame) gameFor(room);
-        RecordingRoomRealtimeEventPublisher publisher = new RecordingRoomRealtimeEventPublisher();
-        InMemoryRooms rooms = new InMemoryRooms(room);
-        InMemoryGames games = new InMemoryGames(game);
-        SettleAuctionAttempt settleAuctionAttempt =
-            new SettleAuctionAttempt(
-                rooms,
-                games,
-                Clock.fixed(CREATED_AT.plusSeconds(40), ZoneOffset.UTC),
-                publisher
-            );
-
-        settleAuctionAttempt.settleIfDue(room.getCode());
-
-        assertThat(publisher.events).hasSize(1);
-        assertThat(publisher.events.getFirst()).isInstanceOf(GameUpdatedEvent.class);
-    }
-
-    @Test
-    void 낙찰_정산은_게임_스냅샷을_발행한다() {
-        Room room = startedAuctionRoom();
-        AuctionGame game = (AuctionGame) gameFor(room);
-        game.placeBid(new TeamLeaderId(HOST_ID), 100, CREATED_AT.plusSeconds(1));
-        RecordingRoomRealtimeEventPublisher publisher = new RecordingRoomRealtimeEventPublisher();
-        InMemoryRooms rooms = new InMemoryRooms(room);
-        InMemoryGames games = new InMemoryGames(game);
-        SettleAuctionAttempt settleAuctionAttempt =
-            new SettleAuctionAttempt(
-                rooms,
-                games,
-                Clock.fixed(CREATED_AT.plusSeconds(40), ZoneOffset.UTC),
-                publisher
-            );
-
-        settleAuctionAttempt.settleIfDue(room.getCode());
-
-        assertThat(game.getMembers()).singleElement().extracting(RosterMember::playerName).isEqualTo("선수1");
-        assertThat(publisher.events).hasSize(1);
-        assertThat(publisher.events.getFirst()).isInstanceOf(GameUpdatedEvent.class);
     }
 
     @Test

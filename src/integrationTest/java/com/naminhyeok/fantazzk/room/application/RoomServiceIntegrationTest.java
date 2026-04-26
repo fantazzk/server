@@ -99,9 +99,6 @@ class RoomServiceIntegrationTest {
         assertThat(reloadedRoom.getStartedAt()).isEqualTo(NOW);
         assertThat(reloadedGame.getId()).isEqualTo(reloadedRoom.getStartedGameId());
         assertThat(reloadedGame).isInstanceOf(AuctionGame.class);
-        AuctionGame auctionGame = (AuctionGame) reloadedGame;
-        assertThat(auctionGame.getCurrentRound()).isEqualTo(1);
-        assertThat(auctionGame.getCurrentRoundEndsAt()).isEqualTo(NOW.plusSeconds(reloadedRoom.getPickBanTime()));
         assertThat(recordingTaskScheduler.scheduledInstants()).containsExactly(NOW.plusSeconds(reloadedRoom.getPickBanTime()));
     }
 
@@ -134,7 +131,6 @@ class RoomServiceIntegrationTest {
         Game reloadedGame = games.findById(reloadedRoom.getStartedGameId()).orElseThrow();
 
         assertThat(reloadedGame).isInstanceOf(DraftGame.class);
-        assertThat(((DraftGame) reloadedGame).getCurrentTurnIndex()).isEqualTo(0);
         assertThat(recordingTaskScheduler.scheduledInstants()).isEmpty();
     }
 

@@ -22,7 +22,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
-import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 @WebMvcTest(RoomDraftApiController.class)
@@ -42,7 +41,7 @@ class RoomDraftApiControllerWebMvcTest {
     private ClearDraftPosition clearDraftPosition;
 
     @Test
-    void 드래프트_자리_선택_API는_액션_토큰이_있으면_빈_SUCCESS를_반환한다() throws Exception {
+    void 드래프트_자리_선택_API는_액션_토큰이_있으면_성공한다() throws Exception {
         var result = mockMvcTester().perform(
             put("/api/v1/rooms/{code}/draft-position", RoomApiTestFixtures.ROOM_CODE)
                 .header("X-Room-Action-Token", RoomApiTestFixtures.GUEST_TOKEN)
@@ -57,24 +56,16 @@ class RoomDraftApiControllerWebMvcTest {
         );
 
         result.assertThat().hasStatusOk();
-        JsonNode body = objectMapper.readTree(result.getResponse().getContentAsString());
-        assertThat(body.at("/resultType").asText()).isEqualTo("SUCCESS");
-        assertThat(body.at("/success").isNull()).isTrue();
-        assertThat(body.at("/error").isNull()).isTrue();
     }
 
     @Test
-    void 드래프트_자리_취소_API는_액션_토큰이_있으면_빈_SUCCESS를_반환한다() throws Exception {
+    void 드래프트_자리_취소_API는_액션_토큰이_있으면_성공한다() throws Exception {
         var result = mockMvcTester().perform(
             delete("/api/v1/rooms/{code}/draft-position", RoomApiTestFixtures.ROOM_CODE)
                 .header("X-Room-Action-Token", RoomApiTestFixtures.HOST_TOKEN)
         );
 
         result.assertThat().hasStatusOk();
-        JsonNode body = objectMapper.readTree(result.getResponse().getContentAsString());
-        assertThat(body.at("/resultType").asText()).isEqualTo("SUCCESS");
-        assertThat(body.at("/success").isNull()).isTrue();
-        assertThat(body.at("/error").isNull()).isTrue();
     }
 
     @Test

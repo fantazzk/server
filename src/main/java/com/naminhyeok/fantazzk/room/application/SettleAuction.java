@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class SettleAuction {
+public class SettleAuction implements AuctionSettlementRunner {
     private final SettleAuctionAttempt settleAuctionAttempt;
     private final Rooms rooms;
 
