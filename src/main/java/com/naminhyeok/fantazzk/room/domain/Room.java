@@ -216,26 +216,7 @@ public class Room implements AggregateRoot<Room, RoomId> {
         startedAt = Objects.requireNonNull(now, "now must not be null");
         status = RoomStatus.STARTED;
 
-        return new StartedGameSnapshot(
-            id,
-            code,
-            startedGameId,
-            startedAt,
-            gameType,
-            mode,
-            mode == RoomMode.AUCTION
-                ? GameRules.auction(teamCount, teamSize, budget, pickBanTime, minBidUnit)
-                : GameRules.draft(teamCount, teamSize, pickBanTime, draftOrderStrategy),
-            leaders.stream()
-                .map(leader -> mode == RoomMode.AUCTION
-                    ? GameParticipant.auction(leader.getId(), leader.getNickname(), leader.getRemainingBudget())
-                    : GameParticipant.draft(leader.getId(), leader.getNickname(), leader.getDraftPosition()))
-                .toList(),
-            players.stream()
-                .sorted(Comparator.comparingInt(RoomPlayer::getDisplayOrder))
-                .map(player -> new GamePlayer(player.getId(), player.getName(), player.getPosition(), player.getDisplayOrder()))
-                .toList()
-        );
+        return StartedGameSnapshotFactory.from(this);
     }
 
     private void validateDraftPositionChange(int draftPosition) {
