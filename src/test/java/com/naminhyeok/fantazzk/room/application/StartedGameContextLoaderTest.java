@@ -4,52 +4,37 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.naminhyeok.fantazzk.CoreException;
-import com.naminhyeok.fantazzk.room.application.RoomActionAuthorizer;
-import com.naminhyeok.fantazzk.room.application.StartedGameActionContext;
-import com.naminhyeok.fantazzk.room.application.StartedGameContextLoader;
 import com.naminhyeok.fantazzk.room.domain.Game;
-import com.naminhyeok.fantazzk.room.domain.GameFactory;
 import com.naminhyeok.fantazzk.room.domain.GameId;
-import com.naminhyeok.fantazzk.room.domain.GameParticipant;
-import com.naminhyeok.fantazzk.room.domain.GamePlayer;
-import com.naminhyeok.fantazzk.room.domain.GameRules;
 import com.naminhyeok.fantazzk.room.domain.Room;
 import com.naminhyeok.fantazzk.room.domain.RoomErrorType;
 import com.naminhyeok.fantazzk.room.domain.RoomId;
-import com.naminhyeok.fantazzk.room.domain.RoomMode;
-import com.naminhyeok.fantazzk.room.domain.RoomPlayerId;
-import com.naminhyeok.fantazzk.room.domain.RoomTemplateSpec;
-import com.naminhyeok.fantazzk.room.domain.StartedGameSnapshot;
 import com.naminhyeok.fantazzk.room.domain.TeamLeaderId;
 import com.naminhyeok.fantazzk.room.repository.Games;
 import com.naminhyeok.fantazzk.room.repository.Rooms;
-import java.nio.charset.StandardCharsets;
-import java.time.Instant;
+import com.naminhyeok.fantazzk.room.support.RoomFixtureBuilder;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 class StartedGameContextLoaderTest {
-    private static final Instant CREATED_AT = Instant.parse("2026-04-18T00:00:00Z");
-
     @Test
     void 시작된_게임_행위는_방의_액션_토큰으로_인증한다() {
-        Room room = startedAuctionRoom();
-        Game game = startedGameOf(room);
+        Room room = RoomFixtureBuilder.auction().started().buildRoom();
+        Game game = RoomFixtureBuilder.gameFor(room);
         StartedGameContextLoader loader = new StartedGameContextLoader(
             new InMemoryRooms(Map.of(room.getId(), room)),
             new InMemoryGames(Map.of(game.getId(), game)),
             new RoomActionAuthorizer()
         );
 
-        StartedGameActionContext action = loader.authenticate(game.getId().gameId(), "host-action-token");
+        StartedGameActionContext action = loader.authenticate(game.getId().gameId(), RoomFixtureBuilder.HOST_TOKEN);
 
         assertThat(action.room().getId()).isEqualTo(room.getId());
         assertThat(action.game().getId()).isEqualTo(game.getId());
-        assertThat(action.caller().getId()).isEqualTo(new TeamLeaderId("host-1"));
+        assertThat(action.caller().getId()).isEqualTo(new TeamLeaderId(RoomFixtureBuilder.HOST_ID));
     }
 
     @Test
@@ -66,8 +51,8 @@ class StartedGameContextLoaderTest {
 
     @Test
     void 게임의_방이_없어도_GAME_NOT_FOUND를_반환한다() {
-        Room room = startedAuctionRoom();
-        Game game = startedGameOf(room);
+        Room room = RoomFixtureBuilder.auction().started().buildRoom();
+        Game game = RoomFixtureBuilder.gameFor(room);
         StartedGameContextLoader loader =
             new StartedGameContextLoader(new InMemoryRooms(Map.of()), new InMemoryGames(Map.of(game.getId(), game)), new RoomActionAuthorizer());
 
@@ -80,8 +65,8 @@ class StartedGameContextLoaderTest {
 
     @Test
     void 액션_토큰이_유효하지_않으면_ROOM_ACTION_TOKEN_INVALID를_반환한다() {
-        Room room = startedAuctionRoom();
-        Game game = startedGameOf(room);
+        Room room = RoomFixtureBuilder.auction().started().buildRoom();
+        Game game = RoomFixtureBuilder.gameFor(room);
         StartedGameContextLoader loader = new StartedGameContextLoader(
             new InMemoryRooms(Map.of(room.getId(), room)),
             new InMemoryGames(Map.of(game.getId(), game)),
@@ -93,61 +78,6 @@ class StartedGameContextLoaderTest {
                 CoreException.class,
                 ex -> assertThat(ex.getError()).isEqualTo(RoomErrorType.ROOM_ACTION_TOKEN_INVALID)
             );
-    }
-
-    private Room startedAuctionRoom() {
-        Room room =
-            Room.createFromTemplate(
-                "ROOM01",
-                new TeamLeaderId("host-1"),
-                "호스트",
-                "host-action-token",
-                new RoomTemplateSpec(
-                    "LEAGUE_OF_LEGENDS",
-                    RoomMode.AUCTION,
-                    2,
-                    2,
-                    300,
-                    45,
-                    10,
-                    null,
-                    List.of(
-                        new RoomTemplateSpec.Player(new RoomPlayerId(0), "선수1", "TOP", 0),
-                        new RoomTemplateSpec.Player(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
-                    )
-                ),
-                CREATED_AT
-        );
-        room.join(new TeamLeaderId("guest-1"), "게스트", "guest-action-token");
-        room.start(new TeamLeaderId("host-1"), deterministicGameId(room), CREATED_AT);
-        return room;
-    }
-
-    private Game startedGameOf(Room room) {
-        return new GameFactory().create(
-            new StartedGameSnapshot(
-                room.getId(),
-                room.getCode(),
-                room.getStartedGameId(),
-                room.getStartedAt(),
-                room.getGameType(),
-                room.getMode(),
-                GameRules.auction(room.getTeamCount(), room.getTeamSize(), room.getBudget(), room.getPickBanTime(), room.getMinBidUnit()),
-                List.of(
-                    GameParticipant.auction(new TeamLeaderId("host-1"), "호스트", 300),
-                    GameParticipant.auction(new TeamLeaderId("guest-1"), "게스트", 300)
-                ),
-                List.of(
-                    new GamePlayer(new RoomPlayerId(0), "선수1", "TOP", 0),
-                    new GamePlayer(new RoomPlayerId(1), "선수2", "JUNGLE", 1)
-                )
-            )
-        );
-    }
-
-    private static GameId deterministicGameId(Room room) {
-        String source = "game:%s".formatted(room.getId().roomId());
-        return new GameId(UUID.nameUUIDFromBytes(source.getBytes(StandardCharsets.UTF_8)));
     }
 
     private static final class InMemoryRooms implements Rooms {

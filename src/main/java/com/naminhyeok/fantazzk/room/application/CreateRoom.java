@@ -68,7 +68,7 @@ public class CreateRoom {
         String hostActionToken,
         String hostNickname
     ) {
-        RoomTemplateSpec spec = RoomTemplateSpec.from(template);
+        RoomTemplateSpec spec = RoomTemplateSpecFactory.from(template);
         return Room.createFromTemplate(
             generateCode(),
             hostLeaderId,

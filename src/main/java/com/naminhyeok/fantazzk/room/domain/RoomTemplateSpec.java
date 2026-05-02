@@ -1,6 +1,5 @@
 package com.naminhyeok.fantazzk.room.domain;
 
-import com.naminhyeok.fantazzk.template.TemplateCatalog;
 import java.util.List;
 import java.util.Objects;
 
@@ -53,42 +52,6 @@ public record RoomTemplateSpec(
         }
     }
 
-    public static RoomTemplateSpec from(TemplateCatalog.TemplateBlueprint template) {
-        Objects.requireNonNull(template, "template must not be null");
-        List<Player> players = template.players().stream().map(Player::from).toList();
-        int requiredPlayerCount = template.teamCount() * (template.teamSize() - 1);
-        if (players.size() != requiredPlayerCount) {
-            throw new IllegalArgumentException("선수 수는 정확히 " + requiredPlayerCount + "명이어야 합니다");
-        }
-        return new RoomTemplateSpec(
-            template.gameType(),
-            RoomMode.from(template.mode()),
-            template.teamCount(),
-            template.teamSize(),
-            template.budget(),
-            requirePickBanTime(template.pickBanTime()),
-            template.minBidUnit(),
-            DraftOrderStrategy.from(template.draftOrderStrategy()),
-            players
-        );
-    }
-
     public record Player(RoomPlayerId id, String name, String position, int displayOrder) {
-        public static Player from(TemplateCatalog.PlayerBlueprint player) {
-            Objects.requireNonNull(player, "player must not be null");
-            return new Player(
-                new RoomPlayerId(player.playerIndex()),
-                player.name(),
-                player.position(),
-                player.playerIndex()
-            );
-        }
-    }
-
-    private static int requirePickBanTime(Integer pickBanTime) {
-        if (pickBanTime == null) {
-            throw new IllegalArgumentException("방 생성 명세에는 픽밴 시간이 필요합니다");
-        }
-        return pickBanTime;
     }
 }

@@ -44,6 +44,15 @@ class RoomInternalPackageIsolationTest {
             );
 
     @ArchTest
+    static final ArchRule room_domain은_template_모듈에_의존하지_않는다 =
+        noClasses()
+            .that()
+            .resideInAnyPackage("..room.domain..")
+            .should()
+            .dependOnClassesThat()
+            .resideInAnyPackage("..template..");
+
+    @ArchTest
     static final ArchRule room_query는_web이나_infrastructure에_의존하지_않는다 =
         noClasses()
             .that()
