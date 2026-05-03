@@ -143,6 +143,7 @@ databaseChangeLog:
   - changeSet:
       id: 13-room-game-cleanup
       author: codex
+      validCheckSum: 9:ab793f9c89fa3ff8af0afacad5e1391f
       changes:
         - sqlFile:
             dbms: h2,postgresql
